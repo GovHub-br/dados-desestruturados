@@ -1,0 +1,397 @@
+[
+  {
+    "table_id": "dc48a46c-0f89-5e2f-9860-1352db770bb4",
+    "document_id": "fab1d4b4-843a-54a1-b5e9-771b22967cd7",
+    "page_number": 1,
+    "section_id": "9432a636-67b0-5480-bea3-ae93c2c501b7",
+    "section_title": "Unidades residenciais lançadas",
+    "title_raw": "Unidades residenciais lançadas",
+    "title_canonical": "unidades_residenciais_lancadas",
+    "bbox": {
+      "page_number": 1,
+      "left": 103.50505828857422,
+      "top": 227.80288696289062,
+      "right": 782.9510498046875,
+      "bottom": 70.4620361328125,
+      "coord_origin": "BOTTOMLEFT"
+    },
+    "columns_raw": [
+      "Região pesquisada",
+      "4T 2023",
+      "1T 2024",
+      "2T 2024",
+      "3T 2024",
+      "4T 2024",
+      "1T 2025",
+      "2T 2025",
+      "3T 2025",
+      "4T 2025",
+      "Variação (%) 3T 25 x 4T 25",
+      "Variação (%) 4T 24 x 4T 25"
+    ],
+    "cells": [
+      {
+        "row_index": 0,
+        "column_index": 0,
+        "value_raw": "Norte"
+      },
+      {
+        "row_index": 0,
+        "column_index": 1,
+        "value_raw": "1.998"
+      },
+      {
+        "row_index": 0,
+        "column_index": 2,
+        "value_raw": "1.488"
+      },
+      {
+        "row_index": 0,
+        "column_index": 3,
+        "value_raw": "3.298"
+      },
+      {
+        "row_index": 0,
+        "column_index": 4,
+        "value_raw": "2.905"
+      },
+      {
+        "row_index": 0,
+        "column_index": 5,
+        "value_raw": "1.868"
+      },
+      {
+        "row_index": 0,
+        "column_index": 6,
+        "value_raw": "3.072"
+      },
+      {
+        "row_index": 0,
+        "column_index": 7,
+        "value_raw": "4.200"
+      },
+      {
+        "row_index": 0,
+        "column_index": 8,
+        "value_raw": "2.905"
+      },
+      {
+        "row_index": 0,
+        "column_index": 9,
+        "value_raw": "3.154"
+      },
+      {
+        "row_index": 0,
+        "column_index": 10,
+        "value_raw": "8,6% ▲"
+      },
+      {
+        "row_index": 0,
+        "column_index": 11,
+        "value_raw": "68,8% ▲"
+      },
+      {
+        "row_index": 1,
+        "column_index": 0,
+        "value_raw": "Nordeste"
+      },
+      {
+        "row_index": 1,
+        "column_index": 1,
+        "value_raw": "19.695"
+      },
+      {
+        "row_index": 1,
+        "column_index": 2,
+        "value_raw": "16.462"
+      },
+      {
+        "row_index": 1,
+        "column_index": 3,
+        "value_raw": "20.235"
+      },
+      {
+        "row_index": 1,
+        "column_index": 4,
+        "value_raw": "19.442"
+      },
+      {
+        "row_index": 1,
+        "column_index": 5,
+        "value_raw": "23.046"
+      },
+      {
+        "row_index": 1,
+        "column_index": 6,
+        "value_raw": "19.857"
+      },
+      {
+        "row_index": 1,
+        "column_index": 7,
+        "value_raw": "16.551"
+      },
+      {
+        "row_index": 1,
+        "column_index": 8,
+        "value_raw": "17.671"
+      },
+      {
+        "row_index": 1,
+        "column_index": 9,
+        "value_raw": "22.514"
+      },
+      {
+        "row_index": 1,
+        "column_index": 10,
+        "value_raw": "27,4% ▲"
+      },
+      {
+        "row_index": 1,
+        "column_index": 11,
+        "value_raw": "-2,3% ▼"
+      },
+      {
+        "row_index": 2,
+        "column_index": 0,
+        "value_raw": "Centro-Oeste"
+      },
+      {
+        "row_index": 2,
+        "column_index": 1,
+        "value_raw": "6.302"
+      },
+      {
+        "row_index": 2,
+        "column_index": 2,
+        "value_raw": "4.098"
+      },
+      {
+        "row_index": 2,
+        "column_index": 3,
+        "value_raw": "6.225"
+      },
+      {
+        "row_index": 2,
+        "column_index": 4,
+        "value_raw": "8.435"
+      },
+      {
+        "row_index": 2,
+        "column_index": 5,
+        "value_raw": "6.676"
+      },
+      {
+        "row_index": 2,
+        "column_index": 6,
+        "value_raw": "4.676"
+      },
+      {
+        "row_index": 2,
+        "column_index": 7,
+        "value_raw": "4.764"
+      },
+      {
+        "row_index": 2,
+        "column_index": 8,
+        "value_raw": "7.353"
+      },
+      {
+        "row_index": 2,
+        "column_index": 9,
+        "value_raw": "6.570"
+      },
+      {
+        "row_index": 2,
+        "column_index": 10,
+        "value_raw": "-10,6% ▼"
+      },
+      {
+        "row_index": 2,
+        "column_index": 11,
+        "value_raw": "-1,6% ▼"
+      },
+      {
+        "row_index": 3,
+        "column_index": 0,
+        "value_raw": "Sudeste"
+      },
+      {
+        "row_index": 3,
+        "column_index": 1,
+        "value_raw": "53.488"
+      },
+      {
+        "row_index": 3,
+        "column_index": 2,
+        "value_raw": "33.930"
+      },
+      {
+        "row_index": 3,
+        "column_index": 3,
+        "value_raw": "50.735"
+      },
+      {
+        "row_index": 3,
+        "column_index": 4,
+        "value_raw": "52.863"
+      },
+      {
+        "row_index": 3,
+        "column_index": 5,
+        "value_raw": "67.893"
+      },
+      {
+        "row_index": 3,
+        "column_index": 6,
+        "value_raw": "50.749"
+      },
+      {
+        "row_index": 3,
+        "column_index": 7,
+        "value_raw": "59.293"
+      },
+      {
+        "row_index": 3,
+        "column_index": 8,
+        "value_raw": "59.963"
+      },
+      {
+        "row_index": 3,
+        "column_index": 9,
+        "value_raw": "78.137"
+      },
+      {
+        "row_index": 3,
+        "column_index": 10,
+        "value_raw": "30,3% ▲"
+      },
+      {
+        "row_index": 3,
+        "column_index": 11,
+        "value_raw": "15,1% ▲"
+      },
+      {
+        "row_index": 4,
+        "column_index": 0,
+        "value_raw": "Sul"
+      },
+      {
+        "row_index": 4,
+        "column_index": 1,
+        "value_raw": "20.479"
+      },
+      {
+        "row_index": 4,
+        "column_index": 2,
+        "value_raw": "19.288"
+      },
+      {
+        "row_index": 4,
+        "column_index": 3,
+        "value_raw": "21.042"
+      },
+      {
+        "row_index": 4,
+        "column_index": 4,
+        "value_raw": "23.396"
+      },
+      {
+        "row_index": 4,
+        "column_index": 5,
+        "value_raw": "26.269"
+      },
+      {
+        "row_index": 4,
+        "column_index": 6,
+        "value_raw": "22.325"
+      },
+      {
+        "row_index": 4,
+        "column_index": 7,
+        "value_raw": "20.916"
+      },
+      {
+        "row_index": 4,
+        "column_index": 8,
+        "value_raw": "24.899"
+      },
+      {
+        "row_index": 4,
+        "column_index": 9,
+        "value_raw": "23.436"
+      },
+      {
+        "row_index": 4,
+        "column_index": 10,
+        "value_raw": "-5,9% ▼"
+      },
+      {
+        "row_index": 4,
+        "column_index": 11,
+        "value_raw": "-10,8% ▼"
+      },
+      {
+        "row_index": 5,
+        "column_index": 0,
+        "value_raw": "TOTAL"
+      },
+      {
+        "row_index": 5,
+        "column_index": 1,
+        "value_raw": "101.962"
+      },
+      {
+        "row_index": 5,
+        "column_index": 2,
+        "value_raw": "75.266"
+      },
+      {
+        "row_index": 5,
+        "column_index": 3,
+        "value_raw": "101.535"
+      },
+      {
+        "row_index": 5,
+        "column_index": 4,
+        "value_raw": "107.041"
+      },
+      {
+        "row_index": 5,
+        "column_index": 5,
+        "value_raw": "125.752"
+      },
+      {
+        "row_index": 5,
+        "column_index": 6,
+        "value_raw": "100.679"
+      },
+      {
+        "row_index": 5,
+        "column_index": 7,
+        "value_raw": "105.724"
+      },
+      {
+        "row_index": 5,
+        "column_index": 8,
+        "value_raw": "112.791"
+      },
+      {
+        "row_index": 5,
+        "column_index": 9,
+        "value_raw": "133.811"
+      },
+      {
+        "row_index": 5,
+        "column_index": 10,
+        "value_raw": "18,6%"
+      },
+      {
+        "row_index": 5,
+        "column_index": 11,
+        "value_raw": "6,4%"
+      }
+    ],
+    "row_count": 6,
+    "column_count": 12
+  }
+]

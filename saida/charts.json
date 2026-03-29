@@ -1,0 +1,474 @@
+[
+  {
+    "point_id": "453fafbe-c55d-5c7c-8af0-e97f732ed8d1",
+    "document_id": "fab1d4b4-843a-54a1-b5e9-771b22967cd7",
+    "chart_id": "31200c88-131c-5c97-b581-fdc7e55fcccc",
+    "page_number": 1,
+    "section_id": "816ddc25-d7b0-527f-8ce7-386cff7b6f03",
+    "section_title": "Unidades Lançadas | Trimestre",
+    "chart_type": "bar_chart",
+    "chart_title_raw": "Unidades Lançadas | Trimestre",
+    "chart_title_canonical": "unidades_lancadas_trimestre",
+    "series_name": "4T 2023",
+    "category_name": "Unidades Lançadas",
+    "value_numeric": 101962.0,
+    "value_text": "101.962",
+    "raw_row": {
+      "Trimestre": "4T 2023",
+      "Unidades Lançadas": "101.962",
+      "Percentage": "-26.2%"
+    }
+  },
+  {
+    "point_id": "2f394ed6-d056-5caf-bb98-3a0543d06253",
+    "document_id": "fab1d4b4-843a-54a1-b5e9-771b22967cd7",
+    "chart_id": "31200c88-131c-5c97-b581-fdc7e55fcccc",
+    "page_number": 1,
+    "section_id": "816ddc25-d7b0-527f-8ce7-386cff7b6f03",
+    "section_title": "Unidades Lançadas | Trimestre",
+    "chart_type": "bar_chart",
+    "chart_title_raw": "Unidades Lançadas | Trimestre",
+    "chart_title_canonical": "unidades_lancadas_trimestre",
+    "series_name": "1T 2024",
+    "category_name": "Unidades Lançadas",
+    "value_numeric": 75266.0,
+    "value_text": "75.266",
+    "raw_row": {
+      "Trimestre": "1T 2024",
+      "Unidades Lançadas": "75.266",
+      "Percentage": "34.9%"
+    }
+  },
+  {
+    "point_id": "c4ea0095-e5c7-53ff-ad4e-b339204c19bc",
+    "document_id": "fab1d4b4-843a-54a1-b5e9-771b22967cd7",
+    "chart_id": "31200c88-131c-5c97-b581-fdc7e55fcccc",
+    "page_number": 1,
+    "section_id": "816ddc25-d7b0-527f-8ce7-386cff7b6f03",
+    "section_title": "Unidades Lançadas | Trimestre",
+    "chart_type": "bar_chart",
+    "chart_title_raw": "Unidades Lançadas | Trimestre",
+    "chart_title_canonical": "unidades_lancadas_trimestre",
+    "series_name": "2T 2024",
+    "category_name": "Unidades Lançadas",
+    "value_numeric": 101535.0,
+    "value_text": "101.535",
+    "raw_row": {
+      "Trimestre": "2T 2024",
+      "Unidades Lançadas": "101.535",
+      "Percentage": "5.4%"
+    }
+  },
+  {
+    "point_id": "544027da-f012-5554-9293-41eb78064f78",
+    "document_id": "fab1d4b4-843a-54a1-b5e9-771b22967cd7",
+    "chart_id": "31200c88-131c-5c97-b581-fdc7e55fcccc",
+    "page_number": 1,
+    "section_id": "816ddc25-d7b0-527f-8ce7-386cff7b6f03",
+    "section_title": "Unidades Lançadas | Trimestre",
+    "chart_type": "bar_chart",
+    "chart_title_raw": "Unidades Lançadas | Trimestre",
+    "chart_title_canonical": "unidades_lancadas_trimestre",
+    "series_name": "3T 2024",
+    "category_name": "Unidades Lançadas",
+    "value_numeric": 107041.0,
+    "value_text": "107.041",
+    "raw_row": {
+      "Trimestre": "3T 2024",
+      "Unidades Lançadas": "107.041",
+      "Percentage": "17.5%"
+    }
+  },
+  {
+    "point_id": "3f08fb69-7330-5591-a866-c2070109f8e0",
+    "document_id": "fab1d4b4-843a-54a1-b5e9-771b22967cd7",
+    "chart_id": "31200c88-131c-5c97-b581-fdc7e55fcccc",
+    "page_number": 1,
+    "section_id": "816ddc25-d7b0-527f-8ce7-386cff7b6f03",
+    "section_title": "Unidades Lançadas | Trimestre",
+    "chart_type": "bar_chart",
+    "chart_title_raw": "Unidades Lançadas | Trimestre",
+    "chart_title_canonical": "unidades_lancadas_trimestre",
+    "series_name": "4T 2024",
+    "category_name": "Unidades Lançadas",
+    "value_numeric": 125752.0,
+    "value_text": "125.752",
+    "raw_row": {
+      "Trimestre": "4T 2024",
+      "Unidades Lançadas": "125.752",
+      "Percentage": "-19.9%"
+    }
+  },
+  {
+    "point_id": "9656dbf9-64a6-5171-ad2e-e8c9235fc799",
+    "document_id": "fab1d4b4-843a-54a1-b5e9-771b22967cd7",
+    "chart_id": "31200c88-131c-5c97-b581-fdc7e55fcccc",
+    "page_number": 1,
+    "section_id": "816ddc25-d7b0-527f-8ce7-386cff7b6f03",
+    "section_title": "Unidades Lançadas | Trimestre",
+    "chart_type": "bar_chart",
+    "chart_title_raw": "Unidades Lançadas | Trimestre",
+    "chart_title_canonical": "unidades_lancadas_trimestre",
+    "series_name": "1T 2025",
+    "category_name": "Unidades Lançadas",
+    "value_numeric": 100679.0,
+    "value_text": "100.679",
+    "raw_row": {
+      "Trimestre": "1T 2025",
+      "Unidades Lançadas": "100.679",
+      "Percentage": "5.0%"
+    }
+  },
+  {
+    "point_id": "d46aa7a5-7f4e-58e5-9cbb-5d5b1c91151d",
+    "document_id": "fab1d4b4-843a-54a1-b5e9-771b22967cd7",
+    "chart_id": "31200c88-131c-5c97-b581-fdc7e55fcccc",
+    "page_number": 1,
+    "section_id": "816ddc25-d7b0-527f-8ce7-386cff7b6f03",
+    "section_title": "Unidades Lançadas | Trimestre",
+    "chart_type": "bar_chart",
+    "chart_title_raw": "Unidades Lançadas | Trimestre",
+    "chart_title_canonical": "unidades_lancadas_trimestre",
+    "series_name": "2T 2025",
+    "category_name": "Unidades Lançadas",
+    "value_numeric": 105724.0,
+    "value_text": "105.724",
+    "raw_row": {
+      "Trimestre": "2T 2025",
+      "Unidades Lançadas": "105.724",
+      "Percentage": "6.7%"
+    }
+  },
+  {
+    "point_id": "ced51434-67e1-5f39-a288-7ba7049a2a2c",
+    "document_id": "fab1d4b4-843a-54a1-b5e9-771b22967cd7",
+    "chart_id": "31200c88-131c-5c97-b581-fdc7e55fcccc",
+    "page_number": 1,
+    "section_id": "816ddc25-d7b0-527f-8ce7-386cff7b6f03",
+    "section_title": "Unidades Lançadas | Trimestre",
+    "chart_type": "bar_chart",
+    "chart_title_raw": "Unidades Lançadas | Trimestre",
+    "chart_title_canonical": "unidades_lancadas_trimestre",
+    "series_name": "3T 2025",
+    "category_name": "Unidades Lançadas",
+    "value_numeric": 112791.0,
+    "value_text": "112.791",
+    "raw_row": {
+      "Trimestre": "3T 2025",
+      "Unidades Lançadas": "112.791",
+      "Percentage": "18.6%"
+    }
+  },
+  {
+    "point_id": "2ffa0a7e-3d5d-5dc4-885e-37300c8d1159",
+    "document_id": "fab1d4b4-843a-54a1-b5e9-771b22967cd7",
+    "chart_id": "31200c88-131c-5c97-b581-fdc7e55fcccc",
+    "page_number": 1,
+    "section_id": "816ddc25-d7b0-527f-8ce7-386cff7b6f03",
+    "section_title": "Unidades Lançadas | Trimestre",
+    "chart_type": "bar_chart",
+    "chart_title_raw": "Unidades Lançadas | Trimestre",
+    "chart_title_canonical": "unidades_lancadas_trimestre",
+    "series_name": "4T 2025",
+    "category_name": "Unidades Lançadas",
+    "value_numeric": 133811.0,
+    "value_text": "133.811",
+    "raw_row": {
+      "Trimestre": "4T 2025",
+      "Unidades Lançadas": "133.811",
+      "Percentage": ""
+    }
+  },
+  {
+    "point_id": "a944a2a6-ae0e-55a9-b0e0-996c2d1c5818",
+    "document_id": "fab1d4b4-843a-54a1-b5e9-771b22967cd7",
+    "chart_id": "59577690-d723-5374-8c9f-993bce68eed1",
+    "page_number": 2,
+    "section_id": "6b67e0a2-8130-51bb-91a0-9cdc6ef8bafd",
+    "section_title": "Region | 4T 2024 x 4T 2025",
+    "chart_type": "bar_chart",
+    "chart_title_raw": "Region | 4T 2024 x 4T 2025",
+    "chart_title_canonical": "region_4t_2024_x_4t_2025",
+    "series_name": "Norte",
+    "category_name": "4T 2024",
+    "value_numeric": 1868.0,
+    "value_text": "1.868",
+    "raw_row": {
+      "Region": "Norte",
+      "4T 2024": "1.868",
+      "4T 2025": "3.154"
+    }
+  },
+  {
+    "point_id": "3cf017f2-b705-573d-94b6-2265b2b23b43",
+    "document_id": "fab1d4b4-843a-54a1-b5e9-771b22967cd7",
+    "chart_id": "59577690-d723-5374-8c9f-993bce68eed1",
+    "page_number": 2,
+    "section_id": "6b67e0a2-8130-51bb-91a0-9cdc6ef8bafd",
+    "section_title": "Region | 4T 2024 x 4T 2025",
+    "chart_type": "bar_chart",
+    "chart_title_raw": "Region | 4T 2024 x 4T 2025",
+    "chart_title_canonical": "region_4t_2024_x_4t_2025",
+    "series_name": "Nordeste",
+    "category_name": "4T 2024",
+    "value_numeric": 23046.0,
+    "value_text": "23.046",
+    "raw_row": {
+      "Region": "Nordeste",
+      "4T 2024": "23.046",
+      "4T 2025": "22.514"
+    }
+  },
+  {
+    "point_id": "26826ac5-f7a8-584b-ac8d-bf71c1b8f41d",
+    "document_id": "fab1d4b4-843a-54a1-b5e9-771b22967cd7",
+    "chart_id": "59577690-d723-5374-8c9f-993bce68eed1",
+    "page_number": 2,
+    "section_id": "6b67e0a2-8130-51bb-91a0-9cdc6ef8bafd",
+    "section_title": "Region | 4T 2024 x 4T 2025",
+    "chart_type": "bar_chart",
+    "chart_title_raw": "Region | 4T 2024 x 4T 2025",
+    "chart_title_canonical": "region_4t_2024_x_4t_2025",
+    "series_name": "Centro-Oeste",
+    "category_name": "4T 2024",
+    "value_numeric": 6676.0,
+    "value_text": "6.676",
+    "raw_row": {
+      "Region": "Centro-Oeste",
+      "4T 2024": "6.676",
+      "4T 2025": "6.570"
+    }
+  },
+  {
+    "point_id": "33092798-86aa-54e9-89fa-413259fcc0d8",
+    "document_id": "fab1d4b4-843a-54a1-b5e9-771b22967cd7",
+    "chart_id": "59577690-d723-5374-8c9f-993bce68eed1",
+    "page_number": 2,
+    "section_id": "6b67e0a2-8130-51bb-91a0-9cdc6ef8bafd",
+    "section_title": "Region | 4T 2024 x 4T 2025",
+    "chart_type": "bar_chart",
+    "chart_title_raw": "Region | 4T 2024 x 4T 2025",
+    "chart_title_canonical": "region_4t_2024_x_4t_2025",
+    "series_name": "Sudeste",
+    "category_name": "4T 2024",
+    "value_numeric": 67893.0,
+    "value_text": "67.893",
+    "raw_row": {
+      "Region": "Sudeste",
+      "4T 2024": "67.893",
+      "4T 2025": "78.137"
+    }
+  },
+  {
+    "point_id": "7018457c-a165-54f1-80ca-01a445e2d9e1",
+    "document_id": "fab1d4b4-843a-54a1-b5e9-771b22967cd7",
+    "chart_id": "59577690-d723-5374-8c9f-993bce68eed1",
+    "page_number": 2,
+    "section_id": "6b67e0a2-8130-51bb-91a0-9cdc6ef8bafd",
+    "section_title": "Region | 4T 2024 x 4T 2025",
+    "chart_type": "bar_chart",
+    "chart_title_raw": "Region | 4T 2024 x 4T 2025",
+    "chart_title_canonical": "region_4t_2024_x_4t_2025",
+    "series_name": "Sul",
+    "category_name": "4T 2024",
+    "value_numeric": 26269.0,
+    "value_text": "26.269",
+    "raw_row": {
+      "Region": "Sul",
+      "4T 2024": "26.269",
+      "4T 2025": "23.436"
+    }
+  },
+  {
+    "point_id": "c58e7124-2245-5696-af5f-02014e1f9213",
+    "document_id": "fab1d4b4-843a-54a1-b5e9-771b22967cd7",
+    "chart_id": "8835d643-6bc1-5e78-9068-01340d43b137",
+    "page_number": 2,
+    "section_id": "b93ea93a-b41c-5d89-9e4a-7ab79408094b",
+    "section_title": "Line chart snapshot",
+    "chart_type": "line_chart",
+    "chart_title_raw": "Line chart snapshot",
+    "chart_title_canonical": "line_chart_snapshot",
+    "series_name": "Dez 2022",
+    "category_name": null,
+    "value_numeric": 248142.0,
+    "value_text": "248.142",
+    "raw_row": {
+      "Date": "Dez 2022",
+      "Sudeste": "248.142",
+      "Sul": "91.576",
+      "Nordeste": "76.593",
+      "Centro-Oeste": "23.363",
+      "Norte": "13.331"
+    }
+  },
+  {
+    "point_id": "39da7c8b-9844-5c27-94fe-22f65cb9d062",
+    "document_id": "fab1d4b4-843a-54a1-b5e9-771b22967cd7",
+    "chart_id": "8835d643-6bc1-5e78-9068-01340d43b137",
+    "page_number": 2,
+    "section_id": "b93ea93a-b41c-5d89-9e4a-7ab79408094b",
+    "section_title": "Line chart snapshot",
+    "chart_type": "line_chart",
+    "chart_title_raw": "Line chart snapshot",
+    "chart_title_canonical": "line_chart_snapshot",
+    "series_name": "Dez 2023",
+    "category_name": null,
+    "value_numeric": 248142.0,
+    "value_text": "248.142",
+    "raw_row": {
+      "Date": "Dez 2023",
+      "Sudeste": "248.142",
+      "Sul": "91.576",
+      "Nordeste": "76.593",
+      "Centro-Oeste": "23.363",
+      "Norte": "13.331"
+    }
+  },
+  {
+    "point_id": "01c58f9f-4ae7-5454-b6db-7412f14a3f25",
+    "document_id": "fab1d4b4-843a-54a1-b5e9-771b22967cd7",
+    "chart_id": "8835d643-6bc1-5e78-9068-01340d43b137",
+    "page_number": 2,
+    "section_id": "b93ea93a-b41c-5d89-9e4a-7ab79408094b",
+    "section_title": "Line chart snapshot",
+    "chart_type": "line_chart",
+    "chart_title_raw": "Line chart snapshot",
+    "chart_title_canonical": "line_chart_snapshot",
+    "series_name": "Dez 2024",
+    "category_name": null,
+    "value_numeric": 248142.0,
+    "value_text": "248.142",
+    "raw_row": {
+      "Date": "Dez 2024",
+      "Sudeste": "248.142",
+      "Sul": "91.576",
+      "Nordeste": "76.593",
+      "Centro-Oeste": "23.363",
+      "Norte": "13.331"
+    }
+  },
+  {
+    "point_id": "a77f5764-56d2-5c59-b3d3-d67f17210faa",
+    "document_id": "fab1d4b4-843a-54a1-b5e9-771b22967cd7",
+    "chart_id": "8835d643-6bc1-5e78-9068-01340d43b137",
+    "page_number": 2,
+    "section_id": "b93ea93a-b41c-5d89-9e4a-7ab79408094b",
+    "section_title": "Line chart snapshot",
+    "chart_type": "line_chart",
+    "chart_title_raw": "Line chart snapshot",
+    "chart_title_canonical": "line_chart_snapshot",
+    "series_name": "Dez 2025",
+    "category_name": null,
+    "value_numeric": 248142.0,
+    "value_text": "248.142",
+    "raw_row": {
+      "Date": "Dez 2025",
+      "Sudeste": "248.142",
+      "Sul": "91.576",
+      "Nordeste": "76.593",
+      "Centro-Oeste": "23.363",
+      "Norte": "13.331"
+    }
+  },
+  {
+    "point_id": "e01fa445-77d9-511a-ba6e-ac1d70d56554",
+    "document_id": "fab1d4b4-843a-54a1-b5e9-771b22967cd7",
+    "chart_id": "471f228e-465f-569a-b1e0-d810c494a1a1",
+    "page_number": 2,
+    "section_id": "2efd79d5-2c28-53be-9659-eac370f78ff9",
+    "section_title": "Comparativo Unidades Lançadas por Região 3T 2025 x 4T 2025",
+    "chart_type": "bar_chart",
+    "chart_title_raw": "Comparativo Unidades Lançadas por Região 3T 2025 x 4T 2025",
+    "chart_title_canonical": "comparativo_unidades_lancadas_por_regiao_3t_2025_x_4t_2025",
+    "series_name": "Norte",
+    "category_name": "3T 2025",
+    "value_numeric": 2905.0,
+    "value_text": "2905",
+    "raw_row": {
+      "Region": "Norte",
+      "3T 2025": "2905",
+      "4T 2025": "3154"
+    }
+  },
+  {
+    "point_id": "d86dd444-7082-50d4-be90-76cc205027f3",
+    "document_id": "fab1d4b4-843a-54a1-b5e9-771b22967cd7",
+    "chart_id": "471f228e-465f-569a-b1e0-d810c494a1a1",
+    "page_number": 2,
+    "section_id": "2efd79d5-2c28-53be-9659-eac370f78ff9",
+    "section_title": "Comparativo Unidades Lançadas por Região 3T 2025 x 4T 2025",
+    "chart_type": "bar_chart",
+    "chart_title_raw": "Comparativo Unidades Lançadas por Região 3T 2025 x 4T 2025",
+    "chart_title_canonical": "comparativo_unidades_lancadas_por_regiao_3t_2025_x_4t_2025",
+    "series_name": "Nordeste",
+    "category_name": "3T 2025",
+    "value_numeric": 17671.0,
+    "value_text": "17671",
+    "raw_row": {
+      "Region": "Nordeste",
+      "3T 2025": "17671",
+      "4T 2025": "22514"
+    }
+  },
+  {
+    "point_id": "439e0ed5-189d-5636-94c9-15e94cdff2ec",
+    "document_id": "fab1d4b4-843a-54a1-b5e9-771b22967cd7",
+    "chart_id": "471f228e-465f-569a-b1e0-d810c494a1a1",
+    "page_number": 2,
+    "section_id": "2efd79d5-2c28-53be-9659-eac370f78ff9",
+    "section_title": "Comparativo Unidades Lançadas por Região 3T 2025 x 4T 2025",
+    "chart_type": "bar_chart",
+    "chart_title_raw": "Comparativo Unidades Lançadas por Região 3T 2025 x 4T 2025",
+    "chart_title_canonical": "comparativo_unidades_lancadas_por_regiao_3t_2025_x_4t_2025",
+    "series_name": "Centro-Oeste",
+    "category_name": "3T 2025",
+    "value_numeric": 7353.0,
+    "value_text": "7353",
+    "raw_row": {
+      "Region": "Centro-Oeste",
+      "3T 2025": "7353",
+      "4T 2025": "6570"
+    }
+  },
+  {
+    "point_id": "89393a78-7144-5fc9-8c4f-8ccebbb10e77",
+    "document_id": "fab1d4b4-843a-54a1-b5e9-771b22967cd7",
+    "chart_id": "471f228e-465f-569a-b1e0-d810c494a1a1",
+    "page_number": 2,
+    "section_id": "2efd79d5-2c28-53be-9659-eac370f78ff9",
+    "section_title": "Comparativo Unidades Lançadas por Região 3T 2025 x 4T 2025",
+    "chart_type": "bar_chart",
+    "chart_title_raw": "Comparativo Unidades Lançadas por Região 3T 2025 x 4T 2025",
+    "chart_title_canonical": "comparativo_unidades_lancadas_por_regiao_3t_2025_x_4t_2025",
+    "series_name": "Sudeste",
+    "category_name": "3T 2025",
+    "value_numeric": 59963.0,
+    "value_text": "59963",
+    "raw_row": {
+      "Region": "Sudeste",
+      "3T 2025": "59963",
+      "4T 2025": "78137"
+    }
+  },
+  {
+    "point_id": "e165bf85-aafe-52bd-890e-61da3043648f",
+    "document_id": "fab1d4b4-843a-54a1-b5e9-771b22967cd7",
+    "chart_id": "471f228e-465f-569a-b1e0-d810c494a1a1",
+    "page_number": 2,
+    "section_id": "2efd79d5-2c28-53be-9659-eac370f78ff9",
+    "section_title": "Comparativo Unidades Lançadas por Região 3T 2025 x 4T 2025",
+    "chart_type": "bar_chart",
+    "chart_title_raw": "Comparativo Unidades Lançadas por Região 3T 2025 x 4T 2025",
+    "chart_title_canonical": "comparativo_unidades_lancadas_por_regiao_3t_2025_x_4t_2025",
+    "series_name": "Sul",
+    "category_name": "3T 2025",
+    "value_numeric": 24899.0,
+    "value_text": "24899",
+    "raw_row": {
+      "Region": "Sul",
+      "3T 2025": "24899",
+      "4T 2025": "23436"
+    }
+  }
+]
