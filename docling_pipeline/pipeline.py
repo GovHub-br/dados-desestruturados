@@ -4,7 +4,7 @@ from typing import Any, Optional
 
 from .clients import build_remote_vlm_converter, build_standard_converter
 from .config import RuntimeConfig
-from .extractors import extract_charts, extract_metrics, extract_sections, extract_tables
+from .extractors import extract_blocks, extract_cases, extract_charts, extract_metrics, extract_sections, extract_tables
 from .helpers import stable_id
 from .models import DocumentRecord, PipelineBundle
 
@@ -49,6 +49,8 @@ def run_pipeline(config: RuntimeConfig) -> PipelineBundle:
     document = build_document_record(config, standard_result, bool(semantic_markdown))
 
     sections = extract_sections(document.document_id, standard_result)
+    blocks = extract_blocks(document.document_id, standard_result, sections)
+    cases = extract_cases(document.document_id, sections, blocks)
     metrics = extract_metrics(document.document_id, standard_result, sections)
     tables, table_rows = extract_tables(document.document_id, standard_result, sections)
     charts, chart_rows = extract_charts(document.document_id, standard_result, sections)
@@ -60,5 +62,7 @@ def run_pipeline(config: RuntimeConfig) -> PipelineBundle:
         tables=tables,
         charts=charts,
         normalized_rows=[*table_rows, *chart_rows],
+        blocks=blocks,
+        cases=cases,
         semantic_markdown=semantic_markdown,
     )

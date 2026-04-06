@@ -4,7 +4,7 @@ from typing import Any
 
 from ..helpers import infer_unit_hint, item_bbox, item_page_number, item_text, maybe_metric_from_text, slugify, stable_id
 from ..models import MetricRecord, SectionRecord
-from .common import nearest_section
+from .common import resolve_section_for_item
 
 
 def extract_metrics(
@@ -26,7 +26,13 @@ def extract_metrics(
         label_raw, value_numeric, value_text = parsed
         page_number = item_page_number(item)
         bbox = item_bbox(item)
-        section = nearest_section(sections, page_number=page_number, anchor_bbox=bbox)
+        section = resolve_section_for_item(
+            sections,
+            item=item,
+            page_number=page_number,
+            anchor_bbox=bbox,
+            order_index=idx,
+        )
         metric_id = stable_id(document_id, "metric", page_number, idx, label_raw, value_text)
         if metric_id in seen:
             continue

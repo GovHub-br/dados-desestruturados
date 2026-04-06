@@ -11,7 +11,7 @@ except Exception:  # pragma: no cover
 
 from ..helpers import dataframe_to_cell_records, item_bbox, item_page_number, slugify, stable_id
 from ..models import NormalizedRowRecord, SectionRecord, TableRecord
-from .common import dataframe_to_normalized_rows, nearest_section
+from .common import dataframe_to_normalized_rows, resolve_section_for_item
 
 
 def extract_tables(
@@ -28,7 +28,13 @@ def extract_tables(
 
         page_number = item_page_number(item)
         bbox = item_bbox(item)
-        section = nearest_section(sections, page_number=page_number, anchor_bbox=bbox)
+        section = resolve_section_for_item(
+            sections,
+            item=item,
+            page_number=page_number,
+            anchor_bbox=bbox,
+            order_index=idx,
+        )
         table_id = stable_id(document_id, "table", page_number, idx)
 
         try:

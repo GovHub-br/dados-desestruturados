@@ -12,7 +12,7 @@ import pandas as pd
 from ..helpers import chart_grid_to_dataframe, item_bbox, item_page_number, normalize_space, parse_flexible_number, stable_id
 from ..helpers import slugify
 from ..models import ChartPointRecord, NormalizedRowRecord, SectionRecord
-from .common import dataframe_to_normalized_rows, nearest_section
+from .common import dataframe_to_normalized_rows, resolve_section_for_item
 
 NON_MEASURE_COLUMN_HINTS = {
     "percentage",
@@ -188,7 +188,13 @@ def extract_charts(
 
         page_number = item_page_number(item)
         bbox = item_bbox(item)
-        section = nearest_section(sections, page_number=page_number, anchor_bbox=bbox)
+        section = resolve_section_for_item(
+            sections,
+            item=item,
+            page_number=page_number,
+            anchor_bbox=bbox,
+            order_index=idx,
+        )
         chart_id = stable_id(document_id, "chart", page_number, idx)
 
         classification = getattr(meta, "classification", None)

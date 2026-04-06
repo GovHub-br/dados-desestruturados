@@ -23,6 +23,8 @@ def persist_bundle(bundle: PipelineBundle, output_dir: Path) -> None:
     write_json(output_dir / "bundle.json", bundle.model_dump(mode="json"))
     write_json(output_dir / "document.json", bundle.document.model_dump(mode="json"))
     write_json(output_dir / "sections.json", [x.model_dump(mode="json") for x in bundle.sections])
+    write_json(output_dir / "blocks.json", [x.model_dump(mode="json") for x in bundle.blocks])
+    write_json(output_dir / "cases.json", [x.model_dump(mode="json") for x in bundle.cases])
     write_json(output_dir / "metrics.json", [x.model_dump(mode="json") for x in bundle.metrics])
     write_json(output_dir / "tables.json", [x.model_dump(mode="json") for x in bundle.tables])
     write_json(output_dir / "charts.json", [x.model_dump(mode="json") for x in bundle.charts])
@@ -32,6 +34,8 @@ def persist_bundle(bundle: PipelineBundle, output_dir: Path) -> None:
     )
 
     write_dataframe(output_dir / "sections.csv", [x.model_dump(mode="json") for x in bundle.sections])
+    write_dataframe(output_dir / "blocks.csv", [x.model_dump(mode="json") for x in bundle.blocks])
+    write_dataframe(output_dir / "cases.csv", [x.model_dump(mode="json") for x in bundle.cases])
     write_dataframe(output_dir / "metrics.csv", [x.model_dump(mode="json") for x in bundle.metrics])
     write_dataframe(output_dir / "charts.csv", [x.model_dump(mode="json") for x in bundle.charts])
     write_dataframe(

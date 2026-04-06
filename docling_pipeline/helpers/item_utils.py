@@ -8,6 +8,14 @@ from ..models import BoundingBox, TableCellRecord
 from .text_utils import normalize_space
 
 
+def _ref_to_string(ref: Any) -> str:
+    for attr in ("cref", "ref", "self_ref"):
+        value = getattr(ref, attr, None)
+        if value:
+            return str(value)
+    return str(ref)
+
+
 def item_text(item: Any) -> str:
     for attr in ("text", "orig", "orig_text"):
         value = getattr(item, attr, None)
@@ -32,6 +40,10 @@ def item_label(item: Any) -> str:
     if hasattr(label, "value"):
         return str(label.value).lower()
     return str(label).lower()
+
+
+def item_type(item: Any) -> str:
+    return item.__class__.__name__
 
 
 def item_page_number(item: Any) -> Optional[int]:
@@ -61,6 +73,33 @@ def item_bbox(item: Any) -> Optional[BoundingBox]:
         bottom=getattr(bbox, "b", None),
         coord_origin=getattr(bbox, "coord_origin", None),
     )
+
+
+def item_self_ref(item: Any) -> Optional[str]:
+    value = getattr(item, "self_ref", None)
+    return str(value) if value else None
+
+
+def item_parent_ref(item: Any) -> Optional[str]:
+    parent = getattr(item, "parent", None)
+    if parent is None:
+        return None
+    return _ref_to_string(parent)
+
+
+def item_child_refs(item: Any) -> list[str]:
+    children = getattr(item, "children", None) or []
+    return [_ref_to_string(child) for child in children]
+
+
+def item_caption_refs(item: Any) -> list[str]:
+    captions = getattr(item, "captions", None) or []
+    return [_ref_to_string(caption) for caption in captions]
+
+
+def item_reference_refs(item: Any) -> list[str]:
+    references = getattr(item, "references", None) or []
+    return [_ref_to_string(reference) for reference in references]
 
 
 def dataframe_to_cell_records(df: pd.DataFrame) -> tuple[list[str], list[TableCellRecord]]:

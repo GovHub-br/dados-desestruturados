@@ -30,6 +30,11 @@ class SectionRecord(BaseModel):
     title_raw: str
     title_canonical: str
     level_hint: Optional[int] = None
+    order_index: int = 0
+    parent_section_id: Optional[str] = None
+    self_ref: Optional[str] = None
+    parent_ref: Optional[str] = None
+    child_refs: list[str] = Field(default_factory=list)
     bbox: Optional[BoundingBox] = None
     provenance_kind: str = "layout"
 
@@ -101,6 +106,44 @@ class NormalizedRowRecord(BaseModel):
     measures: dict[str, Any] = Field(default_factory=dict)
 
 
+class BlockRecord(BaseModel):
+    block_id: str
+    document_id: str
+    page_number: Optional[int] = None
+    section_id: Optional[str] = None
+    section_title: Optional[str] = None
+    parent_block_id: Optional[str] = None
+    order_index: int = 0
+    level_hint: Optional[int] = None
+    item_type: str = "node"
+    label_raw: str
+    label_canonical: str
+    role_hint: str = "paragraph"
+    text: str
+    self_ref: Optional[str] = None
+    parent_ref: Optional[str] = None
+    child_refs: list[str] = Field(default_factory=list)
+    caption_refs: list[str] = Field(default_factory=list)
+    reference_refs: list[str] = Field(default_factory=list)
+    bbox: Optional[BoundingBox] = None
+    provenance_kind: str = "layout"
+
+
+class CaseRecord(BaseModel):
+    case_id: str
+    document_id: str
+    page_number: Optional[int] = None
+    section_id: str
+    parent_section_id: Optional[str] = None
+    title_raw: str
+    title_canonical: str
+    level_hint: Optional[int] = None
+    field_map: dict[str, Any] = Field(default_factory=dict)
+    narrative_blocks: list[str] = Field(default_factory=list)
+    block_ids: list[str] = Field(default_factory=list)
+    child_section_ids: list[str] = Field(default_factory=list)
+
+
 class PipelineBundle(BaseModel):
     document: DocumentRecord
     sections: list[SectionRecord] = Field(default_factory=list)
@@ -108,4 +151,6 @@ class PipelineBundle(BaseModel):
     tables: list[TableRecord] = Field(default_factory=list)
     charts: list[ChartPointRecord] = Field(default_factory=list)
     normalized_rows: list[NormalizedRowRecord] = Field(default_factory=list)
+    blocks: list[BlockRecord] = Field(default_factory=list)
+    cases: list[CaseRecord] = Field(default_factory=list)
     semantic_markdown: Optional[str] = None
