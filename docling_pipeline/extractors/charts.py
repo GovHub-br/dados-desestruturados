@@ -308,7 +308,7 @@ def _build_accumulated_chart(
             category_name=category,
             value_numeric=total,
             value_text=str(int(total)) if total.is_integer() else str(total),
-            raw_row={dimension: category, **raw_values, "value": total},
+            raw_row={dimension: category, "series": " + ".join(selected_columns), "value": total},
         )
     return chart_points, normalized_rows
 
@@ -403,7 +403,7 @@ def _build_annual_total_chart(
             category_name=str(year),
             value_numeric=total,
             value_text=str(int(total)) if total.is_integer() else str(total),
-            raw_row={"year": year, **raw_values, "value": total},
+            raw_row={"year": year, "series": " + ".join(columns), "value": total},
         )
     return chart_points, normalized_rows
 
