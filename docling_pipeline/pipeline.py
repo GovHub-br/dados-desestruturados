@@ -4,7 +4,15 @@ from typing import Any, Optional
 
 from .clients import build_remote_vlm_converter, build_standard_converter
 from .config import RuntimeConfig
-from .extractors import extract_blocks, extract_cases, extract_charts, extract_metrics, extract_sections, extract_tables
+from .extractors import (
+    extract_blocks,
+    extract_cases,
+    extract_charts,
+    extract_metrics,
+    extract_sections,
+    extract_table_derived_charts,
+    extract_tables,
+)
 from .helpers import stable_id
 from .models import DocumentRecord, PipelineBundle
 
@@ -54,6 +62,8 @@ def run_pipeline(config: RuntimeConfig) -> PipelineBundle:
     metrics = extract_metrics(document.document_id, standard_result, sections)
     tables, table_rows = extract_tables(document.document_id, standard_result, sections)
     charts, chart_rows = extract_charts(document.document_id, standard_result, sections)
+    if not charts:
+        charts, chart_rows = extract_table_derived_charts(document.document_id, tables, sections)
 
     return PipelineBundle(
         document=document,

@@ -34,6 +34,8 @@ A extração local de gráficos do Docling fica desligada por padrão porque car
 python3 -m docling_pipeline docling_pipeline/dados.pdf --output-dir ./saida --do-chart-extraction
 ```
 
+Quando o Docling não expõe gráficos como objetos nativos, a pipeline tenta um fallback genérico: deriva séries a partir de tabelas estruturadas e títulos de seções com sinais como comparativo, período contra período, anual ou acumulado. Isso cobre relatórios em que o gráfico é desenhado visualmente, mas os dados também aparecem em tabela.
+
 Assistência remota por VLM:
 
 ```bash
