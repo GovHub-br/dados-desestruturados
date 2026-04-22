@@ -1,0 +1,5 @@
+docling
+pandas
+Pillow
+pydantic
+reportlab

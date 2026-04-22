@@ -21,6 +21,7 @@ class RuntimeConfig:
     max_tokens: int = 4096
     artifacts_path: Optional[str] = None
     do_ocr: bool = True
+    do_chart_extraction: bool = False
 
 
 def parse_args() -> RuntimeConfig:
@@ -54,6 +55,16 @@ def parse_args() -> RuntimeConfig:
     parser.add_argument("--max-tokens", type=int, default=int(os.getenv("DOCLING_REMOTE_MAX_TOKENS", "4096")))
     parser.add_argument("--artifacts-path", default=os.getenv("DOCLING_ARTIFACTS_PATH"))
     parser.add_argument("--do-ocr", action=argparse.BooleanOptionalAction, default=True)
+    parser.add_argument(
+        "--do-chart-extraction",
+        action=argparse.BooleanOptionalAction,
+        default=False,
+        help=(
+            "Enable Docling's local chart extraction model. Disabled by default because it "
+            "downloads/loads a heavy Granite Vision model and may require tightly matched "
+            "transformers dependencies."
+        ),
+    )
     args = parser.parse_args()
 
     return RuntimeConfig(
@@ -69,4 +80,5 @@ def parse_args() -> RuntimeConfig:
         max_tokens=args.max_tokens,
         artifacts_path=args.artifacts_path,
         do_ocr=args.do_ocr,
+        do_chart_extraction=args.do_chart_extraction,
     )

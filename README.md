@@ -1,5 +1,21 @@
 ## Uso
 
+Prepare um ambiente Python e instale as dependências:
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+python3 -m pip install -r requirements.txt
+```
+
+O arquivo `requirements.txt` cobre a execução padrão. Para usar assistência remota por VLM, instale os extras separados:
+
+```bash
+python3 -m pip install -r requirements-vlm.txt
+```
+
+Para usar `draw_pdf_bboxes.py`, instale também o Poppler no sistema, porque o script chama o binário `pdftoppm`.
+
 Execução padrão:
 
 ```bash
@@ -10,6 +26,12 @@ OCR vem ligado por padrão. Para desligar:
 
 ```bash
 python3 -m docling_pipeline docling_pipeline/dados.pdf --output-dir ./saida --no-do-ocr
+```
+
+A extração local de gráficos do Docling fica desligada por padrão porque carrega um modelo Granite Vision pesado e sensível a versões de `transformers`. Para ligar:
+
+```bash
+python3 -m docling_pipeline docling_pipeline/dados.pdf --output-dir ./saida --do-chart-extraction
 ```
 
 Assistência remota por VLM:

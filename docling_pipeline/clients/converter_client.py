@@ -13,7 +13,7 @@ def build_standard_converter(config: RuntimeConfig) -> DocumentConverter:
     pipeline_options = PdfPipelineOptions()
     pipeline_options.do_table_structure = True
     pipeline_options.table_structure_options.mode = TableFormerMode.ACCURATE
-    pipeline_options.do_chart_extraction = True
+    pipeline_options.do_chart_extraction = config.do_chart_extraction
     pipeline_options.generate_page_images = True
     pipeline_options.generate_picture_images = True
     if config.artifacts_path:
