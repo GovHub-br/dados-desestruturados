@@ -16,10 +16,10 @@ from reportlab.pdfgen import canvas
 
 
 DEFAULT_PDF = Path("docling_pipeline/dados.pdf")
-DEFAULT_SECTIONS = Path("saida/sections.json")
-DEFAULT_TABLES = Path("saida/tables.json")
-DEFAULT_METRICS = Path("saida/metrics.json")
-DEFAULT_CHARTS = Path("saida/charts.json")
+DEFAULT_SECTIONS = Path("saida/sections/sections.jsonl")
+DEFAULT_TABLES = Path("saida/tables/metadata.json")
+DEFAULT_METRICS = Path("saida/metrics/metrics.jsonl")
+DEFAULT_CHARTS = Path("saida/charts/metadata.json")
 DEFAULT_OUTPUT = Path("saida/sections_annotated.pdf")
 PAGE_SIZE = (960, 540)
 RECT_COLOR = Color(1, 0, 0, alpha=0.85)
@@ -46,25 +46,25 @@ def parse_args() -> argparse.Namespace:
         "--sections",
         type=Path,
         default=DEFAULT_SECTIONS,
-        help=f"JSON de sections. Padrao: {DEFAULT_SECTIONS}",
+        help=f"JSON ou JSONL de sections. Padrao: {DEFAULT_SECTIONS}",
     )
     parser.add_argument(
         "--tables",
         type=Path,
         default=DEFAULT_TABLES,
-        help=f"JSON de tables. Padrao: {DEFAULT_TABLES}",
+        help=f"JSON ou metadata de tables. Padrao: {DEFAULT_TABLES}",
     )
     parser.add_argument(
         "--metrics",
         type=Path,
         default=DEFAULT_METRICS,
-        help=f"JSON de metrics. Padrao: {DEFAULT_METRICS}",
+        help=f"JSON ou JSONL de metrics. Padrao: {DEFAULT_METRICS}",
     )
     parser.add_argument(
         "--charts",
         type=Path,
         default=DEFAULT_CHARTS,
-        help=f"JSON de charts. Padrao: {DEFAULT_CHARTS}",
+        help=f"JSON ou metadata de charts. Padrao: {DEFAULT_CHARTS}",
     )
     parser.add_argument(
         "--json",
@@ -98,6 +98,8 @@ def parse_args() -> argparse.Namespace:
 
 
 def infer_source_name(path: Path) -> str:
+    if path.stem.lower() == "metadata":
+        return path.parent.name.lower()
     name = path.stem.lower()
     if name.endswith("_annotated"):
         name = name.removesuffix("_annotated")
@@ -120,10 +122,31 @@ def infer_label(item: dict) -> str:
     return "bbox"
 
 
+def load_records(path: Path) -> list[dict]:
+    if path.suffix.lower() == ".jsonl":
+        records: list[dict] = []
+        for line in path.read_text(encoding="utf-8").splitlines():
+            line = line.strip()
+            if not line:
+                continue
+            records.append(json.loads(line))
+        return records
+
+    data = json.loads(path.read_text(encoding="utf-8"))
+    if isinstance(data, list):
+        return data
+    if isinstance(data, dict):
+        items = data.get("items")
+        if isinstance(items, list):
+            return items
+        return [data]
+    return []
+
+
 def load_bbox_records(json_paths: Iterable[Path]) -> dict[int, list[dict]]:
     grouped: dict[int, list[dict]] = defaultdict(list)
     for json_path in json_paths:
-        data = json.loads(json_path.read_text(encoding="utf-8"))
+        data = load_records(json_path)
         source_name = infer_source_name(json_path)
         for item in data:
             bbox = item.get("bbox") or {}

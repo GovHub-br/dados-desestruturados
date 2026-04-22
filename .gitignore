@@ -9,3 +9,6 @@ venv/
 .pytest_cache/
 
 tmp_case_check/
+mir/
+saida/
+teste/

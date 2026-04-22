@@ -25,17 +25,49 @@ python3 -m docling_pipeline docling_pipeline/dados.pdf \
 
 ## O que a pipeline produz
 
-Além do `document.json`, a pipeline exporta artefatos estruturados para diferentes camadas:
+A saída agora é organizada em pastas. A raiz traz um catálogo enxuto para escolher os dados que você quer abrir:
 
-- `sections.json`: títulos/seções detectados no documento.
-- `tables.json`: tabelas reconhecidas pelo Docling, com `bbox`, colunas e células serializadas.
-- `charts.json`: pontos de gráficos tabulares reconhecidos pelo Docling.
-- `metrics.json`: métricas textuais simples extraídas por heurística.
-- `normalized_rows.json`: linhas normalizadas derivadas de tabelas e gráficos.
-- `blocks.json`: blocos textuais genéricos com sinais estruturais.
-- `cases.json`: consolidação semiestruturada por seção.
+```text
+saida/
+  metadata.json
+  tables/
+  charts/
+  blocks/
+  metrics/
+  sections/
+  cases/
+```
+
+## Como interpretar `metadata.json`
+
+O arquivo `saida/metadata.json` é um catálogo humano.
+
+Cada item traz só o essencial para seleção:
+
+- `kind`: tipo principal do dado (`table`, `chart`, `blocks`, `metrics`).
+- `name`: nome amigável do dado.
+- `path`: caminho do arquivo principal.
+- `schema`: formato do dado.
+
+Exemplos de `schema`:
+
+- tabela: lista de colunas;
+- chart: lista de campos do dataset agregado;
+- blocks: campos textuais mais úteis (`text`, `role_hint`, `section_title`, `item_type`);
+- metrics: campos mais úteis (`label_raw`, `value_numeric`, `value_text`, `unit_hint`, `section_title`).
+
+## Pastas principais
+
+- `tables/`: uma tabela por arquivo principal (`table001.json`) e anexos técnicos em `table001/`.
+- `charts/`: um gráfico agregado por `chart_id` em cada `chart001.json`, com anexos técnicos em `chart001/`.
+- `blocks/blocks.jsonl`: blocos textuais completos.
+- `metrics/metrics.jsonl`: métricas textuais completas.
+- `sections/sections.jsonl`: mapeamento estrutural de títulos e hierarquia.
+- `cases/cases.jsonl`: consolidação auxiliar derivada de `sections` + `blocks`.
 
 ## Como interpretar `sections`
+
+`sections` é uma camada de contexto. Ela ajuda a localizar títulos e hierarquia, e hoje serve de base para anexar contexto em `blocks`, `metrics`, `tables` e `charts`.
 
 Cada seção traz:
 
@@ -47,6 +79,8 @@ Cada seção traz:
 - `bbox`: caixa delimitadora do item no PDF.
 
 Na prática, `level_hint` ajuda a montar uma árvore leve de seções. O agrupamento não depende só de bbox: quando o Docling expõe relações nativas entre nós, elas também ficam preservadas.
+
+Os registros ficam em `sections/sections.jsonl`.
 
 ## Como interpretar `blocks`
 
@@ -62,9 +96,11 @@ Cada bloco textual traz:
 
 Esses blocos formam a camada base para dados semiestruturados e textuais variáveis.
 
+Os registros ficam em `blocks/blocks.jsonl`.
+
 ## Como interpretar `cases`
 
-`cases.json` é uma consolidação inicial por seção, pensada para conteúdo semiestruturado. Ele tenta:
+`cases` é uma consolidação auxiliar por seção, derivada de `sections` + `blocks`. Ele tenta:
 
 - usar relações nativas do Docling (`parent_ref`, `child_refs`, `self_ref`) para associar blocos à seção correta;
 - usar heurística espacial e associação por seção apenas como fallback;
@@ -72,7 +108,9 @@ Esses blocos formam a camada base para dados semiestruturados e textuais variáv
 - juntar `field_label` com o próximo bloco compatível quando o valor vier separado;
 - acumular narrativas longas e notas em `narrative_blocks`.
 
-Essa camada ainda é genérica. A ideia é servir como base para evoluções futuras sem amarrar a pipeline a um schema fixo.
+Essa camada ainda é genérica. A ideia é servir como apoio para evoluções futuras sem amarrar a pipeline a um schema fixo.
+
+Os registros ficam em `cases/cases.jsonl`.
 
 ## Estratégia atual
 
