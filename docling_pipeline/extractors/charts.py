@@ -95,12 +95,25 @@ def _table_to_dataframe(table: TableRecord) -> pd.DataFrame:
     return pd.DataFrame(rows, columns=table.columns_raw)
 
 
+def _column_values(df: pd.DataFrame, column: Any) -> list[str]:
+    selected = df[column]
+    if isinstance(selected, pd.DataFrame):
+        values: list[str] = []
+        for _, row in selected.iterrows():
+            for value in row.tolist():
+                normalized = normalize_space(str(value))
+                if normalized:
+                    values.append(normalized)
+                    break
+        return values
+    return [normalize_space(str(value)) for value in selected.tolist()]
+
+
 def _dimension_column(df: pd.DataFrame) -> str | None:
     if df.empty:
         return None
     for column in df.columns:
-        values = [normalize_space(str(value)) for value in df[column].tolist()]
-        non_empty = [value for value in values if value]
+        non_empty = [value for value in _column_values(df, column) if value]
         if not non_empty:
             continue
         numeric_hits = sum(parse_flexible_number(value, column_name=str(column)) is not None for value in non_empty)
