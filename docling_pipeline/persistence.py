@@ -150,7 +150,18 @@ def persist_bundle(bundle: PipelineBundle, output_dir: Path) -> None:
     metrics_dir = output_dir / "metrics"
     sections_dir = output_dir / "sections"
     cases_dir = output_dir / "cases"
-    for folder in (tables_dir, charts_dir, blocks_dir, metrics_dir, sections_dir, cases_dir):
+    text_candidates_dir = output_dir / "text_candidates"
+    text_structures_dir = output_dir / "text_structures"
+    for folder in (
+        tables_dir,
+        charts_dir,
+        blocks_dir,
+        metrics_dir,
+        sections_dir,
+        cases_dir,
+        text_candidates_dir,
+        text_structures_dir,
+    ):
         folder.mkdir(parents=True, exist_ok=True)
 
     root_items: list[dict[str, Any]] = []
@@ -386,6 +397,52 @@ def persist_bundle(bundle: PipelineBundle, output_dir: Path) -> None:
         schema=["title_raw", "field_map", "narrative_blocks", "block_ids"],
         extra={"derived_from": ["sections", "blocks"]},
     )
+
+    text_candidate_records = dump_models(bundle.text_candidates)
+    text_candidates_data_path = text_candidates_dir / "text_candidates.jsonl"
+    write_jsonl(text_candidates_data_path, text_candidate_records)
+    write_collection_metadata(
+        folder=text_candidates_dir,
+        root=output_dir,
+        kind="text_candidates",
+        source_file=bundle.document.source_file,
+        records_path=text_candidates_data_path,
+        records=text_candidate_records,
+        schema=["section_title", "matched_values", "context_text", "source_blocks"],
+        extra={"derived_from": ["sections", "blocks"], "method": "regex_candidate"},
+    )
+    if text_candidate_records:
+        root_items.append(
+            {
+                "kind": "text_candidates",
+                "name": "Candidatos textuais com valores",
+                "path": relpath(text_candidates_data_path, output_dir),
+                "schema": ["section_title", "matched_values", "context_text", "source_blocks"],
+            }
+        )
+
+    text_structure_records = dump_models(bundle.text_structures)
+    text_structures_data_path = text_structures_dir / "text_structures.jsonl"
+    write_jsonl(text_structures_data_path, text_structure_records)
+    write_collection_metadata(
+        folder=text_structures_dir,
+        root=output_dir,
+        kind="text_structures",
+        source_file=bundle.document.source_file,
+        records_path=text_structures_data_path,
+        records=text_structure_records,
+        schema=["section_title", "context_type", "entities", "facts", "narrative_summary", "confidence"],
+        extra={"derived_from": ["text_candidates"], "method": "llm"},
+    )
+    if text_structure_records:
+        root_items.append(
+            {
+                "kind": "text_structures",
+                "name": "Extrações textuais estruturadas por LLM",
+                "path": relpath(text_structures_data_path, output_dir),
+                "schema": ["section_title", "context_type", "entities", "facts", "narrative_summary", "confidence"],
+            }
+        )
 
     write_json(
         output_dir / "metadata.json",

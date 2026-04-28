@@ -12,6 +12,8 @@ from .extractors import (
     extract_sections,
     extract_table_derived_charts,
     extract_tables,
+    extract_text_candidates,
+    extract_text_structures,
 )
 from .helpers import stable_id
 from .models import DocumentRecord, PipelineBundle
@@ -64,6 +66,11 @@ def run_pipeline(config: RuntimeConfig) -> PipelineBundle:
     charts, chart_rows = extract_charts(document.document_id, standard_result, sections)
     if not charts:
         charts, chart_rows = extract_table_derived_charts(document.document_id, tables, sections)
+    text_candidates = []
+    text_structures = []
+    if config.enable_llm_text_extraction:
+        text_candidates = extract_text_candidates(document.document_id, sections, blocks, config)
+        text_structures = extract_text_structures(document.document_id, text_candidates, config)
 
     return PipelineBundle(
         document=document,
@@ -74,5 +81,7 @@ def run_pipeline(config: RuntimeConfig) -> PipelineBundle:
         normalized_rows=[*table_rows, *chart_rows],
         blocks=blocks,
         cases=cases,
+        text_candidates=text_candidates,
+        text_structures=text_structures,
         semantic_markdown=semantic_markdown,
     )

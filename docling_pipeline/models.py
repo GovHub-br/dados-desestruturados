@@ -144,6 +144,55 @@ class CaseRecord(BaseModel):
     child_section_ids: list[str] = Field(default_factory=list)
 
 
+class TextValueMatchRecord(BaseModel):
+    text: str
+    kind_hint: str
+    start: Optional[int] = None
+    end: Optional[int] = None
+
+
+class TextExtractionCandidateRecord(BaseModel):
+    candidate_id: str
+    document_id: str
+    page_number: Optional[int] = None
+    section_id: Optional[str] = None
+    section_title: Optional[str] = None
+    source_blocks: list[str] = Field(default_factory=list)
+    context_text: str
+    matched_values: list[TextValueMatchRecord] = Field(default_factory=list)
+    extraction_method: str = "regex_candidate"
+    truncated: bool = False
+
+
+class TextFactRecord(BaseModel):
+    metric: Optional[str] = None
+    value: Optional[Any] = None
+    unit: Optional[str] = None
+    qualifier: Optional[str] = None
+    comparison: Optional[str] = None
+    raw_text: str
+
+
+class TextStructureRecord(BaseModel):
+    record_id: str
+    document_id: str
+    candidate_id: str
+    page_number: Optional[int] = None
+    section_id: Optional[str] = None
+    section_title: Optional[str] = None
+    context_type: Optional[str] = None
+    source_blocks: list[str] = Field(default_factory=list)
+    matched_values: list[TextValueMatchRecord] = Field(default_factory=list)
+    entities: dict[str, Any] = Field(default_factory=dict)
+    facts: list[TextFactRecord] = Field(default_factory=list)
+    narrative_summary: Optional[str] = None
+    confidence: Optional[float] = None
+    context_text: str
+    extraction_method: str = "llm"
+    raw_response: Optional[str] = None
+    error: Optional[str] = None
+
+
 class PipelineBundle(BaseModel):
     document: DocumentRecord
     sections: list[SectionRecord] = Field(default_factory=list)
@@ -153,4 +202,6 @@ class PipelineBundle(BaseModel):
     normalized_rows: list[NormalizedRowRecord] = Field(default_factory=list)
     blocks: list[BlockRecord] = Field(default_factory=list)
     cases: list[CaseRecord] = Field(default_factory=list)
+    text_candidates: list[TextExtractionCandidateRecord] = Field(default_factory=list)
+    text_structures: list[TextStructureRecord] = Field(default_factory=list)
     semantic_markdown: Optional[str] = None

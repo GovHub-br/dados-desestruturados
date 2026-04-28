@@ -7,6 +7,20 @@ from pathlib import Path
 from typing import Optional
 
 
+def load_dotenv(path: Path = Path(".env")) -> None:
+    if not path.exists():
+        return
+    for raw_line in path.read_text(encoding="utf-8").splitlines():
+        line = raw_line.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        key, value = line.split("=", 1)
+        key = key.strip()
+        value = value.strip().strip('"').strip("'")
+        if key:
+            os.environ.setdefault(key, value)
+
+
 @dataclass
 class RuntimeConfig:
     input_path: Path
@@ -22,9 +36,22 @@ class RuntimeConfig:
     artifacts_path: Optional[str] = None
     do_ocr: bool = True
     do_chart_extraction: bool = False
+    enable_llm_text_extraction: bool = False
+    llm_api_url: Optional[str] = None
+    llm_api_key: Optional[str] = None
+    llm_api_model: Optional[str] = None
+    llm_timeout: int = 180
+    llm_max_tokens: int = 4096
+    llm_fail_fast: bool = False
+    text_candidate_window_before: int = 1
+    text_candidate_window_after: int = 1
+    text_candidate_max_chars: int = 2500
+    text_candidate_min_chars: int = 40
+    text_candidate_max_per_section: int = 50
 
 
 def parse_args() -> RuntimeConfig:
+    load_dotenv()
     parser = argparse.ArgumentParser(
         description=(
             "Generic Docling pipeline for PDFs with tables, charts, sections and optional remote VLM assist."
@@ -65,7 +92,52 @@ def parse_args() -> RuntimeConfig:
             "transformers dependencies."
         ),
     )
+    parser.add_argument(
+        "--enable-llm-text-extraction",
+        action="store_true",
+        help="Detect value-bearing text candidates and structure them with an OpenAI-compatible LLM API.",
+    )
+    parser.add_argument("--llm-api-url", default=os.getenv("DOCLING_LLM_API_URL"))
+    parser.add_argument("--llm-api-key", default=os.getenv("DOCLING_LLM_API_KEY"))
+    parser.add_argument("--llm-api-model", default=os.getenv("DOCLING_LLM_API_MODEL"))
+    parser.add_argument("--llm-timeout", type=int, default=int(os.getenv("DOCLING_LLM_TIMEOUT", "180")))
+    parser.add_argument("--llm-max-tokens", type=int, default=int(os.getenv("DOCLING_LLM_MAX_TOKENS", "4096")))
+    parser.add_argument("--llm-fail-fast", action=argparse.BooleanOptionalAction, default=False)
+    parser.add_argument(
+        "--text-candidate-window-before",
+        type=int,
+        default=int(os.getenv("DOCLING_TEXT_CANDIDATE_WINDOW_BEFORE", "1")),
+    )
+    parser.add_argument(
+        "--text-candidate-window-after",
+        type=int,
+        default=int(os.getenv("DOCLING_TEXT_CANDIDATE_WINDOW_AFTER", "1")),
+    )
+    parser.add_argument(
+        "--text-candidate-max-chars",
+        type=int,
+        default=int(os.getenv("DOCLING_TEXT_CANDIDATE_MAX_CHARS", "2500")),
+    )
+    parser.add_argument(
+        "--text-candidate-min-chars",
+        type=int,
+        default=int(os.getenv("DOCLING_TEXT_CANDIDATE_MIN_CHARS", "40")),
+    )
+    parser.add_argument(
+        "--text-candidate-max-per-section",
+        type=int,
+        default=int(os.getenv("DOCLING_TEXT_CANDIDATE_MAX_PER_SECTION", "50")),
+    )
     args = parser.parse_args()
+
+    if args.enable_llm_text_extraction:
+        missing = []
+        if not args.llm_api_url:
+            missing.append("--llm-api-url or DOCLING_LLM_API_URL")
+        if not args.llm_api_model:
+            missing.append("--llm-api-model or DOCLING_LLM_API_MODEL")
+        if missing:
+            parser.error("--enable-llm-text-extraction requires " + ", ".join(missing))
 
     return RuntimeConfig(
         input_path=args.input_path,
@@ -81,4 +153,16 @@ def parse_args() -> RuntimeConfig:
         artifacts_path=args.artifacts_path,
         do_ocr=args.do_ocr,
         do_chart_extraction=args.do_chart_extraction,
+        enable_llm_text_extraction=args.enable_llm_text_extraction,
+        llm_api_url=args.llm_api_url,
+        llm_api_key=args.llm_api_key,
+        llm_api_model=args.llm_api_model,
+        llm_timeout=args.llm_timeout,
+        llm_max_tokens=args.llm_max_tokens,
+        llm_fail_fast=args.llm_fail_fast,
+        text_candidate_window_before=max(0, args.text_candidate_window_before),
+        text_candidate_window_after=max(0, args.text_candidate_window_after),
+        text_candidate_max_chars=max(200, args.text_candidate_max_chars),
+        text_candidate_min_chars=max(1, args.text_candidate_min_chars),
+        text_candidate_max_per_section=max(1, args.text_candidate_max_per_section),
     )

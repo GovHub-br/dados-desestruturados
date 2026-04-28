@@ -47,6 +47,18 @@ python3 -m docling_pipeline docling_pipeline/dados.pdf \
   --remote-api-model granite-vision-3.3-2b-chart2csv-preview
 ```
 
+Extração textual estruturada por LLM:
+
+```bash
+python3 -m docling_pipeline docling_pipeline/dados.pdf \
+  --output-dir ./saida \
+  --enable-llm-text-extraction \
+  --llm-api-url http://127.0.0.1:1234 \
+  --llm-api-model seu-modelo
+```
+
+Essa etapa usa regex apenas para encontrar trechos textuais com valores e manda para a LLM somente o contexto ao redor desses valores. A documentação detalhada está em `LLM_TEXT_EXTRACTION.md`.
+
 ## O que a pipeline produz
 
 A saída agora é organizada em pastas. A raiz traz um catálogo enxuto para escolher os dados que você quer abrir:
@@ -60,6 +72,8 @@ saida/
   metrics/
   sections/
   cases/
+  text_candidates/
+  text_structures/
 ```
 
 ## Como interpretar `metadata.json`
