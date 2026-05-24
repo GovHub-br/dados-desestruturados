@@ -1,5 +1,19 @@
 ## Uso
 
+## Documentação do projeto
+
+O repositório agora inclui uma documentação em **MkDocs Material** dentro de `docs/`, inspirada no padrão usado no projeto GovHub.
+
+Para visualizar localmente:
+
+```bash
+. .venv/bin/activate
+python3 -m pip install -r requirements-docs.txt
+mkdocs serve
+```
+
+Depois abra `http://127.0.0.1:8000`.
+
 Prepare um ambiente Python e instale as dependências:
 
 ```bash

@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-label="Dados Desestruturados">
+  <rect width="128" height="128" rx="28" fill="#5b3cc4"/>
+  <path d="M32 34h30c18 0 32 13 32 30s-14 30-32 30H32V34zm20 18v24h10c7 0 12-5 12-12s-5-12-12-12H52z" fill="#fff"/>
+  <circle cx="94" cy="38" r="8" fill="#b7a8ff"/>
+</svg>

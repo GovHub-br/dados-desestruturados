@@ -1,0 +1,24 @@
+:root {
+  --md-primary-fg-color: #5b3cc4;
+  --md-primary-fg-color--light: #7a5ae0;
+  --md-primary-fg-color--dark: #3d2793;
+  --md-accent-fg-color: #6f52d9;
+}
+
+.md-typeset h1,
+.md-typeset h2,
+.md-typeset h3 {
+  letter-spacing: -0.01em;
+}
+
+.md-typeset .md-button--primary {
+  border-radius: 999px;
+}
+
+.md-typeset .md-button {
+  border-radius: 999px;
+}
+
+.md-footer-meta__inner {
+  font-size: 0.8rem;
+}

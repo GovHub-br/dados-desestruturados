@@ -1,0 +1,123 @@
+site_name: ""
+site_author: Dados Desestruturados
+site_description: >-
+  Documentação do projeto Dados Desestruturados, uma pipeline baseada em Docling
+  para extração de estrutura, blocos textuais, métricas, tabelas, gráficos e fatos narrativos em PDFs.
+
+theme:
+  name: material
+  custom_dir: docs/overrides
+  features:
+    - announce.dismiss
+    - content.code.annotate
+    - content.code.copy
+    - content.tooltips
+    - navigation.footer
+    - navigation.indexes
+    - navigation.sections
+    - navigation.tabs
+    - navigation.top
+    - navigation.tracking
+    - search.highlight
+    - search.share
+    - search.suggest
+    - toc.follow
+  palette:
+    - media: "(prefers-color-scheme)"
+      toggle:
+        icon: material/brightness-4
+        name: Alternar para preferencia do sistema
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: purple
+      accent: purple
+      toggle:
+        icon: material/weather-night
+        name: Alternar para modo escuro
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: purple
+      accent: purple
+      toggle:
+        icon: material/weather-sunny
+        name: Alternar para modo claro
+  font:
+    text: Inter
+    code: JetBrains Mono
+  favicon: assets/logo.svg
+  logo: assets/logo.svg
+  language: pt-BR
+
+plugins:
+  - search:
+      separator: '[\s\u200b\-_,:!=\[\]()"\`/]+|\.(?!\d)|&[lg]t;|(?!\b)(?=[A-Z][a-z])'
+
+extra_css:
+  - https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap
+  - assets/custom-footer.css
+  - assets/home-hero.css
+
+extra_javascript:
+  - assets/home-hero.js
+
+markdown_extensions:
+  - abbr
+  - admonition
+  - attr_list
+  - def_list
+  - footnotes
+  - md_in_html
+  - toc:
+      permalink: true
+  - pymdownx.betterem:
+      smart_enable: all
+  - pymdownx.caret
+  - pymdownx.details
+  - pymdownx.emoji:
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.keys
+  - pymdownx.magiclink:
+      normalize_issue_symbols: true
+  - pymdownx.mark
+  - pymdownx.smartsymbols
+  - pymdownx.snippets
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.tabbed:
+      alternate_style: true
+      combine_header_slug: true
+  - pymdownx.tasklist:
+      custom_checkbox: true
+  - pymdownx.tilde
+
+nav:
+  - Início: index.md
+  - Introdução:
+    - Visão Geral: sobre-projeto/overview.md
+    - Por que o projeto existe:
+      - sobre-projeto/por-que-dados-desestruturados.md
+      - sobre-projeto/como-adotar.md
+  - Getting Started:
+    - Instalação: documentacao/instalacao.md
+    - Arquitetura: documentacao/arquitetura.md
+    - Fluxo da Pipeline: documentacao/pipeline.md
+  - Estrutura e Heurísticas:
+    - Árvore do Docling: documentacao/docling-tree.md
+    - Heurísticas de Extração: documentacao/heuristicas.md
+    - Blocos, Cases e Contexto: documentacao/blocos-cases-contexto.md
+  - Saídas:
+    - Formato dos Outputs: documentacao/outputs.md
+    - Tabelas e Gráficos: documentacao/tabelas-e-graficos.md
+    - Camada Textual com LLM: documentacao/texto-com-llm.md
+  - Referência:
+    - Operação Local: documentacao/operacao-local.md
+    - Referência Técnica: documentacao/referencia-tecnica.md
