@@ -5,7 +5,16 @@
 
   <style>
     .md-header {
-      position: initial;
+      position: relative;
+      color: #f8f7ff;
+      background: #020611;
+      box-shadow: none;
+    }
+
+    .md-tabs {
+      color: #f8f7ff;
+      background: #020611;
+      border-bottom: 1px solid rgba(125, 147, 184, 0.08);
     }
 
     .md-main__inner {
@@ -29,94 +38,125 @@
     }
   </style>
 
-  <section class="dd-home-hero" data-dd-home-hero>
-    <div class="dd-home-hero__background">
-      <img
-        src="{{ 'assets/images/home-hero.png' | url }}"
-        alt="Capa visual da documentação do projeto Dados Desestruturados"
-        width="1672"
-        height="941"
-        draggable="false"
-      >
-    </div>
-    <div class="dd-home-hero__overlay"></div>
-    <div class="dd-home-hero__shade"></div>
+  <main class="dd-home-page">
+    <section class="dd-home-hero" data-dd-home-hero>
+      <div class="dd-home-hero__glow"></div>
+      <div class="dd-home-hero__visual" aria-hidden="true">
+        <img
+          src="{{ 'assets/images/home-hero.png' | url }}"
+          alt=""
+          width="1672"
+          height="941"
+          draggable="false"
+        >
+      </div>
 
-    <div class="md-grid md-typeset">
-      <a href="#home-intro" class="dd-home-hero__scroll" aria-label="Rolar para o conteúdo">
-        <span class="dd-home-hero__scroll-line"></span>
-        <span class="dd-home-hero__scroll-arrow">↓</span>
-      </a>
-    </div>
-  </section>
-
-  <section class="dd-home-intro md-typeset" id="home-intro">
-    <div class="md-grid">
-      <div class="dd-home-intro__headline">
-        <span class="dd-home-intro__eyebrow">Dados Desestruturados</span>
-        <h1>Mapeando PDFs complexos com contexto, posição e estrutura.</h1>
-        <p>
-          Uma pipeline baseada em Docling para transformar documentos desestruturados em
-          seções, blocos textuais, métricas, tabelas, gráficos e camadas narrativas rastreáveis.
-        </p>
-        <div class="dd-home-intro__actions">
-          <a
-            href="{{ 'sobre-projeto/overview/' | url }}"
-            class="md-button md-button--primary"
-          >
-            Entender o projeto
-          </a>
-          <a
-            href="{{ 'documentacao/instalacao/' | url }}"
-            class="md-button"
-          >
-            Começar a usar
-          </a>
+      <div class="md-grid md-typeset">
+        <div class="dd-home-hero__content">
+          <span class="dd-home-hero__eyebrow">Dados Desestruturados</span>
+          <h1>Extração de dados desestruturados</h1>
+          <p>
+            Uma pipeline baseada em Docling para transformar documentos desestruturados em
+            seções, blocos textuais, métricas, tabelas, gráficos e camadas narrativas rastreáveis.
+          </p>
+          <div class="dd-home-hero__actions">
+            <a
+              href="{{ 'sobre-projeto/overview/' | url }}"
+              class="md-button md-button--primary"
+            >
+              <span>Entender o projeto</span>
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M5 12h14m-6-6 6 6-6 6" />
+              </svg>
+            </a>
+            <a
+              href="{{ 'documentacao/instalacao/' | url }}"
+              class="md-button"
+            >
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="m8 5 11 7-11 7z" />
+              </svg>
+              <span>Começar a usar</span>
+            </a>
+          </div>
         </div>
       </div>
+    </section>
 
-      <div class="dd-home-intro__lead">
-        <h2>Uma camada de interpretação para documentos complexos</h2>
-        <p>
-          O projeto <strong>Dados Desestruturados</strong> parte de um problema concreto:
-          muitos documentos relevantes existem em PDF, mas o conteúdo útil dentro deles não
-          está organizado para análise, automação ou revisão incremental. Títulos, números,
-          tabelas, gráficos e narrativa convivem no mesmo arquivo, mas sem uma estrutura
-          imediatamente reaproveitável.
-        </p>
-        <p>
-          A pipeline foi desenhada para reconstruir esse contexto. Em vez de extrair apenas
-          texto corrido, ela tenta mapear onde cada item aparece, a que seção pertence,
-          em que ordem foi lido e quais relações estruturais o documento convertido preserva.
-          Isso cria uma base muito mais forte para inspeção, correção e evolução futura.
-        </p>
-      </div>
+    <section class="dd-home-intro md-typeset" id="home-intro">
+      <div class="md-grid">
+        <div class="dd-home-intro__lead">
+          <div class="dd-home-intro__title">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="m12 3 9 5-9 5-9-5 9-5Z" />
+              <path d="m3 12 9 5 9-5" />
+              <path d="m3 17 9 5 9-5" />
+            </svg>
+            <h2>Uma camada de interpretação para documentos complexos</h2>
+          </div>
+          <p>
+            O projeto <strong>Dados Desestruturados</strong> parte de um problema concreto:
+            muitos documentos relevantes existem em PDF, mas o conteúdo útil dentro deles não
+            está organizado para análise, automação ou revisão incremental. Títulos, números,
+            tabelas, gráficos e narrativa convivem no mesmo arquivo, mas sem uma estrutura
+            imediatamente reaproveitável.
+          </p>
+          <p>
+            A pipeline foi desenhada para reconstruir esse contexto. Em vez de extrair apenas
+            texto corrido, ela tenta mapear onde cada item aparece, a que seção pertence,
+            em que ordem foi lido e quais relações estruturais o documento convertido preserva.
+            Isso cria uma base muito mais forte para inspeção, correção e evolução futura.
+          </p>
+        </div>
 
-      <div class="dd-home-intro__grid">
-        <article class="dd-home-card">
-          <h3>Problema</h3>
-          <p>
-            Dados importantes ficam presos em formatos visuais, com contexto disperso e baixa
-            reutilização computacional.
-          </p>
-        </article>
-        <article class="dd-home-card">
-          <h3>Abordagem</h3>
-          <p>
-            O projeto usa o Docling como base estrutural e complementa a leitura com heurísticas
-            de títulos, contexto, números e extração semântica opcional.
-          </p>
-        </article>
-        <article class="dd-home-card">
-          <h3>Resultado</h3>
-          <p>
-            O documento passa a existir como uma coleção rastreável de seções, blocos, métricas,
-            tabelas, gráficos e fatos narrativos.
-          </p>
-        </article>
+        <div class="dd-home-intro__grid">
+          <article class="dd-home-card">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M12 3 2 21h20L12 3Z" />
+              <path d="M12 9v5" />
+              <path d="M12 18h.01" />
+            </svg>
+            <div>
+              <h3>Problema</h3>
+              <p>
+                Dados importantes ficam presos em formatos visuais, com contexto disperso e
+                baixa reutilização computacional.
+              </p>
+            </div>
+          </article>
+          <article class="dd-home-card">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M12 2 5 6v8l7 4 7-4V6l-7-4Z" />
+              <path d="m5 6 7 4 7-4" />
+              <path d="M12 10v8" />
+              <path d="M5 14 2 16v4l4 2 4-2v-4l-5-2Z" />
+              <path d="M19 14 14 16v4l4 2 4-2v-4l-3-2Z" />
+            </svg>
+            <div>
+              <h3>Abordagem</h3>
+              <p>
+                O projeto usa o Docling como base estrutural e complementa a leitura com
+                heurísticas de títulos, contexto, números e extração semântica opcional.
+              </p>
+            </div>
+          </article>
+          <article class="dd-home-card">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <circle cx="12" cy="12" r="9" />
+              <circle cx="12" cy="12" r="4" />
+            </svg>
+            <div>
+              <h3>Resultado</h3>
+              <p>
+                O documento passa a existir como uma coleção rastreável de seções, blocos,
+                métricas, tabelas, gráficos e fatos narrativos.
+              </p>
+            </div>
+          </article>
+        </div>
       </div>
-    </div>
-  </section>
+    </section>
+  </main>
 {% endblock %}
 
 {% block content %}{% endblock %}

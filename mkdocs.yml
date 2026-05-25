@@ -118,6 +118,3 @@ nav:
     - Formato dos Outputs: documentacao/outputs.md
     - Tabelas e Gráficos: documentacao/tabelas-e-graficos.md
     - Camada Textual com LLM: documentacao/texto-com-llm.md
-  - Referência:
-    - Operação Local: documentacao/operacao-local.md
-    - Referência Técnica: documentacao/referencia-tecnica.md
