@@ -122,17 +122,19 @@ Os registros ficam em `sections/sections.jsonl`.
 
 ## Como interpretar `blocks`
 
-Cada bloco textual traz:
+`blocks` representa apenas texto corrido ou semiestruturado textual. Itens que o Docling ja classificou como estruturas proprias, como tabelas, nao entram nessa camada; eles ficam exclusivamente nas pastas especializadas, por exemplo `tables/`.
+
+Cada bloco traz:
 
 - `item_type`: tipo concreto do item do Docling.
 - `label_raw`: label exposto pelo item.
-- `role_hint`: classificação textual genérica (`title`, `field`, `field_label`, `paragraph`, `narrative`, `note`, `list_item`).
+- `role_hint`: classificação textual genérica (`field`, `paragraph`, `narrative`, `note`, `list_item`).
 - `section_id`: seção associada.
 - `parent_block_id`: pai inferido na ordem de leitura.
 - `self_ref`, `parent_ref`, `child_refs`, `caption_refs`, `reference_refs`: relações nativas do Docling, quando existirem.
 - `bbox`: caixa delimitadora no PDF.
 
-Esses blocos formam a camada base para dados semiestruturados e textuais variáveis.
+Esses blocos formam a camada base para dados semiestruturados e textuais variáveis. Titulos continuam representados em `sections`, e tabelas continuam representadas em `tables`.
 
 Os registros ficam em `blocks/blocks.jsonl`.
 

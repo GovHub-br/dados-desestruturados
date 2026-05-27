@@ -19,7 +19,6 @@ TITLE_PREFIX_HINTS = (
     "resumo",
     "lancamentos",
     "lançamentos",
-    "acumulado",
     "indicadores",
     "overview",
     "summary",

@@ -1,0 +1,310 @@
+{
+  "tipo_artefato": "auditoria_resolucao",
+  "empresa": "Cury",
+  "documento_origem": {
+    "arquivo_pdf": "pdf_construturas/cury.pdf",
+    "pasta_de_extracao": "dados-desestruturados/extraction_cury",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad"
+  },
+  "layout_signature": {
+    "arquivo": "layout_signature_cury_deterministico.json",
+    "versao_artefato": "3.0.0"
+  },
+  "contrato_semantico": {
+    "arquivo": "contrato_semantico_construtora.json",
+    "versao": "1.1.0"
+  },
+  "resumo": {
+    "total_campos_schema_saida": 37,
+    "campos_com_valor_nao_nulo": 26,
+    "campos_nulos_por_ausencia_documental": 3,
+    "campos_nulos_por_nao_aplicabilidade": 8,
+    "llm_utilizada": false
+  },
+  "resolucoes": {
+    "fonte": {
+      "status": "resolvido",
+      "tipo_origem": "valor_fixo",
+      "valor_resolvido": "Balanços trimestrais das empresas",
+      "metodo_resolucao": "valor_fixo"
+    },
+    "periodo_referencia": {
+      "status": "resolvido",
+      "tipo_origem": "bloco_textual",
+      "valor_bruto_encontrado": "A Cury Construtora e Incorporadora S.A. (\"Companhia\" ou \"Cury\") (B3: CURY3), uma das construtoras líderes do segmento residencial no Brasil atuando nas regiões metropolitanas de São Paulo e Rio de Janeiro divulga a prévia de seus resultados operacionais do primeiro trimestre de 2026 (1T26) em comparação ao mesmo trimestre do exercício anterior (1T25) e aos últimos doze meses (UDM).",
+      "valor_resolvido": "1T26",
+      "arquivo_origem": "blocks/blocks.jsonl",
+      "block_id": "24b3231c-2232-54c9-b9e0-01c1cb23865d",
+      "page_number": 2,
+      "section_id": "9dbabb99-216d-576c-9488-c2a968b0eb98",
+      "metodo_resolucao": "regex"
+    },
+    "periodos_comparacao.periodo_referencia": {
+      "status": "resolvido",
+      "tipo_origem": "campo_derivado",
+      "campo_origem": "periodo_referencia",
+      "valor_resolvido": "1T26",
+      "metodo_resolucao": "derivacao"
+    },
+    "periodos_comparacao.periodo_comparativo_anterior": {
+      "status": "resolvido",
+      "tipo_origem": "cabecalho_de_tabela",
+      "valor_resolvido": "4T25",
+      "arquivo_origem": "tables/table001.json",
+      "page_number": 4,
+      "section_id": "12097fa3-49c1-5fbc-91b2-4fdbabc67f64",
+      "indice_coluna": 2,
+      "metodo_resolucao": "leitura_de_cabecalho"
+    },
+    "periodos_comparacao.mesmo_periodo_ano_anterior": {
+      "status": "resolvido",
+      "tipo_origem": "cabecalho_de_tabela",
+      "valor_resolvido": "1T25",
+      "arquivo_origem": "tables/table001.json",
+      "page_number": 4,
+      "section_id": "12097fa3-49c1-5fbc-91b2-4fdbabc67f64",
+      "indice_coluna": 4,
+      "metodo_resolucao": "leitura_de_cabecalho"
+    },
+    "periodos_comparacao.periodo_12m_atual": {
+      "status": "resolvido",
+      "tipo_origem": "cabecalho_de_tabela",
+      "valor_resolvido": "1T26 UDM*",
+      "arquivo_origem": "tables/table001.json",
+      "page_number": 4,
+      "section_id": "12097fa3-49c1-5fbc-91b2-4fdbabc67f64",
+      "indice_coluna": 6,
+      "metodo_resolucao": "leitura_de_cabecalho"
+    },
+    "periodos_comparacao.periodo_12m_anterior": {
+      "status": "resolvido",
+      "tipo_origem": "cabecalho_de_tabela",
+      "valor_resolvido": "1T25 UDM*",
+      "arquivo_origem": "tables/table001.json",
+      "page_number": 4,
+      "section_id": "12097fa3-49c1-5fbc-91b2-4fdbabc67f64",
+      "indice_coluna": 7,
+      "metodo_resolucao": "leitura_de_cabecalho"
+    },
+    "periodos_comparacao.periodo_12m_base": {
+      "status": "nulo_por_ausencia_documental",
+      "tipo_origem": "nao_mapeado_neste_documento",
+      "valor_resolvido": null,
+      "motivo": "O documento nao explicita uma janela base adicional para comparacao 12m."
+    },
+    "balancos_das_empresas.titulo": {
+      "status": "resolvido",
+      "tipo_origem": "valor_fixo",
+      "valor_resolvido": "Balanços das empresas",
+      "metodo_resolucao": "valor_fixo"
+    },
+    "balancos_das_empresas.lancamentos.titulo": {
+      "status": "resolvido",
+      "tipo_origem": "valor_fixo",
+      "valor_resolvido": "Lançamentos",
+      "metodo_resolucao": "valor_fixo"
+    },
+    "balancos_das_empresas.lancamentos.tipo": {
+      "status": "resolvido",
+      "tipo_origem": "valor_fixo",
+      "valor_resolvido": "variacao_percentual",
+      "metodo_resolucao": "valor_fixo"
+    },
+    "balancos_das_empresas.lancamentos.dados[empresa=Cury].empresa": {
+      "status": "resolvido",
+      "tipo_origem": "valor_fixo",
+      "valor_resolvido": "Cury",
+      "metodo_resolucao": "valor_fixo"
+    },
+    "balancos_das_empresas.lancamentos.dados[empresa=Cury].variacao_vs_periodo_comparativo_anterior": {
+      "status": "resolvido",
+      "tipo_origem": "celula_de_tabela",
+      "valor_bruto_encontrado": "108,7%",
+      "valor_resolvido": 108.7,
+      "arquivo_origem": "tables/table001/cells.json",
+      "page_number": 4,
+      "section_id": "12097fa3-49c1-5fbc-91b2-4fdbabc67f64",
+      "row_index": 2,
+      "column_index": 3,
+      "seletor_linha": "Número de Unidades",
+      "seletor_coluna": "%T/T",
+      "metodo_resolucao": "leitura_de_celula_com_normalizacao"
+    },
+    "balancos_das_empresas.lancamentos.dados[empresa=Cury].variacao_vs_mesmo_periodo_ano_anterior": {
+      "status": "resolvido",
+      "tipo_origem": "celula_de_tabela",
+      "valor_bruto_encontrado": "-12,4%",
+      "valor_resolvido": -12.4,
+      "arquivo_origem": "tables/table001/cells.json",
+      "page_number": 4,
+      "section_id": "12097fa3-49c1-5fbc-91b2-4fdbabc67f64",
+      "row_index": 2,
+      "column_index": 5,
+      "seletor_linha": "Número de Unidades",
+      "seletor_coluna": "%A/A",
+      "metodo_resolucao": "leitura_de_celula_com_normalizacao"
+    },
+    "balancos_das_empresas.lancamentos.dados[empresa=Cury].variacao_12m_periodo_atual_vs_12m_periodo_anterior": {
+      "status": "resolvido",
+      "tipo_origem": "celula_de_tabela",
+      "valor_bruto_encontrado": "5,4%",
+      "valor_resolvido": 5.4,
+      "arquivo_origem": "tables/table001/cells.json",
+      "page_number": 4,
+      "section_id": "12097fa3-49c1-5fbc-91b2-4fdbabc67f64",
+      "row_index": 2,
+      "column_index": 8,
+      "seletor_linha": "Número de Unidades",
+      "seletor_coluna": "%A/A",
+      "metodo_resolucao": "leitura_de_celula_com_normalizacao"
+    },
+    "balancos_das_empresas.lancamentos.dados[empresa=Cury].variacao_12m_periodo_anterior_vs_12m_periodo_base": {
+      "status": "nulo_por_ausencia_documental",
+      "tipo_origem": "nao_mapeado_neste_documento",
+      "valor_resolvido": null,
+      "motivo": "A tabela de lancamentos nao informa variacao de 1T25 UDM* contra uma janela base adicional."
+    },
+    "balancos_das_empresas.vendas.titulo": {
+      "status": "resolvido",
+      "tipo_origem": "valor_fixo",
+      "valor_resolvido": "Vendas",
+      "metodo_resolucao": "valor_fixo"
+    },
+    "balancos_das_empresas.vendas.tipo": {
+      "status": "resolvido",
+      "tipo_origem": "valor_fixo",
+      "valor_resolvido": "variacao_percentual",
+      "metodo_resolucao": "valor_fixo"
+    },
+    "balancos_das_empresas.vendas.dados[empresa=Cury].empresa": {
+      "status": "resolvido",
+      "tipo_origem": "valor_fixo",
+      "valor_resolvido": "Cury",
+      "metodo_resolucao": "valor_fixo"
+    },
+    "balancos_das_empresas.vendas.dados[empresa=Cury].variacao_vs_periodo_comparativo_anterior": {
+      "status": "resolvido",
+      "tipo_origem": "celula_de_tabela",
+      "valor_bruto_encontrado": "43,0%",
+      "valor_resolvido": 43.0,
+      "arquivo_origem": "tables/table002/cells.json",
+      "page_number": 7,
+      "section_id": "e0af7ca8-647e-531c-9ec8-84d5cf4255f0",
+      "row_index": 1,
+      "column_index": 3,
+      "seletor_linha": "Número de Unidades",
+      "seletor_coluna": "%T/T",
+      "metodo_resolucao": "leitura_de_celula_com_normalizacao"
+    },
+    "balancos_das_empresas.vendas.dados[empresa=Cury].variacao_vs_mesmo_periodo_ano_anterior": {
+      "status": "resolvido",
+      "tipo_origem": "celula_de_tabela",
+      "valor_bruto_encontrado": "8,5%",
+      "valor_resolvido": 8.5,
+      "arquivo_origem": "tables/table002/cells.json",
+      "page_number": 7,
+      "section_id": "e0af7ca8-647e-531c-9ec8-84d5cf4255f0",
+      "row_index": 1,
+      "column_index": 5,
+      "seletor_linha": "Número de Unidades",
+      "seletor_coluna": "%A/A",
+      "metodo_resolucao": "leitura_de_celula_com_normalizacao"
+    },
+    "balancos_das_empresas.vendas.dados[empresa=Cury].variacao_12m_periodo_atual_vs_12m_periodo_anterior": {
+      "status": "resolvido",
+      "tipo_origem": "celula_de_tabela",
+      "valor_bruto_encontrado": "19,4%",
+      "valor_resolvido": 19.4,
+      "arquivo_origem": "tables/table002/cells.json",
+      "page_number": 7,
+      "section_id": "e0af7ca8-647e-531c-9ec8-84d5cf4255f0",
+      "row_index": 1,
+      "column_index": 8,
+      "seletor_linha": "Número de Unidades",
+      "seletor_coluna": "%A/A",
+      "metodo_resolucao": "leitura_de_celula_com_normalizacao"
+    },
+    "balancos_das_empresas.vendas.dados[empresa=Cury].variacao_12m_periodo_anterior_vs_12m_periodo_base": {
+      "status": "nulo_por_ausencia_documental",
+      "tipo_origem": "nao_mapeado_neste_documento",
+      "valor_resolvido": null,
+      "motivo": "A tabela de vendas nao informa variacao de 1T25 UDM* contra uma janela base adicional."
+    },
+    "indicadores_consolidados.total_lancamentos.titulo": {
+      "status": "preenchido_por_politica_de_nao_aplicabilidade",
+      "tipo_origem": "politica_de_saida",
+      "valor_resolvido": "Total lançamentos",
+      "motivo": "Campo mantido no schema final por consistencia, mas sem fonte neste PDF individual."
+    },
+    "indicadores_consolidados.total_lancamentos.observacao": {
+      "status": "preenchido_por_politica_de_nao_aplicabilidade",
+      "tipo_origem": "politica_de_saida",
+      "valor_resolvido": "Nao aplicavel em PDF individual da Cury; preenchimento depende de consolidacao entre empresas.",
+      "motivo": "Observacao adicionada para deixar explicito que a ausencia nao e falha."
+    },
+    "indicadores_consolidados.total_lancamentos.tipo": {
+      "status": "resolvido",
+      "tipo_origem": "valor_fixo",
+      "valor_resolvido": "variacao_percentual",
+      "metodo_resolucao": "valor_fixo"
+    },
+    "indicadores_consolidados.total_lancamentos.variacao_vs_periodo_comparativo_anterior": {
+      "status": "nulo_por_nao_aplicabilidade",
+      "tipo_origem": "nao_aplicavel_neste_pdf_individual",
+      "valor_resolvido": null
+    },
+    "indicadores_consolidados.total_lancamentos.variacao_vs_mesmo_periodo_ano_anterior": {
+      "status": "nulo_por_nao_aplicabilidade",
+      "tipo_origem": "nao_aplicavel_neste_pdf_individual",
+      "valor_resolvido": null
+    },
+    "indicadores_consolidados.total_lancamentos.variacao_12m_periodo_atual_vs_12m_periodo_anterior": {
+      "status": "nulo_por_nao_aplicabilidade",
+      "tipo_origem": "nao_aplicavel_neste_pdf_individual",
+      "valor_resolvido": null
+    },
+    "indicadores_consolidados.total_lancamentos.variacao_12m_periodo_anterior_vs_12m_periodo_base": {
+      "status": "nulo_por_nao_aplicabilidade",
+      "tipo_origem": "nao_aplicavel_neste_pdf_individual",
+      "valor_resolvido": null
+    },
+    "indicadores_consolidados.total_vendas.titulo": {
+      "status": "preenchido_por_politica_de_nao_aplicabilidade",
+      "tipo_origem": "politica_de_saida",
+      "valor_resolvido": "Total vendas",
+      "motivo": "Campo mantido no schema final por consistencia, mas sem fonte neste PDF individual."
+    },
+    "indicadores_consolidados.total_vendas.observacao": {
+      "status": "preenchido_por_politica_de_nao_aplicabilidade",
+      "tipo_origem": "politica_de_saida",
+      "valor_resolvido": "Nao aplicavel em PDF individual da Cury; preenchimento depende de consolidacao entre empresas.",
+      "motivo": "Observacao adicionada para deixar explicito que a ausencia nao e falha."
+    },
+    "indicadores_consolidados.total_vendas.tipo": {
+      "status": "resolvido",
+      "tipo_origem": "valor_fixo",
+      "valor_resolvido": "variacao_percentual",
+      "metodo_resolucao": "valor_fixo"
+    },
+    "indicadores_consolidados.total_vendas.variacao_vs_periodo_comparativo_anterior": {
+      "status": "nulo_por_nao_aplicabilidade",
+      "tipo_origem": "nao_aplicavel_neste_pdf_individual",
+      "valor_resolvido": null
+    },
+    "indicadores_consolidados.total_vendas.variacao_vs_mesmo_periodo_ano_anterior": {
+      "status": "nulo_por_nao_aplicabilidade",
+      "tipo_origem": "nao_aplicavel_neste_pdf_individual",
+      "valor_resolvido": null
+    },
+    "indicadores_consolidados.total_vendas.variacao_12m_periodo_atual_vs_12m_periodo_anterior": {
+      "status": "nulo_por_nao_aplicabilidade",
+      "tipo_origem": "nao_aplicavel_neste_pdf_individual",
+      "valor_resolvido": null
+    },
+    "indicadores_consolidados.total_vendas.variacao_12m_periodo_anterior_vs_12m_periodo_base": {
+      "status": "nulo_por_nao_aplicabilidade",
+      "tipo_origem": "nao_aplicavel_neste_pdf_individual",
+      "valor_resolvido": null
+    }
+  }
+}

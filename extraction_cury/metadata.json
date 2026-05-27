@@ -1,0 +1,222 @@
+{
+  "source_file": "pdf_construturas/cury.pdf",
+  "items": [
+    {
+      "kind": "table",
+      "name": "R$ 2.646,8 MILHÕES",
+      "path": "tables/table001.json",
+      "schema": [
+        "Lançamentos",
+        "1T26",
+        "4T25",
+        "%T/T",
+        "1T25",
+        "%A/A",
+        "1T26 UDM*",
+        "1T25 UDM*",
+        "%A/A"
+      ]
+    },
+    {
+      "kind": "table",
+      "name": "/ / V E N D A S L Í Q U I D A S",
+      "path": "tables/table002.json",
+      "schema": [
+        "Vendas, %VSO",
+        "1T26",
+        "4T25",
+        "%T/T",
+        "1T25",
+        "%A/A",
+        "1T26 UDM*",
+        "1T25 UDM*",
+        "%A/A"
+      ]
+    },
+    {
+      "kind": "table",
+      "name": "AUMENTO DE 31,3%",
+      "path": "tables/table003.json",
+      "schema": [
+        "Repasses",
+        "1T26",
+        "4T25",
+        "% T/T",
+        "1T25",
+        "% A/A",
+        "1T26 UDM*",
+        "1T25 UDM*",
+        "% A/A"
+      ]
+    },
+    {
+      "kind": "table",
+      "name": "4.633 UNIDADES,",
+      "path": "tables/table004.json",
+      "schema": [
+        "Produção",
+        "1T26",
+        "4T25",
+        "%T/T",
+        "1T25",
+        "%A/A",
+        "1T26 UDM*1T25",
+        "UDM*",
+        "%A/A"
+      ]
+    },
+    {
+      "kind": "table",
+      "name": "A Cury encerrou o 1T26 com estoque de R$ 2.805,2 milhões.",
+      "path": "tables/table005.json",
+      "schema": [
+        "Estoque (R$ milhões, exceto% e unidades)",
+        "1T26",
+        "4T25",
+        "% T/T",
+        "1T25",
+        "% A/A"
+      ]
+    },
+    {
+      "kind": "table",
+      "name": "R$ 24.924,6 MILHÕES EM VGV POTENCIAL,",
+      "path": "tables/table006.json",
+      "schema": [
+        "Banco de Terrenos",
+        "1T26",
+        "4T25",
+        "% T/T",
+        "1T25",
+        "% A/A"
+      ]
+    },
+    {
+      "kind": "chart",
+      "name": "VGV Lançamentos (R$ milhões) | Quarter",
+      "path": "charts/chart001.json",
+      "schema": [
+        "Quarter",
+        "VGV Lançamentos (R$ milhões)",
+        "VGV Lançamentos (%)",
+        "Preço Médio por unidade (R$ mil)",
+        "Preço Médio por unidade (%)"
+      ]
+    },
+    {
+      "kind": "chart",
+      "name": "VGV Lançamentos (R$ milhões) | Category",
+      "path": "charts/chart002.json",
+      "schema": [
+        "Category",
+        "VGV Lançamentos (R$ milhões)",
+        "Preço Médio por unidade (R$ mil)"
+      ]
+    },
+    {
+      "kind": "chart",
+      "name": "VSO Líquido (%) | Quarter",
+      "path": "charts/chart003.json",
+      "schema": [
+        "Quarter",
+        "VSO Líquido (%)",
+        "Vendas Líquidas (R$ milhões)"
+      ]
+    },
+    {
+      "kind": "chart",
+      "name": "Value | Period",
+      "path": "charts/chart004.json",
+      "schema": [
+        "Period",
+        "Value",
+        "Percentage"
+      ]
+    },
+    {
+      "kind": "chart",
+      "name": "Value | Category",
+      "path": "charts/chart005.json",
+      "schema": [
+        "Category",
+        "Value",
+        "Percentage"
+      ]
+    },
+    {
+      "kind": "chart",
+      "name": "A Cury encerrou o 1T26 com estoque de R$ 2.805,2 milhões.",
+      "path": "charts/chart006.json",
+      "schema": [
+        "Category",
+        "Percentage"
+      ]
+    },
+    {
+      "kind": "chart",
+      "name": "/ / G E R A Ç Ã O D E C A I X A",
+      "path": "charts/chart007.json",
+      "schema": [
+        "Category",
+        "Value (R$ milhões)"
+      ]
+    },
+    {
+      "kind": "chart",
+      "name": "Y | X",
+      "path": "charts/chart008.json",
+      "schema": [
+        "X",
+        "Y",
+        "Value"
+      ]
+    },
+    {
+      "kind": "blocks",
+      "name": "Blocos textuais",
+      "path": "blocks/blocks.jsonl",
+      "schema": [
+        "text",
+        "role_hint",
+        "section_title",
+        "item_type"
+      ]
+    },
+    {
+      "kind": "metrics",
+      "name": "Métricas extraídas",
+      "path": "metrics/metrics.jsonl",
+      "schema": [
+        "label_raw",
+        "value_numeric",
+        "value_text",
+        "unit_hint",
+        "section_title"
+      ]
+    },
+    {
+      "kind": "text_candidates",
+      "name": "Candidatos textuais com valores",
+      "path": "text_candidates/text_candidates.jsonl",
+      "schema": [
+        "section_title",
+        "matched_values",
+        "context_text",
+        "source_blocks"
+      ]
+    },
+    {
+      "kind": "text_structures",
+      "name": "Extrações textuais estruturadas por LLM",
+      "path": "text_structures/text_structures.jsonl",
+      "schema": [
+        "section_title",
+        "context_type",
+        "entities",
+        "facts",
+        "narrative_summary",
+        "confidence"
+      ]
+    }
+  ]
+}

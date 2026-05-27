@@ -1,0 +1,17 @@
+{
+  "kind": "chart",
+  "chart_id": "032b4dbc-4dae-59f8-a392-b12c6519b1cb",
+  "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+  "page_number": 8,
+  "section_id": "f71976cd-2996-529f-bd29-88699823d11d",
+  "section_title": "VSO Líquido (%) | Quarter",
+  "chart_type": "bar_chart",
+  "chart_title_raw": "VSO Líquido (%) | Quarter",
+  "chart_title_canonical": "vso_liquido_quarter",
+  "schema": [
+    "Quarter",
+    "VSO Líquido (%)",
+    "Vendas Líquidas (R$ milhões)"
+  ],
+  "point_count": 3
+}

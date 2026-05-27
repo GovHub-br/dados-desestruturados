@@ -1,0 +1,533 @@
+{
+  "tipo_artefato": "layout_signature_com_mapeamento_canonico_deterministico",
+  "versao_artefato": "3.0.0",
+  "tipo_documento": "relatorio_trimestral_construtora",
+  "empresa": "Cury",
+  "referencia_contrato_semantico": {
+    "arquivo": "contrato_semantico_construtora.json",
+    "versao": "1.1.0"
+  },
+  "documento_origem": {
+    "arquivo_pdf": "pdf_construturas/cury.pdf",
+    "pdf_encontrado_em_pdf_construturas": true,
+    "pasta_de_extracao": "dados-desestruturados/extraction_cury",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad"
+  },
+  "regras_execucao": {
+    "modo_resolucao": "deterministico",
+    "permitir_aliases_do_contrato_semantico": true,
+    "permitir_fontes_alternativas_sem_llm": true,
+    "gerar_resultado_validacao_em_runtime": true,
+    "acionar_llm_apenas_em_fallback": true,
+    "codigos_que_podem_acionar_llm": [
+      "FALHA_CAMPO_OBRIGATORIO",
+      "FALHA_TABELA_CRITICA_AUSENTE",
+      "FALHA_SECAO_CRITICA_AUSENTE",
+      "FALHA_LINHA_CRITICA_AUSENTE",
+      "FALHA_COLUNA_CRITICA_AUSENTE",
+      "FALHA_VALOR_NAO_NORMALIZAVEL",
+      "FALHA_AMBIGUIDADE_DE_CANDIDATOS"
+    ]
+  },
+  "fontes_relevantes": {
+    "sections_path": "sections/sections.jsonl",
+    "blocks_path": "blocks/blocks.jsonl",
+    "text_candidates_path": "text_candidates/text_candidates.jsonl",
+    "text_structures_path": "text_structures/text_structures.jsonl",
+    "tabelas_primarias": [
+      {
+        "conceito": "lancamentos",
+        "arquivo": "tables/table001.json",
+        "arquivo_metadados": "tables/table001/metadata.json",
+        "table_id": "f0f1e575-5a8e-5ad1-a589-ebfd43615a48",
+        "page_number": 4,
+        "section_id": "12097fa3-49c1-5fbc-91b2-4fdbabc67f64",
+        "section_title": "R$ 2.646,8 MILHÕES",
+        "title_canonical": "r_26468_milhoes"
+      },
+      {
+        "conceito": "vendas",
+        "arquivo": "tables/table002.json",
+        "arquivo_metadados": "tables/table002/metadata.json",
+        "table_id": "199923b8-996b-5fcd-a7ca-da62fea90867",
+        "page_number": 7,
+        "section_id": "e0af7ca8-647e-531c-9ec8-84d5cf4255f0",
+        "section_title": "/ / V E N D A S L Í Q U I D A S",
+        "title_canonical": "v_e_n_d_a_s_l_i_q_u_i_d_a_s"
+      }
+    ]
+  },
+  "regras_deteccao_mudanca": [
+    {
+      "id_regra": "SEC_LANC_001",
+      "tipo_teste": "secao_existe",
+      "obrigatoria": true,
+      "arquivo_origem": "sections/sections.jsonl",
+      "campo_comparado": "title_canonical",
+      "valores_aceitos": [
+        "l_a_n_c_a_m_e_n_t_o_s",
+        "r_26468_milhoes"
+      ],
+      "paginas_aceitas": [
+        4,
+        5,
+        6
+      ],
+      "codigo_falha": "FALHA_SECAO_CRITICA_AUSENTE"
+    },
+    {
+      "id_regra": "SEC_VEND_001",
+      "tipo_teste": "secao_existe",
+      "obrigatoria": true,
+      "arquivo_origem": "sections/sections.jsonl",
+      "campo_comparado": "title_canonical",
+      "valores_aceitos": [
+        "v_e_n_d_a_s_l_i_q_u_i_d_a_s"
+      ],
+      "paginas_aceitas": [
+        7,
+        8,
+        9
+      ],
+      "codigo_falha": "FALHA_SECAO_CRITICA_AUSENTE"
+    },
+    {
+      "id_regra": "TAB_LANC_001",
+      "tipo_teste": "arquivo_existe",
+      "obrigatoria": true,
+      "arquivo_origem": "tables/table001.json",
+      "codigo_falha": "FALHA_TABELA_CRITICA_AUSENTE"
+    },
+    {
+      "id_regra": "TAB_VEND_001",
+      "tipo_teste": "arquivo_existe",
+      "obrigatoria": true,
+      "arquivo_origem": "tables/table002.json",
+      "codigo_falha": "FALHA_TABELA_CRITICA_AUSENTE"
+    },
+    {
+      "id_regra": "ROW_LANC_001",
+      "tipo_teste": "linha_existe_em_tabela",
+      "obrigatoria": true,
+      "arquivo_origem": "tables/table001.json",
+      "coluna_rotulo": 0,
+      "valores_aceitos": [
+        "Número de Unidades"
+      ],
+      "codigo_falha": "FALHA_LINHA_CRITICA_AUSENTE"
+    },
+    {
+      "id_regra": "ROW_VEND_001",
+      "tipo_teste": "linha_existe_em_tabela",
+      "obrigatoria": true,
+      "arquivo_origem": "tables/table002.json",
+      "coluna_rotulo": 0,
+      "valores_aceitos": [
+        "Número de Unidades"
+      ],
+      "codigo_falha": "FALHA_LINHA_CRITICA_AUSENTE"
+    },
+    {
+      "id_regra": "COL_LANC_QOQ_001",
+      "tipo_teste": "coluna_existe_em_tabela",
+      "obrigatoria": true,
+      "arquivo_origem": "tables/table001.json",
+      "valores_aceitos": [
+        "%T/T"
+      ],
+      "codigo_falha": "FALHA_COLUNA_CRITICA_AUSENTE"
+    },
+    {
+      "id_regra": "COL_LANC_YOY_001",
+      "tipo_teste": "coluna_existe_em_tabela",
+      "obrigatoria": true,
+      "arquivo_origem": "tables/table001.json",
+      "valores_aceitos": [
+        "%A/A"
+      ],
+      "codigo_falha": "FALHA_COLUNA_CRITICA_AUSENTE"
+    },
+    {
+      "id_regra": "COL_VEND_QOQ_001",
+      "tipo_teste": "coluna_existe_em_tabela",
+      "obrigatoria": true,
+      "arquivo_origem": "tables/table002.json",
+      "valores_aceitos": [
+        "%T/T"
+      ],
+      "codigo_falha": "FALHA_COLUNA_CRITICA_AUSENTE"
+    },
+    {
+      "id_regra": "COL_VEND_YOY_001",
+      "tipo_teste": "coluna_existe_em_tabela",
+      "obrigatoria": true,
+      "arquivo_origem": "tables/table002.json",
+      "valores_aceitos": [
+        "%A/A"
+      ],
+      "codigo_falha": "FALHA_COLUNA_CRITICA_AUSENTE"
+    },
+    {
+      "id_regra": "VAL_LANC_QOQ_001",
+      "tipo_teste": "valor_normalizavel",
+      "obrigatoria": true,
+      "arquivo_origem": "tables/table001.json",
+      "linha_rotulo": "Número de Unidades",
+      "cabecalho_coluna": "%T/T",
+      "normalizacao": "percentual_pt_br_para_numero",
+      "codigo_falha": "FALHA_VALOR_NAO_NORMALIZAVEL"
+    },
+    {
+      "id_regra": "VAL_VEND_QOQ_001",
+      "tipo_teste": "valor_normalizavel",
+      "obrigatoria": true,
+      "arquivo_origem": "tables/table002.json",
+      "linha_rotulo": "Número de Unidades",
+      "cabecalho_coluna": "%T/T",
+      "normalizacao": "percentual_pt_br_para_numero",
+      "codigo_falha": "FALHA_VALOR_NAO_NORMALIZAVEL"
+    }
+  ],
+  "mapeamento_canonico": {
+    "fonte": {
+      "tipo_origem": "valor_fixo",
+      "valor_fixo": "Balanços trimestrais das empresas",
+      "obrigatorio": true
+    },
+    "periodo_referencia": {
+      "tipo_origem": "bloco_textual",
+      "arquivo_origem": "blocks/blocks.jsonl",
+      "section_id": "9dbabb99-216d-576c-9488-c2a968b0eb98",
+      "section_title": "PRÉVIA OPERACIONAL",
+      "page_number": 2,
+      "block_id": "24b3231c-2232-54c9-b9e0-01c1cb23865d",
+      "modo_extracao": "regex",
+      "padrao": "1T[0-9]{2}",
+      "obrigatorio": true
+    },
+    "periodos_comparacao.periodo_referencia": {
+      "tipo_origem": "campo_derivado",
+      "campo_origem": "periodo_referencia",
+      "obrigatorio": true
+    },
+    "periodos_comparacao.periodo_comparativo_anterior": {
+      "tipo_origem": "cabecalho_de_tabela",
+      "arquivo_origem": "tables/table001.json",
+      "arquivo_metadados": "tables/table001/metadata.json",
+      "page_number": 4,
+      "section_id": "12097fa3-49c1-5fbc-91b2-4fdbabc67f64",
+      "cabecalho_coluna": "4T25",
+      "indice_coluna": 2,
+      "obrigatorio": false
+    },
+    "periodos_comparacao.mesmo_periodo_ano_anterior": {
+      "tipo_origem": "cabecalho_de_tabela",
+      "arquivo_origem": "tables/table001.json",
+      "arquivo_metadados": "tables/table001/metadata.json",
+      "page_number": 4,
+      "section_id": "12097fa3-49c1-5fbc-91b2-4fdbabc67f64",
+      "cabecalho_coluna": "1T25",
+      "indice_coluna": 4,
+      "obrigatorio": false
+    },
+    "periodos_comparacao.periodo_12m_atual": {
+      "tipo_origem": "cabecalho_de_tabela",
+      "arquivo_origem": "tables/table001.json",
+      "arquivo_metadados": "tables/table001/metadata.json",
+      "page_number": 4,
+      "section_id": "12097fa3-49c1-5fbc-91b2-4fdbabc67f64",
+      "cabecalho_coluna": "1T26 UDM*",
+      "indice_coluna": 6,
+      "obrigatorio": false
+    },
+    "periodos_comparacao.periodo_12m_anterior": {
+      "tipo_origem": "cabecalho_de_tabela",
+      "arquivo_origem": "tables/table001.json",
+      "arquivo_metadados": "tables/table001/metadata.json",
+      "page_number": 4,
+      "section_id": "12097fa3-49c1-5fbc-91b2-4fdbabc67f64",
+      "cabecalho_coluna": "1T25 UDM*",
+      "indice_coluna": 7,
+      "obrigatorio": false
+    },
+    "periodos_comparacao.periodo_12m_base": {
+      "tipo_origem": "nao_mapeado_neste_documento",
+      "obrigatorio": false
+    },
+    "balancos_das_empresas.titulo": {
+      "tipo_origem": "valor_fixo",
+      "valor_fixo": "Balanços das empresas",
+      "obrigatorio": true
+    },
+    "balancos_das_empresas.lancamentos.titulo": {
+      "tipo_origem": "valor_fixo",
+      "valor_fixo": "Lançamentos",
+      "obrigatorio": true
+    },
+    "balancos_das_empresas.lancamentos.tipo": {
+      "tipo_origem": "valor_fixo",
+      "valor_fixo": "variacao_percentual",
+      "obrigatorio": true
+    },
+    "balancos_das_empresas.lancamentos.dados[empresa=Cury].empresa": {
+      "tipo_origem": "valor_fixo",
+      "valor_fixo": "Cury",
+      "obrigatorio": true
+    },
+    "balancos_das_empresas.lancamentos.dados[empresa=Cury].variacao_vs_periodo_comparativo_anterior": {
+      "tipo_origem": "celula_de_tabela",
+      "arquivo_origem": "tables/table001.json",
+      "arquivo_metadados": "tables/table001/metadata.json",
+      "page_number": 4,
+      "section_id": "12097fa3-49c1-5fbc-91b2-4fdbabc67f64",
+      "section_title": "R$ 2.646,8 MILHÕES",
+      "bbox": {
+        "page_number": 4,
+        "left": 51.07921600341797,
+        "top": 270.1937255859375,
+        "right": 904.115966796875,
+        "bottom": 61.3275146484375,
+        "coord_origin": "BOTTOMLEFT"
+      },
+      "seletor_linha": {
+        "tipo_match": "exato",
+        "coluna_rotulo": 0,
+        "valor_aceito": "Número de Unidades",
+        "indice_linha_esperado": 2
+      },
+      "seletor_coluna": {
+        "tipo_match": "exato",
+        "cabecalho_aceito": "%T/T",
+        "indice_coluna_esperado": 3
+      },
+      "normalizacao": "percentual_pt_br_para_numero",
+      "obrigatorio": false
+    },
+    "balancos_das_empresas.lancamentos.dados[empresa=Cury].variacao_vs_mesmo_periodo_ano_anterior": {
+      "tipo_origem": "celula_de_tabela",
+      "arquivo_origem": "tables/table001.json",
+      "arquivo_metadados": "tables/table001/metadata.json",
+      "page_number": 4,
+      "section_id": "12097fa3-49c1-5fbc-91b2-4fdbabc67f64",
+      "section_title": "R$ 2.646,8 MILHÕES",
+      "bbox": {
+        "page_number": 4,
+        "left": 51.07921600341797,
+        "top": 270.1937255859375,
+        "right": 904.115966796875,
+        "bottom": 61.3275146484375,
+        "coord_origin": "BOTTOMLEFT"
+      },
+      "seletor_linha": {
+        "tipo_match": "exato",
+        "coluna_rotulo": 0,
+        "valor_aceito": "Número de Unidades",
+        "indice_linha_esperado": 2
+      },
+      "seletor_coluna": {
+        "tipo_match": "exato",
+        "cabecalho_aceito": "%A/A",
+        "indice_coluna_esperado": 5
+      },
+      "normalizacao": "percentual_pt_br_para_numero",
+      "obrigatorio": false
+    },
+    "balancos_das_empresas.lancamentos.dados[empresa=Cury].variacao_12m_periodo_atual_vs_12m_periodo_anterior": {
+      "tipo_origem": "celula_de_tabela",
+      "arquivo_origem": "tables/table001.json",
+      "arquivo_metadados": "tables/table001/metadata.json",
+      "page_number": 4,
+      "section_id": "12097fa3-49c1-5fbc-91b2-4fdbabc67f64",
+      "section_title": "R$ 2.646,8 MILHÕES",
+      "bbox": {
+        "page_number": 4,
+        "left": 51.07921600341797,
+        "top": 270.1937255859375,
+        "right": 904.115966796875,
+        "bottom": 61.3275146484375,
+        "coord_origin": "BOTTOMLEFT"
+      },
+      "seletor_linha": {
+        "tipo_match": "exato",
+        "coluna_rotulo": 0,
+        "valor_aceito": "Número de Unidades",
+        "indice_linha_esperado": 2
+      },
+      "seletor_coluna": {
+        "tipo_match": "exato",
+        "cabecalho_aceito": "%A/A",
+        "indice_coluna_esperado": 8
+      },
+      "normalizacao": "percentual_pt_br_para_numero",
+      "obrigatorio": false
+    },
+    "balancos_das_empresas.lancamentos.dados[empresa=Cury].variacao_12m_periodo_anterior_vs_12m_periodo_base": {
+      "tipo_origem": "nao_mapeado_neste_documento",
+      "obrigatorio": false
+    },
+    "balancos_das_empresas.vendas.titulo": {
+      "tipo_origem": "valor_fixo",
+      "valor_fixo": "Vendas",
+      "obrigatorio": true
+    },
+    "balancos_das_empresas.vendas.tipo": {
+      "tipo_origem": "valor_fixo",
+      "valor_fixo": "variacao_percentual",
+      "obrigatorio": true
+    },
+    "balancos_das_empresas.vendas.dados[empresa=Cury].empresa": {
+      "tipo_origem": "valor_fixo",
+      "valor_fixo": "Cury",
+      "obrigatorio": true
+    },
+    "balancos_das_empresas.vendas.dados[empresa=Cury].variacao_vs_periodo_comparativo_anterior": {
+      "tipo_origem": "celula_de_tabela",
+      "arquivo_origem": "tables/table002.json",
+      "arquivo_metadados": "tables/table002/metadata.json",
+      "page_number": 7,
+      "section_id": "e0af7ca8-647e-531c-9ec8-84d5cf4255f0",
+      "section_title": "/ / V E N D A S L Í Q U I D A S",
+      "bbox": {
+        "page_number": 7,
+        "left": 50.65180969238281,
+        "top": 388.6880187988281,
+        "right": 919.4471435546875,
+        "bottom": 98.20401000976562,
+        "coord_origin": "BOTTOMLEFT"
+      },
+      "seletor_linha": {
+        "tipo_match": "exato",
+        "coluna_rotulo": 0,
+        "valor_aceito": "Número de Unidades",
+        "indice_linha_esperado": 1
+      },
+      "seletor_coluna": {
+        "tipo_match": "exato",
+        "cabecalho_aceito": "%T/T",
+        "indice_coluna_esperado": 3
+      },
+      "normalizacao": "percentual_pt_br_para_numero",
+      "obrigatorio": false
+    },
+    "balancos_das_empresas.vendas.dados[empresa=Cury].variacao_vs_mesmo_periodo_ano_anterior": {
+      "tipo_origem": "celula_de_tabela",
+      "arquivo_origem": "tables/table002.json",
+      "arquivo_metadados": "tables/table002/metadata.json",
+      "page_number": 7,
+      "section_id": "e0af7ca8-647e-531c-9ec8-84d5cf4255f0",
+      "section_title": "/ / V E N D A S L Í Q U I D A S",
+      "bbox": {
+        "page_number": 7,
+        "left": 50.65180969238281,
+        "top": 388.6880187988281,
+        "right": 919.4471435546875,
+        "bottom": 98.20401000976562,
+        "coord_origin": "BOTTOMLEFT"
+      },
+      "seletor_linha": {
+        "tipo_match": "exato",
+        "coluna_rotulo": 0,
+        "valor_aceito": "Número de Unidades",
+        "indice_linha_esperado": 1
+      },
+      "seletor_coluna": {
+        "tipo_match": "exato",
+        "cabecalho_aceito": "%A/A",
+        "indice_coluna_esperado": 5
+      },
+      "normalizacao": "percentual_pt_br_para_numero",
+      "obrigatorio": false
+    },
+    "balancos_das_empresas.vendas.dados[empresa=Cury].variacao_12m_periodo_atual_vs_12m_periodo_anterior": {
+      "tipo_origem": "celula_de_tabela",
+      "arquivo_origem": "tables/table002.json",
+      "arquivo_metadados": "tables/table002/metadata.json",
+      "page_number": 7,
+      "section_id": "e0af7ca8-647e-531c-9ec8-84d5cf4255f0",
+      "section_title": "/ / V E N D A S L Í Q U I D A S",
+      "bbox": {
+        "page_number": 7,
+        "left": 50.65180969238281,
+        "top": 388.6880187988281,
+        "right": 919.4471435546875,
+        "bottom": 98.20401000976562,
+        "coord_origin": "BOTTOMLEFT"
+      },
+      "seletor_linha": {
+        "tipo_match": "exato",
+        "coluna_rotulo": 0,
+        "valor_aceito": "Número de Unidades",
+        "indice_linha_esperado": 1
+      },
+      "seletor_coluna": {
+        "tipo_match": "exato",
+        "cabecalho_aceito": "%A/A",
+        "indice_coluna_esperado": 8
+      },
+      "normalizacao": "percentual_pt_br_para_numero",
+      "obrigatorio": false
+    },
+    "balancos_das_empresas.vendas.dados[empresa=Cury].variacao_12m_periodo_anterior_vs_12m_periodo_base": {
+      "tipo_origem": "nao_mapeado_neste_documento",
+      "obrigatorio": false
+    },
+    "indicadores_consolidados.total_lancamentos.titulo": {
+      "tipo_origem": "nao_aplicavel_neste_pdf_individual",
+      "obrigatorio": false
+    },
+    "indicadores_consolidados.total_lancamentos.observacao": {
+      "tipo_origem": "nao_aplicavel_neste_pdf_individual",
+      "obrigatorio": false
+    },
+    "indicadores_consolidados.total_lancamentos.tipo": {
+      "tipo_origem": "valor_fixo",
+      "valor_fixo": "variacao_percentual",
+      "obrigatorio": false
+    },
+    "indicadores_consolidados.total_lancamentos.variacao_vs_periodo_comparativo_anterior": {
+      "tipo_origem": "nao_aplicavel_neste_pdf_individual",
+      "obrigatorio": false
+    },
+    "indicadores_consolidados.total_lancamentos.variacao_vs_mesmo_periodo_ano_anterior": {
+      "tipo_origem": "nao_aplicavel_neste_pdf_individual",
+      "obrigatorio": false
+    },
+    "indicadores_consolidados.total_lancamentos.variacao_12m_periodo_atual_vs_12m_periodo_anterior": {
+      "tipo_origem": "nao_aplicavel_neste_pdf_individual",
+      "obrigatorio": false
+    },
+    "indicadores_consolidados.total_lancamentos.variacao_12m_periodo_anterior_vs_12m_periodo_base": {
+      "tipo_origem": "nao_aplicavel_neste_pdf_individual",
+      "obrigatorio": false
+    },
+    "indicadores_consolidados.total_vendas.titulo": {
+      "tipo_origem": "nao_aplicavel_neste_pdf_individual",
+      "obrigatorio": false
+    },
+    "indicadores_consolidados.total_vendas.observacao": {
+      "tipo_origem": "nao_aplicavel_neste_pdf_individual",
+      "obrigatorio": false
+    },
+    "indicadores_consolidados.total_vendas.tipo": {
+      "tipo_origem": "valor_fixo",
+      "valor_fixo": "variacao_percentual",
+      "obrigatorio": false
+    },
+    "indicadores_consolidados.total_vendas.variacao_vs_periodo_comparativo_anterior": {
+      "tipo_origem": "nao_aplicavel_neste_pdf_individual",
+      "obrigatorio": false
+    },
+    "indicadores_consolidados.total_vendas.variacao_vs_mesmo_periodo_ano_anterior": {
+      "tipo_origem": "nao_aplicavel_neste_pdf_individual",
+      "obrigatorio": false
+    },
+    "indicadores_consolidados.total_vendas.variacao_12m_periodo_atual_vs_12m_periodo_anterior": {
+      "tipo_origem": "nao_aplicavel_neste_pdf_individual",
+      "obrigatorio": false
+    },
+    "indicadores_consolidados.total_vendas.variacao_12m_periodo_anterior_vs_12m_periodo_base": {
+      "tipo_origem": "nao_aplicavel_neste_pdf_individual",
+      "obrigatorio": false
+    }
+  }
+}

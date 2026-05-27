@@ -1,0 +1,44 @@
+{
+  "kind": "table",
+  "name": "AUMENTO DE 31,3%",
+  "schema": [
+    "Repasses",
+    "1T26",
+    "4T25",
+    "% T/T",
+    "1T25",
+    "% A/A",
+    "1T26 UDM*",
+    "1T25 UDM*",
+    "% A/A"
+  ],
+  "rows": [
+    [
+      "VGV Repassado (R$ milhões)",
+      "1.339,8",
+      "1.492,3",
+      "-10,2%",
+      "1.122,9",
+      "19,3%",
+      "6.468,6",
+      "4.926,4",
+      "31,3%"
+    ],
+    [
+      "Unidades Repassadas",
+      "4.364",
+      "5.001",
+      "-12,7%",
+      "3.783",
+      "15,4%",
+      "21.621",
+      "16.741",
+      "29,1%"
+    ]
+  ],
+  "files": {
+    "metadata": "tables/table003/metadata.json",
+    "cells": "tables/table003/cells.json",
+    "normalized_rows": "tables/table003/normalized_rows.json"
+  }
+}

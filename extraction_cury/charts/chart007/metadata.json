@@ -1,0 +1,16 @@
+{
+  "kind": "chart",
+  "chart_id": "eadc1401-2a98-558a-a955-c31d90a41144",
+  "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+  "page_number": 14,
+  "section_id": "9300b5a2-0b60-5a2a-85bf-ebad01a197cb",
+  "section_title": "/ / G E R A Ç Ã O D E C A I X A",
+  "chart_type": "bar_chart",
+  "chart_title_raw": "/ / G E R A Ç Ã O D E C A I X A",
+  "chart_title_canonical": "g_e_r_a_c_a_o_d_e_c_a_i_x_a",
+  "schema": [
+    "Category",
+    "Value (R$ milhões)"
+  ],
+  "point_count": 5
+}

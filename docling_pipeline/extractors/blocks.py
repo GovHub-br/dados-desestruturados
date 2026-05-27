@@ -22,6 +22,15 @@ from ..models import BlockRecord, SectionRecord
 from .common import nearest_section
 
 
+_EXCLUDED_ITEM_LABELS = {"table"}
+_EXCLUDED_ITEM_TYPES = {"TableItem"}
+_TEXTUAL_BLOCK_ROLES = {"field", "list_item", "narrative", "note", "paragraph"}
+
+
+def _is_structured_non_text_item(item: Any, label: str) -> bool:
+    return label in _EXCLUDED_ITEM_LABELS or item_type(item) in _EXCLUDED_ITEM_TYPES
+
+
 def _infer_block_role(text: str, label: str) -> str:
     normalized = normalize_space(text)
     lowered = normalized.lower()
@@ -46,6 +55,24 @@ def _infer_block_role(text: str, label: str) -> str:
     return "paragraph"
 
 
+def _looks_like_visual_artifact(text: str) -> bool:
+    normalized = normalize_space(text)
+    if not normalized:
+        return True
+    if any(char.isalpha() for char in normalized):
+        return False
+    if len(normalized) <= 12:
+        return True
+    punctuation_or_symbol_count = sum(1 for char in normalized if not char.isdigit() and not char.isspace())
+    return punctuation_or_symbol_count >= max(1, len(normalized) // 4)
+
+
+def _is_running_text_block(text: str, role_hint: str) -> bool:
+    if role_hint not in _TEXTUAL_BLOCK_ROLES:
+        return False
+    return not _looks_like_visual_artifact(text)
+
+
 def extract_blocks(
     document_id: str,
     conv_res: Any,
@@ -55,11 +82,18 @@ def extract_blocks(
     level_stack: list[tuple[int, str]] = []
 
     for idx, (item, level) in enumerate(conv_res.document.iterate_items()):
+        label = item_label(item)
+        if _is_structured_non_text_item(item, label):
+            continue
+
         text = item_text(item)
         if not text:
             continue
 
-        label = item_label(item)
+        role_hint = _infer_block_role(text, label)
+        if not _is_running_text_block(text, role_hint):
+            continue
+
         page_number = item_page_number(item)
         bbox = item_bbox(item)
         section = nearest_section(sections, page_number=page_number, anchor_bbox=bbox)
@@ -83,7 +117,7 @@ def extract_blocks(
                 item_type=item_type(item),
                 label_raw=label,
                 label_canonical=slugify(label),
-                role_hint=_infer_block_role(text, label),
+                role_hint=role_hint,
                 text=text,
                 self_ref=item_self_ref(item),
                 parent_ref=item_parent_ref(item),

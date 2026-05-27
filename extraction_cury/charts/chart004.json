@@ -1,0 +1,31 @@
+{
+  "kind": "chart",
+  "name": "Value | Period",
+  "schema": [
+    "Period",
+    "Value",
+    "Percentage"
+  ],
+  "rows": [
+    [
+      "1T25",
+      "310.2",
+      "4.9%"
+    ],
+    [
+      "4T25",
+      "314.8",
+      "3.4%"
+    ],
+    [
+      "1T26",
+      "325.4",
+      ""
+    ]
+  ],
+  "files": {
+    "metadata": "charts/chart004/metadata.json",
+    "points": "charts/chart004/points.json",
+    "normalized_rows": "charts/chart004/normalized_rows.json"
+  }
+}

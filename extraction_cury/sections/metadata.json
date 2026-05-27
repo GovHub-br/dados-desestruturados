@@ -1,0 +1,27 @@
+{
+  "kind": "sections",
+  "source_file": "pdf_construturas/cury.pdf",
+  "path": "sections/sections.jsonl",
+  "record_count": 42,
+  "schema": [
+    "title_raw",
+    "level_hint",
+    "parent_section_id",
+    "page_number"
+  ],
+  "fields": [
+    "section_id",
+    "document_id",
+    "page_number",
+    "title_raw",
+    "title_canonical",
+    "level_hint",
+    "order_index",
+    "parent_section_id",
+    "self_ref",
+    "parent_ref",
+    "child_refs",
+    "bbox",
+    "provenance_kind"
+  ]
+}

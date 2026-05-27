@@ -1,0 +1,223 @@
+[
+  {
+    "record_id": "1ce5eb13-8f55-5ea5-bb85-4689eea01334",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "page_number": 4,
+    "source_kind": "table",
+    "source_id": "f0f1e575-5a8e-5ad1-a589-ebfd43615a48",
+    "section_id": "12097fa3-49c1-5fbc-91b2-4fdbabc67f64",
+    "section_title": "R$ 2.646,8 MILHÕES",
+    "domain": "r_26468_milhoes",
+    "grain": "table_row",
+    "attributes": {
+      "lancamentos": "Número de Empreendimentos",
+      "1t26__raw": "10",
+      "4t25__raw": "5",
+      "t_t__raw": "100,0%",
+      "1t25__raw": "14",
+      "a_a__raw": "-28,6%",
+      "1t26_udm__raw": "33",
+      "1t25_udm__raw": "38",
+      "a_a_2__raw": "-13,2%"
+    },
+    "measures": {
+      "1t26": 10.0,
+      "4t25": 5.0,
+      "t_t": 100.0,
+      "1t25": 14.0,
+      "a_a": -28.6,
+      "1t26_udm": 33.0,
+      "1t25_udm": 38.0,
+      "a_a_2": -13.2
+    }
+  },
+  {
+    "record_id": "212e8d30-741c-50cb-ae92-e1ddd28ed0a5",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "page_number": 4,
+    "source_kind": "table",
+    "source_id": "f0f1e575-5a8e-5ad1-a589-ebfd43615a48",
+    "section_id": "12097fa3-49c1-5fbc-91b2-4fdbabc67f64",
+    "section_title": "R$ 2.646,8 MILHÕES",
+    "domain": "r_26468_milhoes",
+    "grain": "table_row",
+    "attributes": {
+      "lancamentos": "VGV (R$ milhões)",
+      "1t26__raw": "2.646,8",
+      "4t25__raw": "1.289,5",
+      "t_t__raw": "105,3%",
+      "1t25__raw": "2.783,5",
+      "a_a__raw": "-4,9%",
+      "1t26_udm__raw": "8.147,9",
+      "1t25_udm__raw": "7.478,7",
+      "a_a_2__raw": "8,9%"
+    },
+    "measures": {
+      "1t26": 2646.8,
+      "4t25": 1289.5,
+      "t_t": 105.3,
+      "1t25": 2783.5,
+      "a_a": -4.9,
+      "1t26_udm": 8147.9,
+      "1t25_udm": 7478.7,
+      "a_a_2": 8.9
+    }
+  },
+  {
+    "record_id": "e8af9d26-3baa-5276-8f39-119c34789b59",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "page_number": 4,
+    "source_kind": "table",
+    "source_id": "f0f1e575-5a8e-5ad1-a589-ebfd43615a48",
+    "section_id": "12097fa3-49c1-5fbc-91b2-4fdbabc67f64",
+    "section_title": "R$ 2.646,8 MILHÕES",
+    "domain": "r_26468_milhoes",
+    "grain": "table_row",
+    "attributes": {
+      "lancamentos": "Número de Unidades",
+      "1t26__raw": "8.001",
+      "4t25__raw": "3.833",
+      "t_t__raw": "108,7%",
+      "1t25__raw": "9.132",
+      "a_a__raw": "-12,4%",
+      "1t26_udm__raw": "25.235",
+      "1t25_udm__raw": "23.938",
+      "a_a_2__raw": "5,4%"
+    },
+    "measures": {
+      "1t26": 8001.0,
+      "4t25": 3833.0,
+      "t_t": 108.7,
+      "1t25": 9132.0,
+      "a_a": -12.4,
+      "1t26_udm": 25235.0,
+      "1t25_udm": 23938.0,
+      "a_a_2": 5.4
+    }
+  },
+  {
+    "record_id": "7a0b234a-aa3b-5225-94fc-a1bdba50dabf",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "page_number": 4,
+    "source_kind": "table",
+    "source_id": "f0f1e575-5a8e-5ad1-a589-ebfd43615a48",
+    "section_id": "12097fa3-49c1-5fbc-91b2-4fdbabc67f64",
+    "section_title": "R$ 2.646,8 MILHÕES",
+    "domain": "r_26468_milhoes",
+    "grain": "table_row",
+    "attributes": {
+      "lancamentos": "Preço Médio/Unid. (R$ mil)",
+      "1t26__raw": "330,8",
+      "4t25__raw": "336,4",
+      "t_t__raw": "-1,7%",
+      "1t25__raw": "304,8",
+      "a_a__raw": "8,5%",
+      "1t26_udm__raw": "322,9",
+      "1t25_udm__raw": "312,4",
+      "a_a_2__raw": "3,4%"
+    },
+    "measures": {
+      "1t26": 330.8,
+      "4t25": 336.4,
+      "t_t": -1.7,
+      "1t25": 304.8,
+      "a_a": 8.5,
+      "1t26_udm": 322.9,
+      "1t25_udm": 312.4,
+      "a_a_2": 3.4
+    }
+  },
+  {
+    "record_id": "3640f3bc-745d-5f28-8fbc-01a8c6e68d85",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "page_number": 4,
+    "source_kind": "table",
+    "source_id": "f0f1e575-5a8e-5ad1-a589-ebfd43615a48",
+    "section_id": "12097fa3-49c1-5fbc-91b2-4fdbabc67f64",
+    "section_title": "R$ 2.646,8 MILHÕES",
+    "domain": "r_26468_milhoes",
+    "grain": "table_row",
+    "attributes": {
+      "lancamentos": "Média de Unid. por Lanç.",
+      "1t26__raw": "800",
+      "4t25__raw": "767",
+      "t_t__raw": "4,3%",
+      "1t25__raw": "652",
+      "a_a__raw": "22,7%",
+      "1t26_udm__raw": "765",
+      "1t25_udm__raw": "630",
+      "a_a_2__raw": "21,4%"
+    },
+    "measures": {
+      "1t26": 800.0,
+      "4t25": 767.0,
+      "t_t": 4.3,
+      "1t25": 652.0,
+      "a_a": 22.7,
+      "1t26_udm": 765.0,
+      "1t25_udm": 630.0,
+      "a_a_2": 21.4
+    }
+  },
+  {
+    "record_id": "02643707-45a8-5aec-9c1f-3003e652db40",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "page_number": 4,
+    "source_kind": "table",
+    "source_id": "f0f1e575-5a8e-5ad1-a589-ebfd43615a48",
+    "section_id": "12097fa3-49c1-5fbc-91b2-4fdbabc67f64",
+    "section_title": "R$ 2.646,8 MILHÕES",
+    "domain": "r_26468_milhoes",
+    "grain": "table_row",
+    "attributes": {
+      "lancamentos": "Parte Cury Lançamentos (VGV)",
+      "1t26__raw": "2.268,9",
+      "4t25__raw": "1.179,1",
+      "t_t__raw": "92,4%",
+      "1t25__raw": "2.666,3",
+      "a_a__raw": "-14,9%",
+      "1t26_udm__raw": "7.142,4",
+      "1t25_udm__raw": "6.907,2",
+      "a_a_2__raw": "3,4%"
+    },
+    "measures": {
+      "1t26": 2268.9,
+      "4t25": 1179.1,
+      "t_t": 92.4,
+      "1t25": 2666.3,
+      "a_a": -14.9,
+      "1t26_udm": 7142.4,
+      "1t25_udm": 6907.2,
+      "a_a_2": 3.4
+    }
+  },
+  {
+    "record_id": "f8c64028-7563-568e-a24a-17fbbf2a16c9",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "page_number": 4,
+    "source_kind": "table",
+    "source_id": "f0f1e575-5a8e-5ad1-a589-ebfd43615a48",
+    "section_id": "12097fa3-49c1-5fbc-91b2-4fdbabc67f64",
+    "section_title": "R$ 2.646,8 MILHÕES",
+    "domain": "r_26468_milhoes",
+    "grain": "table_row",
+    "attributes": {
+      "lancamentos": "Parte Cury Lançamentos (%)",
+      "1t26__raw": "85,7%",
+      "4t25__raw": "91,4%",
+      "t_t": "-5,7 p.p.",
+      "1t25__raw": "95,8%",
+      "a_a": "-10,1 p.p.",
+      "1t26_udm__raw": "87,7%",
+      "1t25_udm__raw": "92,4%",
+      "a_a_2": "-4,7 p.p."
+    },
+    "measures": {
+      "1t26": 85.7,
+      "4t25": 91.4,
+      "1t25": 95.8,
+      "1t26_udm": 87.7,
+      "1t25_udm": 92.4
+    }
+  }
+]

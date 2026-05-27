@@ -1,0 +1,42 @@
+[
+  {
+    "point_id": "19568fc5-a07b-5478-b8e0-e18d0fd63ece",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "chart_id": "843b5176-37ff-5c5e-b7f5-cfb6fcd056b3",
+    "page_number": 9,
+    "section_id": "e4791e59-b42e-555f-8202-043c3d47f612",
+    "section_title": "Value | Category",
+    "chart_type": "bar_chart",
+    "chart_title_raw": "Value | Category",
+    "chart_title_canonical": "value_category",
+    "series_name": "1T25 UDM*",
+    "category_name": "Value",
+    "value_numeric": 308.5,
+    "value_text": "308.5",
+    "raw_row": {
+      "Category": "1T25 UDM*",
+      "Value": "308.5",
+      "Percentage": ""
+    }
+  },
+  {
+    "point_id": "c7179f2d-70c2-56c2-a68d-4fdf7343ced1",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "chart_id": "843b5176-37ff-5c5e-b7f5-cfb6fcd056b3",
+    "page_number": 9,
+    "section_id": "e4791e59-b42e-555f-8202-043c3d47f612",
+    "section_title": "Value | Category",
+    "chart_type": "bar_chart",
+    "chart_title_raw": "Value | Category",
+    "chart_title_canonical": "value_category",
+    "series_name": "1T26 UDM*",
+    "category_name": "Value",
+    "value_numeric": 312.6,
+    "value_text": "312.6",
+    "raw_row": {
+      "Category": "1T26 UDM*",
+      "Value": "312.6",
+      "Percentage": ""
+    }
+  }
+]

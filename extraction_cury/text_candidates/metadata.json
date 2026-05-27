@@ -1,0 +1,29 @@
+{
+  "kind": "text_candidates",
+  "source_file": "pdf_construturas/cury.pdf",
+  "path": "text_candidates/text_candidates.jsonl",
+  "record_count": 18,
+  "schema": [
+    "section_title",
+    "matched_values",
+    "context_text",
+    "source_blocks"
+  ],
+  "fields": [
+    "candidate_id",
+    "document_id",
+    "page_number",
+    "section_id",
+    "section_title",
+    "source_blocks",
+    "context_text",
+    "matched_values",
+    "extraction_method",
+    "truncated"
+  ],
+  "derived_from": [
+    "sections",
+    "blocks"
+  ],
+  "method": "regex_candidate"
+}

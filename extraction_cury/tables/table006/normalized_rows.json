@@ -1,0 +1,106 @@
+[
+  {
+    "record_id": "1a2c23b5-8910-50c1-9490-a2c73dfe9ec3",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "page_number": 13,
+    "source_kind": "table",
+    "source_id": "e02683e7-f13f-5520-80d9-9cc77d6650aa",
+    "section_id": "c3bdf8e2-e5cf-5fff-93ea-51818c4da48a",
+    "section_title": "R$ 24.924,6 MILHÕES EM VGV POTENCIAL,",
+    "domain": "r_249246_milhoes_em_vgv_potencial",
+    "grain": "table_row",
+    "attributes": {
+      "banco_de_terrenos": "Banco de Terrenos (VGV, R$ milhões)",
+      "1t26__raw": "24.924,6",
+      "4t25__raw": "24.641,3",
+      "t_t__raw": "1,1%",
+      "1t25__raw": "19.805,3",
+      "a_a__raw": "25,8%"
+    },
+    "measures": {
+      "1t26": 24924.6,
+      "4t25": 24641.3,
+      "t_t": 1.1,
+      "1t25": 19805.3,
+      "a_a": 25.8
+    }
+  },
+  {
+    "record_id": "0c47b566-f275-5504-80ab-da769f312ee3",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "page_number": 13,
+    "source_kind": "table",
+    "source_id": "e02683e7-f13f-5520-80d9-9cc77d6650aa",
+    "section_id": "c3bdf8e2-e5cf-5fff-93ea-51818c4da48a",
+    "section_title": "R$ 24.924,6 MILHÕES EM VGV POTENCIAL,",
+    "domain": "r_249246_milhoes_em_vgv_potencial",
+    "grain": "table_row",
+    "attributes": {
+      "banco_de_terrenos": "Número de Empreendimentos",
+      "1t26__raw": "88",
+      "4t25__raw": "96",
+      "t_t__raw": "-8,3%",
+      "1t25__raw": "73",
+      "a_a__raw": "20,5%"
+    },
+    "measures": {
+      "1t26": 88.0,
+      "4t25": 96.0,
+      "t_t": -8.3,
+      "1t25": 73.0,
+      "a_a": 20.5
+    }
+  },
+  {
+    "record_id": "e92b4413-d1e7-5b40-a016-817932941309",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "page_number": 13,
+    "source_kind": "table",
+    "source_id": "e02683e7-f13f-5520-80d9-9cc77d6650aa",
+    "section_id": "c3bdf8e2-e5cf-5fff-93ea-51818c4da48a",
+    "section_title": "R$ 24.924,6 MILHÕES EM VGV POTENCIAL,",
+    "domain": "r_249246_milhoes_em_vgv_potencial",
+    "grain": "table_row",
+    "attributes": {
+      "banco_de_terrenos": "Número de Unidades",
+      "1t26__raw": "82.119",
+      "4t25__raw": "81.240",
+      "t_t__raw": "1,1%",
+      "1t25__raw": "68.218",
+      "a_a__raw": "20,4%"
+    },
+    "measures": {
+      "1t26": 82119.0,
+      "4t25": 81240.0,
+      "t_t": 1.1,
+      "1t25": 68218.0,
+      "a_a": 20.4
+    }
+  },
+  {
+    "record_id": "68f2dd6d-f26c-5913-84bd-295edd9d0bdc",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "page_number": 13,
+    "source_kind": "table",
+    "source_id": "e02683e7-f13f-5520-80d9-9cc77d6650aa",
+    "section_id": "c3bdf8e2-e5cf-5fff-93ea-51818c4da48a",
+    "section_title": "R$ 24.924,6 MILHÕES EM VGV POTENCIAL,",
+    "domain": "r_249246_milhoes_em_vgv_potencial",
+    "grain": "table_row",
+    "attributes": {
+      "banco_de_terrenos": "Preço Médio/Unid. (R$ mil)",
+      "1t26__raw": "303,5",
+      "4t25__raw": "303,3",
+      "t_t__raw": "0,1%",
+      "1t25__raw": "290,3",
+      "a_a__raw": "4,5%"
+    },
+    "measures": {
+      "1t26": 303.5,
+      "4t25": 303.3,
+      "t_t": 0.1,
+      "1t25": 290.3,
+      "a_a": 4.5
+    }
+  }
+]

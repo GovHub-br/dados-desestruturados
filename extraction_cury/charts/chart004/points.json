@@ -1,0 +1,62 @@
+[
+  {
+    "point_id": "89fdf058-38bd-5cf6-9657-805d7b6b960c",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "chart_id": "74281cbe-ce3c-5e52-94b4-af394347f7f8",
+    "page_number": 9,
+    "section_id": "4159eab3-0222-5751-885d-0625cc7fb726",
+    "section_title": "Value | Period",
+    "chart_type": "bar_chart",
+    "chart_title_raw": "Value | Period",
+    "chart_title_canonical": "value_period",
+    "series_name": "1T25",
+    "category_name": "Value",
+    "value_numeric": 310.2,
+    "value_text": "310.2",
+    "raw_row": {
+      "Period": "1T25",
+      "Value": "310.2",
+      "Percentage": "4.9%"
+    }
+  },
+  {
+    "point_id": "67b740ef-2aca-588c-9aed-a8bec828f6f0",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "chart_id": "74281cbe-ce3c-5e52-94b4-af394347f7f8",
+    "page_number": 9,
+    "section_id": "4159eab3-0222-5751-885d-0625cc7fb726",
+    "section_title": "Value | Period",
+    "chart_type": "bar_chart",
+    "chart_title_raw": "Value | Period",
+    "chart_title_canonical": "value_period",
+    "series_name": "4T25",
+    "category_name": "Value",
+    "value_numeric": 314.8,
+    "value_text": "314.8",
+    "raw_row": {
+      "Period": "4T25",
+      "Value": "314.8",
+      "Percentage": "3.4%"
+    }
+  },
+  {
+    "point_id": "69717346-7691-5a93-9e96-a6b8dcbfdd18",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "chart_id": "74281cbe-ce3c-5e52-94b4-af394347f7f8",
+    "page_number": 9,
+    "section_id": "4159eab3-0222-5751-885d-0625cc7fb726",
+    "section_title": "Value | Period",
+    "chart_type": "bar_chart",
+    "chart_title_raw": "Value | Period",
+    "chart_title_canonical": "value_period",
+    "series_name": "1T26",
+    "category_name": "Value",
+    "value_numeric": 325.4,
+    "value_text": "325.4",
+    "raw_row": {
+      "Period": "1T26",
+      "Value": "325.4",
+      "Percentage": ""
+    }
+  }
+]

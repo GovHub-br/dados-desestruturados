@@ -1,0 +1,17 @@
+{
+  "kind": "chart",
+  "chart_id": "8ae53d1f-87d2-5844-b1fd-bbc722752ded",
+  "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+  "page_number": 6,
+  "section_id": "f9dafa1f-55b3-53f1-b144-38ae97033d58",
+  "section_title": "VGV Lançamentos (R$ milhões) | Category",
+  "chart_type": "bar_chart",
+  "chart_title_raw": "VGV Lançamentos (R$ milhões) | Category",
+  "chart_title_canonical": "vgv_lancamentos_r_milhoes_category",
+  "schema": [
+    "Category",
+    "VGV Lançamentos (R$ milhões)",
+    "Preço Médio por unidade (R$ mil)"
+  ],
+  "point_count": 2
+}

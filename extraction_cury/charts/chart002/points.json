@@ -1,0 +1,42 @@
+[
+  {
+    "point_id": "dadbb020-97ae-55dd-9139-c6943b65e046",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "chart_id": "8ae53d1f-87d2-5844-b1fd-bbc722752ded",
+    "page_number": 6,
+    "section_id": "f9dafa1f-55b3-53f1-b144-38ae97033d58",
+    "section_title": "VGV Lançamentos (R$ milhões) | Category",
+    "chart_type": "bar_chart",
+    "chart_title_raw": "VGV Lançamentos (R$ milhões) | Category",
+    "chart_title_canonical": "vgv_lancamentos_r_milhoes_category",
+    "series_name": "1T25 UDM*",
+    "category_name": "VGV Lançamentos (R$ milhões)",
+    "value_numeric": 7478.7,
+    "value_text": "7478.7",
+    "raw_row": {
+      "Category": "1T25 UDM*",
+      "VGV Lançamentos (R$ milhões)": "7478.7",
+      "Preço Médio por unidade (R$ mil)": "312.4"
+    }
+  },
+  {
+    "point_id": "82a1c6a4-65ee-526d-aa7c-8dce361b6d49",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "chart_id": "8ae53d1f-87d2-5844-b1fd-bbc722752ded",
+    "page_number": 6,
+    "section_id": "f9dafa1f-55b3-53f1-b144-38ae97033d58",
+    "section_title": "VGV Lançamentos (R$ milhões) | Category",
+    "chart_type": "bar_chart",
+    "chart_title_raw": "VGV Lançamentos (R$ milhões) | Category",
+    "chart_title_canonical": "vgv_lancamentos_r_milhoes_category",
+    "series_name": "1T26 UDM*",
+    "category_name": "VGV Lançamentos (R$ milhões)",
+    "value_numeric": 8147.9,
+    "value_text": "8147.9",
+    "raw_row": {
+      "Category": "1T26 UDM*",
+      "VGV Lançamentos (R$ milhões)": "8147.9",
+      "Preço Médio por unidade (R$ mil)": "322.9"
+    }
+  }
+]

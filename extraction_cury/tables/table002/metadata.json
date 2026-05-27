@@ -1,0 +1,31 @@
+{
+  "kind": "table",
+  "table_id": "199923b8-996b-5fcd-a7ca-da62fea90867",
+  "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+  "page_number": 7,
+  "section_id": "e0af7ca8-647e-531c-9ec8-84d5cf4255f0",
+  "section_title": "/ / V E N D A S L Í Q U I D A S",
+  "title_raw": "/ / V E N D A S L Í Q U I D A S",
+  "title_canonical": "v_e_n_d_a_s_l_i_q_u_i_d_a_s",
+  "bbox": {
+    "page_number": 7,
+    "left": 50.65180969238281,
+    "top": 388.6880187988281,
+    "right": 919.4471435546875,
+    "bottom": 98.20401000976562,
+    "coord_origin": "BOTTOMLEFT"
+  },
+  "row_count": 13,
+  "column_count": 9,
+  "schema": [
+    "Vendas, %VSO",
+    "1T26",
+    "4T25",
+    "%T/T",
+    "1T25",
+    "%A/A",
+    "1T26 UDM*",
+    "1T25 UDM*",
+    "%A/A"
+  ]
+}

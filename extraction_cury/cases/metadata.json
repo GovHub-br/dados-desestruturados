@@ -1,0 +1,30 @@
+{
+  "kind": "cases",
+  "source_file": "pdf_construturas/cury.pdf",
+  "path": "cases/cases.jsonl",
+  "record_count": 42,
+  "schema": [
+    "title_raw",
+    "field_map",
+    "narrative_blocks",
+    "block_ids"
+  ],
+  "fields": [
+    "case_id",
+    "document_id",
+    "page_number",
+    "section_id",
+    "parent_section_id",
+    "title_raw",
+    "title_canonical",
+    "level_hint",
+    "field_map",
+    "narrative_blocks",
+    "block_ids",
+    "child_section_ids"
+  ],
+  "derived_from": [
+    "sections",
+    "blocks"
+  ]
+}

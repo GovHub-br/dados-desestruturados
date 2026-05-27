@@ -1,0 +1,67 @@
+{
+  "kind": "table",
+  "name": "A Cury encerrou o 1T26 com estoque de R$ 2.805,2 milhões.",
+  "schema": [
+    "Estoque (R$ milhões, exceto% e unidades)",
+    "1T26",
+    "4T25",
+    "% T/T",
+    "1T25",
+    "% A/A"
+  ],
+  "rows": [
+    [
+      "Em andamento",
+      "2.739,0",
+      "2.344,5",
+      "16,8%",
+      "2.505,4",
+      "9,3%"
+    ],
+    [
+      "%Total",
+      "97,6%",
+      "97,4%",
+      "0,2 p.p.",
+      "99,0%",
+      "-1,4 p.p."
+    ],
+    [
+      "Concluído",
+      "66,2",
+      "61,8",
+      "7,1%",
+      "25,7",
+      "157,6%"
+    ],
+    [
+      "% Total",
+      "2,4%",
+      "2,6%",
+      "-0,2 p.p.",
+      "1,0%",
+      "1,4 p.p."
+    ],
+    [
+      "Total",
+      "2.805,2",
+      "2.406,3",
+      "16,6%",
+      "2.531,0",
+      "10,8%"
+    ],
+    [
+      "Total (Unidades)",
+      "7.373",
+      "6.425",
+      "14,8%",
+      "7.548",
+      "-2,3%"
+    ]
+  ],
+  "files": {
+    "metadata": "tables/table005/metadata.json",
+    "cells": "tables/table005/cells.json",
+    "normalized_rows": "tables/table005/normalized_rows.json"
+  }
+}

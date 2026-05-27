@@ -1,0 +1,3402 @@
+[
+  {
+    "point_id": "583c7c2a-a957-5a9a-950c-4864820343fe",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "chart_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "page_number": 15,
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "chart_type": "bar_chart",
+    "chart_title_raw": "Y | X",
+    "chart_title_canonical": "y_x",
+    "series_name": "0",
+    "category_name": "Y",
+    "value_numeric": 0.0,
+    "value_text": "0",
+    "raw_row": {
+      "X": "0",
+      "Y": "0",
+      "Value": "0"
+    }
+  },
+  {
+    "point_id": "b54c5722-913d-5c5c-bb2f-617054dc826a",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "chart_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "page_number": 15,
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "chart_type": "bar_chart",
+    "chart_title_raw": "Y | X",
+    "chart_title_canonical": "y_x",
+    "series_name": "0",
+    "category_name": "Y",
+    "value_numeric": 1.0,
+    "value_text": "1",
+    "raw_row": {
+      "X": "0",
+      "Y": "1",
+      "Value": "0"
+    }
+  },
+  {
+    "point_id": "6a5b9d87-7709-5e20-8313-e8fefaed7883",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "chart_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "page_number": 15,
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "chart_type": "bar_chart",
+    "chart_title_raw": "Y | X",
+    "chart_title_canonical": "y_x",
+    "series_name": "0",
+    "category_name": "Y",
+    "value_numeric": 2.0,
+    "value_text": "2",
+    "raw_row": {
+      "X": "0",
+      "Y": "2",
+      "Value": "0"
+    }
+  },
+  {
+    "point_id": "fa640273-de2f-55b3-b784-ed4ec90ace22",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "chart_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "page_number": 15,
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "chart_type": "bar_chart",
+    "chart_title_raw": "Y | X",
+    "chart_title_canonical": "y_x",
+    "series_name": "0",
+    "category_name": "Y",
+    "value_numeric": 3.0,
+    "value_text": "3",
+    "raw_row": {
+      "X": "0",
+      "Y": "3",
+      "Value": "0"
+    }
+  },
+  {
+    "point_id": "8f422de9-44b5-561f-a72b-35f038c79c99",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "chart_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "page_number": 15,
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "chart_type": "bar_chart",
+    "chart_title_raw": "Y | X",
+    "chart_title_canonical": "y_x",
+    "series_name": "0",
+    "category_name": "Y",
+    "value_numeric": 4.0,
+    "value_text": "4",
+    "raw_row": {
+      "X": "0",
+      "Y": "4",
+      "Value": "0"
+    }
+  },
+  {
+    "point_id": "b19b8560-7278-53af-b534-edba0fbb00d6",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "chart_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "page_number": 15,
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "chart_type": "bar_chart",
+    "chart_title_raw": "Y | X",
+    "chart_title_canonical": "y_x",
+    "series_name": "0",
+    "category_name": "Y",
+    "value_numeric": 5.0,
+    "value_text": "5",
+    "raw_row": {
+      "X": "0",
+      "Y": "5",
+      "Value": "0"
+    }
+  },
+  {
+    "point_id": "01df1d25-ec16-503a-a776-0327b8aeec0a",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "chart_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "page_number": 15,
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "chart_type": "bar_chart",
+    "chart_title_raw": "Y | X",
+    "chart_title_canonical": "y_x",
+    "series_name": "0",
+    "category_name": "Y",
+    "value_numeric": 6.0,
+    "value_text": "6",
+    "raw_row": {
+      "X": "0",
+      "Y": "6",
+      "Value": "0"
+    }
+  },
+  {
+    "point_id": "84e330d2-ea6c-5d38-b7e9-3c4a1e454a40",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "chart_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "page_number": 15,
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "chart_type": "bar_chart",
+    "chart_title_raw": "Y | X",
+    "chart_title_canonical": "y_x",
+    "series_name": "0",
+    "category_name": "Y",
+    "value_numeric": 7.0,
+    "value_text": "7",
+    "raw_row": {
+      "X": "0",
+      "Y": "7",
+      "Value": "0"
+    }
+  },
+  {
+    "point_id": "ab88cd23-28f0-5508-a4d8-7de259bf3903",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "chart_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "page_number": 15,
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "chart_type": "bar_chart",
+    "chart_title_raw": "Y | X",
+    "chart_title_canonical": "y_x",
+    "series_name": "0",
+    "category_name": "Y",
+    "value_numeric": 8.0,
+    "value_text": "8",
+    "raw_row": {
+      "X": "0",
+      "Y": "8",
+      "Value": "0"
+    }
+  },
+  {
+    "point_id": "feb20450-a531-5363-b71b-1ee0ca0692c9",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "chart_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "page_number": 15,
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "chart_type": "bar_chart",
+    "chart_title_raw": "Y | X",
+    "chart_title_canonical": "y_x",
+    "series_name": "0",
+    "category_name": "Y",
+    "value_numeric": 9.0,
+    "value_text": "9",
+    "raw_row": {
+      "X": "0",
+      "Y": "9",
+      "Value": "0"
+    }
+  },
+  {
+    "point_id": "af53b9e9-dd7b-5207-a389-9d9b88e28967",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "chart_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "page_number": 15,
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "chart_type": "bar_chart",
+    "chart_title_raw": "Y | X",
+    "chart_title_canonical": "y_x",
+    "series_name": "0",
+    "category_name": "Y",
+    "value_numeric": 10.0,
+    "value_text": "10",
+    "raw_row": {
+      "X": "0",
+      "Y": "10",
+      "Value": "0"
+    }
+  },
+  {
+    "point_id": "6af70c3b-7e38-592b-8bda-9061a8a6cd58",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "chart_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "page_number": 15,
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "chart_type": "bar_chart",
+    "chart_title_raw": "Y | X",
+    "chart_title_canonical": "y_x",
+    "series_name": "0",
+    "category_name": "Y",
+    "value_numeric": 11.0,
+    "value_text": "11",
+    "raw_row": {
+      "X": "0",
+      "Y": "11",
+      "Value": "0"
+    }
+  },
+  {
+    "point_id": "6616dccf-4159-508f-a009-0438f94f1b93",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "chart_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "page_number": 15,
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "chart_type": "bar_chart",
+    "chart_title_raw": "Y | X",
+    "chart_title_canonical": "y_x",
+    "series_name": "0",
+    "category_name": "Y",
+    "value_numeric": 12.0,
+    "value_text": "12",
+    "raw_row": {
+      "X": "0",
+      "Y": "12",
+      "Value": "0"
+    }
+  },
+  {
+    "point_id": "d23c8962-014c-59f0-8427-a189e99d18ec",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "chart_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "page_number": 15,
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "chart_type": "bar_chart",
+    "chart_title_raw": "Y | X",
+    "chart_title_canonical": "y_x",
+    "series_name": "0",
+    "category_name": "Y",
+    "value_numeric": 13.0,
+    "value_text": "13",
+    "raw_row": {
+      "X": "0",
+      "Y": "13",
+      "Value": "0"
+    }
+  },
+  {
+    "point_id": "2fc79831-5222-5525-91b8-2fe2cb005664",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "chart_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "page_number": 15,
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "chart_type": "bar_chart",
+    "chart_title_raw": "Y | X",
+    "chart_title_canonical": "y_x",
+    "series_name": "0",
+    "category_name": "Y",
+    "value_numeric": 14.0,
+    "value_text": "14",
+    "raw_row": {
+      "X": "0",
+      "Y": "14",
+      "Value": "0"
+    }
+  },
+  {
+    "point_id": "8e68c0eb-6a39-56bb-8614-a1f51b644f38",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "chart_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "page_number": 15,
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "chart_type": "bar_chart",
+    "chart_title_raw": "Y | X",
+    "chart_title_canonical": "y_x",
+    "series_name": "0",
+    "category_name": "Y",
+    "value_numeric": 15.0,
+    "value_text": "15",
+    "raw_row": {
+      "X": "0",
+      "Y": "15",
+      "Value": "0"
+    }
+  },
+  {
+    "point_id": "c38a1b47-1e0a-524c-92b2-6260480af303",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "chart_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "page_number": 15,
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "chart_type": "bar_chart",
+    "chart_title_raw": "Y | X",
+    "chart_title_canonical": "y_x",
+    "series_name": "0",
+    "category_name": "Y",
+    "value_numeric": 16.0,
+    "value_text": "16",
+    "raw_row": {
+      "X": "0",
+      "Y": "16",
+      "Value": "0"
+    }
+  },
+  {
+    "point_id": "a6fc02b7-ef7c-5a79-92c6-f6a9ee227463",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "chart_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "page_number": 15,
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "chart_type": "bar_chart",
+    "chart_title_raw": "Y | X",
+    "chart_title_canonical": "y_x",
+    "series_name": "0",
+    "category_name": "Y",
+    "value_numeric": 17.0,
+    "value_text": "17",
+    "raw_row": {
+      "X": "0",
+      "Y": "17",
+      "Value": "0"
+    }
+  },
+  {
+    "point_id": "bc526160-a587-52eb-b8ee-a9614fc54ade",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "chart_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "page_number": 15,
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "chart_type": "bar_chart",
+    "chart_title_raw": "Y | X",
+    "chart_title_canonical": "y_x",
+    "series_name": "0",
+    "category_name": "Y",
+    "value_numeric": 18.0,
+    "value_text": "18",
+    "raw_row": {
+      "X": "0",
+      "Y": "18",
+      "Value": "0"
+    }
+  },
+  {
+    "point_id": "5cc5ff25-2f3b-5bb5-9caa-9883f5d53a88",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "chart_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "page_number": 15,
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "chart_type": "bar_chart",
+    "chart_title_raw": "Y | X",
+    "chart_title_canonical": "y_x",
+    "series_name": "0",
+    "category_name": "Y",
+    "value_numeric": 19.0,
+    "value_text": "19",
+    "raw_row": {
+      "X": "0",
+      "Y": "19",
+      "Value": "0"
+    }
+  },
+  {
+    "point_id": "f8215763-39f2-55a4-a840-8e5c418b938b",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "chart_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "page_number": 15,
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "chart_type": "bar_chart",
+    "chart_title_raw": "Y | X",
+    "chart_title_canonical": "y_x",
+    "series_name": "0",
+    "category_name": "Y",
+    "value_numeric": 20.0,
+    "value_text": "20",
+    "raw_row": {
+      "X": "0",
+      "Y": "20",
+      "Value": "0"
+    }
+  },
+  {
+    "point_id": "9de0a5d8-8bc2-54bf-9395-8f7ade010035",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "chart_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "page_number": 15,
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "chart_type": "bar_chart",
+    "chart_title_raw": "Y | X",
+    "chart_title_canonical": "y_x",
+    "series_name": "0",
+    "category_name": "Y",
+    "value_numeric": 21.0,
+    "value_text": "21",
+    "raw_row": {
+      "X": "0",
+      "Y": "21",
+      "Value": "0"
+    }
+  },
+  {
+    "point_id": "3c730a6e-397d-52d7-9a14-7b7a501261dd",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "chart_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "page_number": 15,
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "chart_type": "bar_chart",
+    "chart_title_raw": "Y | X",
+    "chart_title_canonical": "y_x",
+    "series_name": "0",
+    "category_name": "Y",
+    "value_numeric": 22.0,
+    "value_text": "22",
+    "raw_row": {
+      "X": "0",
+      "Y": "22",
+      "Value": "0"
+    }
+  },
+  {
+    "point_id": "da06780b-a548-54ed-a0a2-62245e94a476",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "chart_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "page_number": 15,
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "chart_type": "bar_chart",
+    "chart_title_raw": "Y | X",
+    "chart_title_canonical": "y_x",
+    "series_name": "0",
+    "category_name": "Y",
+    "value_numeric": 23.0,
+    "value_text": "23",
+    "raw_row": {
+      "X": "0",
+      "Y": "23",
+      "Value": "0"
+    }
+  },
+  {
+    "point_id": "4d0a71b5-ba45-5ad3-ba3c-e1025e73d8bf",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "chart_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "page_number": 15,
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "chart_type": "bar_chart",
+    "chart_title_raw": "Y | X",
+    "chart_title_canonical": "y_x",
+    "series_name": "0",
+    "category_name": "Y",
+    "value_numeric": 24.0,
+    "value_text": "24",
+    "raw_row": {
+      "X": "0",
+      "Y": "24",
+      "Value": "0"
+    }
+  },
+  {
+    "point_id": "554ff262-0e9f-584f-a80c-4d207079f9f6",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "chart_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "page_number": 15,
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "chart_type": "bar_chart",
+    "chart_title_raw": "Y | X",
+    "chart_title_canonical": "y_x",
+    "series_name": "0",
+    "category_name": "Y",
+    "value_numeric": 25.0,
+    "value_text": "25",
+    "raw_row": {
+      "X": "0",
+      "Y": "25",
+      "Value": "0"
+    }
+  },
+  {
+    "point_id": "b722d89a-6898-52ec-8315-e8247232044d",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "chart_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "page_number": 15,
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "chart_type": "bar_chart",
+    "chart_title_raw": "Y | X",
+    "chart_title_canonical": "y_x",
+    "series_name": "0",
+    "category_name": "Y",
+    "value_numeric": 26.0,
+    "value_text": "26",
+    "raw_row": {
+      "X": "0",
+      "Y": "26",
+      "Value": "0"
+    }
+  },
+  {
+    "point_id": "de2cf501-6f89-5a74-99fc-faf25848baba",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "chart_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "page_number": 15,
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "chart_type": "bar_chart",
+    "chart_title_raw": "Y | X",
+    "chart_title_canonical": "y_x",
+    "series_name": "0",
+    "category_name": "Y",
+    "value_numeric": 27.0,
+    "value_text": "27",
+    "raw_row": {
+      "X": "0",
+      "Y": "27",
+      "Value": "0"
+    }
+  },
+  {
+    "point_id": "8338c616-ec0d-54bc-9c7e-11860ed57302",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "chart_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "page_number": 15,
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "chart_type": "bar_chart",
+    "chart_title_raw": "Y | X",
+    "chart_title_canonical": "y_x",
+    "series_name": "0",
+    "category_name": "Y",
+    "value_numeric": 28.0,
+    "value_text": "28",
+    "raw_row": {
+      "X": "0",
+      "Y": "28",
+      "Value": "0"
+    }
+  },
+  {
+    "point_id": "5e2742ef-5417-578a-84be-a6e566d20cf2",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "chart_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "page_number": 15,
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "chart_type": "bar_chart",
+    "chart_title_raw": "Y | X",
+    "chart_title_canonical": "y_x",
+    "series_name": "0",
+    "category_name": "Y",
+    "value_numeric": 29.0,
+    "value_text": "29",
+    "raw_row": {
+      "X": "0",
+      "Y": "29",
+      "Value": "0"
+    }
+  },
+  {
+    "point_id": "aad292b2-3129-5afd-a31f-1202e584aeae",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "chart_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "page_number": 15,
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "chart_type": "bar_chart",
+    "chart_title_raw": "Y | X",
+    "chart_title_canonical": "y_x",
+    "series_name": "0",
+    "category_name": "Y",
+    "value_numeric": 30.0,
+    "value_text": "30",
+    "raw_row": {
+      "X": "0",
+      "Y": "30",
+      "Value": "0"
+    }
+  },
+  {
+    "point_id": "964bdacf-5973-5d14-9247-489ec0a33494",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "chart_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "page_number": 15,
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "chart_type": "bar_chart",
+    "chart_title_raw": "Y | X",
+    "chart_title_canonical": "y_x",
+    "series_name": "0",
+    "category_name": "Y",
+    "value_numeric": 31.0,
+    "value_text": "31",
+    "raw_row": {
+      "X": "0",
+      "Y": "31",
+      "Value": "0"
+    }
+  },
+  {
+    "point_id": "8dbb3349-f847-522e-b388-9030aedf85bd",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "chart_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "page_number": 15,
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "chart_type": "bar_chart",
+    "chart_title_raw": "Y | X",
+    "chart_title_canonical": "y_x",
+    "series_name": "0",
+    "category_name": "Y",
+    "value_numeric": 32.0,
+    "value_text": "32",
+    "raw_row": {
+      "X": "0",
+      "Y": "32",
+      "Value": "0"
+    }
+  },
+  {
+    "point_id": "cac153ff-df39-5fbf-89e0-4e9de713f73f",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "chart_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "page_number": 15,
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "chart_type": "bar_chart",
+    "chart_title_raw": "Y | X",
+    "chart_title_canonical": "y_x",
+    "series_name": "0",
+    "category_name": "Y",
+    "value_numeric": 33.0,
+    "value_text": "33",
+    "raw_row": {
+      "X": "0",
+      "Y": "33",
+      "Value": "0"
+    }
+  },
+  {
+    "point_id": "4f2c861f-9dbc-57fd-933c-ed7ff69a8f94",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "chart_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "page_number": 15,
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "chart_type": "bar_chart",
+    "chart_title_raw": "Y | X",
+    "chart_title_canonical": "y_x",
+    "series_name": "0",
+    "category_name": "Y",
+    "value_numeric": 34.0,
+    "value_text": "34",
+    "raw_row": {
+      "X": "0",
+      "Y": "34",
+      "Value": "0"
+    }
+  },
+  {
+    "point_id": "c3aa9594-ddc6-5282-8d8f-63bc13271190",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "chart_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "page_number": 15,
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "chart_type": "bar_chart",
+    "chart_title_raw": "Y | X",
+    "chart_title_canonical": "y_x",
+    "series_name": "0",
+    "category_name": "Y",
+    "value_numeric": 35.0,
+    "value_text": "35",
+    "raw_row": {
+      "X": "0",
+      "Y": "35",
+      "Value": "0"
+    }
+  },
+  {
+    "point_id": "956c50d6-d7b5-5cea-844b-5087daa22fb1",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "chart_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "page_number": 15,
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "chart_type": "bar_chart",
+    "chart_title_raw": "Y | X",
+    "chart_title_canonical": "y_x",
+    "series_name": "0",
+    "category_name": "Y",
+    "value_numeric": 36.0,
+    "value_text": "36",
+    "raw_row": {
+      "X": "0",
+      "Y": "36",
+      "Value": "0"
+    }
+  },
+  {
+    "point_id": "14c3c87a-d390-5dd6-8957-821166911f59",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "chart_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "page_number": 15,
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "chart_type": "bar_chart",
+    "chart_title_raw": "Y | X",
+    "chart_title_canonical": "y_x",
+    "series_name": "0",
+    "category_name": "Y",
+    "value_numeric": 37.0,
+    "value_text": "37",
+    "raw_row": {
+      "X": "0",
+      "Y": "37",
+      "Value": "0"
+    }
+  },
+  {
+    "point_id": "85601287-21ca-55e1-89ae-ec922beca379",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "chart_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "page_number": 15,
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "chart_type": "bar_chart",
+    "chart_title_raw": "Y | X",
+    "chart_title_canonical": "y_x",
+    "series_name": "0",
+    "category_name": "Y",
+    "value_numeric": 38.0,
+    "value_text": "38",
+    "raw_row": {
+      "X": "0",
+      "Y": "38",
+      "Value": "0"
+    }
+  },
+  {
+    "point_id": "a84a46f9-30ee-592c-9ff8-dfa2d2d09065",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "chart_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "page_number": 15,
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "chart_type": "bar_chart",
+    "chart_title_raw": "Y | X",
+    "chart_title_canonical": "y_x",
+    "series_name": "0",
+    "category_name": "Y",
+    "value_numeric": 39.0,
+    "value_text": "39",
+    "raw_row": {
+      "X": "0",
+      "Y": "39",
+      "Value": "0"
+    }
+  },
+  {
+    "point_id": "d6dedc2b-36a5-5e6e-a245-30073d13c776",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "chart_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "page_number": 15,
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "chart_type": "bar_chart",
+    "chart_title_raw": "Y | X",
+    "chart_title_canonical": "y_x",
+    "series_name": "0",
+    "category_name": "Y",
+    "value_numeric": 40.0,
+    "value_text": "40",
+    "raw_row": {
+      "X": "0",
+      "Y": "40",
+      "Value": "0"
+    }
+  },
+  {
+    "point_id": "e6b5af21-9683-55a7-83b8-815252d8e879",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "chart_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "page_number": 15,
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "chart_type": "bar_chart",
+    "chart_title_raw": "Y | X",
+    "chart_title_canonical": "y_x",
+    "series_name": "0",
+    "category_name": "Y",
+    "value_numeric": 41.0,
+    "value_text": "41",
+    "raw_row": {
+      "X": "0",
+      "Y": "41",
+      "Value": "0"
+    }
+  },
+  {
+    "point_id": "31abc609-0e53-5b3d-bfe1-46ce3b60762b",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "chart_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "page_number": 15,
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "chart_type": "bar_chart",
+    "chart_title_raw": "Y | X",
+    "chart_title_canonical": "y_x",
+    "series_name": "0",
+    "category_name": "Y",
+    "value_numeric": 42.0,
+    "value_text": "42",
+    "raw_row": {
+      "X": "0",
+      "Y": "42",
+      "Value": "0"
+    }
+  },
+  {
+    "point_id": "5c972bb5-1106-5e41-9573-84f290618674",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "chart_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "page_number": 15,
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "chart_type": "bar_chart",
+    "chart_title_raw": "Y | X",
+    "chart_title_canonical": "y_x",
+    "series_name": "0",
+    "category_name": "Y",
+    "value_numeric": 43.0,
+    "value_text": "43",
+    "raw_row": {
+      "X": "0",
+      "Y": "43",
+      "Value": "0"
+    }
+  },
+  {
+    "point_id": "895827ab-e8df-55b9-9832-b9053e96506c",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "chart_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "page_number": 15,
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "chart_type": "bar_chart",
+    "chart_title_raw": "Y | X",
+    "chart_title_canonical": "y_x",
+    "series_name": "0",
+    "category_name": "Y",
+    "value_numeric": 44.0,
+    "value_text": "44",
+    "raw_row": {
+      "X": "0",
+      "Y": "44",
+      "Value": "0"
+    }
+  },
+  {
+    "point_id": "17095201-389a-59fb-84f1-eac15b08f747",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "chart_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "page_number": 15,
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "chart_type": "bar_chart",
+    "chart_title_raw": "Y | X",
+    "chart_title_canonical": "y_x",
+    "series_name": "0",
+    "category_name": "Y",
+    "value_numeric": 45.0,
+    "value_text": "45",
+    "raw_row": {
+      "X": "0",
+      "Y": "45",
+      "Value": "0"
+    }
+  },
+  {
+    "point_id": "cd916106-3623-59c9-b71b-a2927af8403b",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "chart_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "page_number": 15,
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "chart_type": "bar_chart",
+    "chart_title_raw": "Y | X",
+    "chart_title_canonical": "y_x",
+    "series_name": "0",
+    "category_name": "Y",
+    "value_numeric": 46.0,
+    "value_text": "46",
+    "raw_row": {
+      "X": "0",
+      "Y": "46",
+      "Value": "0"
+    }
+  },
+  {
+    "point_id": "dda900dc-95ba-51f4-a26f-eaa0b34567e2",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "chart_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "page_number": 15,
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "chart_type": "bar_chart",
+    "chart_title_raw": "Y | X",
+    "chart_title_canonical": "y_x",
+    "series_name": "0",
+    "category_name": "Y",
+    "value_numeric": 47.0,
+    "value_text": "47",
+    "raw_row": {
+      "X": "0",
+      "Y": "47",
+      "Value": "0"
+    }
+  },
+  {
+    "point_id": "9b6b4027-c442-56ed-9764-17dff6d74776",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "chart_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "page_number": 15,
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "chart_type": "bar_chart",
+    "chart_title_raw": "Y | X",
+    "chart_title_canonical": "y_x",
+    "series_name": "0",
+    "category_name": "Y",
+    "value_numeric": 48.0,
+    "value_text": "48",
+    "raw_row": {
+      "X": "0",
+      "Y": "48",
+      "Value": "0"
+    }
+  },
+  {
+    "point_id": "3081c4eb-a75c-59b4-88b5-91942b6e2f99",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "chart_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "page_number": 15,
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "chart_type": "bar_chart",
+    "chart_title_raw": "Y | X",
+    "chart_title_canonical": "y_x",
+    "series_name": "0",
+    "category_name": "Y",
+    "value_numeric": 49.0,
+    "value_text": "49",
+    "raw_row": {
+      "X": "0",
+      "Y": "49",
+      "Value": "0"
+    }
+  },
+  {
+    "point_id": "abc66630-aede-5965-beac-93d3e54206ff",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "chart_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "page_number": 15,
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "chart_type": "bar_chart",
+    "chart_title_raw": "Y | X",
+    "chart_title_canonical": "y_x",
+    "series_name": "0",
+    "category_name": "Y",
+    "value_numeric": 50.0,
+    "value_text": "50",
+    "raw_row": {
+      "X": "0",
+      "Y": "50",
+      "Value": "0"
+    }
+  },
+  {
+    "point_id": "455a1903-cb5a-5f43-ac76-6d97cce728b4",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "chart_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "page_number": 15,
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "chart_type": "bar_chart",
+    "chart_title_raw": "Y | X",
+    "chart_title_canonical": "y_x",
+    "series_name": "0",
+    "category_name": "Y",
+    "value_numeric": 51.0,
+    "value_text": "51",
+    "raw_row": {
+      "X": "0",
+      "Y": "51",
+      "Value": "0"
+    }
+  },
+  {
+    "point_id": "b6c729e8-2553-5d82-9ec3-fa5e009ac939",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "chart_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "page_number": 15,
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "chart_type": "bar_chart",
+    "chart_title_raw": "Y | X",
+    "chart_title_canonical": "y_x",
+    "series_name": "0",
+    "category_name": "Y",
+    "value_numeric": 52.0,
+    "value_text": "52",
+    "raw_row": {
+      "X": "0",
+      "Y": "52",
+      "Value": "0"
+    }
+  },
+  {
+    "point_id": "085975d3-6a3d-5b75-b4fe-f19f40f7c1c5",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "chart_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "page_number": 15,
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "chart_type": "bar_chart",
+    "chart_title_raw": "Y | X",
+    "chart_title_canonical": "y_x",
+    "series_name": "0",
+    "category_name": "Y",
+    "value_numeric": 53.0,
+    "value_text": "53",
+    "raw_row": {
+      "X": "0",
+      "Y": "53",
+      "Value": "0"
+    }
+  },
+  {
+    "point_id": "211a5731-82b2-5bdf-a816-b6e66bf53a01",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "chart_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "page_number": 15,
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "chart_type": "bar_chart",
+    "chart_title_raw": "Y | X",
+    "chart_title_canonical": "y_x",
+    "series_name": "0",
+    "category_name": "Y",
+    "value_numeric": 54.0,
+    "value_text": "54",
+    "raw_row": {
+      "X": "0",
+      "Y": "54",
+      "Value": "0"
+    }
+  },
+  {
+    "point_id": "02e61165-a818-5b7e-b29b-be302932adb9",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "chart_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "page_number": 15,
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "chart_type": "bar_chart",
+    "chart_title_raw": "Y | X",
+    "chart_title_canonical": "y_x",
+    "series_name": "0",
+    "category_name": "Y",
+    "value_numeric": 55.0,
+    "value_text": "55",
+    "raw_row": {
+      "X": "0",
+      "Y": "55",
+      "Value": "0"
+    }
+  },
+  {
+    "point_id": "a7c9398d-d8b5-538a-b389-aa02f486e59b",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "chart_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "page_number": 15,
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "chart_type": "bar_chart",
+    "chart_title_raw": "Y | X",
+    "chart_title_canonical": "y_x",
+    "series_name": "0",
+    "category_name": "Y",
+    "value_numeric": 56.0,
+    "value_text": "56",
+    "raw_row": {
+      "X": "0",
+      "Y": "56",
+      "Value": "0"
+    }
+  },
+  {
+    "point_id": "126c6049-f5e7-5f26-8ca5-c06021592a84",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "chart_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "page_number": 15,
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "chart_type": "bar_chart",
+    "chart_title_raw": "Y | X",
+    "chart_title_canonical": "y_x",
+    "series_name": "0",
+    "category_name": "Y",
+    "value_numeric": 57.0,
+    "value_text": "57",
+    "raw_row": {
+      "X": "0",
+      "Y": "57",
+      "Value": "0"
+    }
+  },
+  {
+    "point_id": "10cba961-df89-5bde-9bd0-02de44f9f07b",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "chart_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "page_number": 15,
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "chart_type": "bar_chart",
+    "chart_title_raw": "Y | X",
+    "chart_title_canonical": "y_x",
+    "series_name": "0",
+    "category_name": "Y",
+    "value_numeric": 58.0,
+    "value_text": "58",
+    "raw_row": {
+      "X": "0",
+      "Y": "58",
+      "Value": "0"
+    }
+  },
+  {
+    "point_id": "34e3c1dd-98f0-59e3-a501-c2f2cdf940a9",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "chart_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "page_number": 15,
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "chart_type": "bar_chart",
+    "chart_title_raw": "Y | X",
+    "chart_title_canonical": "y_x",
+    "series_name": "0",
+    "category_name": "Y",
+    "value_numeric": 59.0,
+    "value_text": "59",
+    "raw_row": {
+      "X": "0",
+      "Y": "59",
+      "Value": "0"
+    }
+  },
+  {
+    "point_id": "e3ac2c85-2216-5ac0-92d9-0d1b5e4000f7",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "chart_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "page_number": 15,
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "chart_type": "bar_chart",
+    "chart_title_raw": "Y | X",
+    "chart_title_canonical": "y_x",
+    "series_name": "0",
+    "category_name": "Y",
+    "value_numeric": 60.0,
+    "value_text": "60",
+    "raw_row": {
+      "X": "0",
+      "Y": "60",
+      "Value": "0"
+    }
+  },
+  {
+    "point_id": "006e9bb7-9a35-53e8-a50d-ef20195d6495",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "chart_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "page_number": 15,
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "chart_type": "bar_chart",
+    "chart_title_raw": "Y | X",
+    "chart_title_canonical": "y_x",
+    "series_name": "0",
+    "category_name": "Y",
+    "value_numeric": 61.0,
+    "value_text": "61",
+    "raw_row": {
+      "X": "0",
+      "Y": "61",
+      "Value": "0"
+    }
+  },
+  {
+    "point_id": "77112e23-8104-5b5e-9695-ea943c8f59ea",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "chart_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "page_number": 15,
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "chart_type": "bar_chart",
+    "chart_title_raw": "Y | X",
+    "chart_title_canonical": "y_x",
+    "series_name": "0",
+    "category_name": "Y",
+    "value_numeric": 62.0,
+    "value_text": "62",
+    "raw_row": {
+      "X": "0",
+      "Y": "62",
+      "Value": "0"
+    }
+  },
+  {
+    "point_id": "958c6fa7-712b-5cb4-b9d3-0051ddf48dd7",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "chart_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "page_number": 15,
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "chart_type": "bar_chart",
+    "chart_title_raw": "Y | X",
+    "chart_title_canonical": "y_x",
+    "series_name": "0",
+    "category_name": "Y",
+    "value_numeric": 63.0,
+    "value_text": "63",
+    "raw_row": {
+      "X": "0",
+      "Y": "63",
+      "Value": "0"
+    }
+  },
+  {
+    "point_id": "6a0a8ff0-4820-5b8a-ada6-7481a5ca9420",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "chart_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "page_number": 15,
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "chart_type": "bar_chart",
+    "chart_title_raw": "Y | X",
+    "chart_title_canonical": "y_x",
+    "series_name": "0",
+    "category_name": "Y",
+    "value_numeric": 64.0,
+    "value_text": "64",
+    "raw_row": {
+      "X": "0",
+      "Y": "64",
+      "Value": "0"
+    }
+  },
+  {
+    "point_id": "40d1cc15-5219-5c1e-bd46-011c2cdb4ee2",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "chart_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "page_number": 15,
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "chart_type": "bar_chart",
+    "chart_title_raw": "Y | X",
+    "chart_title_canonical": "y_x",
+    "series_name": "0",
+    "category_name": "Y",
+    "value_numeric": 65.0,
+    "value_text": "65",
+    "raw_row": {
+      "X": "0",
+      "Y": "65",
+      "Value": "0"
+    }
+  },
+  {
+    "point_id": "84881b24-cdd4-5bf6-a8c0-a9c64181d435",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "chart_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "page_number": 15,
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "chart_type": "bar_chart",
+    "chart_title_raw": "Y | X",
+    "chart_title_canonical": "y_x",
+    "series_name": "0",
+    "category_name": "Y",
+    "value_numeric": 66.0,
+    "value_text": "66",
+    "raw_row": {
+      "X": "0",
+      "Y": "66",
+      "Value": "0"
+    }
+  },
+  {
+    "point_id": "7b4be537-115d-5151-868b-08b331b17b38",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "chart_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "page_number": 15,
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "chart_type": "bar_chart",
+    "chart_title_raw": "Y | X",
+    "chart_title_canonical": "y_x",
+    "series_name": "0",
+    "category_name": "Y",
+    "value_numeric": 67.0,
+    "value_text": "67",
+    "raw_row": {
+      "X": "0",
+      "Y": "67",
+      "Value": "0"
+    }
+  },
+  {
+    "point_id": "1302e9e0-8cd6-5af6-80ea-8890d4a15d08",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "chart_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "page_number": 15,
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "chart_type": "bar_chart",
+    "chart_title_raw": "Y | X",
+    "chart_title_canonical": "y_x",
+    "series_name": "0",
+    "category_name": "Y",
+    "value_numeric": 68.0,
+    "value_text": "68",
+    "raw_row": {
+      "X": "0",
+      "Y": "68",
+      "Value": "0"
+    }
+  },
+  {
+    "point_id": "bcacbe17-7c31-5e0b-b4b4-a9cd1571f978",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "chart_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "page_number": 15,
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "chart_type": "bar_chart",
+    "chart_title_raw": "Y | X",
+    "chart_title_canonical": "y_x",
+    "series_name": "0",
+    "category_name": "Y",
+    "value_numeric": 69.0,
+    "value_text": "69",
+    "raw_row": {
+      "X": "0",
+      "Y": "69",
+      "Value": "0"
+    }
+  },
+  {
+    "point_id": "a96f6e93-92d5-51e5-af19-a530b615f677",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "chart_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "page_number": 15,
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "chart_type": "bar_chart",
+    "chart_title_raw": "Y | X",
+    "chart_title_canonical": "y_x",
+    "series_name": "0",
+    "category_name": "Y",
+    "value_numeric": 70.0,
+    "value_text": "70",
+    "raw_row": {
+      "X": "0",
+      "Y": "70",
+      "Value": "0"
+    }
+  },
+  {
+    "point_id": "5a866249-736c-5f52-a657-d66c5cd9b698",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "chart_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "page_number": 15,
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "chart_type": "bar_chart",
+    "chart_title_raw": "Y | X",
+    "chart_title_canonical": "y_x",
+    "series_name": "0",
+    "category_name": "Y",
+    "value_numeric": 71.0,
+    "value_text": "71",
+    "raw_row": {
+      "X": "0",
+      "Y": "71",
+      "Value": "0"
+    }
+  },
+  {
+    "point_id": "f969a547-bb5e-5b02-a86b-7361b0fbe431",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "chart_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "page_number": 15,
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "chart_type": "bar_chart",
+    "chart_title_raw": "Y | X",
+    "chart_title_canonical": "y_x",
+    "series_name": "0",
+    "category_name": "Y",
+    "value_numeric": 72.0,
+    "value_text": "72",
+    "raw_row": {
+      "X": "0",
+      "Y": "72",
+      "Value": "0"
+    }
+  },
+  {
+    "point_id": "0f2466d1-6173-5b6f-8add-1259c21c3c02",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "chart_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "page_number": 15,
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "chart_type": "bar_chart",
+    "chart_title_raw": "Y | X",
+    "chart_title_canonical": "y_x",
+    "series_name": "0",
+    "category_name": "Y",
+    "value_numeric": 73.0,
+    "value_text": "73",
+    "raw_row": {
+      "X": "0",
+      "Y": "73",
+      "Value": "0"
+    }
+  },
+  {
+    "point_id": "1d9d6deb-c7bb-559a-a35a-0f14fbd629ae",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "chart_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "page_number": 15,
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "chart_type": "bar_chart",
+    "chart_title_raw": "Y | X",
+    "chart_title_canonical": "y_x",
+    "series_name": "0",
+    "category_name": "Y",
+    "value_numeric": 74.0,
+    "value_text": "74",
+    "raw_row": {
+      "X": "0",
+      "Y": "74",
+      "Value": "0"
+    }
+  },
+  {
+    "point_id": "5f990fdf-ce1f-5c2b-81fa-c017f2dc9d64",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "chart_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "page_number": 15,
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "chart_type": "bar_chart",
+    "chart_title_raw": "Y | X",
+    "chart_title_canonical": "y_x",
+    "series_name": "0",
+    "category_name": "Y",
+    "value_numeric": 75.0,
+    "value_text": "75",
+    "raw_row": {
+      "X": "0",
+      "Y": "75",
+      "Value": "0"
+    }
+  },
+  {
+    "point_id": "9bdf9b10-5cf4-5ea1-a74b-8cafa24e905a",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "chart_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "page_number": 15,
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "chart_type": "bar_chart",
+    "chart_title_raw": "Y | X",
+    "chart_title_canonical": "y_x",
+    "series_name": "0",
+    "category_name": "Y",
+    "value_numeric": 76.0,
+    "value_text": "76",
+    "raw_row": {
+      "X": "0",
+      "Y": "76",
+      "Value": "0"
+    }
+  },
+  {
+    "point_id": "0881cc8e-55fb-5707-8682-3b5bf27a44b5",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "chart_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "page_number": 15,
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "chart_type": "bar_chart",
+    "chart_title_raw": "Y | X",
+    "chart_title_canonical": "y_x",
+    "series_name": "0",
+    "category_name": "Y",
+    "value_numeric": 77.0,
+    "value_text": "77",
+    "raw_row": {
+      "X": "0",
+      "Y": "77",
+      "Value": "0"
+    }
+  },
+  {
+    "point_id": "02037fe4-9c5f-5462-93fb-80f0cccdfb8c",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "chart_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "page_number": 15,
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "chart_type": "bar_chart",
+    "chart_title_raw": "Y | X",
+    "chart_title_canonical": "y_x",
+    "series_name": "0",
+    "category_name": "Y",
+    "value_numeric": 78.0,
+    "value_text": "78",
+    "raw_row": {
+      "X": "0",
+      "Y": "78",
+      "Value": "0"
+    }
+  },
+  {
+    "point_id": "da2760ba-933e-582d-9e58-b9a5682146a7",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "chart_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "page_number": 15,
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "chart_type": "bar_chart",
+    "chart_title_raw": "Y | X",
+    "chart_title_canonical": "y_x",
+    "series_name": "0",
+    "category_name": "Y",
+    "value_numeric": 79.0,
+    "value_text": "79",
+    "raw_row": {
+      "X": "0",
+      "Y": "79",
+      "Value": "0"
+    }
+  },
+  {
+    "point_id": "3781f28b-a7a9-57bf-b619-3aedc49e8ac2",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "chart_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "page_number": 15,
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "chart_type": "bar_chart",
+    "chart_title_raw": "Y | X",
+    "chart_title_canonical": "y_x",
+    "series_name": "0",
+    "category_name": "Y",
+    "value_numeric": 80.0,
+    "value_text": "80",
+    "raw_row": {
+      "X": "0",
+      "Y": "80",
+      "Value": "0"
+    }
+  },
+  {
+    "point_id": "ff7713b1-fda3-5d43-837a-f3c8dfb036b3",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "chart_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "page_number": 15,
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "chart_type": "bar_chart",
+    "chart_title_raw": "Y | X",
+    "chart_title_canonical": "y_x",
+    "series_name": "0",
+    "category_name": "Y",
+    "value_numeric": 81.0,
+    "value_text": "81",
+    "raw_row": {
+      "X": "0",
+      "Y": "81",
+      "Value": "0"
+    }
+  },
+  {
+    "point_id": "da59a4f4-f83f-55f0-8a80-ead6aaa5d4ff",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "chart_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "page_number": 15,
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "chart_type": "bar_chart",
+    "chart_title_raw": "Y | X",
+    "chart_title_canonical": "y_x",
+    "series_name": "0",
+    "category_name": "Y",
+    "value_numeric": 82.0,
+    "value_text": "82",
+    "raw_row": {
+      "X": "0",
+      "Y": "82",
+      "Value": "0"
+    }
+  },
+  {
+    "point_id": "ac5e189b-7045-5e1d-a61d-2363cf1a1958",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "chart_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "page_number": 15,
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "chart_type": "bar_chart",
+    "chart_title_raw": "Y | X",
+    "chart_title_canonical": "y_x",
+    "series_name": "0",
+    "category_name": "Y",
+    "value_numeric": 83.0,
+    "value_text": "83",
+    "raw_row": {
+      "X": "0",
+      "Y": "83",
+      "Value": "0"
+    }
+  },
+  {
+    "point_id": "96bcfbe9-12f0-5e4a-9a5e-15e6521abd79",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "chart_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "page_number": 15,
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "chart_type": "bar_chart",
+    "chart_title_raw": "Y | X",
+    "chart_title_canonical": "y_x",
+    "series_name": "0",
+    "category_name": "Y",
+    "value_numeric": 84.0,
+    "value_text": "84",
+    "raw_row": {
+      "X": "0",
+      "Y": "84",
+      "Value": "0"
+    }
+  },
+  {
+    "point_id": "0e619b9f-a186-5398-88f7-5d7b89baddc3",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "chart_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "page_number": 15,
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "chart_type": "bar_chart",
+    "chart_title_raw": "Y | X",
+    "chart_title_canonical": "y_x",
+    "series_name": "0",
+    "category_name": "Y",
+    "value_numeric": 85.0,
+    "value_text": "85",
+    "raw_row": {
+      "X": "0",
+      "Y": "85",
+      "Value": "0"
+    }
+  },
+  {
+    "point_id": "10e464e1-faf6-5e2b-b705-40f33952cc5e",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "chart_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "page_number": 15,
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "chart_type": "bar_chart",
+    "chart_title_raw": "Y | X",
+    "chart_title_canonical": "y_x",
+    "series_name": "0",
+    "category_name": "Y",
+    "value_numeric": 86.0,
+    "value_text": "86",
+    "raw_row": {
+      "X": "0",
+      "Y": "86",
+      "Value": "0"
+    }
+  },
+  {
+    "point_id": "84bc70a1-12d8-5025-bdd8-efad96fd5e8e",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "chart_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "page_number": 15,
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "chart_type": "bar_chart",
+    "chart_title_raw": "Y | X",
+    "chart_title_canonical": "y_x",
+    "series_name": "0",
+    "category_name": "Y",
+    "value_numeric": 87.0,
+    "value_text": "87",
+    "raw_row": {
+      "X": "0",
+      "Y": "87",
+      "Value": "0"
+    }
+  },
+  {
+    "point_id": "9121e031-37c3-56d1-80a7-7cdb021dd74c",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "chart_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "page_number": 15,
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "chart_type": "bar_chart",
+    "chart_title_raw": "Y | X",
+    "chart_title_canonical": "y_x",
+    "series_name": "0",
+    "category_name": "Y",
+    "value_numeric": 88.0,
+    "value_text": "88",
+    "raw_row": {
+      "X": "0",
+      "Y": "88",
+      "Value": "0"
+    }
+  },
+  {
+    "point_id": "15423e9f-2095-5c8e-8185-05dd449117d2",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "chart_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "page_number": 15,
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "chart_type": "bar_chart",
+    "chart_title_raw": "Y | X",
+    "chart_title_canonical": "y_x",
+    "series_name": "0",
+    "category_name": "Y",
+    "value_numeric": 89.0,
+    "value_text": "89",
+    "raw_row": {
+      "X": "0",
+      "Y": "89",
+      "Value": "0"
+    }
+  },
+  {
+    "point_id": "b99acd22-2392-5789-a0d9-21111663008c",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "chart_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "page_number": 15,
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "chart_type": "bar_chart",
+    "chart_title_raw": "Y | X",
+    "chart_title_canonical": "y_x",
+    "series_name": "0",
+    "category_name": "Y",
+    "value_numeric": 90.0,
+    "value_text": "90",
+    "raw_row": {
+      "X": "0",
+      "Y": "90",
+      "Value": "0"
+    }
+  },
+  {
+    "point_id": "841cb518-2c7b-507f-bcd5-207e38fbad67",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "chart_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "page_number": 15,
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "chart_type": "bar_chart",
+    "chart_title_raw": "Y | X",
+    "chart_title_canonical": "y_x",
+    "series_name": "0",
+    "category_name": "Y",
+    "value_numeric": 91.0,
+    "value_text": "91",
+    "raw_row": {
+      "X": "0",
+      "Y": "91",
+      "Value": "0"
+    }
+  },
+  {
+    "point_id": "0fc8a8a9-a7a4-503f-b78a-02e092433c34",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "chart_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "page_number": 15,
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "chart_type": "bar_chart",
+    "chart_title_raw": "Y | X",
+    "chart_title_canonical": "y_x",
+    "series_name": "0",
+    "category_name": "Y",
+    "value_numeric": 92.0,
+    "value_text": "92",
+    "raw_row": {
+      "X": "0",
+      "Y": "92",
+      "Value": "0"
+    }
+  },
+  {
+    "point_id": "921e7484-0ccd-5401-a66f-34e2d1c2ff0f",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "chart_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "page_number": 15,
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "chart_type": "bar_chart",
+    "chart_title_raw": "Y | X",
+    "chart_title_canonical": "y_x",
+    "series_name": "0",
+    "category_name": "Y",
+    "value_numeric": 93.0,
+    "value_text": "93",
+    "raw_row": {
+      "X": "0",
+      "Y": "93",
+      "Value": "0"
+    }
+  },
+  {
+    "point_id": "103f9225-4c87-5eb7-a299-b4720527a3c3",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "chart_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "page_number": 15,
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "chart_type": "bar_chart",
+    "chart_title_raw": "Y | X",
+    "chart_title_canonical": "y_x",
+    "series_name": "0",
+    "category_name": "Y",
+    "value_numeric": 94.0,
+    "value_text": "94",
+    "raw_row": {
+      "X": "0",
+      "Y": "94",
+      "Value": "0"
+    }
+  },
+  {
+    "point_id": "5828e663-b272-5f59-89d6-f0d810ef582f",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "chart_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "page_number": 15,
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "chart_type": "bar_chart",
+    "chart_title_raw": "Y | X",
+    "chart_title_canonical": "y_x",
+    "series_name": "0",
+    "category_name": "Y",
+    "value_numeric": 95.0,
+    "value_text": "95",
+    "raw_row": {
+      "X": "0",
+      "Y": "95",
+      "Value": "0"
+    }
+  },
+  {
+    "point_id": "9604f6cc-c3af-57fa-bc43-e341f93b0856",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "chart_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "page_number": 15,
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "chart_type": "bar_chart",
+    "chart_title_raw": "Y | X",
+    "chart_title_canonical": "y_x",
+    "series_name": "0",
+    "category_name": "Y",
+    "value_numeric": 96.0,
+    "value_text": "96",
+    "raw_row": {
+      "X": "0",
+      "Y": "96",
+      "Value": "0"
+    }
+  },
+  {
+    "point_id": "72a12cc2-e9d4-5d97-9151-d330ec55525d",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "chart_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "page_number": 15,
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "chart_type": "bar_chart",
+    "chart_title_raw": "Y | X",
+    "chart_title_canonical": "y_x",
+    "series_name": "0",
+    "category_name": "Y",
+    "value_numeric": 97.0,
+    "value_text": "97",
+    "raw_row": {
+      "X": "0",
+      "Y": "97",
+      "Value": "0"
+    }
+  },
+  {
+    "point_id": "a3173827-da1d-55cf-b0a7-e0997807e9fa",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "chart_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "page_number": 15,
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "chart_type": "bar_chart",
+    "chart_title_raw": "Y | X",
+    "chart_title_canonical": "y_x",
+    "series_name": "0",
+    "category_name": "Y",
+    "value_numeric": 98.0,
+    "value_text": "98",
+    "raw_row": {
+      "X": "0",
+      "Y": "98",
+      "Value": "0"
+    }
+  },
+  {
+    "point_id": "3a33c9d0-3f61-5681-b03b-3652c5d5c378",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "chart_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "page_number": 15,
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "chart_type": "bar_chart",
+    "chart_title_raw": "Y | X",
+    "chart_title_canonical": "y_x",
+    "series_name": "0",
+    "category_name": "Y",
+    "value_numeric": 99.0,
+    "value_text": "99",
+    "raw_row": {
+      "X": "0",
+      "Y": "99",
+      "Value": "0"
+    }
+  },
+  {
+    "point_id": "73a18f39-b890-524c-82ea-b3bb57010d9b",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "chart_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "page_number": 15,
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "chart_type": "bar_chart",
+    "chart_title_raw": "Y | X",
+    "chart_title_canonical": "y_x",
+    "series_name": "0",
+    "category_name": "Y",
+    "value_numeric": 100.0,
+    "value_text": "100",
+    "raw_row": {
+      "X": "0",
+      "Y": "100",
+      "Value": "0"
+    }
+  },
+  {
+    "point_id": "9f5be737-f389-50b2-9933-a3834d89b2aa",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "chart_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "page_number": 15,
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "chart_type": "bar_chart",
+    "chart_title_raw": "Y | X",
+    "chart_title_canonical": "y_x",
+    "series_name": "0",
+    "category_name": "Y",
+    "value_numeric": 101.0,
+    "value_text": "101",
+    "raw_row": {
+      "X": "0",
+      "Y": "101",
+      "Value": "0"
+    }
+  },
+  {
+    "point_id": "df95a301-e9d7-5f0a-b7e9-a11a2c928995",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "chart_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "page_number": 15,
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "chart_type": "bar_chart",
+    "chart_title_raw": "Y | X",
+    "chart_title_canonical": "y_x",
+    "series_name": "0",
+    "category_name": "Y",
+    "value_numeric": 102.0,
+    "value_text": "102",
+    "raw_row": {
+      "X": "0",
+      "Y": "102",
+      "Value": "0"
+    }
+  },
+  {
+    "point_id": "ac876330-803d-5a5b-8f3d-79851912b610",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "chart_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "page_number": 15,
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "chart_type": "bar_chart",
+    "chart_title_raw": "Y | X",
+    "chart_title_canonical": "y_x",
+    "series_name": "0",
+    "category_name": "Y",
+    "value_numeric": 103.0,
+    "value_text": "103",
+    "raw_row": {
+      "X": "0",
+      "Y": "103",
+      "Value": "0"
+    }
+  },
+  {
+    "point_id": "49cd368e-a0f9-5849-9427-a1712a9d8f98",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "chart_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "page_number": 15,
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "chart_type": "bar_chart",
+    "chart_title_raw": "Y | X",
+    "chart_title_canonical": "y_x",
+    "series_name": "0",
+    "category_name": "Y",
+    "value_numeric": 104.0,
+    "value_text": "104",
+    "raw_row": {
+      "X": "0",
+      "Y": "104",
+      "Value": "0"
+    }
+  },
+  {
+    "point_id": "7789db18-fe67-5646-9c3e-28f99d5b2eaa",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "chart_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "page_number": 15,
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "chart_type": "bar_chart",
+    "chart_title_raw": "Y | X",
+    "chart_title_canonical": "y_x",
+    "series_name": "0",
+    "category_name": "Y",
+    "value_numeric": 105.0,
+    "value_text": "105",
+    "raw_row": {
+      "X": "0",
+      "Y": "105",
+      "Value": "0"
+    }
+  },
+  {
+    "point_id": "4869da45-132b-5b33-ad93-d07200658c09",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "chart_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "page_number": 15,
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "chart_type": "bar_chart",
+    "chart_title_raw": "Y | X",
+    "chart_title_canonical": "y_x",
+    "series_name": "0",
+    "category_name": "Y",
+    "value_numeric": 106.0,
+    "value_text": "106",
+    "raw_row": {
+      "X": "0",
+      "Y": "106",
+      "Value": "0"
+    }
+  },
+  {
+    "point_id": "e5fa6b20-960f-58c6-a776-c5757f42b5f3",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "chart_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "page_number": 15,
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "chart_type": "bar_chart",
+    "chart_title_raw": "Y | X",
+    "chart_title_canonical": "y_x",
+    "series_name": "0",
+    "category_name": "Y",
+    "value_numeric": 107.0,
+    "value_text": "107",
+    "raw_row": {
+      "X": "0",
+      "Y": "107",
+      "Value": "0"
+    }
+  },
+  {
+    "point_id": "37c82634-65c4-5212-859e-f82843196ed1",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "chart_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "page_number": 15,
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "chart_type": "bar_chart",
+    "chart_title_raw": "Y | X",
+    "chart_title_canonical": "y_x",
+    "series_name": "0",
+    "category_name": "Y",
+    "value_numeric": 108.0,
+    "value_text": "108",
+    "raw_row": {
+      "X": "0",
+      "Y": "108",
+      "Value": "0"
+    }
+  },
+  {
+    "point_id": "f56ef7ba-dced-5387-a647-2c6cf8f093df",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "chart_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "page_number": 15,
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "chart_type": "bar_chart",
+    "chart_title_raw": "Y | X",
+    "chart_title_canonical": "y_x",
+    "series_name": "0",
+    "category_name": "Y",
+    "value_numeric": 109.0,
+    "value_text": "109",
+    "raw_row": {
+      "X": "0",
+      "Y": "109",
+      "Value": "0"
+    }
+  },
+  {
+    "point_id": "e72bd85e-6d3c-58de-a388-2c9ecfe5dce3",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "chart_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "page_number": 15,
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "chart_type": "bar_chart",
+    "chart_title_raw": "Y | X",
+    "chart_title_canonical": "y_x",
+    "series_name": "0",
+    "category_name": "Y",
+    "value_numeric": 110.0,
+    "value_text": "110",
+    "raw_row": {
+      "X": "0",
+      "Y": "110",
+      "Value": "0"
+    }
+  },
+  {
+    "point_id": "a030e867-d894-5062-8957-b04cde15e190",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "chart_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "page_number": 15,
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "chart_type": "bar_chart",
+    "chart_title_raw": "Y | X",
+    "chart_title_canonical": "y_x",
+    "series_name": "0",
+    "category_name": "Y",
+    "value_numeric": 111.0,
+    "value_text": "111",
+    "raw_row": {
+      "X": "0",
+      "Y": "111",
+      "Value": "0"
+    }
+  },
+  {
+    "point_id": "12cbd091-d0ba-5185-87b4-0c71f159b819",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "chart_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "page_number": 15,
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "chart_type": "bar_chart",
+    "chart_title_raw": "Y | X",
+    "chart_title_canonical": "y_x",
+    "series_name": "0",
+    "category_name": "Y",
+    "value_numeric": 112.0,
+    "value_text": "112",
+    "raw_row": {
+      "X": "0",
+      "Y": "112",
+      "Value": "0"
+    }
+  },
+  {
+    "point_id": "d9b58ed9-9682-51e2-8077-9906440c6d26",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "chart_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "page_number": 15,
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "chart_type": "bar_chart",
+    "chart_title_raw": "Y | X",
+    "chart_title_canonical": "y_x",
+    "series_name": "0",
+    "category_name": "Y",
+    "value_numeric": 113.0,
+    "value_text": "113",
+    "raw_row": {
+      "X": "0",
+      "Y": "113",
+      "Value": "0"
+    }
+  },
+  {
+    "point_id": "55e1f5cb-9c7e-5d9e-ab0c-82c78f6500c1",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "chart_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "page_number": 15,
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "chart_type": "bar_chart",
+    "chart_title_raw": "Y | X",
+    "chart_title_canonical": "y_x",
+    "series_name": "0",
+    "category_name": "Y",
+    "value_numeric": 114.0,
+    "value_text": "114",
+    "raw_row": {
+      "X": "0",
+      "Y": "114",
+      "Value": "0"
+    }
+  },
+  {
+    "point_id": "4eb2e52e-3b0d-5124-ae89-6cfbd2756723",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "chart_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "page_number": 15,
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "chart_type": "bar_chart",
+    "chart_title_raw": "Y | X",
+    "chart_title_canonical": "y_x",
+    "series_name": "0",
+    "category_name": "Y",
+    "value_numeric": 115.0,
+    "value_text": "115",
+    "raw_row": {
+      "X": "0",
+      "Y": "115",
+      "Value": "0"
+    }
+  },
+  {
+    "point_id": "489d2b1c-9ca5-5ab8-861a-c030e0fa43a9",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "chart_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "page_number": 15,
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "chart_type": "bar_chart",
+    "chart_title_raw": "Y | X",
+    "chart_title_canonical": "y_x",
+    "series_name": "0",
+    "category_name": "Y",
+    "value_numeric": 116.0,
+    "value_text": "116",
+    "raw_row": {
+      "X": "0",
+      "Y": "116",
+      "Value": "0"
+    }
+  },
+  {
+    "point_id": "791e2b54-8223-5efa-81ad-36e2289c9da0",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "chart_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "page_number": 15,
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "chart_type": "bar_chart",
+    "chart_title_raw": "Y | X",
+    "chart_title_canonical": "y_x",
+    "series_name": "0",
+    "category_name": "Y",
+    "value_numeric": 117.0,
+    "value_text": "117",
+    "raw_row": {
+      "X": "0",
+      "Y": "117",
+      "Value": "0"
+    }
+  },
+  {
+    "point_id": "36769fef-6609-542a-9072-47dc367d0659",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "chart_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "page_number": 15,
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "chart_type": "bar_chart",
+    "chart_title_raw": "Y | X",
+    "chart_title_canonical": "y_x",
+    "series_name": "0",
+    "category_name": "Y",
+    "value_numeric": 118.0,
+    "value_text": "118",
+    "raw_row": {
+      "X": "0",
+      "Y": "118",
+      "Value": "0"
+    }
+  },
+  {
+    "point_id": "64006e30-483d-5b4b-b8ee-89b21981547e",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "chart_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "page_number": 15,
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "chart_type": "bar_chart",
+    "chart_title_raw": "Y | X",
+    "chart_title_canonical": "y_x",
+    "series_name": "0",
+    "category_name": "Y",
+    "value_numeric": 119.0,
+    "value_text": "119",
+    "raw_row": {
+      "X": "0",
+      "Y": "119",
+      "Value": "0"
+    }
+  },
+  {
+    "point_id": "857b9442-8037-5b2d-81eb-7b9cc2125d74",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "chart_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "page_number": 15,
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "chart_type": "bar_chart",
+    "chart_title_raw": "Y | X",
+    "chart_title_canonical": "y_x",
+    "series_name": "0",
+    "category_name": "Y",
+    "value_numeric": 120.0,
+    "value_text": "120",
+    "raw_row": {
+      "X": "0",
+      "Y": "120",
+      "Value": "0"
+    }
+  },
+  {
+    "point_id": "941c7ef5-5403-57df-ac9c-42dd3034adf3",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "chart_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "page_number": 15,
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "chart_type": "bar_chart",
+    "chart_title_raw": "Y | X",
+    "chart_title_canonical": "y_x",
+    "series_name": "0",
+    "category_name": "Y",
+    "value_numeric": 121.0,
+    "value_text": "121",
+    "raw_row": {
+      "X": "0",
+      "Y": "121",
+      "Value": "0"
+    }
+  },
+  {
+    "point_id": "322e6d49-81cc-5889-a42b-4ab4a8dd13cb",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "chart_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "page_number": 15,
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "chart_type": "bar_chart",
+    "chart_title_raw": "Y | X",
+    "chart_title_canonical": "y_x",
+    "series_name": "0",
+    "category_name": "Y",
+    "value_numeric": 122.0,
+    "value_text": "122",
+    "raw_row": {
+      "X": "0",
+      "Y": "122",
+      "Value": "0"
+    }
+  },
+  {
+    "point_id": "39f71992-5b49-569c-86b3-7503707b74c9",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "chart_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "page_number": 15,
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "chart_type": "bar_chart",
+    "chart_title_raw": "Y | X",
+    "chart_title_canonical": "y_x",
+    "series_name": "0",
+    "category_name": "Y",
+    "value_numeric": 123.0,
+    "value_text": "123",
+    "raw_row": {
+      "X": "0",
+      "Y": "123",
+      "Value": "0"
+    }
+  },
+  {
+    "point_id": "6630186f-3332-5ee4-8842-ad6d3564653d",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "chart_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "page_number": 15,
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "chart_type": "bar_chart",
+    "chart_title_raw": "Y | X",
+    "chart_title_canonical": "y_x",
+    "series_name": "0",
+    "category_name": "Y",
+    "value_numeric": 124.0,
+    "value_text": "124",
+    "raw_row": {
+      "X": "0",
+      "Y": "124",
+      "Value": "0"
+    }
+  },
+  {
+    "point_id": "f6b5028f-9f36-5e08-8af1-5bec27265573",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "chart_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "page_number": 15,
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "chart_type": "bar_chart",
+    "chart_title_raw": "Y | X",
+    "chart_title_canonical": "y_x",
+    "series_name": "0",
+    "category_name": "Y",
+    "value_numeric": 125.0,
+    "value_text": "125",
+    "raw_row": {
+      "X": "0",
+      "Y": "125",
+      "Value": "0"
+    }
+  },
+  {
+    "point_id": "5d386ef9-7406-504c-86e0-9a4e6b507699",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "chart_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "page_number": 15,
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "chart_type": "bar_chart",
+    "chart_title_raw": "Y | X",
+    "chart_title_canonical": "y_x",
+    "series_name": "0",
+    "category_name": "Y",
+    "value_numeric": 126.0,
+    "value_text": "126",
+    "raw_row": {
+      "X": "0",
+      "Y": "126",
+      "Value": "0"
+    }
+  },
+  {
+    "point_id": "8bd364eb-fba2-5716-a831-6b566dbf9bb1",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "chart_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "page_number": 15,
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "chart_type": "bar_chart",
+    "chart_title_raw": "Y | X",
+    "chart_title_canonical": "y_x",
+    "series_name": "0",
+    "category_name": "Y",
+    "value_numeric": 127.0,
+    "value_text": "127",
+    "raw_row": {
+      "X": "0",
+      "Y": "127",
+      "Value": "0"
+    }
+  },
+  {
+    "point_id": "e8ac5966-4ba2-5215-b63e-e18c09d9aa48",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "chart_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "page_number": 15,
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "chart_type": "bar_chart",
+    "chart_title_raw": "Y | X",
+    "chart_title_canonical": "y_x",
+    "series_name": "0",
+    "category_name": "Y",
+    "value_numeric": 128.0,
+    "value_text": "128",
+    "raw_row": {
+      "X": "0",
+      "Y": "128",
+      "Value": "0"
+    }
+  },
+  {
+    "point_id": "a793d17d-06ed-5278-ba09-4228fd2f4997",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "chart_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "page_number": 15,
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "chart_type": "bar_chart",
+    "chart_title_raw": "Y | X",
+    "chart_title_canonical": "y_x",
+    "series_name": "0",
+    "category_name": "Y",
+    "value_numeric": 129.0,
+    "value_text": "129",
+    "raw_row": {
+      "X": "0",
+      "Y": "129",
+      "Value": "0"
+    }
+  },
+  {
+    "point_id": "aa59c81e-1d8b-5ccd-bde6-5351a8ec999d",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "chart_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "page_number": 15,
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "chart_type": "bar_chart",
+    "chart_title_raw": "Y | X",
+    "chart_title_canonical": "y_x",
+    "series_name": "0",
+    "category_name": "Y",
+    "value_numeric": 130.0,
+    "value_text": "130",
+    "raw_row": {
+      "X": "0",
+      "Y": "130",
+      "Value": "0"
+    }
+  },
+  {
+    "point_id": "4ba0e5ca-f9ef-568f-b7fd-5c6c5714e134",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "chart_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "page_number": 15,
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "chart_type": "bar_chart",
+    "chart_title_raw": "Y | X",
+    "chart_title_canonical": "y_x",
+    "series_name": "0",
+    "category_name": "Y",
+    "value_numeric": 131.0,
+    "value_text": "131",
+    "raw_row": {
+      "X": "0",
+      "Y": "131",
+      "Value": "0"
+    }
+  },
+  {
+    "point_id": "640c1aff-7f67-52c8-9aef-e38bd4aa56ca",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "chart_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "page_number": 15,
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "chart_type": "bar_chart",
+    "chart_title_raw": "Y | X",
+    "chart_title_canonical": "y_x",
+    "series_name": "0",
+    "category_name": "Y",
+    "value_numeric": 132.0,
+    "value_text": "132",
+    "raw_row": {
+      "X": "0",
+      "Y": "132",
+      "Value": "0"
+    }
+  },
+  {
+    "point_id": "1f186af0-9cef-57a0-b91d-56388b50f74e",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "chart_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "page_number": 15,
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "chart_type": "bar_chart",
+    "chart_title_raw": "Y | X",
+    "chart_title_canonical": "y_x",
+    "series_name": "0",
+    "category_name": "Y",
+    "value_numeric": 133.0,
+    "value_text": "133",
+    "raw_row": {
+      "X": "0",
+      "Y": "133",
+      "Value": "0"
+    }
+  },
+  {
+    "point_id": "a21ebc9d-2cb4-557d-b678-49e5119e1cd8",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "chart_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "page_number": 15,
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "chart_type": "bar_chart",
+    "chart_title_raw": "Y | X",
+    "chart_title_canonical": "y_x",
+    "series_name": "0",
+    "category_name": "Y",
+    "value_numeric": 134.0,
+    "value_text": "134",
+    "raw_row": {
+      "X": "0",
+      "Y": "134",
+      "Value": "0"
+    }
+  },
+  {
+    "point_id": "7592f39f-d049-5df6-a1fa-429632e0906c",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "chart_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "page_number": 15,
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "chart_type": "bar_chart",
+    "chart_title_raw": "Y | X",
+    "chart_title_canonical": "y_x",
+    "series_name": "0",
+    "category_name": "Y",
+    "value_numeric": 135.0,
+    "value_text": "135",
+    "raw_row": {
+      "X": "0",
+      "Y": "135",
+      "Value": "0"
+    }
+  },
+  {
+    "point_id": "6bb5c615-a2af-59f1-a8fd-6f0ec39d7743",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "chart_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "page_number": 15,
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "chart_type": "bar_chart",
+    "chart_title_raw": "Y | X",
+    "chart_title_canonical": "y_x",
+    "series_name": "0",
+    "category_name": "Y",
+    "value_numeric": 136.0,
+    "value_text": "136",
+    "raw_row": {
+      "X": "0",
+      "Y": "136",
+      "Value": "0"
+    }
+  },
+  {
+    "point_id": "9fdfa078-1cf1-5340-9bf2-d03365de68a5",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "chart_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "page_number": 15,
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "chart_type": "bar_chart",
+    "chart_title_raw": "Y | X",
+    "chart_title_canonical": "y_x",
+    "series_name": "0",
+    "category_name": "Y",
+    "value_numeric": 137.0,
+    "value_text": "137",
+    "raw_row": {
+      "X": "0",
+      "Y": "137",
+      "Value": "0"
+    }
+  },
+  {
+    "point_id": "414c50e0-9c55-5a65-a0a5-0d646c63f171",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "chart_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "page_number": 15,
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "chart_type": "bar_chart",
+    "chart_title_raw": "Y | X",
+    "chart_title_canonical": "y_x",
+    "series_name": "0",
+    "category_name": "Y",
+    "value_numeric": 138.0,
+    "value_text": "138",
+    "raw_row": {
+      "X": "0",
+      "Y": "138",
+      "Value": "0"
+    }
+  },
+  {
+    "point_id": "5acb77c9-fb3a-579a-a4b6-5a1bfdeb5a34",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "chart_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "page_number": 15,
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "chart_type": "bar_chart",
+    "chart_title_raw": "Y | X",
+    "chart_title_canonical": "y_x",
+    "series_name": "0",
+    "category_name": "Y",
+    "value_numeric": 139.0,
+    "value_text": "139",
+    "raw_row": {
+      "X": "0",
+      "Y": "139",
+      "Value": "0"
+    }
+  },
+  {
+    "point_id": "d443060c-5021-5d22-844c-ffa474efad28",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "chart_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "page_number": 15,
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "chart_type": "bar_chart",
+    "chart_title_raw": "Y | X",
+    "chart_title_canonical": "y_x",
+    "series_name": "0",
+    "category_name": "Y",
+    "value_numeric": 140.0,
+    "value_text": "140",
+    "raw_row": {
+      "X": "0",
+      "Y": "140",
+      "Value": "0"
+    }
+  },
+  {
+    "point_id": "1494e7f0-e487-5621-9ed7-8b02cf8121b5",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "chart_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "page_number": 15,
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "chart_type": "bar_chart",
+    "chart_title_raw": "Y | X",
+    "chart_title_canonical": "y_x",
+    "series_name": "0",
+    "category_name": "Y",
+    "value_numeric": 141.0,
+    "value_text": "141",
+    "raw_row": {
+      "X": "0",
+      "Y": "141",
+      "Value": "0"
+    }
+  },
+  {
+    "point_id": "cd556a3b-54de-503b-9800-6a9e4e00d83d",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "chart_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "page_number": 15,
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "chart_type": "bar_chart",
+    "chart_title_raw": "Y | X",
+    "chart_title_canonical": "y_x",
+    "series_name": "0",
+    "category_name": "Y",
+    "value_numeric": 142.0,
+    "value_text": "142",
+    "raw_row": {
+      "X": "0",
+      "Y": "142",
+      "Value": "0"
+    }
+  },
+  {
+    "point_id": "1d53bac4-21f8-5f99-a6d3-6c624896ba1f",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "chart_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "page_number": 15,
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "chart_type": "bar_chart",
+    "chart_title_raw": "Y | X",
+    "chart_title_canonical": "y_x",
+    "series_name": "0",
+    "category_name": "Y",
+    "value_numeric": 143.0,
+    "value_text": "143",
+    "raw_row": {
+      "X": "0",
+      "Y": "143",
+      "Value": "0"
+    }
+  },
+  {
+    "point_id": "3a4822d4-59d6-5f6f-b181-4b2c4a2c8a73",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "chart_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "page_number": 15,
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "chart_type": "bar_chart",
+    "chart_title_raw": "Y | X",
+    "chart_title_canonical": "y_x",
+    "series_name": "0",
+    "category_name": "Y",
+    "value_numeric": 144.0,
+    "value_text": "144",
+    "raw_row": {
+      "X": "0",
+      "Y": "144",
+      "Value": "0"
+    }
+  },
+  {
+    "point_id": "ca0caf93-14cf-5ca9-afda-2368b308c029",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "chart_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "page_number": 15,
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "chart_type": "bar_chart",
+    "chart_title_raw": "Y | X",
+    "chart_title_canonical": "y_x",
+    "series_name": "0",
+    "category_name": "Y",
+    "value_numeric": 145.0,
+    "value_text": "145",
+    "raw_row": {
+      "X": "0",
+      "Y": "145",
+      "Value": "0"
+    }
+  },
+  {
+    "point_id": "78fffd4c-8d2f-5261-b4c3-de5e3d079438",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "chart_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "page_number": 15,
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "chart_type": "bar_chart",
+    "chart_title_raw": "Y | X",
+    "chart_title_canonical": "y_x",
+    "series_name": "0",
+    "category_name": "Y",
+    "value_numeric": 146.0,
+    "value_text": "146",
+    "raw_row": {
+      "X": "0",
+      "Y": "146",
+      "Value": "0"
+    }
+  },
+  {
+    "point_id": "17bf47d6-4428-5e0c-b2ae-d918f14209d3",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "chart_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "page_number": 15,
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "chart_type": "bar_chart",
+    "chart_title_raw": "Y | X",
+    "chart_title_canonical": "y_x",
+    "series_name": "0",
+    "category_name": "Y",
+    "value_numeric": 147.0,
+    "value_text": "147",
+    "raw_row": {
+      "X": "0",
+      "Y": "147",
+      "Value": "0"
+    }
+  },
+  {
+    "point_id": "5c84e911-6e51-50d0-94d3-3323bc102130",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "chart_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "page_number": 15,
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "chart_type": "bar_chart",
+    "chart_title_raw": "Y | X",
+    "chart_title_canonical": "y_x",
+    "series_name": "0",
+    "category_name": "Y",
+    "value_numeric": 148.0,
+    "value_text": "148",
+    "raw_row": {
+      "X": "0",
+      "Y": "148",
+      "Value": "0"
+    }
+  },
+  {
+    "point_id": "108bca8b-32cc-5f20-8a3d-f3faedf615e0",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "chart_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "page_number": 15,
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "chart_type": "bar_chart",
+    "chart_title_raw": "Y | X",
+    "chart_title_canonical": "y_x",
+    "series_name": "0",
+    "category_name": "Y",
+    "value_numeric": 149.0,
+    "value_text": "149",
+    "raw_row": {
+      "X": "0",
+      "Y": "149",
+      "Value": "0"
+    }
+  },
+  {
+    "point_id": "042eb2b5-094e-599d-a728-1e05b1afebaa",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "chart_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "page_number": 15,
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "chart_type": "bar_chart",
+    "chart_title_raw": "Y | X",
+    "chart_title_canonical": "y_x",
+    "series_name": "0",
+    "category_name": "Y",
+    "value_numeric": 150.0,
+    "value_text": "150",
+    "raw_row": {
+      "X": "0",
+      "Y": "150",
+      "Value": "0"
+    }
+  },
+  {
+    "point_id": "071a18e3-bd5a-5351-864a-412562e90d40",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "chart_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "page_number": 15,
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "chart_type": "bar_chart",
+    "chart_title_raw": "Y | X",
+    "chart_title_canonical": "y_x",
+    "series_name": "0",
+    "category_name": "Y",
+    "value_numeric": 151.0,
+    "value_text": "151",
+    "raw_row": {
+      "X": "0",
+      "Y": "151",
+      "Value": "0"
+    }
+  },
+  {
+    "point_id": "646c2457-9b11-52d5-88e5-5acd1679d623",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "chart_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "page_number": 15,
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "chart_type": "bar_chart",
+    "chart_title_raw": "Y | X",
+    "chart_title_canonical": "y_x",
+    "series_name": "0",
+    "category_name": "Y",
+    "value_numeric": 152.0,
+    "value_text": "152",
+    "raw_row": {
+      "X": "0",
+      "Y": "152",
+      "Value": "0"
+    }
+  },
+  {
+    "point_id": "bf62f406-2411-5466-b703-584323cf88d8",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "chart_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "page_number": 15,
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "chart_type": "bar_chart",
+    "chart_title_raw": "Y | X",
+    "chart_title_canonical": "y_x",
+    "series_name": "0",
+    "category_name": "Y",
+    "value_numeric": 153.0,
+    "value_text": "153",
+    "raw_row": {
+      "X": "0",
+      "Y": "153",
+      "Value": "0"
+    }
+  },
+  {
+    "point_id": "d97a75f4-a587-56fc-95e1-872ae00d9ead",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "chart_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "page_number": 15,
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "chart_type": "bar_chart",
+    "chart_title_raw": "Y | X",
+    "chart_title_canonical": "y_x",
+    "series_name": "0",
+    "category_name": "Y",
+    "value_numeric": 154.0,
+    "value_text": "154",
+    "raw_row": {
+      "X": "0",
+      "Y": "154",
+      "Value": "0"
+    }
+  },
+  {
+    "point_id": "3b45b280-6dcc-5ffd-a913-9bf83c054f32",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "chart_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "page_number": 15,
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "chart_type": "bar_chart",
+    "chart_title_raw": "Y | X",
+    "chart_title_canonical": "y_x",
+    "series_name": "0",
+    "category_name": "Y",
+    "value_numeric": 155.0,
+    "value_text": "155",
+    "raw_row": {
+      "X": "0",
+      "Y": "155",
+      "Value": "0"
+    }
+  },
+  {
+    "point_id": "e0024466-dd5e-58bb-b913-0234d455cb16",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "chart_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "page_number": 15,
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "chart_type": "bar_chart",
+    "chart_title_raw": "Y | X",
+    "chart_title_canonical": "y_x",
+    "series_name": "0",
+    "category_name": "Y",
+    "value_numeric": 156.0,
+    "value_text": "156",
+    "raw_row": {
+      "X": "0",
+      "Y": "156",
+      "Value": "0"
+    }
+  },
+  {
+    "point_id": "cc227202-f9a1-5d8c-ae55-a53b60ba2f97",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "chart_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "page_number": 15,
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "chart_type": "bar_chart",
+    "chart_title_raw": "Y | X",
+    "chart_title_canonical": "y_x",
+    "series_name": "0",
+    "category_name": "Y",
+    "value_numeric": 157.0,
+    "value_text": "157",
+    "raw_row": {
+      "X": "0",
+      "Y": "157",
+      "Value": "0"
+    }
+  },
+  {
+    "point_id": "ce253437-e181-5190-babd-2b33dde01ddd",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "chart_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "page_number": 15,
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "chart_type": "bar_chart",
+    "chart_title_raw": "Y | X",
+    "chart_title_canonical": "y_x",
+    "series_name": "0",
+    "category_name": "Y",
+    "value_numeric": 158.0,
+    "value_text": "158",
+    "raw_row": {
+      "X": "0",
+      "Y": "158",
+      "Value": "0"
+    }
+  },
+  {
+    "point_id": "5edb0504-997b-59ac-a83d-a23dec7ab001",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "chart_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "page_number": 15,
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "chart_type": "bar_chart",
+    "chart_title_raw": "Y | X",
+    "chart_title_canonical": "y_x",
+    "series_name": "0",
+    "category_name": "Y",
+    "value_numeric": 159.0,
+    "value_text": "159",
+    "raw_row": {
+      "X": "0",
+      "Y": "159",
+      "Value": "0"
+    }
+  },
+  {
+    "point_id": "124c4a8c-06fc-5482-a7c4-ffd796938f80",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "chart_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "page_number": 15,
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "chart_type": "bar_chart",
+    "chart_title_raw": "Y | X",
+    "chart_title_canonical": "y_x",
+    "series_name": "0",
+    "category_name": "Y",
+    "value_numeric": 160.0,
+    "value_text": "160",
+    "raw_row": {
+      "X": "0",
+      "Y": "160",
+      "Value": "0"
+    }
+  },
+  {
+    "point_id": "2221a874-9a0f-516a-808e-44c77a9792c8",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "chart_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "page_number": 15,
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "chart_type": "bar_chart",
+    "chart_title_raw": "Y | X",
+    "chart_title_canonical": "y_x",
+    "series_name": "0",
+    "category_name": "Y",
+    "value_numeric": 161.0,
+    "value_text": "161",
+    "raw_row": {
+      "X": "0",
+      "Y": "161",
+      "Value": "0"
+    }
+  },
+  {
+    "point_id": "bff87f68-37e8-5143-87a1-3098dfba3a8f",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "chart_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "page_number": 15,
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "chart_type": "bar_chart",
+    "chart_title_raw": "Y | X",
+    "chart_title_canonical": "y_x",
+    "series_name": "0",
+    "category_name": "Y",
+    "value_numeric": 162.0,
+    "value_text": "162",
+    "raw_row": {
+      "X": "0",
+      "Y": "162",
+      "Value": "0"
+    }
+  },
+  {
+    "point_id": "a387b70d-7125-581f-a84a-2219fb3d70d2",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "chart_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "page_number": 15,
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "chart_type": "bar_chart",
+    "chart_title_raw": "Y | X",
+    "chart_title_canonical": "y_x",
+    "series_name": "0",
+    "category_name": "Y",
+    "value_numeric": 163.0,
+    "value_text": "163",
+    "raw_row": {
+      "X": "0",
+      "Y": "163",
+      "Value": "0"
+    }
+  },
+  {
+    "point_id": "68d02235-9f39-50da-8195-93d169fdf01a",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "chart_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "page_number": 15,
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "chart_type": "bar_chart",
+    "chart_title_raw": "Y | X",
+    "chart_title_canonical": "y_x",
+    "series_name": "0",
+    "category_name": "Y",
+    "value_numeric": 164.0,
+    "value_text": "164",
+    "raw_row": {
+      "X": "0",
+      "Y": "164",
+      "Value": "0"
+    }
+  },
+  {
+    "point_id": "0342c3b3-991b-5ddb-ad11-44f1f1cd1e1a",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "chart_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "page_number": 15,
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "chart_type": "bar_chart",
+    "chart_title_raw": "Y | X",
+    "chart_title_canonical": "y_x",
+    "series_name": "0",
+    "category_name": "Y",
+    "value_numeric": 165.0,
+    "value_text": "165",
+    "raw_row": {
+      "X": "0",
+      "Y": "165",
+      "Value": "0"
+    }
+  },
+  {
+    "point_id": "bc2815ef-6591-5b03-91c4-d2f709bff70f",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "chart_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "page_number": 15,
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "chart_type": "bar_chart",
+    "chart_title_raw": "Y | X",
+    "chart_title_canonical": "y_x",
+    "series_name": "0",
+    "category_name": "Y",
+    "value_numeric": 166.0,
+    "value_text": "166",
+    "raw_row": {
+      "X": "0",
+      "Y": "166",
+      "Value": "0"
+    }
+  },
+  {
+    "point_id": "30f09486-d53c-5e62-824a-5676acd1f45e",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "chart_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "page_number": 15,
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "chart_type": "bar_chart",
+    "chart_title_raw": "Y | X",
+    "chart_title_canonical": "y_x",
+    "series_name": "0",
+    "category_name": "Y",
+    "value_numeric": 167.0,
+    "value_text": "167",
+    "raw_row": {
+      "X": "0",
+      "Y": "167",
+      "Value": "0"
+    }
+  },
+  {
+    "point_id": "c10b3740-7921-5c3e-a53e-a6954fe4981d",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "chart_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "page_number": 15,
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "chart_type": "bar_chart",
+    "chart_title_raw": "Y | X",
+    "chart_title_canonical": "y_x",
+    "series_name": "0",
+    "category_name": "Y",
+    "value_numeric": 168.0,
+    "value_text": "168",
+    "raw_row": {
+      "X": "0",
+      "Y": "168",
+      "Value": "0"
+    }
+  },
+  {
+    "point_id": "e445756c-0322-5e5f-8c14-b3db36547b79",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "chart_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "page_number": 15,
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "chart_type": "bar_chart",
+    "chart_title_raw": "Y | X",
+    "chart_title_canonical": "y_x",
+    "series_name": "0",
+    "category_name": "Y",
+    "value_numeric": null,
+    "value_text": null,
+    "raw_row": {
+      "X": "0",
+      "Y": "",
+      "Value": ""
+    }
+  }
+]

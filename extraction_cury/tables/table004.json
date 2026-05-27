@@ -1,0 +1,55 @@
+{
+  "kind": "table",
+  "name": "4.633 UNIDADES,",
+  "schema": [
+    "Produção",
+    "1T26",
+    "4T25",
+    "%T/T",
+    "1T25",
+    "%A/A",
+    "1T26 UDM*1T25",
+    "UDM*",
+    "%A/A"
+  ],
+  "rows": [
+    [
+      "Unidades Produzidas",
+      "4.633",
+      "4.472",
+      "3,6%",
+      "3.363",
+      "37,8%",
+      "18.060",
+      "14.450",
+      "25,0%"
+    ],
+    [
+      "Unidades Concluídas",
+      "1.884",
+      "4.882",
+      "-61,4%",
+      "2.220",
+      "-15,1%",
+      "14.641",
+      "9.552",
+      "53,3%"
+    ],
+    [
+      "Obras em Andamento",
+      "87",
+      "84",
+      "3,6%",
+      "72",
+      "20,8%",
+      "84",
+      "72",
+      "16,7%"
+    ]
+  ],
+  "files": {
+    "metadata": "tables/table004/metadata.json",
+    "cells": "tables/table004/cells.json",
+    "normalized_rows": "tables/table004/normalized_rows.json"
+  }
+}

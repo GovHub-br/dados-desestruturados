@@ -1,0 +1,31 @@
+{
+  "kind": "table",
+  "table_id": "f0f1e575-5a8e-5ad1-a589-ebfd43615a48",
+  "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+  "page_number": 4,
+  "section_id": "12097fa3-49c1-5fbc-91b2-4fdbabc67f64",
+  "section_title": "R$ 2.646,8 MILHÕES",
+  "title_raw": "R$ 2.646,8 MILHÕES",
+  "title_canonical": "r_26468_milhoes",
+  "bbox": {
+    "page_number": 4,
+    "left": 51.07921600341797,
+    "top": 270.1937255859375,
+    "right": 904.115966796875,
+    "bottom": 61.3275146484375,
+    "coord_origin": "BOTTOMLEFT"
+  },
+  "row_count": 7,
+  "column_count": 9,
+  "schema": [
+    "Lançamentos",
+    "1T26",
+    "4T25",
+    "%T/T",
+    "1T25",
+    "%A/A",
+    "1T26 UDM*",
+    "1T25 UDM*",
+    "%A/A"
+  ]
+}

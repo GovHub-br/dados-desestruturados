@@ -1,0 +1,39 @@
+{
+  "kind": "chart",
+  "name": "VGV Lançamentos (R$ milhões) | Quarter",
+  "schema": [
+    "Quarter",
+    "VGV Lançamentos (R$ milhões)",
+    "VGV Lançamentos (%)",
+    "Preço Médio por unidade (R$ mil)",
+    "Preço Médio por unidade (%)"
+  ],
+  "rows": [
+    [
+      "1T25",
+      "2783.5",
+      "-4.9",
+      "304.8",
+      "8.5"
+    ],
+    [
+      "4T25",
+      "1289.5",
+      "105.3",
+      "336.4",
+      "-1.7"
+    ],
+    [
+      "1T26",
+      "2646.8",
+      "",
+      "330.8",
+      ""
+    ]
+  ],
+  "files": {
+    "metadata": "charts/chart001/metadata.json",
+    "points": "charts/chart001/points.json",
+    "normalized_rows": "charts/chart001/normalized_rows.json"
+  }
+}

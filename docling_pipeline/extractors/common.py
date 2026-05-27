@@ -118,6 +118,13 @@ def nearest_section(
     order_index: Optional[int] = None,
 ) -> Optional[SectionRecord]:
     candidates = [s for s in sections if s.page_number == page_number]
+    if not candidates and page_number is not None:
+        previous_page_sections = [
+            s for s in sections if s.page_number is not None and s.page_number < page_number
+        ]
+        if previous_page_sections:
+            return max(previous_page_sections, key=lambda section: (section.page_number or 0, section.order_index))
+        return None
     if not candidates:
         return None
     if order_index is not None:

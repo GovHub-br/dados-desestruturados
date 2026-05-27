@@ -1,0 +1,98 @@
+[
+  {
+    "record_id": "2c427567-0a72-5887-92d7-00042d8e590c",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "page_number": 11,
+    "source_kind": "table",
+    "source_id": "a849e6c6-1a6c-5c1f-97ba-75929ebbf841",
+    "section_id": "a3e6a78a-c415-5ad0-a747-41bf265bd69d",
+    "section_title": "4.633 UNIDADES,",
+    "domain": "4633_unidades",
+    "grain": "table_row",
+    "attributes": {
+      "producao": "Unidades Produzidas",
+      "1t26__raw": "4.633",
+      "4t25__raw": "4.472",
+      "t_t__raw": "3,6%",
+      "1t25__raw": "3.363",
+      "a_a__raw": "37,8%",
+      "1t26_udm1t25__raw": "18.060",
+      "udm__raw": "14.450",
+      "a_a_2__raw": "25,0%"
+    },
+    "measures": {
+      "1t26": 4633.0,
+      "4t25": 4472.0,
+      "t_t": 3.6,
+      "1t25": 3363.0,
+      "a_a": 37.8,
+      "1t26_udm1t25": 18060.0,
+      "udm": 14450.0,
+      "a_a_2": 25.0
+    }
+  },
+  {
+    "record_id": "306407b6-6b2b-5638-aeb6-59e73c4c775f",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "page_number": 11,
+    "source_kind": "table",
+    "source_id": "a849e6c6-1a6c-5c1f-97ba-75929ebbf841",
+    "section_id": "a3e6a78a-c415-5ad0-a747-41bf265bd69d",
+    "section_title": "4.633 UNIDADES,",
+    "domain": "4633_unidades",
+    "grain": "table_row",
+    "attributes": {
+      "producao": "Unidades Concluídas",
+      "1t26__raw": "1.884",
+      "4t25__raw": "4.882",
+      "t_t__raw": "-61,4%",
+      "1t25__raw": "2.220",
+      "a_a__raw": "-15,1%",
+      "1t26_udm1t25__raw": "14.641",
+      "udm__raw": "9.552",
+      "a_a_2__raw": "53,3%"
+    },
+    "measures": {
+      "1t26": 1884.0,
+      "4t25": 4882.0,
+      "t_t": -61.4,
+      "1t25": 2220.0,
+      "a_a": -15.1,
+      "1t26_udm1t25": 14641.0,
+      "udm": 9552.0,
+      "a_a_2": 53.3
+    }
+  },
+  {
+    "record_id": "f3fc1870-80d2-5e8b-959a-2150bf3b6232",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "page_number": 11,
+    "source_kind": "table",
+    "source_id": "a849e6c6-1a6c-5c1f-97ba-75929ebbf841",
+    "section_id": "a3e6a78a-c415-5ad0-a747-41bf265bd69d",
+    "section_title": "4.633 UNIDADES,",
+    "domain": "4633_unidades",
+    "grain": "table_row",
+    "attributes": {
+      "producao": "Obras em Andamento",
+      "1t26__raw": "87",
+      "4t25__raw": "84",
+      "t_t__raw": "3,6%",
+      "1t25__raw": "72",
+      "a_a__raw": "20,8%",
+      "1t26_udm1t25__raw": "84",
+      "udm__raw": "72",
+      "a_a_2__raw": "16,7%"
+    },
+    "measures": {
+      "1t26": 87.0,
+      "4t25": 84.0,
+      "t_t": 3.6,
+      "1t25": 72.0,
+      "a_a": 20.8,
+      "1t26_udm1t25": 84.0,
+      "udm": 72.0,
+      "a_a_2": 16.7
+    }
+  }
+]

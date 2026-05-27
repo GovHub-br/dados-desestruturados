@@ -1,0 +1,51 @@
+{
+  "kind": "table",
+  "name": "R$ 24.924,6 MILHÕES EM VGV POTENCIAL,",
+  "schema": [
+    "Banco de Terrenos",
+    "1T26",
+    "4T25",
+    "% T/T",
+    "1T25",
+    "% A/A"
+  ],
+  "rows": [
+    [
+      "Banco de Terrenos (VGV, R$ milhões)",
+      "24.924,6",
+      "24.641,3",
+      "1,1%",
+      "19.805,3",
+      "25,8%"
+    ],
+    [
+      "Número de Empreendimentos",
+      "88",
+      "96",
+      "-8,3%",
+      "73",
+      "20,5%"
+    ],
+    [
+      "Número de Unidades",
+      "82.119",
+      "81.240",
+      "1,1%",
+      "68.218",
+      "20,4%"
+    ],
+    [
+      "Preço Médio/Unid. (R$ mil)",
+      "303,5",
+      "303,3",
+      "0,1%",
+      "290,3",
+      "4,5%"
+    ]
+  ],
+  "files": {
+    "metadata": "tables/table006/metadata.json",
+    "cells": "tables/table006/cells.json",
+    "normalized_rows": "tables/table006/normalized_rows.json"
+  }
+}

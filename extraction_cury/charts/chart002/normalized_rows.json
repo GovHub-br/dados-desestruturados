@@ -1,0 +1,42 @@
+[
+  {
+    "record_id": "a48f0002-e821-52a7-b9a3-4c5aa9c9034f",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "page_number": 6,
+    "source_kind": "chart",
+    "source_id": "8ae53d1f-87d2-5844-b1fd-bbc722752ded",
+    "section_id": "f9dafa1f-55b3-53f1-b144-38ae97033d58",
+    "section_title": "VGV Lançamentos (R$ milhões) | Category",
+    "domain": "vgv_lancamentos_r_milhoes_category",
+    "grain": "chart_row",
+    "attributes": {
+      "category": "1T25 UDM*",
+      "vgv_lancamentos_r_milhoes__raw": "7478.7",
+      "preco_medio_por_unidade_r_mil__raw": "312.4"
+    },
+    "measures": {
+      "vgv_lancamentos_r_milhoes": 7478.7,
+      "preco_medio_por_unidade_r_mil": 312.4
+    }
+  },
+  {
+    "record_id": "6435d337-cdee-5188-8b3e-bc9abdc62fbf",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "page_number": 6,
+    "source_kind": "chart",
+    "source_id": "8ae53d1f-87d2-5844-b1fd-bbc722752ded",
+    "section_id": "f9dafa1f-55b3-53f1-b144-38ae97033d58",
+    "section_title": "VGV Lançamentos (R$ milhões) | Category",
+    "domain": "vgv_lancamentos_r_milhoes_category",
+    "grain": "chart_row",
+    "attributes": {
+      "category": "1T26 UDM*",
+      "vgv_lancamentos_r_milhoes__raw": "8147.9",
+      "preco_medio_por_unidade_r_mil__raw": "322.9"
+    },
+    "measures": {
+      "vgv_lancamentos_r_milhoes": 8147.9,
+      "preco_medio_por_unidade_r_mil": 322.9
+    }
+  }
+]

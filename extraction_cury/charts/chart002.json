@@ -1,0 +1,26 @@
+{
+  "kind": "chart",
+  "name": "VGV Lançamentos (R$ milhões) | Category",
+  "schema": [
+    "Category",
+    "VGV Lançamentos (R$ milhões)",
+    "Preço Médio por unidade (R$ mil)"
+  ],
+  "rows": [
+    [
+      "1T25 UDM*",
+      "7478.7",
+      "312.4"
+    ],
+    [
+      "1T26 UDM*",
+      "8147.9",
+      "322.9"
+    ]
+  ],
+  "files": {
+    "metadata": "charts/chart002/metadata.json",
+    "points": "charts/chart002/points.json",
+    "normalized_rows": "charts/chart002/normalized_rows.json"
+  }
+}

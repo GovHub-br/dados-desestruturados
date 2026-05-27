@@ -1,0 +1,26 @@
+{
+  "kind": "chart",
+  "name": "Value | Category",
+  "schema": [
+    "Category",
+    "Value",
+    "Percentage"
+  ],
+  "rows": [
+    [
+      "1T25 UDM*",
+      "308.5",
+      ""
+    ],
+    [
+      "1T26 UDM*",
+      "312.6",
+      ""
+    ]
+  ],
+  "files": {
+    "metadata": "charts/chart005/metadata.json",
+    "points": "charts/chart005/points.json",
+    "normalized_rows": "charts/chart005/normalized_rows.json"
+  }
+}

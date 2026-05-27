@@ -1,0 +1,19 @@
+{
+  "kind": "chart",
+  "chart_id": "9edd5a17-6fad-5786-b0e5-0a3f212f2078",
+  "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+  "page_number": 5,
+  "section_id": "14318449-52ae-556c-8983-fc18d1be0988",
+  "section_title": "VGV Lançamentos (R$ milhões) | Quarter",
+  "chart_type": "bar_chart",
+  "chart_title_raw": "VGV Lançamentos (R$ milhões) | Quarter",
+  "chart_title_canonical": "vgv_lancamentos_r_milhoes_quarter",
+  "schema": [
+    "Quarter",
+    "VGV Lançamentos (R$ milhões)",
+    "VGV Lançamentos (%)",
+    "Preço Médio por unidade (R$ mil)",
+    "Preço Médio por unidade (%)"
+  ],
+  "point_count": 3
+}

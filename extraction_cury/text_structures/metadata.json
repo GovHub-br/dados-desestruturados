@@ -1,0 +1,37 @@
+{
+  "kind": "text_structures",
+  "source_file": "pdf_construturas/cury.pdf",
+  "path": "text_structures/text_structures.jsonl",
+  "record_count": 15,
+  "schema": [
+    "section_title",
+    "context_type",
+    "entities",
+    "facts",
+    "narrative_summary",
+    "confidence"
+  ],
+  "fields": [
+    "record_id",
+    "document_id",
+    "candidate_id",
+    "page_number",
+    "section_id",
+    "section_title",
+    "context_type",
+    "source_blocks",
+    "matched_values",
+    "entities",
+    "facts",
+    "narrative_summary",
+    "confidence",
+    "context_text",
+    "extraction_method",
+    "raw_response",
+    "error"
+  ],
+  "derived_from": [
+    "text_candidates"
+  ],
+  "method": "llm"
+}

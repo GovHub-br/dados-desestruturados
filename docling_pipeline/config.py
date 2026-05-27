@@ -26,6 +26,10 @@ class RuntimeConfig:
     input_path: Path
     output_dir: Path
     pipeline_mode: str = "standard"
+    table_structure_kind: str = "tableformer"
+    table_structure_mode: str = "accurate"
+    table_cell_matching: bool = True
+    merge_table_fragments: bool = True
     enable_remote_vlm_assist: bool = False
     remote_api_url: Optional[str] = None
     remote_api_model: Optional[str] = None
@@ -48,6 +52,8 @@ class RuntimeConfig:
     text_candidate_max_chars: int = 2500
     text_candidate_min_chars: int = 40
     text_candidate_max_per_section: int = 50
+    diagnostics: bool = False
+    diagnostics_interval: float = 5.0
 
 
 def parse_args() -> RuntimeConfig:
@@ -64,6 +70,39 @@ def parse_args() -> RuntimeConfig:
         choices=["standard"],
         default="standard",
         help="Structured extraction mode. Standard mode is the recommended base for charts/tables.",
+    )
+    parser.add_argument(
+        "--table-structure-kind",
+        choices=["tableformer", "tableformer_v2"],
+        default=os.getenv("DOCLING_TABLE_STRUCTURE_KIND", "tableformer"),
+        help=(
+            "Table structure engine. `tableformer_v2` can work better on harder table layouts, "
+            "while `tableformer` is the current default."
+        ),
+    )
+    parser.add_argument(
+        "--table-structure-mode",
+        choices=["accurate", "fast"],
+        default=os.getenv("DOCLING_TABLE_STRUCTURE_MODE", "accurate"),
+        help="TableFormer V1 mode. Ignored when `--table-structure-kind=tableformer_v2`.",
+    )
+    parser.add_argument(
+        "--table-cell-matching",
+        action=argparse.BooleanOptionalAction,
+        default=os.getenv("DOCLING_TABLE_CELL_MATCHING", "true").strip().lower() not in {"0", "false", "no"},
+        help=(
+            "Match predicted table cells back to PDF text cells. Disabling this can help when merged "
+            "or badly segmented PDF cells confuse table reconstruction."
+        ),
+    )
+    parser.add_argument(
+        "--merge-table-fragments",
+        action=argparse.BooleanOptionalAction,
+        default=os.getenv("DOCLING_MERGE_TABLE_FRAGMENTS", "true").strip().lower() not in {"0", "false", "no"},
+        help=(
+            "Merge obvious table continuations after Docling extraction, such as a header-only fragment "
+            "followed by the body of the same table."
+        ),
     )
     parser.add_argument(
         "--enable-remote-vlm-assist",
@@ -128,6 +167,18 @@ def parse_args() -> RuntimeConfig:
         type=int,
         default=int(os.getenv("DOCLING_TEXT_CANDIDATE_MAX_PER_SECTION", "50")),
     )
+    parser.add_argument(
+        "--diagnostics",
+        action=argparse.BooleanOptionalAction,
+        default=os.getenv("DOCLING_DIAGNOSTICS", "false").strip().lower() in {"1", "true", "yes"},
+        help="Write detailed runtime diagnostics to <output-dir>/diagnostics.log.",
+    )
+    parser.add_argument(
+        "--diagnostics-interval",
+        type=float,
+        default=float(os.getenv("DOCLING_DIAGNOSTICS_INTERVAL", "5")),
+        help="Seconds between process resource snapshots when diagnostics are enabled.",
+    )
     args = parser.parse_args()
 
     if args.enable_llm_text_extraction:
@@ -143,6 +194,10 @@ def parse_args() -> RuntimeConfig:
         input_path=args.input_path,
         output_dir=args.output_dir,
         pipeline_mode=args.pipeline_mode,
+        table_structure_kind=args.table_structure_kind,
+        table_structure_mode=args.table_structure_mode,
+        table_cell_matching=args.table_cell_matching,
+        merge_table_fragments=args.merge_table_fragments,
         enable_remote_vlm_assist=args.enable_remote_vlm_assist,
         remote_api_url=args.remote_api_url,
         remote_api_model=args.remote_api_model,
@@ -165,4 +220,6 @@ def parse_args() -> RuntimeConfig:
         text_candidate_max_chars=max(200, args.text_candidate_max_chars),
         text_candidate_min_chars=max(1, args.text_candidate_min_chars),
         text_candidate_max_per_section=max(1, args.text_candidate_max_per_section),
+        diagnostics=args.diagnostics,
+        diagnostics_interval=max(1.0, args.diagnostics_interval),
     )
