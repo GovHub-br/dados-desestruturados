@@ -1,8 +1,11 @@
-site_name: ""
+site_name: Dados Desestruturados
 site_author: Dados Desestruturados
 site_description: >-
   Documentação do projeto Dados Desestruturados, uma pipeline baseada em Docling
   para extração de estrutura, blocos textuais, métricas, tabelas, gráficos e fatos narrativos em PDFs.
+site_url: https://govhub-br.github.io/dados-desestruturados/
+repo_url: https://github.com/GovHub-br/dados-desestruturados
+edit_uri: edit/docs/docs/
 
 theme:
   name: material
