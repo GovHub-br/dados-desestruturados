@@ -9,7 +9,9 @@ Este documento descreve o fluxo completo para:
 - resolver os campos do `schema_saida` definido no contrato semântico;
 - validar se o mapeamento canônico ainda funciona;
 - acionar fallback com LLM somente quando necessário;
-- gerar dados prontos para ingestão na camada bronze.
+- gerar dados brutos prontos para ingestão na camada bronze.
+
+A extração de construtoras deve priorizar valores brutos observados no PDF, como unidades lançadas e unidades vendidas por período. Percentuais comparativos, variações trimestre contra trimestre, ano contra ano e janelas acumuladas devem ser calculados depois, na engenharia de dados, a partir dos valores brutos resolvidos.
 
 Os arquivos centrais deste fluxo são:
 
@@ -34,10 +36,10 @@ Em alto nível:
 
 1. um novo PDF entra no data lake;
 2. a extração gera artefatos como tabelas, blocos, seções e candidatos textuais;
-3. outra DAG usa contrato + layout signature para montar o `schema_saida`;
+3. outra DAG usa contrato + layout signature para montar o `schema_saida` com valores brutos;
 4. se houver falha crítica, entra o fallback com LLM;
 5. o JSON final vai para ingestão na bronze;
-6. a engenharia de dados segue daí até consumo em BI.
+6. a engenharia de dados calcula métricas derivadas e segue daí até consumo em BI.
 
 
 ## Artefatos estáticos
@@ -53,6 +55,8 @@ Função:
 - definir entidades, métricas e sinônimos;
 - definir o `schema_saida`;
 - estabelecer quais campos são esperados;
+- declarar que o resultado canônico deve preservar valores brutos;
+- indicar quais métricas derivadas serão calculadas depois;
 - separar o significado de negócio do layout do documento.
 
 Esse arquivo não deve ser recalculado a cada execução.
@@ -74,7 +78,8 @@ Função:
 - apontar caminhos de leitura para o `schema_saida`;
 - registrar as fontes relevantes;
 - definir regras determinísticas para detectar quebra;
-- informar quais campos são resolvidos por tabela, cabeçalho, bloco textual, valor fixo ou derivação.
+- informar quais campos são resolvidos por tabela, cabeçalho, bloco textual, valor fixo ou derivação;
+- mapear períodos por papel semântico, como `periodo_referencia`, `periodo_comparativo_anterior`, `mesmo_periodo_ano_anterior`, `periodo_12m_atual` e `periodo_12m_anterior`, sem prender a regra a um trimestre específico.
 
 Esse arquivo é a referência operacional da DAG de resolução.
 Ele não deve conter texto aberto, resumo narrativo ou status de compatibilidade preenchido manualmente.
@@ -171,7 +176,7 @@ Exemplos de testes:
 - `arquivo_existe`
 - `secao_existe`
 - `linha_existe_em_tabela`
-- `coluna_existe_em_tabela`
+- `perfil_colunas_periodo_existe_em_tabela`
 - `valor_normalizavel`
 
 Cada teste retorna algo fechado, por exemplo:
@@ -221,7 +226,9 @@ Ele deve conter algo do tipo:
 
 #### B. `schema_saida_resolvido.json`
 
-JSON final no formato do contrato, pronto para relatório ou ingestão.
+JSON final no formato do contrato, pronto para relatório, cálculo posterior ou ingestão.
+
+Esse arquivo contém os valores finais resolvidos. Ele não precisa conter a trilha completa de auditoria de cada célula.
 
 #### C. `auditoria_resolucao.json`
 
@@ -234,6 +241,8 @@ Serve para rastrear:
 - qual era o valor bruto;
 - como foi a normalização;
 - qual foi o status de resolução.
+
+Ele não faz parte do caminho crítico da ingestão bronze. A ingestão deve consumir `schema_saida_resolvido.json`; a auditoria serve para rastreabilidade, depuração, conferência humana e investigação de divergências.
 
 
 ## DAG 3: fallback com LLM
@@ -284,7 +293,7 @@ A estratégia recomendada é:
 
 Exemplos:
 
-- `%T/T` virou `T/T (%)`
+- o padrão do cabeçalho de período mudou;
 - `Número de Unidades` virou `Unidades`
 - `Vendas Líquidas` virou `Vendas Contratadas`
 
@@ -384,6 +393,7 @@ Se houver fallback, o ideal é também guardar referência a:
 
 - `proposta_novo_mapeamento.json`
 - versão do layout signature usada
+- `auditoria_resolucao.json`, quando gerado, para rastreabilidade
 
 
 ## Conjunto mínimo de arquivos gerados por execução
@@ -397,6 +407,8 @@ Se houver fallback, o ideal é também guardar referência a:
 ### Recomendado
 
 - `auditoria_resolucao.json`
+
+Esse arquivo é recomendado para ambientes de homologação, primeiros ciclos de produção, investigações de qualidade e execuções com fallback. Ele pode ser omitido ou compactado em produção estável, desde que a ingestão preserve metadados mínimos de linhagem.
 
 ### Apenas em fallback
 
