@@ -1,13 +1,14 @@
 {
   "fonte": "Balanços trimestrais das empresas",
   "tipo_documento": "contrato_semantico",
-  "versao": "1.1.0",
-  "descricao": "Contrato semântico para padronizar a extração de indicadores de lançamentos e vendas de empresas do setor imobiliário, garantindo consistência da saída mesmo com mudanças de layout, nomenclatura, redação ou período de referência dos documentos de origem.",
+  "versao": "1.2.0",
+  "descricao": "Contrato semântico para padronizar a extração de indicadores brutos de lançamentos e vendas de empresas do setor imobiliário. O objetivo é preservar os valores originais dos PDFs, deixando cálculos de variação percentual para etapas posteriores de engenharia de dados.",
   "contrato_semantico": {
     "principios": {
-      "periodos_como_valores": "Períodos específicos, como 1T26, 4T25, mar/2026 ou mar/2025, não devem aparecer nos nomes das chaves. Eles devem ser armazenados como valores dentro de metadados de comparação.",
+      "periodos_como_valores": "Períodos específicos do documento não devem aparecer nos nomes das chaves. Eles devem ser armazenados como valores dentro das observações de período.",
       "chaves_estaveis": "As chaves da saída devem ser genéricas, reutilizáveis e independentes do período do documento.",
-      "layout_independente": "A estrutura final deve permanecer igual mesmo que o PDF altere títulos, ordem das seções, nomes das colunas ou formato visual."
+      "layout_independente": "A estrutura final deve permanecer igual mesmo que o PDF altere títulos, ordem das seções, nomes das colunas ou formato visual.",
+      "valores_brutos_primeiro": "O pipeline deve extrair valores brutos observados no documento. Indicadores como variação trimestre contra trimestre, ano contra ano ou acumulado devem ser calculados depois, fora da etapa de extração."
     },
     "entidades": {
       "empresa": {
@@ -23,8 +24,8 @@
           "nome da empresa"
         ]
       },
-      "periodo_referencia": {
-        "descricao": "Período principal ao qual os indicadores extraídos se referem.",
+      "periodo": {
+        "descricao": "Período ao qual o valor bruto extraído se refere.",
         "tipo": "string",
         "obrigatorio": true,
         "sinonimos": [
@@ -35,308 +36,193 @@
           "competência",
           "referência",
           "período de apuração",
-          "período referência"
+          "período referência",
+          "UDM",
+          "últimos doze meses"
         ]
       },
-      "periodo_comparativo_anterior": {
-        "descricao": "Período imediatamente anterior usado para comparação com o período de referência.",
+      "tipo_operacao": {
+        "descricao": "Tipo da operação imobiliária observada no balanço.",
         "tipo": "string",
-        "obrigatorio": false,
+        "obrigatorio": true,
+        "dominio": [
+          "lancamento",
+          "venda"
+        ],
         "sinonimos": [
-          "trimestre anterior",
-          "período anterior",
-          "comparativo anterior",
-          "período imediatamente anterior",
-          "QoQ",
-          "quarter over quarter"
+          "lançamentos",
+          "vendas",
+          "vendas líquidas",
+          "unidades lançadas",
+          "unidades vendidas",
+          "imóveis lançados",
+          "imóveis vendidos",
+          "UH vendidas",
+          "comercialização"
         ]
       },
-      "mesmo_periodo_ano_anterior": {
-        "descricao": "Mesmo período de referência, porém no ano anterior.",
+      "indicador": {
+        "descricao": "Indicador bruto observado para a operação.",
         "tipo": "string",
-        "obrigatorio": false,
+        "obrigatorio": true,
+        "dominio": [
+          "numero_de_unidades"
+        ],
         "sinonimos": [
-          "mesmo trimestre do ano anterior",
-          "mesmo período do ano anterior",
-          "comparação anual",
-          "YoY",
-          "year over year"
+          "Número de Unidades",
+          "número de unidades",
+          "unidades",
+          "unidades lançadas",
+          "unidades vendidas",
+          "UH",
+          "imóveis",
+          "imóveis comercializados"
         ]
       },
-      "periodo_12m_atual": {
-        "descricao": "Janela acumulada de 12 meses encerrada no período de referência atual.",
+      "valor": {
+        "descricao": "Valor numérico bruto extraído do PDF.",
+        "tipo": "number",
+        "obrigatorio": true
+      },
+      "unidade": {
+        "descricao": "Unidade do valor bruto extraído.",
         "tipo": "string",
-        "obrigatorio": false,
-        "sinonimos": [
-          "12 meses atuais",
-          "últimos 12 meses",
-          "12 meses encerrados no período atual",
-          "LTM atual",
-          "acumulado em 12 meses"
+        "obrigatorio": true,
+        "dominio": [
+          "unidades"
         ]
       },
-      "periodo_12m_anterior": {
-        "descricao": "Janela acumulada de 12 meses usada como comparação imediatamente anterior ao período de 12 meses atual.",
+      "escopo_periodo": {
+        "descricao": "Classificação do período extraído.",
         "tipo": "string",
-        "obrigatorio": false,
+        "obrigatorio": true,
+        "dominio": [
+          "trimestre",
+          "ultimos_12_meses"
+        ],
         "sinonimos": [
-          "12 meses anteriores",
-          "12 meses imediatamente anteriores",
-          "LTM anterior",
-          "período acumulado anterior"
-        ]
-      },
-      "periodo_12m_base": {
-        "descricao": "Janela acumulada de 12 meses usada como base de comparação para o período de 12 meses anterior.",
-        "tipo": "string",
-        "obrigatorio": false,
-        "sinonimos": [
-          "12 meses base",
-          "período-base",
-          "LTM base",
-          "período acumulado base"
+          "trimestre",
+          "UDM",
+          "últimos doze meses",
+          "12 meses",
+          "LTM"
         ]
       }
     },
     "metricas": {
       "lancamentos": {
-        "descricao": "Indicadores relacionados aos lançamentos imobiliários das empresas.",
-        "tipo": "grupo_metricas",
-        "sinonimos": [
-          "lançamentos",
-          "lançamentos imobiliários",
-          "unidades lançadas",
-          "imóveis lançados",
-          "novos lançamentos",
-          "empreendimentos lançados",
-          "VGV lançado",
-          "volume lançado",
-          "total de lançamentos"
-        ],
-        "campos": {
-          "variacao_vs_periodo_comparativo_anterior": {
-            "descricao": "Variação percentual em relação ao período imediatamente anterior ao período de referência.",
+        "descricao": "Valores brutos relacionados aos lançamentos imobiliários das empresas.",
+        "tipo": "grupo_metricas_brutas",
+        "tipo_operacao": "lancamento",
+        "indicadores": {
+          "numero_de_unidades": {
+            "descricao": "Quantidade bruta de unidades lançadas no período.",
             "tipo": "number",
-            "unidade": "percentual",
+            "unidade": "unidades",
             "obrigatorio": false,
             "sinonimos": [
-              "vs período anterior",
-              "contra período anterior",
-              "em relação ao período anterior",
-              "comparado ao período anterior",
-              "vs trimestre anterior",
-              "contra trimestre anterior",
-              "QoQ",
-              "quarter over quarter"
-            ]
-          },
-          "variacao_vs_mesmo_periodo_ano_anterior": {
-            "descricao": "Variação percentual em relação ao mesmo período do ano anterior.",
-            "tipo": "number",
-            "unidade": "percentual",
-            "obrigatorio": false,
-            "sinonimos": [
-              "vs mesmo período do ano anterior",
-              "contra mesmo período do ano anterior",
-              "comparado ao mesmo período do ano anterior",
-              "vs mesmo trimestre do ano anterior",
-              "YoY",
-              "year over year"
-            ]
-          },
-          "variacao_12m_periodo_atual_vs_12m_periodo_anterior": {
-            "descricao": "Variação percentual dos 12 meses encerrados no período atual em relação aos 12 meses encerrados no período imediatamente anterior.",
-            "tipo": "number",
-            "unidade": "percentual",
-            "obrigatorio": false,
-            "sinonimos": [
-              "12 meses atual contra 12 meses anterior",
-              "últimos 12 meses contra período anterior",
-              "acumulado em 12 meses contra acumulado anterior",
-              "LTM atual contra LTM anterior",
-              "12m atual vs 12m anterior"
-            ]
-          },
-          "variacao_12m_periodo_anterior_vs_12m_periodo_base": {
-            "descricao": "Variação percentual dos 12 meses encerrados no período anterior em relação aos 12 meses encerrados no período-base.",
-            "tipo": "number",
-            "unidade": "percentual",
-            "obrigatorio": false,
-            "sinonimos": [
-              "12 meses anterior contra 12 meses base",
-              "LTM anterior contra LTM base",
-              "acumulado anterior contra acumulado base",
-              "12m anterior vs 12m base"
+              "Número de Unidades",
+              "unidades lançadas",
+              "imóveis lançados",
+              "UH lançadas",
+              "volume lançado em unidades"
             ]
           }
         }
       },
       "vendas": {
-        "descricao": "Indicadores relacionados às vendas imobiliárias das empresas.",
-        "tipo": "grupo_metricas",
-        "sinonimos": [
-          "vendas",
-          "vendas imobiliárias",
-          "unidades vendidas",
-          "imóveis vendidos",
-          "UH vendidas",
-          "vendas contratadas",
-          "vendas líquidas",
-          "vendas brutas",
-          "volume vendido",
-          "VGV vendido",
-          "comercialização",
-          "unidades comercializadas"
-        ],
-        "campos": {
-          "variacao_vs_periodo_comparativo_anterior": {
-            "descricao": "Variação percentual em relação ao período imediatamente anterior ao período de referência.",
+        "descricao": "Valores brutos relacionados às vendas imobiliárias das empresas.",
+        "tipo": "grupo_metricas_brutas",
+        "tipo_operacao": "venda",
+        "indicadores": {
+          "numero_de_unidades": {
+            "descricao": "Quantidade bruta de unidades vendidas no período.",
             "tipo": "number",
-            "unidade": "percentual",
+            "unidade": "unidades",
             "obrigatorio": false,
             "sinonimos": [
-              "vs período anterior",
-              "contra período anterior",
-              "em relação ao período anterior",
-              "comparado ao período anterior",
-              "vs trimestre anterior",
-              "contra trimestre anterior",
-              "QoQ",
-              "quarter over quarter"
-            ]
-          },
-          "variacao_vs_mesmo_periodo_ano_anterior": {
-            "descricao": "Variação percentual em relação ao mesmo período do ano anterior.",
-            "tipo": "number",
-            "unidade": "percentual",
-            "obrigatorio": false,
-            "sinonimos": [
-              "vs mesmo período do ano anterior",
-              "contra mesmo período do ano anterior",
-              "comparado ao mesmo período do ano anterior",
-              "vs mesmo trimestre do ano anterior",
-              "YoY",
-              "year over year"
-            ]
-          },
-          "variacao_12m_periodo_atual_vs_12m_periodo_anterior": {
-            "descricao": "Variação percentual dos 12 meses encerrados no período atual em relação aos 12 meses encerrados no período imediatamente anterior.",
-            "tipo": "number",
-            "unidade": "percentual",
-            "obrigatorio": false,
-            "sinonimos": [
-              "12 meses atual contra 12 meses anterior",
-              "últimos 12 meses contra período anterior",
-              "acumulado em 12 meses contra acumulado anterior",
-              "LTM atual contra LTM anterior",
-              "12m atual vs 12m anterior"
-            ]
-          },
-          "variacao_12m_periodo_anterior_vs_12m_periodo_base": {
-            "descricao": "Variação percentual dos 12 meses encerrados no período anterior em relação aos 12 meses encerrados no período-base.",
-            "tipo": "number",
-            "unidade": "percentual",
-            "obrigatorio": false,
-            "sinonimos": [
-              "12 meses anterior contra 12 meses base",
-              "LTM anterior contra LTM base",
-              "acumulado anterior contra acumulado base",
-              "12m anterior vs 12m base"
+              "Número de Unidades",
+              "unidades vendidas",
+              "imóveis vendidos",
+              "UH vendidas",
+              "unidades comercializadas",
+              "imóveis comercializados"
             ]
           }
         }
       },
-      "total_lancamentos": {
-        "descricao": "Indicador consolidado dos lançamentos das empresas levantadas.",
-        "tipo": "indicador_consolidado",
-        "sinonimos": [
-          "total lançamentos",
-          "lançamentos totais",
-          "total de lançamentos",
-          "lançamentos das empresas levantadas",
-          "lançamentos consolidados",
-          "lançamentos agregados",
-          "volume total lançado",
-          "VGV lançado total"
-        ]
-      },
-      "total_vendas": {
-        "descricao": "Indicador consolidado das vendas das empresas levantadas.",
-        "tipo": "indicador_consolidado",
-        "sinonimos": [
-          "total vendas",
-          "vendas totais",
-          "total de vendas",
-          "vendas das empresas levantadas",
-          "vendas consolidadas",
-          "vendas agregadas",
-          "volume total vendido",
-          "VGV vendido total",
-          "unidades vendidas totais",
-          "imóveis vendidos totais"
-        ]
+      "derivacoes_previstas": {
+        "descricao": "Métricas que devem ser calculadas depois da extração, a partir dos valores brutos.",
+        "tipo": "metrica_calculada",
+        "calcular_fora_da_extracao": true,
+        "campos": {
+          "variacao_vs_periodo_comparativo_anterior": {
+            "formula": "(valor_periodo_referencia / valor_periodo_comparativo_anterior - 1) * 100"
+          },
+          "variacao_vs_mesmo_periodo_ano_anterior": {
+            "formula": "(valor_periodo_referencia / valor_mesmo_periodo_ano_anterior - 1) * 100"
+          },
+          "variacao_12m_periodo_atual_vs_12m_periodo_anterior": {
+            "formula": "(valor_12m_atual / valor_12m_anterior - 1) * 100"
+          }
+        }
       }
     }
   },
   "schema_saida": {
     "fonte": "string",
     "periodo_referencia": "string",
-    "periodos_comparacao": {
+    "periodos_disponiveis": {
       "periodo_referencia": "string",
       "periodo_comparativo_anterior": "string | null",
       "mesmo_periodo_ano_anterior": "string | null",
       "periodo_12m_atual": "string | null",
-      "periodo_12m_anterior": "string | null",
-      "periodo_12m_base": "string | null"
+      "periodo_12m_anterior": "string | null"
     },
     "balancos_das_empresas": {
       "titulo": "string",
       "lancamentos": {
         "titulo": "string",
-        "tipo": "variacao_percentual",
+        "tipo": "valor_bruto",
+        "tipo_operacao": "lancamento",
+        "indicador": "numero_de_unidades",
+        "unidade": "unidades",
         "dados": [
           {
             "empresa": "string",
-            "variacao_vs_periodo_comparativo_anterior": "number | null",
-            "variacao_vs_mesmo_periodo_ano_anterior": "number | null",
-            "variacao_12m_periodo_atual_vs_12m_periodo_anterior": "number | null",
-            "variacao_12m_periodo_anterior_vs_12m_periodo_base": "number | null"
+            "valores": [
+              {
+                "periodo": "string",
+                "escopo_periodo": "trimestre | ultimos_12_meses",
+                "valor": "number | null"
+              }
+            ]
           }
         ]
       },
       "vendas": {
         "titulo": "string",
-        "tipo": "variacao_percentual",
+        "tipo": "valor_bruto",
+        "tipo_operacao": "venda",
+        "indicador": "numero_de_unidades",
+        "unidade": "unidades",
         "dados": [
           {
             "empresa": "string",
-            "variacao_vs_periodo_comparativo_anterior": "number | null",
-            "variacao_vs_mesmo_periodo_ano_anterior": "number | null",
-            "variacao_12m_periodo_atual_vs_12m_periodo_anterior": "number | null",
-            "variacao_12m_periodo_anterior_vs_12m_periodo_base": "number | null"
+            "valores": [
+              {
+                "periodo": "string",
+                "escopo_periodo": "trimestre | ultimos_12_meses",
+                "valor": "number | null"
+              }
+            ]
           }
         ]
       }
     },
-    "indicadores_consolidados": {
-      "total_lancamentos": {
-        "titulo": "string",
-        "observacao": "string | null",
-        "tipo": "variacao_percentual",
-        "variacao_vs_periodo_comparativo_anterior": "number | null",
-        "variacao_vs_mesmo_periodo_ano_anterior": "number | null",
-        "variacao_12m_periodo_atual_vs_12m_periodo_anterior": "number | null",
-        "variacao_12m_periodo_anterior_vs_12m_periodo_base": "number | null"
-      },
-      "total_vendas": {
-        "titulo": "string",
-        "observacao": "string | null",
-        "tipo": "variacao_percentual",
-        "variacao_vs_periodo_comparativo_anterior": "number | null",
-        "variacao_vs_mesmo_periodo_ano_anterior": "number | null",
-        "variacao_12m_periodo_atual_vs_12m_periodo_anterior": "number | null",
-        "variacao_12m_periodo_anterior_vs_12m_periodo_base": "number | null"
-      }
+    "metricas_calculadas": {
+      "observacao": "string",
+      "status": "nao_calculadas_na_extracao"
     }
   }
 }

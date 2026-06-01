@@ -1,61 +1,96 @@
 {
   "fonte": "Balanços trimestrais das empresas",
   "periodo_referencia": "1T26",
-  "periodos_comparacao": {
+  "periodos_disponiveis": {
     "periodo_referencia": "1T26",
     "periodo_comparativo_anterior": "4T25",
     "mesmo_periodo_ano_anterior": "1T25",
     "periodo_12m_atual": "1T26 UDM*",
-    "periodo_12m_anterior": "1T25 UDM*",
-    "periodo_12m_base": null
+    "periodo_12m_anterior": "1T25 UDM*"
   },
   "balancos_das_empresas": {
     "titulo": "Balanços das empresas",
     "lancamentos": {
       "titulo": "Lançamentos",
-      "tipo": "variacao_percentual",
+      "tipo": "valor_bruto",
+      "tipo_operacao": "lancamento",
+      "indicador": "numero_de_unidades",
+      "unidade": "unidades",
       "dados": [
         {
           "empresa": "Cury",
-          "variacao_vs_periodo_comparativo_anterior": 108.7,
-          "variacao_vs_mesmo_periodo_ano_anterior": -12.4,
-          "variacao_12m_periodo_atual_vs_12m_periodo_anterior": 5.4,
-          "variacao_12m_periodo_anterior_vs_12m_periodo_base": null
+          "valores": [
+            {
+              "periodo": "1T26",
+              "escopo_periodo": "trimestre",
+              "valor": 8001.0
+            },
+            {
+              "periodo": "4T25",
+              "escopo_periodo": "trimestre",
+              "valor": 3833.0
+            },
+            {
+              "periodo": "1T25",
+              "escopo_periodo": "trimestre",
+              "valor": 9132.0
+            },
+            {
+              "periodo": "1T26 UDM*",
+              "escopo_periodo": "ultimos_12_meses",
+              "valor": 25235.0
+            },
+            {
+              "periodo": "1T25 UDM*",
+              "escopo_periodo": "ultimos_12_meses",
+              "valor": 23938.0
+            }
+          ]
         }
       ]
     },
     "vendas": {
       "titulo": "Vendas",
-      "tipo": "variacao_percentual",
+      "tipo": "valor_bruto",
+      "tipo_operacao": "venda",
+      "indicador": "numero_de_unidades",
+      "unidade": "unidades",
       "dados": [
         {
           "empresa": "Cury",
-          "variacao_vs_periodo_comparativo_anterior": 43.0,
-          "variacao_vs_mesmo_periodo_ano_anterior": 8.5,
-          "variacao_12m_periodo_atual_vs_12m_periodo_anterior": 19.4,
-          "variacao_12m_periodo_anterior_vs_12m_periodo_base": null
+          "valores": [
+            {
+              "periodo": "1T26",
+              "escopo_periodo": "trimestre",
+              "valor": 7786.0
+            },
+            {
+              "periodo": "4T25",
+              "escopo_periodo": "trimestre",
+              "valor": 5445.0
+            },
+            {
+              "periodo": "1T25",
+              "escopo_periodo": "trimestre",
+              "valor": 7173.0
+            },
+            {
+              "periodo": "1T26 UDM*",
+              "escopo_periodo": "ultimos_12_meses",
+              "valor": 28145.0
+            },
+            {
+              "periodo": "1T25 UDM*",
+              "escopo_periodo": "ultimos_12_meses",
+              "valor": 23572.0
+            }
+          ]
         }
       ]
     }
   },
-  "indicadores_consolidados": {
-    "total_lancamentos": {
-      "titulo": "Total lançamentos",
-      "observacao": "Nao aplicavel em PDF individual da Cury; preenchimento depende de consolidacao entre empresas.",
-      "tipo": "variacao_percentual",
-      "variacao_vs_periodo_comparativo_anterior": null,
-      "variacao_vs_mesmo_periodo_ano_anterior": null,
-      "variacao_12m_periodo_atual_vs_12m_periodo_anterior": null,
-      "variacao_12m_periodo_anterior_vs_12m_periodo_base": null
-    },
-    "total_vendas": {
-      "titulo": "Total vendas",
-      "observacao": "Nao aplicavel em PDF individual da Cury; preenchimento depende de consolidacao entre empresas.",
-      "tipo": "variacao_percentual",
-      "variacao_vs_periodo_comparativo_anterior": null,
-      "variacao_vs_mesmo_periodo_ano_anterior": null,
-      "variacao_12m_periodo_atual_vs_12m_periodo_anterior": null,
-      "variacao_12m_periodo_anterior_vs_12m_periodo_base": null
-    }
+  "metricas_calculadas": {
+    "observacao": "Variações percentuais devem ser calculadas em etapa posterior usando os valores brutos por período.",
+    "status": "nao_calculadas_na_extracao"
   }
 }
