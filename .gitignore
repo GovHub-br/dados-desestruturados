@@ -15,3 +15,6 @@ mir/
 saida/
 teste/
 output-*/
+
+*.log
+.DS_Store
