@@ -64,7 +64,7 @@ services:
 
   postgres-operacional-init:
     build:
-      context: ./postgres-operacional-init
+      context: ./infra/postgres-operacional-init
     container_name: ocr_postgres_operacional_init
     depends_on:
       postgres-operacional:
@@ -196,7 +196,8 @@ services:
       AIRFLOW_ADMIN_FIRSTNAME: ${AIRFLOW_ADMIN_FIRSTNAME:-Admin}
       AIRFLOW_ADMIN_LASTNAME: ${AIRFLOW_ADMIN_LASTNAME:-User}
       AIRFLOW_ADMIN_EMAIL: ${AIRFLOW_ADMIN_EMAIL:-admin@example.com}
-      PYTHONPATH: /opt/project/dados-desestruturados
+      PROJECT_ROOT: /opt/project/dados-desestruturados
+      PYTHONPATH: /opt/project/dados-desestruturados:/opt/project/dados-desestruturados/airflow
     user: "50000:0"
     command: >
       bash -c "
@@ -210,9 +211,10 @@ services:
       --email $$AIRFLOW_ADMIN_EMAIL || true
       "
     volumes: &airflow-common-volumes
-      - airflow_dags:/opt/airflow/dags
-      - airflow_logs:/opt/airflow/logs
-      - airflow_plugins:/opt/airflow/plugins
+      - ./airflow/dags:/opt/airflow/dags
+      - ./airflow/logs:/opt/airflow/logs
+      - ./airflow/plugins:/opt/airflow/plugins
+      - ./:/opt/project/dados-desestruturados
     restart: "no"
     networks:
       - ocr_net
@@ -385,6 +387,3 @@ volumes:
   postgres_airflow_data:
   postgres_openmetadata_data:
   elasticsearch_data:
-  airflow_dags:
-  airflow_logs:
-  airflow_plugins:

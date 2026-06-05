@@ -1,6 +1,7 @@
 __pycache__/
 *.py[cod]
 *.pyo
+site
 
 .env
 
@@ -18,3 +19,5 @@ output-*/
 
 *.log
 .DS_Store
+airflow/logs/*
+!airflow/logs/.gitkeep

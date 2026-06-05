@@ -1,3 +1,18 @@
+## Stack local
+
+O ambiente local agora parte da raiz do repositório:
+
+```bash
+cp .env.example .env
+docker compose up -d
+```
+
+Estrutura principal da stack:
+
+- `docker-compose.yml`: ponto de entrada da infraestrutura local.
+- `airflow/`: DAGs, helpers, plugins e logs do Airflow.
+- `infra/`: bootstrap do banco operacional e demais artefatos estritamente de infraestrutura.
+
 ## Uso
 
 Prepare um ambiente Python e instale as dependências:
