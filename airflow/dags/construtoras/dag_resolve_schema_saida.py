@@ -5,13 +5,13 @@ import logging
 from airflow.decorators import dag, task
 from airflow.providers.standard.operators.empty import EmptyOperator
 
-from helpers import DEFAULT_START_DATE, default_dag_args, default_tags
-from plugins.services import build_resolution_runtime
+from helpers import AirflowDefaults
+from plugins.services import CONSTRUTORAS_PAYLOAD_BUILDER
 
 
 @task
 def montar_runtime() -> dict[str, object]:
-    return build_resolution_runtime()
+    return CONSTRUTORAS_PAYLOAD_BUILDER.build_resolution_runtime()
 
 
 @task
@@ -23,10 +23,10 @@ def registrar_planejamento(runtime: dict[str, object]) -> dict[str, object]:
 @dag(
     dag_id="dag_resolve_schema_saida",
     schedule=None,
-    start_date=DEFAULT_START_DATE,
+    start_date=AirflowDefaults.start_date,
     catchup=False,
-    default_args=default_dag_args(),
-    tags=default_tags("resolucao"),
+    default_args=AirflowDefaults.default_args(),
+    tags=AirflowDefaults.tags("resolucao"),
 )
 def dag_resolve_schema_saida() -> None:
     inicio = EmptyOperator(task_id="inicio")

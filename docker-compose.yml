@@ -1,3 +1,11 @@
+x-airflow-image: &airflow-image
+  image: dados-desestruturados-airflow:${AIRFLOW_VERSION:-3.0.2-python3.11}
+  build:
+    context: .
+    dockerfile: infra/airflow/Dockerfile
+    args:
+      AIRFLOW_VERSION: ${AIRFLOW_VERSION:-3.0.2-python3.11}
+
 services:
   minio:
     image: minio/minio:latest
@@ -173,7 +181,7 @@ services:
       - ocr_net
 
   airflow-init:
-    image: apache/airflow:${AIRFLOW_VERSION:-3.0.2-python3.11}
+    <<: *airflow-image
     container_name: ocr_airflow_init
     depends_on:
       postgres-airflow-initdb:
@@ -198,6 +206,12 @@ services:
       AIRFLOW_ADMIN_EMAIL: ${AIRFLOW_ADMIN_EMAIL:-admin@example.com}
       PROJECT_ROOT: /opt/project/dados-desestruturados
       PYTHONPATH: /opt/project/dados-desestruturados:/opt/project/dados-desestruturados/airflow
+      MINIO_ENDPOINT: ${MINIO_ENDPOINT:-minio:9000}
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minioadmin123}
+      MINIO_BUCKET_DATA_LAKE: ${MINIO_BUCKET_DATA_LAKE:-ocr-cidades}
+      MINIO_SECURE: ${MINIO_SECURE:-false}
+      PIPELINE_TMP_DIR: ${PIPELINE_TMP_DIR:-/tmp/dados-desestruturados}
     user: "50000:0"
     command: >
       bash -c "
@@ -220,7 +234,7 @@ services:
       - ocr_net
 
   airflow-webserver:
-    image: apache/airflow:${AIRFLOW_VERSION:-3.0.2-python3.11}
+    <<: *airflow-image
     container_name: ocr_airflow_webserver
     depends_on:
       airflow-init:
@@ -249,7 +263,7 @@ services:
       - ocr_net
 
   airflow-scheduler:
-    image: apache/airflow:${AIRFLOW_VERSION:-3.0.2-python3.11}
+    <<: *airflow-image
     container_name: ocr_airflow_scheduler
     depends_on:
       airflow-init:
@@ -266,7 +280,7 @@ services:
       - ocr_net
 
   airflow-triggerer:
-    image: apache/airflow:${AIRFLOW_VERSION:-3.0.2-python3.11}
+    <<: *airflow-image
     container_name: ocr_airflow_triggerer
     depends_on:
       airflow-init:
