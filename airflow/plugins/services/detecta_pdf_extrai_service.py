@@ -144,6 +144,8 @@ class DetectaPdfExtraiService:
             self.docling_client.run_extract_command(
                 input_path=document["local_pdf_path"],
                 output_dir=str(output_dir),
+                do_chart_extraction=True,
+                enable_llm_text_extraction=True,
             )
 
             object_prefix = (
