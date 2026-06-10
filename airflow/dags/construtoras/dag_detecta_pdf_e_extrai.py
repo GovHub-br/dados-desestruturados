@@ -6,13 +6,14 @@ from airflow.decorators import dag, task
 from airflow.exceptions import AirflowSkipException
 from airflow.providers.standard.operators.empty import EmptyOperator
 
-from helpers import AirflowDefaults
+from helpers import AirflowDefaults, REFERENCE_DATE_RESOLVER
 from plugins.services import DETECTA_PDF_EXTRAI_SERVICE
 
 
 @task
-def montar_contexto_janela_divulgacao() -> dict[str, object]:
-    context = DETECTA_PDF_EXTRAI_SERVICE.build_detection_context()
+def montar_contexto_janela_divulgacao(reference_date: str | None = None) -> dict[str, object]:
+    resolved_reference_date = REFERENCE_DATE_RESOLVER.resolve(reference_date)
+    context = DETECTA_PDF_EXTRAI_SERVICE.build_detection_context(today=resolved_reference_date)
     if not context["should_check"]:
         raise AirflowSkipException(
             "Fora da janela de divulgacao trimestral: a DAG nao verifica os sites neste mes."
@@ -66,7 +67,9 @@ def dag_detecta_pdf_e_extrai() -> None:
     inicio = EmptyOperator(task_id="inicio")
     fim = EmptyOperator(task_id="fim")
 
-    context = montar_contexto_janela_divulgacao()
+    context = montar_contexto_janela_divulgacao(
+        reference_date="{{ dag_run.conf.get('reference_date', '') if dag_run and dag_run.conf else '' }}"
+    )
     candidates = detectar_pdfs(context)
     documents = baixar_e_persistir_pdfs(candidates)
     extractions = extrair_e_persistir_resultados(documents)
