@@ -16,9 +16,20 @@ class LocalPlatformConfig:
     minio_contract_prefix: str
     minio_layout_prefix: str
     pipeline_tmp_dir: str
+    docling_runner_base_url: str
+    docling_runner_timeout_seconds: int
+    docling_runner_execution_timeout_seconds: int
+    ri_download_timeout_seconds: int
+    ri_download_max_attempts: int
+    ri_download_retry_delay_seconds: int
+    force_extract: bool
     dominio: str
     entidade: str
     tipo_documento: str
+    docling_do_chart_extraction: bool
+    docling_enable_llm_text_extraction: bool
+
+
 class RuntimeConfigLoader:
     """Carrega configuracoes de runtime a partir de variaveis de ambiente."""
 
@@ -26,6 +37,14 @@ class RuntimeConfigLoader:
     def _as_bool(value: str) -> bool:
         """Converte valores de ambiente em booleanos de forma tolerante."""
         return value.strip().lower() in {"1", "true", "yes", "sim"}
+
+    @staticmethod
+    def _as_int(value: str, *, default: int) -> int:
+        """Converte valores de ambiente em inteiros com fallback previsivel."""
+        try:
+            return int(value.strip())
+        except (AttributeError, TypeError, ValueError):
+            return default
 
     def load_local_platform_config(self) -> LocalPlatformConfig:
         """Monta a configuracao usada pelos clientes e services do Airflow."""
@@ -51,14 +70,50 @@ class RuntimeConfigLoader:
                 "MINIO_LAYOUT_PREFIX",
                 "layouts/construtoras",
             ),
-            pipeline_tmp_dir=os.getenv("PIPELINE_TMP_DIR", "/tmp/dados-desestruturados"),
+            pipeline_tmp_dir=os.getenv("PIPELINE_TMP_DIR", "/opt/pipeline-tmp"),
+            docling_runner_base_url=os.getenv("DOCLING_RUNNER_BASE_URL", "http://docling-runner:8081"),
+            docling_runner_timeout_seconds=self._as_int(
+                os.getenv("DOCLING_RUNNER_TIMEOUT_SECONDS", "1800"),
+                default=1800,
+            ),
+            docling_runner_execution_timeout_seconds=self._as_int(
+                os.getenv("DOCLING_RUNNER_EXECUTION_TIMEOUT_SECONDS", "1500"),
+                default=1500,
+            ),
+            ri_download_timeout_seconds=self._as_int(
+                os.getenv("RI_DOWNLOAD_TIMEOUT_SECONDS", "120"),
+                default=120,
+            ),
+            ri_download_max_attempts=self._as_int(
+                os.getenv("RI_DOWNLOAD_MAX_ATTEMPTS", "3"),
+                default=3,
+            ),
+            ri_download_retry_delay_seconds=self._as_int(
+                os.getenv("RI_DOWNLOAD_RETRY_DELAY_SECONDS", "5"),
+                default=5,
+            ),
+            force_extract=self._as_bool(os.getenv("FORCE_EXTRACT", "false")),
             dominio=os.getenv("PIPELINE_DOMINIO", "construtoras"),
             entidade=os.getenv("PIPELINE_ENTIDADE", "cury"),
             tipo_documento=os.getenv(
                 "PIPELINE_TIPO_DOCUMENTO",
                 "relatorio_trimestral_construtora",
             ),
+            docling_do_chart_extraction=self._as_bool(
+                os.getenv("DOCLING_DO_CHART_EXTRACTION", "true")
+            ),
+            docling_enable_llm_text_extraction=self._resolve_llm_text_extraction_flag(),
         )
+
+    def _resolve_llm_text_extraction_flag(self) -> bool:
+        """Ativa LLM apenas quando a feature foi habilitada e a configuracao minima existe."""
+        requested = self._as_bool(os.getenv("DOCLING_ENABLE_LLM_TEXT_EXTRACTION", "false"))
+        if not requested:
+            return False
+
+        api_url = os.getenv("DOCLING_LLM_API_URL", "").strip() or os.getenv("LLM_API_URL", "").strip()
+        api_model = os.getenv("DOCLING_LLM_API_MODEL", "").strip() or os.getenv("LLM_API_MODEL", "").strip()
+        return bool(api_url and api_model)
 
 
 RUNTIME_CONFIG_LOADER = RuntimeConfigLoader()

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import hashlib
+import logging
 import re
 from datetime import UTC, date, datetime
 from pathlib import Path
@@ -71,9 +72,25 @@ class DetectaPdfExtraiService:
     def download_and_persist_pdfs(self, candidates: list[dict[str, Any]]) -> list[dict[str, Any]]:
         """Baixa PDFs candidatos, calcula hash, salva no MinIO e registra manifesto."""
         persisted: list[dict[str, Any]] = []
+        force_extract = self.config.force_extract
 
         for candidate in candidates:
-            response = self.http_client.fetch(candidate["url"])
+            logging.info(
+                "Baixando PDF detectado para %s %s a partir de %s "
+                "(timeout=%ss, tentativas=%s, espera=%ss)",
+                candidate["company_slug"],
+                candidate["period_label"],
+                candidate["url"],
+                self.config.ri_download_timeout_seconds,
+                self.config.ri_download_max_attempts,
+                self.config.ri_download_retry_delay_seconds,
+            )
+            response = self.http_client.fetch(
+                candidate["url"],
+                timeout=self.config.ri_download_timeout_seconds,
+                max_attempts=self.config.ri_download_max_attempts,
+                retry_delay_seconds=self.config.ri_download_retry_delay_seconds,
+            )
             content = response.body
             digest = hashlib.sha256(content).hexdigest()
             document_id = digest[:32]
@@ -99,11 +116,26 @@ class DetectaPdfExtraiService:
                     data=content,
                     content_type=response.content_type or "application/pdf",
                 )
+                logging.info(
+                    "PDF novo persistido no MinIO para %s %s em %s",
+                    candidate["company_slug"],
+                    candidate["period_label"],
+                    pdf_uri,
+                )
+            else:
+                logging.info(
+                    "PDF duplicado identificado para %s %s; reutilizando %s",
+                    candidate["company_slug"],
+                    candidate["period_label"],
+                    pdf_uri,
+                )
 
+            should_extract = force_extract or not already_exists
             manifest = {
                 "document_id": document_id,
                 "sha256": digest,
                 "status": "duplicado" if already_exists else "novo",
+                "force_extract": force_extract,
                 "pdf_uri": pdf_uri,
                 "source_final_url": response.url,
                 "candidate": candidate,
@@ -115,7 +147,7 @@ class DetectaPdfExtraiService:
                     **manifest,
                     "manifest_uri": manifest_uri,
                     "local_pdf_path": str(local_pdf),
-                    "should_extract": not already_exists,
+                    "should_extract": should_extract,
                 }
             )
 
@@ -124,6 +156,8 @@ class DetectaPdfExtraiService:
     def extract_and_persist_outputs(self, documents: list[dict[str, Any]]) -> list[dict[str, Any]]:
         """Roda o pipeline Docling para PDFs novos e persiste a pasta de saida no MinIO."""
         results: list[dict[str, Any]] = []
+        do_chart_extraction = self.config.docling_do_chart_extraction
+        enable_llm_text_extraction = self.config.docling_enable_llm_text_extraction
 
         for document in documents:
             if not document.get("should_extract"):
@@ -138,15 +172,23 @@ class DetectaPdfExtraiService:
             command = self.docling_client.render_extract_command(
                 input_path=document["local_pdf_path"],
                 output_dir=str(output_dir),
-                do_chart_extraction=True,
-                enable_llm_text_extraction=True,
+                do_chart_extraction=do_chart_extraction,
+                enable_llm_text_extraction=enable_llm_text_extraction,
             )
-            self.docling_client.run_extract_command(
+            runner_result = self.docling_client.run_extract_command(
                 input_path=document["local_pdf_path"],
                 output_dir=str(output_dir),
-                do_chart_extraction=True,
-                enable_llm_text_extraction=True,
+                do_chart_extraction=do_chart_extraction,
+                enable_llm_text_extraction=enable_llm_text_extraction,
             )
+            runner_log_tail = str(runner_result.get("log_tail", "")).strip()
+            if runner_log_tail:
+                logging.info(
+                    "Resumo do runner Docling para %s:%s%s",
+                    execution_id,
+                    "\n",
+                    runner_log_tail,
+                )
 
             object_prefix = (
                 f"{self.config.minio_execution_prefix}/{candidate['company_slug']}/"
@@ -158,6 +200,7 @@ class DetectaPdfExtraiService:
                 "document_id": document["document_id"],
                 "command": command,
                 "input_pdf_uri": document["pdf_uri"],
+                "runner_result": runner_result,
                 "artifact_prefix": f"minio://{self.config.minio_bucket}/{object_prefix}",
                 "artifact_uris": artifact_uris,
                 "candidate": candidate,
