@@ -3,7 +3,12 @@ from __future__ import annotations
 from typing import Any
 
 from docling.datamodel.base_models import InputFormat
-from docling.datamodel.pipeline_options import PdfPipelineOptions, TableFormerMode
+from docling.datamodel.pipeline_options import (
+    PdfPipelineOptions,
+    TableFormerMode,
+    TableStructureOptions,
+    TableStructureV2Options,
+)
 from docling.document_converter import DocumentConverter, PdfFormatOption
 
 from ..config import RuntimeConfig
@@ -12,8 +17,16 @@ from ..config import RuntimeConfig
 def build_standard_converter(config: RuntimeConfig) -> DocumentConverter:
     pipeline_options = PdfPipelineOptions()
     pipeline_options.do_table_structure = True
-    pipeline_options.table_structure_options.mode = TableFormerMode.ACCURATE
-    pipeline_options.do_chart_extraction = True
+    if config.table_structure_kind == "tableformer_v2":
+        pipeline_options.table_structure_options = TableStructureV2Options(
+            do_cell_matching=config.table_cell_matching
+        )
+    else:
+        pipeline_options.table_structure_options = TableStructureOptions(
+            mode=TableFormerMode(config.table_structure_mode),
+            do_cell_matching=config.table_cell_matching,
+        )
+    pipeline_options.do_chart_extraction = config.do_chart_extraction
     pipeline_options.generate_page_images = True
     pipeline_options.generate_picture_images = True
     if config.artifacts_path:

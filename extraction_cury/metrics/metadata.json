@@ -1,0 +1,27 @@
+{
+  "kind": "metrics",
+  "source_file": "pdf_construturas/cury.pdf",
+  "path": "metrics/metrics.jsonl",
+  "record_count": 35,
+  "schema": [
+    "label_raw",
+    "value_numeric",
+    "value_text",
+    "unit_hint",
+    "section_title"
+  ],
+  "fields": [
+    "metric_id",
+    "document_id",
+    "page_number",
+    "section_id",
+    "section_title",
+    "label_raw",
+    "label_canonical",
+    "value_numeric",
+    "value_text",
+    "unit_hint",
+    "bbox",
+    "extraction_method"
+  ]
+}

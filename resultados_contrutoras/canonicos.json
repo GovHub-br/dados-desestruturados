@@ -1,0 +1,1281 @@
+[
+  {
+    "bloco_canonico": "pib_construcao_civil",
+    "descricao": "PIB da construção civil em percentual de crescimento",
+    "fontes_oficiais": ["IBGE"],
+    "periodicidade": "trimestral",
+    "colunas": [
+      {
+        "nome": "periodo",
+        "tipo": "string",
+        "nullable": false,
+        "descricao": "Período de referência"
+      },
+      {
+        "nome": "tipo_variacao",
+        "tipo": "string",
+        "nullable": false,
+        "descricao": "Tipo de variação"
+      },
+      {
+        "nome": "valor",
+        "tipo": "numeric",
+        "nullable": false,
+        "descricao": "Valor do indicador"
+      },
+      {
+        "nome": "unidade",
+        "tipo": "string",
+        "nullable": false,
+        "descricao": "Unidade do indicador"
+      },
+      {
+        "nome": "fonte",
+        "tipo": "string",
+        "nullable": false,
+        "descricao": "Fonte oficial"
+      }
+    ],
+    "dominios": {
+      "tipo_variacao": [
+        "trim_vs_trim_anterior",
+        "acumulado_ano",
+        "acumulado_4_trimestres"
+      ],
+      "unidade": ["%"]
+    }
+  },
+  {
+    "bloco_canonico": "lancamentos_e_vendas",
+    "descricao": "Indicadores de lançamentos e vendas imobiliárias",
+    "fontes_oficiais": ["CBIC"],
+    "periodicidade": "trimestral",
+    "colunas": [
+      {
+        "nome": "periodo",
+        "tipo": "string",
+        "nullable": false,
+        "descricao": "Período de referência"
+      },
+      {
+        "nome": "regiao",
+        "tipo": "string",
+        "nullable": true,
+        "descricao": "Região geográfica. Null para consolidado nacional"
+      },
+      {
+        "nome": "tipo_operacao",
+        "tipo": "string",
+        "nullable": false,
+        "descricao": "Tipo da operação"
+      },
+      {
+        "nome": "categoria",
+        "tipo": "string",
+        "nullable": false,
+        "descricao": "Categoria do indicador"
+      },
+      {
+        "nome": "valor",
+        "tipo": "numeric",
+        "nullable": false,
+        "descricao": "Valor do indicador"
+      },
+      {
+        "nome": "unidade",
+        "tipo": "string",
+        "nullable": false,
+        "descricao": "Unidade do indicador"
+      },
+      {
+        "nome": "fonte",
+        "tipo": "string",
+        "nullable": false,
+        "descricao": "Fonte oficial do dado"
+      }
+    ],
+    "dominios": {
+      "tipo_operacao": [
+        "lancamento",
+        "venda"
+      ],
+      "categoria": [
+        "total",
+        "mcmv",
+        "demais",
+        "percentual_mcmv"
+      ],
+      "unidade": [
+        "unidades",
+        "%"
+      ]
+    }
+  },
+  {
+    "bloco_canonico": "balanco_empresas",
+    "descricao": "Balanços trimestrais de empresas do setor da construção e incorporação",
+    "fontes_oficiais": ["Balanços trimestrais das empresas"],
+    "periodicidade": "trimestral",
+    "colunas": [
+      {
+        "nome": "periodo",
+        "tipo": "string",
+        "nullable": false,
+        "descricao": "Período de referência"
+      },
+      {
+        "nome": "empresa",
+        "tipo": "string",
+        "nullable": false,
+        "descricao": "Empresa do balanço"
+      },
+      {
+        "nome": "tipo_operacao",
+        "tipo": "string",
+        "nullable": false,
+        "descricao": "Tipo da operação"
+      },
+      {
+        "nome": "tipo_variacao",
+        "tipo": "string",
+        "nullable": false,
+        "descricao": "Tipo de variação"
+      },
+      {
+        "nome": "valor",
+        "tipo": "numeric",
+        "nullable": false,
+        "descricao": "Valor do indicador"
+      }
+    ]
+  },
+  {
+    "bloco_canonico": "financiamento_imobiliario",
+    "descricao": "Indicadores de financiamentos imobiliários para pessoa física e jurídica",
+    "fontes_oficiais": [
+      "BACEN"
+    ],
+    "periodicidade": "mensal",
+    "colunas": [
+      {
+        "nome": "periodo",
+        "tipo": "string",
+        "nullable": false,
+        "descricao": "Período de referência"
+      },
+      {
+        "nome": "tipo_pessoa",
+        "tipo": "string",
+        "nullable": false,
+        "descricao": "Pessoa física ou jurídica"
+      },
+      {
+        "nome": "indicador",
+        "tipo": "string",
+        "nullable": false,
+        "descricao": "Indicador financeiro"
+      },
+      {
+        "nome": "valor",
+        "tipo": "numeric",
+        "nullable": false,
+        "descricao": "Valor do indicador"
+      },
+      {
+        "nome": "unidade",
+        "tipo": "string",
+        "nullable": false,
+        "descricao": "Unidade do indicador"
+      },
+      {
+        "nome": "fonte",
+        "tipo": "string",
+        "nullable": false,
+        "descricao": "Fonte oficial"
+      }
+    ],
+    "dominios": {
+      "tipo_pessoa": [
+        "pf",
+        "pj"
+      ],
+      "indicador": [
+        "concessoes",
+        "taxa_juros",
+        "inadimplencia"
+      ],
+      "unidade": [
+        "R$ milhões",
+        "%"
+      ]
+    }
+  },
+  {
+    "bloco_canonico": "financiamento_habitacional",
+    "descricao": "Financiamentos habitacionais por modalidade",
+    "fontes_oficiais": [
+      "FGTS",
+      "ABECIP"
+    ],
+    "periodicidade": "trimestral",
+    "colunas": [
+      {
+        "nome": "periodo",
+        "tipo": "string",
+        "nullable": false,
+        "descricao": "Período de referência"
+      },
+      {
+        "nome": "modalidade",
+        "tipo": "string",
+        "nullable": false,
+        "descricao": "Modalidade do financiamento"
+      },
+      {
+        "nome": "valor",
+        "tipo": "numeric",
+        "nullable": false,
+        "descricao": "Quantidade de financiamentos"
+      },
+      {
+        "nome": "unidade",
+        "tipo": "string",
+        "nullable": false,
+        "descricao": "Unidade do indicador"
+      },
+      {
+        "nome": "fonte",
+        "tipo": "string",
+        "nullable": false,
+        "descricao": "Fonte oficial"
+      }
+    ],
+    "dominios": {
+      "modalidade": [
+        "fgts_pj",
+        "sbpe_const"
+      ],
+      "unidade": [
+        "UH"
+      ]
+    }
+  },
+  {
+    "bloco_canonico": "empregos_construcao",
+    "descricao": "Indicadores de emprego no setor da construção civil",
+    "fontes_oficiais": [
+      "CAGED"
+    ],
+    "periodicidade": "mensal",
+    "colunas": [
+      {
+        "nome": "periodo",
+        "tipo": "string",
+        "nullable": false,
+        "descricao": "Período de referência"
+      },
+      {
+        "nome": "indicador",
+        "tipo": "string",
+        "nullable": false,
+        "descricao": "Indicador medido"
+      },
+      {
+        "nome": "valor",
+        "tipo": "numeric",
+        "nullable": false,
+        "descricao": "Valor do indicador"
+      },
+      {
+        "nome": "unidade",
+        "tipo": "string",
+        "nullable": false,
+        "descricao": "Unidade do indicador"
+      },
+      {
+        "nome": "fonte",
+        "tipo": "string",
+        "nullable": false,
+        "descricao": "Fonte oficial"
+      }
+    ],
+    "dominios": {
+      "indicador": [
+        "criacao_liquida",
+        "total_postos"
+      ],
+      "unidade": [
+        "postos"
+      ]
+    }
+  },
+  {
+    "bloco_canonico": "pnad_indicadores",
+    "descricao": "Indicadores da PNAD Contínua: população ocupada e rendimento médio real",
+    "fontes_oficiais": [
+      "PNAD Contínua"
+    ],
+    "periodicidade": "trimestral",
+    "colunas": [
+      {
+        "nome": "periodo",
+        "tipo": "string",
+        "nullable": false,
+        "descricao": "Período de referência"
+      },
+      {
+        "nome": "categoria",
+        "tipo": "string",
+        "nullable": false,
+        "descricao": "Categoria do indicador"
+      },
+      {
+        "nome": "indicador",
+        "tipo": "string",
+        "nullable": false,
+        "descricao": "Indicador medido"
+      },
+      {
+        "nome": "valor",
+        "tipo": "numeric",
+        "nullable": false,
+        "descricao": "Valor do indicador"
+      },
+      {
+        "nome": "unidade",
+        "tipo": "string",
+        "nullable": false,
+        "descricao": "Unidade do indicador"
+      },
+      {
+        "nome": "fonte",
+        "tipo": "string",
+        "nullable": false,
+        "descricao": "Fonte oficial"
+      }
+    ],
+    "dominios": {
+      "categoria": [
+        "construcao",
+        "total"
+      ],
+      "indicador": [
+        "ocupados",
+        "rendimento_medio_real"
+      ],
+      "unidade": [
+        "milhares",
+        "R$"
+      ]
+    }
+  },
+  {
+    "bloco_canonico": "producao_industrial_vendas",
+    "descricao": "Indicadores de produção industrial e volume de vendas da construção",
+    "fontes_oficiais": [
+      "IBGE - Pesquisa Industrial Mensal",
+      "Pesquisa Mensal do Comércio"
+    ],
+    "periodicidade": "mensal",
+    "colunas": [
+      {
+        "nome": "periodo",
+        "tipo": "string",
+        "nullable": false,
+        "descricao": "Período de referência"
+      },
+      {
+        "nome": "indicador",
+        "tipo": "string",
+        "nullable": false,
+        "descricao": "Indicador medido"
+      },
+      {
+        "nome": "tipo_variacao",
+        "tipo": "string",
+        "nullable": false,
+        "descricao": "Tipo de variação"
+      },
+      {
+        "nome": "valor",
+        "tipo": "numeric",
+        "nullable": false,
+        "descricao": "Valor do indicador"
+      },
+      {
+        "nome": "unidade",
+        "tipo": "string",
+        "nullable": false,
+        "descricao": "Unidade do indicador"
+      },
+      {
+        "nome": "fonte",
+        "tipo": "string",
+        "nullable": false,
+        "descricao": "Fonte oficial"
+      }
+    ],
+    "dominios": {
+      "indicador": [
+        "producao_industrial",
+        "volume_vendas"
+      ],
+      "tipo_variacao": [
+        "variacao_mensal",
+        "acumulado_ano",
+        "acumulado_12m"
+      ],
+      "unidade": [
+        "%"
+      ]
+    }
+  },
+  {
+    "bloco_canonico": "novos_financiamentos_imobiliarios",
+    "descricao": "Indicadores de novos financiamentos imobiliários por banco",
+    "fontes_oficiais": [
+      "ABECIP"
+    ],
+    "periodicidade": "trimestral",
+    "colunas": [
+      {
+        "nome": "periodo",
+        "tipo": "string",
+        "nullable": false,
+        "descricao": "Período de referência"
+      },
+      {
+        "nome": "banco",
+        "tipo": "string",
+        "nullable": false,
+        "descricao": "Banco originador"
+      },
+      {
+        "nome": "indicador",
+        "tipo": "string",
+        "nullable": false,
+        "descricao": "Indicador medido"
+      },
+      {
+        "nome": "tipo_variacao",
+        "tipo": "string",
+        "nullable": false,
+        "descricao": "Tipo de variação"
+      },
+      {
+        "nome": "valor",
+        "tipo": "numeric",
+        "nullable": false,
+        "descricao": "Valor do indicador"
+      },
+      {
+        "nome": "unidade",
+        "tipo": "string",
+        "nullable": false,
+        "descricao": "Unidade do indicador"
+      },
+      {
+        "nome": "fonte",
+        "tipo": "string",
+        "nullable": false,
+        "descricao": "Fonte oficial"
+      }
+    ],
+    "dominios": {
+      "banco": [
+        "cef",
+        "itau",
+        "bradesco",
+        "santander",
+        "brb",
+        "bb",
+        "demais",
+        "total"
+      ],
+      "indicador": [
+        "valor",
+        "uh"
+      ],
+      "tipo_variacao": [
+        "absoluto",
+        "percentual_total",
+        "variacao_ano"
+      ],
+      "unidade": [
+        "R$ bi",
+        "UH",
+        "%"
+      ]
+    }
+  },
+  {
+    "bloco_canonico": "credito_imobiliario_pib",
+    "descricao": "Razão entre saldo de crédito imobiliário e PIB",
+    "fontes_oficiais": [
+      "BACEN"
+    ],
+    "periodicidade": "mensal",
+    "colunas": [
+      {
+        "nome": "periodo",
+        "tipo": "string",
+        "nullable": false,
+        "descricao": "Período de referência"
+      },
+      {
+        "nome": "valor",
+        "tipo": "numeric",
+        "nullable": false,
+        "descricao": "Valor do indicador"
+      },
+      {
+        "nome": "unidade",
+        "tipo": "string",
+        "nullable": false,
+        "descricao": "Unidade do indicador"
+      },
+      {
+        "nome": "fonte",
+        "tipo": "string",
+        "nullable": false,
+        "descricao": "Fonte oficial"
+      }
+    ],
+    "dominios": {
+      "unidade": [
+        "%"
+      ]
+    }
+  },
+  {
+    "bloco_canonico": "fgts_faixa_renda",
+    "descricao": "Unidades habitacionais financiadas pelo FGTS por faixa de renda",
+    "fontes_oficiais": [
+      "Canal FGTS",
+      "ABECIP"
+    ],
+    "periodicidade": "anual",
+    "colunas": [
+      {
+        "nome": "periodo",
+        "tipo": "string",
+        "nullable": false,
+        "descricao": "Período de referência"
+      },
+      {
+        "nome": "faixa_renda",
+        "tipo": "string",
+        "nullable": false,
+        "descricao": "Faixa de renda"
+      },
+      {
+        "nome": "tipo_uh",
+        "tipo": "string",
+        "nullable": false,
+        "descricao": "Tipo de unidade habitacional (nova ou usada)"
+      },
+      {
+        "nome": "valor",
+        "tipo": "numeric",
+        "nullable": false,
+        "descricao": "Valor do indicador"
+      },
+      {
+        "nome": "unidade",
+        "tipo": "string",
+        "nullable": false,
+        "descricao": "Unidade do indicador"
+      },
+      {
+        "nome": "fonte",
+        "tipo": "string",
+        "nullable": false,
+        "descricao": "Fonte oficial"
+      }
+    ],
+    "dominios": {
+      "faixa_renda": [
+        "faixa_1",
+        "faixa_2",
+        "faixa_3",
+        "faixa_3_fs",
+        "classe_media",
+        "fora_mcmv",
+        "total"
+      ],
+      "tipo_uh": [
+        "uh_usadas",
+        "uh_novas"
+      ],
+      "unidade": [
+        "UH"
+      ]
+    }
+  },
+  {
+    "bloco_canonico": "uh_condicao_uso",
+    "descricao": "Unidades habitacionais financiadas por condição de uso",
+    "fontes_oficiais": [
+      "Canal FGTS",
+      "ABECIP"
+    ],
+    "periodicidade": "anual",
+    "colunas": [
+      {
+        "nome": "periodo",
+        "tipo": "string",
+        "nullable": false,
+        "descricao": "Período de referência"
+      },
+      {
+        "nome": "condicao_uso",
+        "tipo": "string",
+        "nullable": false,
+        "descricao": "Condição de uso da unidade habitacional"
+      },
+      {
+        "nome": "tipo_uh",
+        "tipo": "string",
+        "nullable": false,
+        "descricao": "Tipo de unidade habitacional (nova ou usada)"
+      },
+      {
+        "nome": "valor",
+        "tipo": "numeric",
+        "nullable": false,
+        "descricao": "Valor do indicador"
+      },
+      {
+        "nome": "unidade",
+        "tipo": "string",
+        "nullable": false,
+        "descricao": "Unidade do indicador"
+      },
+      {
+        "nome": "fonte",
+        "tipo": "string",
+        "nullable": false,
+        "descricao": "Fonte oficial"
+      }
+    ],
+    "dominios": {
+      "condicao_uso": [
+        "fgts_pf",
+        "sbpe_aquisicao",
+        "total"
+      ],
+      "tipo_uh": [
+        "uh_usadas",
+        "uh_novas"
+      ],
+      "unidade": [
+        "UH"
+      ]
+    }
+  },
+  {
+    "bloco_canonico": "estrutura_funding",
+    "descricao": "Estrutura de funding do crédito imobiliário",
+    "fontes_oficiais": [
+      "Anbima",
+      "B3",
+      "BCB",
+      "Caixa",
+      "CBIC"
+    ],
+    "periodicidade": "mensal",
+    "colunas": [
+      {
+        "nome": "periodo",
+        "tipo": "string",
+        "nullable": false,
+        "descricao": "Período de referência"
+      },
+      {
+        "nome": "funding",
+        "tipo": "string",
+        "nullable": false,
+        "descricao": "Fonte de funding"
+      },
+      {
+        "nome": "tipo_variacao",
+        "tipo": "string",
+        "nullable": false,
+        "descricao": "Tipo de variação"
+      },
+      {
+        "nome": "valor",
+        "tipo": "numeric",
+        "nullable": false,
+        "descricao": "Valor do indicador"
+      },
+      {
+        "nome": "unidade",
+        "tipo": "string",
+        "nullable": false,
+        "descricao": "Unidade do indicador"
+      },
+      {
+        "nome": "fonte",
+        "tipo": "string",
+        "nullable": false,
+        "descricao": "Fonte oficial"
+      }
+    ],
+    "dominios": {
+      "funding": [
+        "sbpe",
+        "fgts",
+        "lci",
+        "fii",
+        "cri",
+        "lig"
+      ],
+      "tipo_variacao": [
+        "absoluto",
+        "percentual_total"
+      ],
+      "unidade": [
+        "R$ bilhões",
+        "%"
+      ]
+    }
+  },
+  {
+    "bloco_canonico": "financiamento_programas_habitacionais",
+    "descricao": "Indicadores anuais de financiamento por programa habitacional",
+    "fontes_oficiais": [
+      "ABECIP",
+      "Canal FGTS"
+    ],
+    "periodicidade": "anual",
+    "colunas": [
+      {
+        "nome": "periodo",
+        "tipo": "string",
+        "nullable": false,
+        "descricao": "Período de referência"
+      },
+      {
+        "nome": "programa",
+        "tipo": "string",
+        "nullable": false,
+        "descricao": "Programa habitacional"
+      },
+      {
+        "nome": "indicador",
+        "tipo": "string",
+        "nullable": false,
+        "descricao": "Indicador medido"
+      },
+      {
+        "nome": "tipo_variacao",
+        "tipo": "string",
+        "nullable": false,
+        "descricao": "Tipo de variação"
+      },
+      {
+        "nome": "valor",
+        "tipo": "numeric",
+        "nullable": false,
+        "descricao": "Valor do indicador"
+      },
+      {
+        "nome": "unidade",
+        "tipo": "string",
+        "nullable": false,
+        "descricao": "Unidade do indicador"
+      },
+      {
+        "nome": "fonte",
+        "tipo": "string",
+        "nullable": false,
+        "descricao": "Fonte oficial"
+      }
+    ],
+    "dominios": {
+      "programa": [
+        "mcmv_fin_pf_sbpe_aq",
+        "sbpe_const",
+        "mcmv_fin_pf_cci_cca_procot",
+        "fgts_pf_apoio_producao",
+        "fin_pf_total"
+      ],
+      "indicador": [
+        "unidades",
+        "valor"
+      ],
+      "tipo_variacao": [
+        "absoluto",
+        "variacao_ano"
+      ],
+      "unidade": [
+        "unidades",
+        "R$ bilhões",
+        "%"
+      ]
+    }
+  },
+  {
+    "bloco_canonico": "saldo_poupanca",
+    "descricao": "Saldo total da poupança SBPE",
+    "fontes_oficiais": [
+      "ABECIP"
+    ],
+    "periodicidade": "mensal",
+    "colunas": [
+      {
+        "nome": "periodo",
+        "tipo": "string",
+        "nullable": false,
+        "descricao": "Período de referência"
+      },
+      {
+        "nome": "valor",
+        "tipo": "numeric",
+        "nullable": false,
+        "descricao": "Valor do indicador"
+      },
+      {
+        "nome": "unidade",
+        "tipo": "string",
+        "nullable": false,
+        "descricao": "Unidade do indicador"
+      },
+      {
+        "nome": "fonte",
+        "tipo": "string",
+        "nullable": false,
+        "descricao": "Fonte oficial"
+      }
+    ],
+    "dominios": {
+      "unidade": [
+        "R$ bilhões"
+      ]
+    }
+  },
+  {
+    "bloco_canonico": "financiamento_pf_faixa_renda",
+    "descricao": "Financiamento pessoa física segmentado por faixa de renda e programa",
+    "fontes_oficiais": [
+      "Canal FGTS"
+    ],
+    "periodicidade": "anual",
+    "colunas": [
+      {
+        "nome": "periodo",
+        "tipo": "string",
+        "nullable": false,
+        "descricao": "Período de referência"
+      },
+      {
+        "nome": "faixa",
+        "tipo": "string",
+        "nullable": false,
+        "descricao": "Faixa de renda"
+      },
+      {
+        "nome": "indicador",
+        "tipo": "string",
+        "nullable": false,
+        "descricao": "Indicador medido"
+      },
+      {
+        "nome": "valor",
+        "tipo": "numeric",
+        "nullable": false,
+        "descricao": "Valor do indicador"
+      },
+      {
+        "nome": "unidade",
+        "tipo": "string",
+        "nullable": false,
+        "descricao": "Unidade do indicador"
+      },
+      {
+        "nome": "fonte",
+        "tipo": "string",
+        "nullable": false,
+        "descricao": "Fonte oficial"
+      }
+    ],
+    "dominios": {
+      "faixa": [
+        "faixa_1",
+        "faixa_2",
+        "faixa_3",
+        "pro_cotista_faixa_1",
+        "pro_cotista_faixa_2",
+        "pro_cotista_faixa_3",
+        "pro_cotista_classe_media",
+        "fora_mcmv",
+        "faixa_3_fundo_social",
+        "faixa_classe_media",
+        "total"
+      ],
+      "indicador": [
+        "numero_uh",
+        "financiamento_bi"
+      ],
+      "unidade": [
+        "UH",
+        "R$ bilhões"
+      ]
+    }
+  },
+  {
+    "bloco_canonico": "sinapi_custo_construcao",
+    "descricao": "Custo de construção segundo o SINAPI",
+    "fontes_oficiais": [
+      "IBGE"
+    ],
+    "periodicidade": "mensal",
+    "colunas": [
+      {
+        "nome": "periodo",
+        "tipo": "string",
+        "nullable": false,
+        "descricao": "Período de referência"
+      },
+      {
+        "nome": "indicador",
+        "tipo": "string",
+        "nullable": false,
+        "descricao": "Indicador medido"
+      },
+      {
+        "nome": "tipo_variacao",
+        "tipo": "string",
+        "nullable": false,
+        "descricao": "Tipo de variação"
+      },
+      {
+        "nome": "valor",
+        "tipo": "numeric",
+        "nullable": false,
+        "descricao": "Valor do indicador"
+      },
+      {
+        "nome": "unidade",
+        "tipo": "string",
+        "nullable": false,
+        "descricao": "Unidade do indicador"
+      },
+      {
+        "nome": "fonte",
+        "tipo": "string",
+        "nullable": false,
+        "descricao": "Fonte oficial"
+      }
+    ],
+    "dominios": {
+      "indicador": [
+        "custo_m2"
+      ],
+      "tipo_variacao": [
+        "absoluto",
+        "variacao_mensal",
+        "variacao_12m"
+      ],
+      "unidade": [
+        "R$/m2",
+        "%"
+      ]
+    }
+  },
+  {
+    "bloco_canonico": "incc_indice_construcao",
+    "descricao": "Índice Nacional de Custo da Construção",
+    "fontes_oficiais": [
+      "FGV"
+    ],
+    "periodicidade": "mensal",
+    "colunas": [
+      {
+        "nome": "periodo",
+        "tipo": "string",
+        "nullable": false,
+        "descricao": "Período de referência"
+      },
+      {
+        "nome": "indicador",
+        "tipo": "string",
+        "nullable": false,
+        "descricao": "Indicador medido"
+      },
+      {
+        "nome": "tipo_variacao",
+        "tipo": "string",
+        "nullable": false,
+        "descricao": "Tipo de variação"
+      },
+      {
+        "nome": "valor",
+        "tipo": "numeric",
+        "nullable": false,
+        "descricao": "Valor do indicador"
+      },
+      {
+        "nome": "unidade",
+        "tipo": "string",
+        "nullable": false,
+        "descricao": "Unidade do indicador"
+      },
+      {
+        "nome": "fonte",
+        "tipo": "string",
+        "nullable": false,
+        "descricao": "Fonte oficial"
+      }
+    ],
+    "dominios": {
+      "indicador": [
+        "incc"
+      ],
+      "tipo_variacao": [
+        "absoluto",
+        "variacao_mensal",
+        "variacao_12m"
+      ],
+      "unidade": [
+        "indice",
+        "%"
+      ]
+    }
+  },
+  {
+    "bloco_canonico": "fgts_valor_medio_imoveis",
+    "descricao": "Valor médio dos imóveis financiados pelo FGTS",
+    "fontes_oficiais": [
+      "Canal FGTS"
+    ],
+    "periodicidade": "mensal",
+    "colunas": [
+      {
+        "nome": "periodo",
+        "tipo": "string",
+        "nullable": false,
+        "descricao": "Período de referência"
+      },
+      {
+        "nome": "indicador",
+        "tipo": "string",
+        "nullable": false,
+        "descricao": "Indicador medido"
+      },
+      {
+        "nome": "tipo_variacao",
+        "tipo": "string",
+        "nullable": false,
+        "descricao": "Tipo de variação"
+      },
+      {
+        "nome": "valor",
+        "tipo": "numeric",
+        "nullable": false,
+        "descricao": "Valor do indicador"
+      },
+      {
+        "nome": "unidade",
+        "tipo": "string",
+        "nullable": false,
+        "descricao": "Unidade do indicador"
+      },
+      {
+        "nome": "fonte",
+        "tipo": "string",
+        "nullable": false,
+        "descricao": "Fonte oficial"
+      }
+    ],
+    "dominios": {
+      "indicador": [
+        "valor_medio_imoveis"
+      ],
+      "tipo_variacao": [
+        "absoluto",
+        "variacao_mensal",
+        "variacao_12m"
+      ],
+      "unidade": [
+        "R$",
+        "%"
+      ]
+    }
+  },
+  {
+    "bloco_canonico": "ticket_medio_vs_incc",
+    "descricao": "Variação do ticket médio das unidades lançadas em comparação com o INCC",
+    "fontes_oficiais": [
+      "INCC",
+      "Balanços das empresas"
+    ],
+    "periodicidade": "trimestral",
+    "colunas": [
+      {
+        "nome": "periodo",
+        "tipo": "string",
+        "nullable": false,
+        "descricao": "Período de referência"
+      },
+      {
+        "nome": "empresa",
+        "tipo": "string",
+        "nullable": false,
+        "descricao": "Empresa ou referência de comparação"
+      },
+      {
+        "nome": "tipo_variacao",
+        "tipo": "string",
+        "nullable": false,
+        "descricao": "Tipo de variação"
+      },
+      {
+        "nome": "valor",
+        "tipo": "numeric",
+        "nullable": false,
+        "descricao": "Valor do indicador"
+      },
+      {
+        "nome": "unidade",
+        "tipo": "string",
+        "nullable": false,
+        "descricao": "Unidade do indicador"
+      },
+      {
+        "nome": "fonte",
+        "tipo": "string",
+        "nullable": false,
+        "descricao": "Fonte oficial"
+      }
+    ],
+    "dominios": {
+      "empresa": [
+        "incc",
+        "mrv",
+        "direcional",
+        "tenda"
+      ],
+      "tipo_variacao": [
+        "variacao_trimestral",
+        "acumulado_ano"
+      ],
+      "unidade": [
+        "%"
+      ]
+    }
+  },
+  {
+    "bloco_canonico": "indices_construcao",
+    "descricao": "Indicadores e índices do setor da construção",
+    "fontes_oficiais": [
+      "InfoMoney",
+      "ABRAMAT",
+      "FIPE",
+      "FGV-IBRE"
+    ],
+    "periodicidade": "mensal",
+    "colunas": [
+      {
+        "nome": "periodo",
+        "tipo": "string",
+        "nullable": false,
+        "descricao": "Período de referência"
+      },
+      {
+        "nome": "indice",
+        "tipo": "string",
+        "nullable": false,
+        "descricao": "Índice publicado"
+      },
+      {
+        "nome": "tipo_variacao",
+        "tipo": "string",
+        "nullable": false,
+        "descricao": "Tipo de variação"
+      },
+      {
+        "nome": "valor",
+        "tipo": "numeric",
+        "nullable": false,
+        "descricao": "Valor do indicador"
+      },
+      {
+        "nome": "unidade",
+        "tipo": "string",
+        "nullable": false,
+        "descricao": "Unidade do indicador"
+      },
+      {
+        "nome": "fonte",
+        "tipo": "string",
+        "nullable": false,
+        "descricao": "Fonte oficial"
+      }
+    ],
+    "dominios": {
+      "indice": [
+        "indice_imob",
+        "indice_abramat",
+        "indice_fipezap",
+        "indice_icst"
+      ],
+      "tipo_variacao": [
+        "vs_mes_anterior",
+        "vs_ano_anterior",
+        "acumulado_ano"
+      ],
+      "unidade": [
+        "%"
+      ]
+    }
+  },
+  {
+    "bloco_canonico": "dados_qualitativos_conjuntura",
+    "descricao": "Observações qualitativas, expectativas e visão institucional",
+    "fontes_oficiais": [],
+    "periodicidade": "trimestral",
+    "colunas": [
+      {
+        "nome": "periodo",
+        "tipo": "string",
+        "nullable": false,
+        "descricao": "Período de referência"
+      },
+      {
+        "nome": "categoria",
+        "tipo": "string",
+        "nullable": false,
+        "descricao": "Categoria da observação"
+      },
+      {
+        "nome": "tema",
+        "tipo": "string",
+        "nullable": false,
+        "descricao": "Tema da observação"
+      },
+      {
+        "nome": "descricao",
+        "tipo": "text",
+        "nullable": false,
+        "descricao": "Texto da observação qualitativa"
+      },
+      {
+        "nome": "fonte",
+        "tipo": "string",
+        "nullable": true,
+        "descricao": "Fonte da observação. Null quando não atribuída"
+      }
+    ],
+    "dominios": {
+      "categoria": [
+        "positivo",
+        "neutro",
+        "negativo",
+        "expectativa",
+        "visao_snh"
+      ]
+    }
+  }
+]

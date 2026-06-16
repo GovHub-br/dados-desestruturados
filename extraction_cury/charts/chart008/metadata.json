@@ -1,0 +1,17 @@
+{
+  "kind": "chart",
+  "chart_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+  "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+  "page_number": 15,
+  "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+  "section_title": "Y | X",
+  "chart_type": "bar_chart",
+  "chart_title_raw": "Y | X",
+  "chart_title_canonical": "y_x",
+  "schema": [
+    "X",
+    "Y",
+    "Value"
+  ],
+  "point_count": 170
+}

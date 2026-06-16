@@ -1,0 +1,92 @@
+[
+  {
+    "record_id": "4a4fdfaf-0450-5374-a2b8-ccb52e1b5f63",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "page_number": 14,
+    "source_kind": "chart",
+    "source_id": "eadc1401-2a98-558a-a955-c31d90a41144",
+    "section_id": "9300b5a2-0b60-5a2a-85bf-ebad01a197cb",
+    "section_title": "/ / G E R A Ç Ã O D E C A I X A",
+    "domain": "g_e_r_a_c_a_o_d_e_c_a_i_x_a",
+    "grain": "chart_row",
+    "attributes": {
+      "category": "1T25",
+      "value_r_milhoes__raw": "25.7"
+    },
+    "measures": {
+      "value_r_milhoes": 25.7
+    }
+  },
+  {
+    "record_id": "09f848d6-23b2-52b7-8447-b7aafe7ba145",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "page_number": 14,
+    "source_kind": "chart",
+    "source_id": "eadc1401-2a98-558a-a955-c31d90a41144",
+    "section_id": "9300b5a2-0b60-5a2a-85bf-ebad01a197cb",
+    "section_title": "/ / G E R A Ç Ã O D E C A I X A",
+    "domain": "g_e_r_a_c_a_o_d_e_c_a_i_x_a",
+    "grain": "chart_row",
+    "attributes": {
+      "category": "4T25",
+      "value_r_milhoes__raw": "321.1"
+    },
+    "measures": {
+      "value_r_milhoes": 321.1
+    }
+  },
+  {
+    "record_id": "dc06c35f-efce-5b03-9c18-916d51c2f44c",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "page_number": 14,
+    "source_kind": "chart",
+    "source_id": "eadc1401-2a98-558a-a955-c31d90a41144",
+    "section_id": "9300b5a2-0b60-5a2a-85bf-ebad01a197cb",
+    "section_title": "/ / G E R A Ç Ã O D E C A I X A",
+    "domain": "g_e_r_a_c_a_o_d_e_c_a_i_x_a",
+    "grain": "chart_row",
+    "attributes": {
+      "category": "1T26",
+      "value_r_milhoes__raw": "93.4"
+    },
+    "measures": {
+      "value_r_milhoes": 93.4
+    }
+  },
+  {
+    "record_id": "f03c7dc6-dcc9-5496-adc9-4f28b0b8664c",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "page_number": 14,
+    "source_kind": "chart",
+    "source_id": "eadc1401-2a98-558a-a955-c31d90a41144",
+    "section_id": "9300b5a2-0b60-5a2a-85bf-ebad01a197cb",
+    "section_title": "/ / G E R A Ç Ã O D E C A I X A",
+    "domain": "g_e_r_a_c_a_o_d_e_c_a_i_x_a",
+    "grain": "chart_row",
+    "attributes": {
+      "category": "1T25 UDM*",
+      "value_r_milhoes__raw": "475.3"
+    },
+    "measures": {
+      "value_r_milhoes": 475.3
+    }
+  },
+  {
+    "record_id": "d87dff14-f343-5eb1-a4bb-6710f4048801",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "page_number": 14,
+    "source_kind": "chart",
+    "source_id": "eadc1401-2a98-558a-a955-c31d90a41144",
+    "section_id": "9300b5a2-0b60-5a2a-85bf-ebad01a197cb",
+    "section_title": "/ / G E R A Ç Ã O D E C A I X A",
+    "domain": "g_e_r_a_c_a_o_d_e_c_a_i_x_a",
+    "grain": "chart_row",
+    "attributes": {
+      "category": "1T26 UDM*",
+      "value_r_milhoes__raw": "750.9"
+    },
+    "measures": {
+      "value_r_milhoes": 750.9
+    }
+  }
+]

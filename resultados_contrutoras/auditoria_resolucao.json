@@ -1,0 +1,192 @@
+{
+  "tipo_artefato": "auditoria_resolucao",
+  "empresa": "Cury",
+  "documento_origem": {
+    "arquivo_pdf": "resultados_contrutoras/fontes_pdfs/cury.pdf",
+    "pasta_de_extracao": "dados-desestruturados/extraction_cury",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad"
+  },
+  "layout_signature": {
+    "arquivo": "layout_signature_cury_deterministico.json",
+    "versao_artefato": "4.0.0"
+  },
+  "contrato_semantico": {
+    "arquivo": "contrato_semantico_construtora.json",
+    "versao": "1.2.0"
+  },
+  "resumo": {
+    "tipo_resultado": "valores_brutos",
+    "total_valores_brutos_resolvidos": 10,
+    "total_valores_calculados_na_extracao": 0,
+    "llm_utilizada": false
+  },
+  "resolucoes": {
+    "fonte": {
+      "status": "resolvido",
+      "tipo_origem": "valor_fixo",
+      "valor_resolvido": "Balanços trimestrais das empresas",
+      "metodo_resolucao": "valor_fixo"
+    },
+    "periodo_referencia": {
+      "status": "resolvido",
+      "tipo_origem": "bloco_textual",
+      "valor_bruto_encontrado": "A Cury Construtora e Incorporadora S.A. (\"Companhia\" ou \"Cury\") (B3: CURY3), uma das construtoras líderes do segmento residencial no Brasil atuando nas regiões metropolitanas de São Paulo e Rio de Janeiro divulga a prévia de seus resultados operacionais do primeiro trimestre de 2026 (1T26) em comparação ao mesmo trimestre do exercício anterior (1T25) e aos últimos doze meses (UDM).",
+      "valor_resolvido": "1T26",
+      "arquivo_origem": "blocks/blocks.jsonl",
+      "block_id": "24b3231c-2232-54c9-b9e0-01c1cb23865d",
+      "page_number": 2,
+      "section_id": "9dbabb99-216d-576c-9488-c2a968b0eb98",
+      "metodo_resolucao": "regex"
+    },
+    "periodos_disponiveis": {
+      "status": "resolvido",
+      "tipo_origem": "cabecalhos_de_tabela",
+      "arquivo_origem": "tables/table001.json",
+      "valores_resolvidos": {
+        "periodo_referencia": "1T26",
+        "periodo_comparativo_anterior": "4T25",
+        "mesmo_periodo_ano_anterior": "1T25",
+        "periodo_12m_atual": "1T26 UDM*",
+        "periodo_12m_anterior": "1T25 UDM*"
+      }
+    },
+    "balancos_das_empresas.lancamentos": {
+      "status": "resolvido",
+      "tipo_origem": "tabela",
+      "arquivo_origem": "tables/table001.json",
+      "arquivo_celulas": "tables/table001/cells.json",
+      "arquivo_linhas_normalizadas": "tables/table001/normalized_rows.json",
+      "table_id": "f0f1e575-5a8e-5ad1-a589-ebfd43615a48",
+      "page_number": 4,
+      "section_id": "12097fa3-49c1-5fbc-91b2-4fdbabc67f64",
+      "section_title": "R$ 2.646,8 MILHÕES",
+      "tipo_operacao": "lancamento",
+      "indicador": "numero_de_unidades",
+      "rotulo_linha": "Número de Unidades",
+      "row_index": 2,
+      "valores": [
+        {
+          "campo_saida": "balancos_das_empresas.lancamentos.dados[empresa=Cury].valores[periodo=1T26]",
+          "periodo": "1T26",
+          "escopo_periodo": "trimestre",
+          "column_index": 1,
+          "valor_bruto_encontrado": "8.001",
+          "valor_resolvido": 8001.0,
+          "unidade": "unidades",
+          "metodo_resolucao": "leitura_de_celula_com_normalizacao"
+        },
+        {
+          "campo_saida": "balancos_das_empresas.lancamentos.dados[empresa=Cury].valores[periodo=4T25]",
+          "periodo": "4T25",
+          "escopo_periodo": "trimestre",
+          "column_index": 2,
+          "valor_bruto_encontrado": "3.833",
+          "valor_resolvido": 3833.0,
+          "unidade": "unidades",
+          "metodo_resolucao": "leitura_de_celula_com_normalizacao"
+        },
+        {
+          "campo_saida": "balancos_das_empresas.lancamentos.dados[empresa=Cury].valores[periodo=1T25]",
+          "periodo": "1T25",
+          "escopo_periodo": "trimestre",
+          "column_index": 4,
+          "valor_bruto_encontrado": "9.132",
+          "valor_resolvido": 9132.0,
+          "unidade": "unidades",
+          "metodo_resolucao": "leitura_de_celula_com_normalizacao"
+        },
+        {
+          "campo_saida": "balancos_das_empresas.lancamentos.dados[empresa=Cury].valores[periodo=1T26 UDM*]",
+          "periodo": "1T26 UDM*",
+          "escopo_periodo": "ultimos_12_meses",
+          "column_index": 6,
+          "valor_bruto_encontrado": "25.235",
+          "valor_resolvido": 25235.0,
+          "unidade": "unidades",
+          "metodo_resolucao": "leitura_de_celula_com_normalizacao"
+        },
+        {
+          "campo_saida": "balancos_das_empresas.lancamentos.dados[empresa=Cury].valores[periodo=1T25 UDM*]",
+          "periodo": "1T25 UDM*",
+          "escopo_periodo": "ultimos_12_meses",
+          "column_index": 7,
+          "valor_bruto_encontrado": "23.938",
+          "valor_resolvido": 23938.0,
+          "unidade": "unidades",
+          "metodo_resolucao": "leitura_de_celula_com_normalizacao"
+        }
+      ]
+    },
+    "balancos_das_empresas.vendas": {
+      "status": "resolvido",
+      "tipo_origem": "tabela",
+      "arquivo_origem": "tables/table002.json",
+      "arquivo_celulas": "tables/table002/cells.json",
+      "arquivo_linhas_normalizadas": "tables/table002/normalized_rows.json",
+      "table_id": "199923b8-996b-5fcd-a7ca-da62fea90867",
+      "page_number": 7,
+      "section_id": "e0af7ca8-647e-531c-9ec8-84d5cf4255f0",
+      "section_title": "/ / V E N D A S L Í Q U I D A S",
+      "tipo_operacao": "venda",
+      "indicador": "numero_de_unidades",
+      "rotulo_linha": "Número de Unidades",
+      "row_index": 1,
+      "valores": [
+        {
+          "campo_saida": "balancos_das_empresas.vendas.dados[empresa=Cury].valores[periodo=1T26]",
+          "periodo": "1T26",
+          "escopo_periodo": "trimestre",
+          "column_index": 1,
+          "valor_bruto_encontrado": "7.786",
+          "valor_resolvido": 7786.0,
+          "unidade": "unidades",
+          "metodo_resolucao": "leitura_de_celula_com_normalizacao"
+        },
+        {
+          "campo_saida": "balancos_das_empresas.vendas.dados[empresa=Cury].valores[periodo=4T25]",
+          "periodo": "4T25",
+          "escopo_periodo": "trimestre",
+          "column_index": 2,
+          "valor_bruto_encontrado": "5.445",
+          "valor_resolvido": 5445.0,
+          "unidade": "unidades",
+          "metodo_resolucao": "leitura_de_celula_com_normalizacao"
+        },
+        {
+          "campo_saida": "balancos_das_empresas.vendas.dados[empresa=Cury].valores[periodo=1T25]",
+          "periodo": "1T25",
+          "escopo_periodo": "trimestre",
+          "column_index": 4,
+          "valor_bruto_encontrado": "7.173,0",
+          "valor_resolvido": 7173.0,
+          "unidade": "unidades",
+          "metodo_resolucao": "leitura_de_celula_com_normalizacao"
+        },
+        {
+          "campo_saida": "balancos_das_empresas.vendas.dados[empresa=Cury].valores[periodo=1T26 UDM*]",
+          "periodo": "1T26 UDM*",
+          "escopo_periodo": "ultimos_12_meses",
+          "column_index": 6,
+          "valor_bruto_encontrado": "28.145",
+          "valor_resolvido": 28145.0,
+          "unidade": "unidades",
+          "metodo_resolucao": "leitura_de_celula_com_normalizacao"
+        },
+        {
+          "campo_saida": "balancos_das_empresas.vendas.dados[empresa=Cury].valores[periodo=1T25 UDM*]",
+          "periodo": "1T25 UDM*",
+          "escopo_periodo": "ultimos_12_meses",
+          "column_index": 7,
+          "valor_bruto_encontrado": "23.572",
+          "valor_resolvido": 23572.0,
+          "unidade": "unidades",
+          "metodo_resolucao": "leitura_de_celula_com_normalizacao"
+        }
+      ]
+    },
+    "metricas_calculadas": {
+      "status": "nao_calculadas_na_extracao",
+      "observacao": "Os percentuais exibidos no relatório original podem ser recalculados em etapa posterior a partir dos valores brutos auditados aqui."
+    }
+  }
+}

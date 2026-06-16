@@ -1,0 +1,35 @@
+{
+  "kind": "chart",
+  "name": "/ / G E R A Ç Ã O D E C A I X A",
+  "schema": [
+    "Category",
+    "Value (R$ milhões)"
+  ],
+  "rows": [
+    [
+      "1T25",
+      "25.7"
+    ],
+    [
+      "4T25",
+      "321.1"
+    ],
+    [
+      "1T26",
+      "93.4"
+    ],
+    [
+      "1T25 UDM*",
+      "475.3"
+    ],
+    [
+      "1T26 UDM*",
+      "750.9"
+    ]
+  ],
+  "files": {
+    "metadata": "charts/chart007/metadata.json",
+    "points": "charts/chart007/points.json",
+    "normalized_rows": "charts/chart007/normalized_rows.json"
+  }
+}

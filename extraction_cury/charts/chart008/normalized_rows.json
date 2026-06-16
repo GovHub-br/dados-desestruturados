@@ -1,0 +1,3570 @@
+[
+  {
+    "record_id": "655d072d-5932-5a65-964a-1cfc204529ee",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "page_number": 15,
+    "source_kind": "chart",
+    "source_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "domain": "y_x",
+    "grain": "chart_row",
+    "attributes": {
+      "x__raw": "0",
+      "y__raw": "0",
+      "value__raw": "0"
+    },
+    "measures": {
+      "x": 0.0,
+      "y": 0.0,
+      "value": 0.0
+    }
+  },
+  {
+    "record_id": "1a45a509-e038-5015-8ab9-63f8d0e6b0cd",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "page_number": 15,
+    "source_kind": "chart",
+    "source_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "domain": "y_x",
+    "grain": "chart_row",
+    "attributes": {
+      "x__raw": "0",
+      "y__raw": "1",
+      "value__raw": "0"
+    },
+    "measures": {
+      "x": 0.0,
+      "y": 1.0,
+      "value": 0.0
+    }
+  },
+  {
+    "record_id": "0064aecc-9449-566b-b660-cfd4885b4484",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "page_number": 15,
+    "source_kind": "chart",
+    "source_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "domain": "y_x",
+    "grain": "chart_row",
+    "attributes": {
+      "x__raw": "0",
+      "y__raw": "2",
+      "value__raw": "0"
+    },
+    "measures": {
+      "x": 0.0,
+      "y": 2.0,
+      "value": 0.0
+    }
+  },
+  {
+    "record_id": "8fa39e65-bb57-5c87-a705-a820e8cb88c6",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "page_number": 15,
+    "source_kind": "chart",
+    "source_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "domain": "y_x",
+    "grain": "chart_row",
+    "attributes": {
+      "x__raw": "0",
+      "y__raw": "3",
+      "value__raw": "0"
+    },
+    "measures": {
+      "x": 0.0,
+      "y": 3.0,
+      "value": 0.0
+    }
+  },
+  {
+    "record_id": "637e2fee-0b4f-5f30-a443-cfc8a8f62a15",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "page_number": 15,
+    "source_kind": "chart",
+    "source_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "domain": "y_x",
+    "grain": "chart_row",
+    "attributes": {
+      "x__raw": "0",
+      "y__raw": "4",
+      "value__raw": "0"
+    },
+    "measures": {
+      "x": 0.0,
+      "y": 4.0,
+      "value": 0.0
+    }
+  },
+  {
+    "record_id": "0b847992-cfc2-5086-a624-7709e7df9356",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "page_number": 15,
+    "source_kind": "chart",
+    "source_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "domain": "y_x",
+    "grain": "chart_row",
+    "attributes": {
+      "x__raw": "0",
+      "y__raw": "5",
+      "value__raw": "0"
+    },
+    "measures": {
+      "x": 0.0,
+      "y": 5.0,
+      "value": 0.0
+    }
+  },
+  {
+    "record_id": "95a43cfb-e0b1-53ea-9ba8-5b1064ea17f7",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "page_number": 15,
+    "source_kind": "chart",
+    "source_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "domain": "y_x",
+    "grain": "chart_row",
+    "attributes": {
+      "x__raw": "0",
+      "y__raw": "6",
+      "value__raw": "0"
+    },
+    "measures": {
+      "x": 0.0,
+      "y": 6.0,
+      "value": 0.0
+    }
+  },
+  {
+    "record_id": "3e01fa7a-309e-5f65-b1cf-c9bc0a89feed",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "page_number": 15,
+    "source_kind": "chart",
+    "source_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "domain": "y_x",
+    "grain": "chart_row",
+    "attributes": {
+      "x__raw": "0",
+      "y__raw": "7",
+      "value__raw": "0"
+    },
+    "measures": {
+      "x": 0.0,
+      "y": 7.0,
+      "value": 0.0
+    }
+  },
+  {
+    "record_id": "ff2f4c16-aad0-5c61-a5e4-6064214f0d22",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "page_number": 15,
+    "source_kind": "chart",
+    "source_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "domain": "y_x",
+    "grain": "chart_row",
+    "attributes": {
+      "x__raw": "0",
+      "y__raw": "8",
+      "value__raw": "0"
+    },
+    "measures": {
+      "x": 0.0,
+      "y": 8.0,
+      "value": 0.0
+    }
+  },
+  {
+    "record_id": "2b8749b5-6edc-5253-831b-7bc78eb11dde",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "page_number": 15,
+    "source_kind": "chart",
+    "source_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "domain": "y_x",
+    "grain": "chart_row",
+    "attributes": {
+      "x__raw": "0",
+      "y__raw": "9",
+      "value__raw": "0"
+    },
+    "measures": {
+      "x": 0.0,
+      "y": 9.0,
+      "value": 0.0
+    }
+  },
+  {
+    "record_id": "3c3ef441-ea28-50b5-b58c-c17839397f30",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "page_number": 15,
+    "source_kind": "chart",
+    "source_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "domain": "y_x",
+    "grain": "chart_row",
+    "attributes": {
+      "x__raw": "0",
+      "y__raw": "10",
+      "value__raw": "0"
+    },
+    "measures": {
+      "x": 0.0,
+      "y": 10.0,
+      "value": 0.0
+    }
+  },
+  {
+    "record_id": "20a44d21-4d7c-56a0-aced-a9be0e928d70",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "page_number": 15,
+    "source_kind": "chart",
+    "source_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "domain": "y_x",
+    "grain": "chart_row",
+    "attributes": {
+      "x__raw": "0",
+      "y__raw": "11",
+      "value__raw": "0"
+    },
+    "measures": {
+      "x": 0.0,
+      "y": 11.0,
+      "value": 0.0
+    }
+  },
+  {
+    "record_id": "4d981edd-2186-5a99-8c21-91e03e71d2ed",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "page_number": 15,
+    "source_kind": "chart",
+    "source_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "domain": "y_x",
+    "grain": "chart_row",
+    "attributes": {
+      "x__raw": "0",
+      "y__raw": "12",
+      "value__raw": "0"
+    },
+    "measures": {
+      "x": 0.0,
+      "y": 12.0,
+      "value": 0.0
+    }
+  },
+  {
+    "record_id": "c5bdccd7-ba92-5117-8a11-65794201e8a4",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "page_number": 15,
+    "source_kind": "chart",
+    "source_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "domain": "y_x",
+    "grain": "chart_row",
+    "attributes": {
+      "x__raw": "0",
+      "y__raw": "13",
+      "value__raw": "0"
+    },
+    "measures": {
+      "x": 0.0,
+      "y": 13.0,
+      "value": 0.0
+    }
+  },
+  {
+    "record_id": "f769247d-3a38-5174-822e-1e334e11acd0",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "page_number": 15,
+    "source_kind": "chart",
+    "source_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "domain": "y_x",
+    "grain": "chart_row",
+    "attributes": {
+      "x__raw": "0",
+      "y__raw": "14",
+      "value__raw": "0"
+    },
+    "measures": {
+      "x": 0.0,
+      "y": 14.0,
+      "value": 0.0
+    }
+  },
+  {
+    "record_id": "302768e6-ab18-5feb-8c3e-5ea8f3a81fb1",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "page_number": 15,
+    "source_kind": "chart",
+    "source_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "domain": "y_x",
+    "grain": "chart_row",
+    "attributes": {
+      "x__raw": "0",
+      "y__raw": "15",
+      "value__raw": "0"
+    },
+    "measures": {
+      "x": 0.0,
+      "y": 15.0,
+      "value": 0.0
+    }
+  },
+  {
+    "record_id": "87ce33e3-c255-501b-b074-c8124f3fcff5",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "page_number": 15,
+    "source_kind": "chart",
+    "source_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "domain": "y_x",
+    "grain": "chart_row",
+    "attributes": {
+      "x__raw": "0",
+      "y__raw": "16",
+      "value__raw": "0"
+    },
+    "measures": {
+      "x": 0.0,
+      "y": 16.0,
+      "value": 0.0
+    }
+  },
+  {
+    "record_id": "2448fff9-1cc0-5f9e-9dc7-bf0277d8579f",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "page_number": 15,
+    "source_kind": "chart",
+    "source_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "domain": "y_x",
+    "grain": "chart_row",
+    "attributes": {
+      "x__raw": "0",
+      "y__raw": "17",
+      "value__raw": "0"
+    },
+    "measures": {
+      "x": 0.0,
+      "y": 17.0,
+      "value": 0.0
+    }
+  },
+  {
+    "record_id": "95b9503d-5409-5e46-bb29-1c6ea8180e34",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "page_number": 15,
+    "source_kind": "chart",
+    "source_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "domain": "y_x",
+    "grain": "chart_row",
+    "attributes": {
+      "x__raw": "0",
+      "y__raw": "18",
+      "value__raw": "0"
+    },
+    "measures": {
+      "x": 0.0,
+      "y": 18.0,
+      "value": 0.0
+    }
+  },
+  {
+    "record_id": "e39dd9a9-7a21-597e-bf0e-d9c710cc8851",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "page_number": 15,
+    "source_kind": "chart",
+    "source_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "domain": "y_x",
+    "grain": "chart_row",
+    "attributes": {
+      "x__raw": "0",
+      "y__raw": "19",
+      "value__raw": "0"
+    },
+    "measures": {
+      "x": 0.0,
+      "y": 19.0,
+      "value": 0.0
+    }
+  },
+  {
+    "record_id": "6580a00f-463a-524e-b928-19b031d005c2",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "page_number": 15,
+    "source_kind": "chart",
+    "source_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "domain": "y_x",
+    "grain": "chart_row",
+    "attributes": {
+      "x__raw": "0",
+      "y__raw": "20",
+      "value__raw": "0"
+    },
+    "measures": {
+      "x": 0.0,
+      "y": 20.0,
+      "value": 0.0
+    }
+  },
+  {
+    "record_id": "5e1fd598-1aa5-5fe5-a838-1e486f58f386",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "page_number": 15,
+    "source_kind": "chart",
+    "source_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "domain": "y_x",
+    "grain": "chart_row",
+    "attributes": {
+      "x__raw": "0",
+      "y__raw": "21",
+      "value__raw": "0"
+    },
+    "measures": {
+      "x": 0.0,
+      "y": 21.0,
+      "value": 0.0
+    }
+  },
+  {
+    "record_id": "74aee759-aad2-507a-8a12-50f7a86a5d53",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "page_number": 15,
+    "source_kind": "chart",
+    "source_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "domain": "y_x",
+    "grain": "chart_row",
+    "attributes": {
+      "x__raw": "0",
+      "y__raw": "22",
+      "value__raw": "0"
+    },
+    "measures": {
+      "x": 0.0,
+      "y": 22.0,
+      "value": 0.0
+    }
+  },
+  {
+    "record_id": "a6ffb402-9300-5d8d-b608-fdfb3e872222",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "page_number": 15,
+    "source_kind": "chart",
+    "source_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "domain": "y_x",
+    "grain": "chart_row",
+    "attributes": {
+      "x__raw": "0",
+      "y__raw": "23",
+      "value__raw": "0"
+    },
+    "measures": {
+      "x": 0.0,
+      "y": 23.0,
+      "value": 0.0
+    }
+  },
+  {
+    "record_id": "a4ed180f-2428-534c-bfc9-5f1d6b55a894",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "page_number": 15,
+    "source_kind": "chart",
+    "source_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "domain": "y_x",
+    "grain": "chart_row",
+    "attributes": {
+      "x__raw": "0",
+      "y__raw": "24",
+      "value__raw": "0"
+    },
+    "measures": {
+      "x": 0.0,
+      "y": 24.0,
+      "value": 0.0
+    }
+  },
+  {
+    "record_id": "ac597112-731a-5e1a-a322-9ab3008ef601",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "page_number": 15,
+    "source_kind": "chart",
+    "source_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "domain": "y_x",
+    "grain": "chart_row",
+    "attributes": {
+      "x__raw": "0",
+      "y__raw": "25",
+      "value__raw": "0"
+    },
+    "measures": {
+      "x": 0.0,
+      "y": 25.0,
+      "value": 0.0
+    }
+  },
+  {
+    "record_id": "52029c55-896c-5c93-89e3-14c5c3d41454",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "page_number": 15,
+    "source_kind": "chart",
+    "source_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "domain": "y_x",
+    "grain": "chart_row",
+    "attributes": {
+      "x__raw": "0",
+      "y__raw": "26",
+      "value__raw": "0"
+    },
+    "measures": {
+      "x": 0.0,
+      "y": 26.0,
+      "value": 0.0
+    }
+  },
+  {
+    "record_id": "568f6f80-f806-5f18-b2fd-eb4dd711dc7c",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "page_number": 15,
+    "source_kind": "chart",
+    "source_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "domain": "y_x",
+    "grain": "chart_row",
+    "attributes": {
+      "x__raw": "0",
+      "y__raw": "27",
+      "value__raw": "0"
+    },
+    "measures": {
+      "x": 0.0,
+      "y": 27.0,
+      "value": 0.0
+    }
+  },
+  {
+    "record_id": "d6d7978e-bbc3-570d-940a-ac66bfe691db",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "page_number": 15,
+    "source_kind": "chart",
+    "source_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "domain": "y_x",
+    "grain": "chart_row",
+    "attributes": {
+      "x__raw": "0",
+      "y__raw": "28",
+      "value__raw": "0"
+    },
+    "measures": {
+      "x": 0.0,
+      "y": 28.0,
+      "value": 0.0
+    }
+  },
+  {
+    "record_id": "069da2a3-c3b4-5d68-b2f0-4718174219af",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "page_number": 15,
+    "source_kind": "chart",
+    "source_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "domain": "y_x",
+    "grain": "chart_row",
+    "attributes": {
+      "x__raw": "0",
+      "y__raw": "29",
+      "value__raw": "0"
+    },
+    "measures": {
+      "x": 0.0,
+      "y": 29.0,
+      "value": 0.0
+    }
+  },
+  {
+    "record_id": "f3b033f2-426b-52d4-9ef8-88bd8d4b7a2c",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "page_number": 15,
+    "source_kind": "chart",
+    "source_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "domain": "y_x",
+    "grain": "chart_row",
+    "attributes": {
+      "x__raw": "0",
+      "y__raw": "30",
+      "value__raw": "0"
+    },
+    "measures": {
+      "x": 0.0,
+      "y": 30.0,
+      "value": 0.0
+    }
+  },
+  {
+    "record_id": "815b45b2-364c-5abb-a089-84cf0d7746de",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "page_number": 15,
+    "source_kind": "chart",
+    "source_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "domain": "y_x",
+    "grain": "chart_row",
+    "attributes": {
+      "x__raw": "0",
+      "y__raw": "31",
+      "value__raw": "0"
+    },
+    "measures": {
+      "x": 0.0,
+      "y": 31.0,
+      "value": 0.0
+    }
+  },
+  {
+    "record_id": "e867b6a9-aaa0-5572-b3b1-c0e075694fe1",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "page_number": 15,
+    "source_kind": "chart",
+    "source_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "domain": "y_x",
+    "grain": "chart_row",
+    "attributes": {
+      "x__raw": "0",
+      "y__raw": "32",
+      "value__raw": "0"
+    },
+    "measures": {
+      "x": 0.0,
+      "y": 32.0,
+      "value": 0.0
+    }
+  },
+  {
+    "record_id": "3b7e0efa-967e-56fe-a89b-b9fee2ea9ca7",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "page_number": 15,
+    "source_kind": "chart",
+    "source_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "domain": "y_x",
+    "grain": "chart_row",
+    "attributes": {
+      "x__raw": "0",
+      "y__raw": "33",
+      "value__raw": "0"
+    },
+    "measures": {
+      "x": 0.0,
+      "y": 33.0,
+      "value": 0.0
+    }
+  },
+  {
+    "record_id": "cbfb9cd0-9483-51d5-9cbe-28bdd606d6d1",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "page_number": 15,
+    "source_kind": "chart",
+    "source_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "domain": "y_x",
+    "grain": "chart_row",
+    "attributes": {
+      "x__raw": "0",
+      "y__raw": "34",
+      "value__raw": "0"
+    },
+    "measures": {
+      "x": 0.0,
+      "y": 34.0,
+      "value": 0.0
+    }
+  },
+  {
+    "record_id": "64377aa3-fcef-57ce-bd6b-b190be45be9b",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "page_number": 15,
+    "source_kind": "chart",
+    "source_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "domain": "y_x",
+    "grain": "chart_row",
+    "attributes": {
+      "x__raw": "0",
+      "y__raw": "35",
+      "value__raw": "0"
+    },
+    "measures": {
+      "x": 0.0,
+      "y": 35.0,
+      "value": 0.0
+    }
+  },
+  {
+    "record_id": "ad7ce2f9-dd1e-5005-af3a-e5b6f2f90350",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "page_number": 15,
+    "source_kind": "chart",
+    "source_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "domain": "y_x",
+    "grain": "chart_row",
+    "attributes": {
+      "x__raw": "0",
+      "y__raw": "36",
+      "value__raw": "0"
+    },
+    "measures": {
+      "x": 0.0,
+      "y": 36.0,
+      "value": 0.0
+    }
+  },
+  {
+    "record_id": "5dc7a8ed-c4ed-513e-ac59-b2ba16337edb",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "page_number": 15,
+    "source_kind": "chart",
+    "source_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "domain": "y_x",
+    "grain": "chart_row",
+    "attributes": {
+      "x__raw": "0",
+      "y__raw": "37",
+      "value__raw": "0"
+    },
+    "measures": {
+      "x": 0.0,
+      "y": 37.0,
+      "value": 0.0
+    }
+  },
+  {
+    "record_id": "ed0fb99b-0f26-5e6d-af2d-88e050eb5879",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "page_number": 15,
+    "source_kind": "chart",
+    "source_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "domain": "y_x",
+    "grain": "chart_row",
+    "attributes": {
+      "x__raw": "0",
+      "y__raw": "38",
+      "value__raw": "0"
+    },
+    "measures": {
+      "x": 0.0,
+      "y": 38.0,
+      "value": 0.0
+    }
+  },
+  {
+    "record_id": "5c02e70b-e799-5d15-b56a-43654c193007",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "page_number": 15,
+    "source_kind": "chart",
+    "source_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "domain": "y_x",
+    "grain": "chart_row",
+    "attributes": {
+      "x__raw": "0",
+      "y__raw": "39",
+      "value__raw": "0"
+    },
+    "measures": {
+      "x": 0.0,
+      "y": 39.0,
+      "value": 0.0
+    }
+  },
+  {
+    "record_id": "fc2f9cc5-a59b-556a-9617-228513cf5b3b",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "page_number": 15,
+    "source_kind": "chart",
+    "source_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "domain": "y_x",
+    "grain": "chart_row",
+    "attributes": {
+      "x__raw": "0",
+      "y__raw": "40",
+      "value__raw": "0"
+    },
+    "measures": {
+      "x": 0.0,
+      "y": 40.0,
+      "value": 0.0
+    }
+  },
+  {
+    "record_id": "e3d52bbc-5981-5267-b4c1-0a0f1b3a565e",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "page_number": 15,
+    "source_kind": "chart",
+    "source_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "domain": "y_x",
+    "grain": "chart_row",
+    "attributes": {
+      "x__raw": "0",
+      "y__raw": "41",
+      "value__raw": "0"
+    },
+    "measures": {
+      "x": 0.0,
+      "y": 41.0,
+      "value": 0.0
+    }
+  },
+  {
+    "record_id": "bd3eed7d-69f6-528a-b0c8-051a244cd98d",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "page_number": 15,
+    "source_kind": "chart",
+    "source_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "domain": "y_x",
+    "grain": "chart_row",
+    "attributes": {
+      "x__raw": "0",
+      "y__raw": "42",
+      "value__raw": "0"
+    },
+    "measures": {
+      "x": 0.0,
+      "y": 42.0,
+      "value": 0.0
+    }
+  },
+  {
+    "record_id": "25cded13-0f18-5942-9fff-26eb3e56e5d4",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "page_number": 15,
+    "source_kind": "chart",
+    "source_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "domain": "y_x",
+    "grain": "chart_row",
+    "attributes": {
+      "x__raw": "0",
+      "y__raw": "43",
+      "value__raw": "0"
+    },
+    "measures": {
+      "x": 0.0,
+      "y": 43.0,
+      "value": 0.0
+    }
+  },
+  {
+    "record_id": "406e8448-1ef9-5bfb-a90b-e71c80a3e60a",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "page_number": 15,
+    "source_kind": "chart",
+    "source_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "domain": "y_x",
+    "grain": "chart_row",
+    "attributes": {
+      "x__raw": "0",
+      "y__raw": "44",
+      "value__raw": "0"
+    },
+    "measures": {
+      "x": 0.0,
+      "y": 44.0,
+      "value": 0.0
+    }
+  },
+  {
+    "record_id": "1ba15ab5-7dbd-59f9-9924-7375dcaaa1c1",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "page_number": 15,
+    "source_kind": "chart",
+    "source_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "domain": "y_x",
+    "grain": "chart_row",
+    "attributes": {
+      "x__raw": "0",
+      "y__raw": "45",
+      "value__raw": "0"
+    },
+    "measures": {
+      "x": 0.0,
+      "y": 45.0,
+      "value": 0.0
+    }
+  },
+  {
+    "record_id": "be16e28c-f0bd-52eb-b41a-740ec8f7108c",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "page_number": 15,
+    "source_kind": "chart",
+    "source_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "domain": "y_x",
+    "grain": "chart_row",
+    "attributes": {
+      "x__raw": "0",
+      "y__raw": "46",
+      "value__raw": "0"
+    },
+    "measures": {
+      "x": 0.0,
+      "y": 46.0,
+      "value": 0.0
+    }
+  },
+  {
+    "record_id": "25690dd8-9726-58e8-99f7-896d4e9354e1",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "page_number": 15,
+    "source_kind": "chart",
+    "source_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "domain": "y_x",
+    "grain": "chart_row",
+    "attributes": {
+      "x__raw": "0",
+      "y__raw": "47",
+      "value__raw": "0"
+    },
+    "measures": {
+      "x": 0.0,
+      "y": 47.0,
+      "value": 0.0
+    }
+  },
+  {
+    "record_id": "d7a6dbc1-4e03-52dc-8923-59ba04e42b25",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "page_number": 15,
+    "source_kind": "chart",
+    "source_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "domain": "y_x",
+    "grain": "chart_row",
+    "attributes": {
+      "x__raw": "0",
+      "y__raw": "48",
+      "value__raw": "0"
+    },
+    "measures": {
+      "x": 0.0,
+      "y": 48.0,
+      "value": 0.0
+    }
+  },
+  {
+    "record_id": "3b002f27-a558-5752-8b1b-9918dce6048b",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "page_number": 15,
+    "source_kind": "chart",
+    "source_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "domain": "y_x",
+    "grain": "chart_row",
+    "attributes": {
+      "x__raw": "0",
+      "y__raw": "49",
+      "value__raw": "0"
+    },
+    "measures": {
+      "x": 0.0,
+      "y": 49.0,
+      "value": 0.0
+    }
+  },
+  {
+    "record_id": "f4987baa-761c-5ac2-a504-137acf93ea98",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "page_number": 15,
+    "source_kind": "chart",
+    "source_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "domain": "y_x",
+    "grain": "chart_row",
+    "attributes": {
+      "x__raw": "0",
+      "y__raw": "50",
+      "value__raw": "0"
+    },
+    "measures": {
+      "x": 0.0,
+      "y": 50.0,
+      "value": 0.0
+    }
+  },
+  {
+    "record_id": "7600d5b4-0e60-5f7d-9818-f60666acb31a",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "page_number": 15,
+    "source_kind": "chart",
+    "source_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "domain": "y_x",
+    "grain": "chart_row",
+    "attributes": {
+      "x__raw": "0",
+      "y__raw": "51",
+      "value__raw": "0"
+    },
+    "measures": {
+      "x": 0.0,
+      "y": 51.0,
+      "value": 0.0
+    }
+  },
+  {
+    "record_id": "56e9483e-646c-5d33-89d4-a40d600be2c8",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "page_number": 15,
+    "source_kind": "chart",
+    "source_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "domain": "y_x",
+    "grain": "chart_row",
+    "attributes": {
+      "x__raw": "0",
+      "y__raw": "52",
+      "value__raw": "0"
+    },
+    "measures": {
+      "x": 0.0,
+      "y": 52.0,
+      "value": 0.0
+    }
+  },
+  {
+    "record_id": "d49d9cf2-49ed-55fd-9618-9166c1456b93",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "page_number": 15,
+    "source_kind": "chart",
+    "source_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "domain": "y_x",
+    "grain": "chart_row",
+    "attributes": {
+      "x__raw": "0",
+      "y__raw": "53",
+      "value__raw": "0"
+    },
+    "measures": {
+      "x": 0.0,
+      "y": 53.0,
+      "value": 0.0
+    }
+  },
+  {
+    "record_id": "ff89449e-cea9-54cc-8b84-5333981a230e",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "page_number": 15,
+    "source_kind": "chart",
+    "source_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "domain": "y_x",
+    "grain": "chart_row",
+    "attributes": {
+      "x__raw": "0",
+      "y__raw": "54",
+      "value__raw": "0"
+    },
+    "measures": {
+      "x": 0.0,
+      "y": 54.0,
+      "value": 0.0
+    }
+  },
+  {
+    "record_id": "86518b82-afb4-5d68-b46e-db342a9fec39",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "page_number": 15,
+    "source_kind": "chart",
+    "source_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "domain": "y_x",
+    "grain": "chart_row",
+    "attributes": {
+      "x__raw": "0",
+      "y__raw": "55",
+      "value__raw": "0"
+    },
+    "measures": {
+      "x": 0.0,
+      "y": 55.0,
+      "value": 0.0
+    }
+  },
+  {
+    "record_id": "a463abfa-7bc9-54d7-a262-efd5e272cfc1",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "page_number": 15,
+    "source_kind": "chart",
+    "source_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "domain": "y_x",
+    "grain": "chart_row",
+    "attributes": {
+      "x__raw": "0",
+      "y__raw": "56",
+      "value__raw": "0"
+    },
+    "measures": {
+      "x": 0.0,
+      "y": 56.0,
+      "value": 0.0
+    }
+  },
+  {
+    "record_id": "86cfa8cf-1a3b-54ab-a8d8-4d0353edbc3b",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "page_number": 15,
+    "source_kind": "chart",
+    "source_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "domain": "y_x",
+    "grain": "chart_row",
+    "attributes": {
+      "x__raw": "0",
+      "y__raw": "57",
+      "value__raw": "0"
+    },
+    "measures": {
+      "x": 0.0,
+      "y": 57.0,
+      "value": 0.0
+    }
+  },
+  {
+    "record_id": "de70c883-e6a2-5950-b668-8404b16cb1be",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "page_number": 15,
+    "source_kind": "chart",
+    "source_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "domain": "y_x",
+    "grain": "chart_row",
+    "attributes": {
+      "x__raw": "0",
+      "y__raw": "58",
+      "value__raw": "0"
+    },
+    "measures": {
+      "x": 0.0,
+      "y": 58.0,
+      "value": 0.0
+    }
+  },
+  {
+    "record_id": "f50c205a-75d9-5f66-a5c7-628b61eb7cec",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "page_number": 15,
+    "source_kind": "chart",
+    "source_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "domain": "y_x",
+    "grain": "chart_row",
+    "attributes": {
+      "x__raw": "0",
+      "y__raw": "59",
+      "value__raw": "0"
+    },
+    "measures": {
+      "x": 0.0,
+      "y": 59.0,
+      "value": 0.0
+    }
+  },
+  {
+    "record_id": "b27333df-1d31-5218-b405-29ad65b96c82",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "page_number": 15,
+    "source_kind": "chart",
+    "source_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "domain": "y_x",
+    "grain": "chart_row",
+    "attributes": {
+      "x__raw": "0",
+      "y__raw": "60",
+      "value__raw": "0"
+    },
+    "measures": {
+      "x": 0.0,
+      "y": 60.0,
+      "value": 0.0
+    }
+  },
+  {
+    "record_id": "5905bf05-33f0-55ca-916a-620cd1ebd75f",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "page_number": 15,
+    "source_kind": "chart",
+    "source_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "domain": "y_x",
+    "grain": "chart_row",
+    "attributes": {
+      "x__raw": "0",
+      "y__raw": "61",
+      "value__raw": "0"
+    },
+    "measures": {
+      "x": 0.0,
+      "y": 61.0,
+      "value": 0.0
+    }
+  },
+  {
+    "record_id": "3e382e8a-6e0c-5bc9-9dd4-4a78d3ae0730",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "page_number": 15,
+    "source_kind": "chart",
+    "source_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "domain": "y_x",
+    "grain": "chart_row",
+    "attributes": {
+      "x__raw": "0",
+      "y__raw": "62",
+      "value__raw": "0"
+    },
+    "measures": {
+      "x": 0.0,
+      "y": 62.0,
+      "value": 0.0
+    }
+  },
+  {
+    "record_id": "84d9e389-bdd7-560f-8358-9a1caf28b6c1",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "page_number": 15,
+    "source_kind": "chart",
+    "source_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "domain": "y_x",
+    "grain": "chart_row",
+    "attributes": {
+      "x__raw": "0",
+      "y__raw": "63",
+      "value__raw": "0"
+    },
+    "measures": {
+      "x": 0.0,
+      "y": 63.0,
+      "value": 0.0
+    }
+  },
+  {
+    "record_id": "abc481bd-2bc0-58b6-a40e-3ed2f5016625",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "page_number": 15,
+    "source_kind": "chart",
+    "source_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "domain": "y_x",
+    "grain": "chart_row",
+    "attributes": {
+      "x__raw": "0",
+      "y__raw": "64",
+      "value__raw": "0"
+    },
+    "measures": {
+      "x": 0.0,
+      "y": 64.0,
+      "value": 0.0
+    }
+  },
+  {
+    "record_id": "08480512-f234-5220-b1bb-208b797f357d",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "page_number": 15,
+    "source_kind": "chart",
+    "source_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "domain": "y_x",
+    "grain": "chart_row",
+    "attributes": {
+      "x__raw": "0",
+      "y__raw": "65",
+      "value__raw": "0"
+    },
+    "measures": {
+      "x": 0.0,
+      "y": 65.0,
+      "value": 0.0
+    }
+  },
+  {
+    "record_id": "f1af6441-0de8-5c1c-8e74-39ce77e18d99",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "page_number": 15,
+    "source_kind": "chart",
+    "source_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "domain": "y_x",
+    "grain": "chart_row",
+    "attributes": {
+      "x__raw": "0",
+      "y__raw": "66",
+      "value__raw": "0"
+    },
+    "measures": {
+      "x": 0.0,
+      "y": 66.0,
+      "value": 0.0
+    }
+  },
+  {
+    "record_id": "2e04b45f-259c-5681-ab03-36eb081d6bd0",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "page_number": 15,
+    "source_kind": "chart",
+    "source_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "domain": "y_x",
+    "grain": "chart_row",
+    "attributes": {
+      "x__raw": "0",
+      "y__raw": "67",
+      "value__raw": "0"
+    },
+    "measures": {
+      "x": 0.0,
+      "y": 67.0,
+      "value": 0.0
+    }
+  },
+  {
+    "record_id": "20ad2267-639a-59ee-a0c6-b777d907cb20",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "page_number": 15,
+    "source_kind": "chart",
+    "source_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "domain": "y_x",
+    "grain": "chart_row",
+    "attributes": {
+      "x__raw": "0",
+      "y__raw": "68",
+      "value__raw": "0"
+    },
+    "measures": {
+      "x": 0.0,
+      "y": 68.0,
+      "value": 0.0
+    }
+  },
+  {
+    "record_id": "8d4d1201-4c70-5544-b6ae-8fbca88559cc",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "page_number": 15,
+    "source_kind": "chart",
+    "source_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "domain": "y_x",
+    "grain": "chart_row",
+    "attributes": {
+      "x__raw": "0",
+      "y__raw": "69",
+      "value__raw": "0"
+    },
+    "measures": {
+      "x": 0.0,
+      "y": 69.0,
+      "value": 0.0
+    }
+  },
+  {
+    "record_id": "456cc504-acb5-51e8-8c84-3df847ff8a50",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "page_number": 15,
+    "source_kind": "chart",
+    "source_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "domain": "y_x",
+    "grain": "chart_row",
+    "attributes": {
+      "x__raw": "0",
+      "y__raw": "70",
+      "value__raw": "0"
+    },
+    "measures": {
+      "x": 0.0,
+      "y": 70.0,
+      "value": 0.0
+    }
+  },
+  {
+    "record_id": "4eba9b12-680e-5904-878d-a647b10fb518",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "page_number": 15,
+    "source_kind": "chart",
+    "source_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "domain": "y_x",
+    "grain": "chart_row",
+    "attributes": {
+      "x__raw": "0",
+      "y__raw": "71",
+      "value__raw": "0"
+    },
+    "measures": {
+      "x": 0.0,
+      "y": 71.0,
+      "value": 0.0
+    }
+  },
+  {
+    "record_id": "f8eeb8d0-9c60-5158-adc5-f777831e86f3",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "page_number": 15,
+    "source_kind": "chart",
+    "source_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "domain": "y_x",
+    "grain": "chart_row",
+    "attributes": {
+      "x__raw": "0",
+      "y__raw": "72",
+      "value__raw": "0"
+    },
+    "measures": {
+      "x": 0.0,
+      "y": 72.0,
+      "value": 0.0
+    }
+  },
+  {
+    "record_id": "3bf336d3-5fb3-589e-a51c-88b861b02fdb",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "page_number": 15,
+    "source_kind": "chart",
+    "source_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "domain": "y_x",
+    "grain": "chart_row",
+    "attributes": {
+      "x__raw": "0",
+      "y__raw": "73",
+      "value__raw": "0"
+    },
+    "measures": {
+      "x": 0.0,
+      "y": 73.0,
+      "value": 0.0
+    }
+  },
+  {
+    "record_id": "cfb875d8-def1-587b-b19c-658c18bedaa3",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "page_number": 15,
+    "source_kind": "chart",
+    "source_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "domain": "y_x",
+    "grain": "chart_row",
+    "attributes": {
+      "x__raw": "0",
+      "y__raw": "74",
+      "value__raw": "0"
+    },
+    "measures": {
+      "x": 0.0,
+      "y": 74.0,
+      "value": 0.0
+    }
+  },
+  {
+    "record_id": "7991ff7c-afa5-5d77-b21f-9c503d0e5e4d",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "page_number": 15,
+    "source_kind": "chart",
+    "source_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "domain": "y_x",
+    "grain": "chart_row",
+    "attributes": {
+      "x__raw": "0",
+      "y__raw": "75",
+      "value__raw": "0"
+    },
+    "measures": {
+      "x": 0.0,
+      "y": 75.0,
+      "value": 0.0
+    }
+  },
+  {
+    "record_id": "c5bf2810-c8a1-5e54-b0d1-dbc7572edbdc",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "page_number": 15,
+    "source_kind": "chart",
+    "source_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "domain": "y_x",
+    "grain": "chart_row",
+    "attributes": {
+      "x__raw": "0",
+      "y__raw": "76",
+      "value__raw": "0"
+    },
+    "measures": {
+      "x": 0.0,
+      "y": 76.0,
+      "value": 0.0
+    }
+  },
+  {
+    "record_id": "4d59d0c7-b510-5cd0-9a54-c65536d35314",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "page_number": 15,
+    "source_kind": "chart",
+    "source_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "domain": "y_x",
+    "grain": "chart_row",
+    "attributes": {
+      "x__raw": "0",
+      "y__raw": "77",
+      "value__raw": "0"
+    },
+    "measures": {
+      "x": 0.0,
+      "y": 77.0,
+      "value": 0.0
+    }
+  },
+  {
+    "record_id": "42da5a03-b14e-5b64-99b2-73757e6aad60",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "page_number": 15,
+    "source_kind": "chart",
+    "source_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "domain": "y_x",
+    "grain": "chart_row",
+    "attributes": {
+      "x__raw": "0",
+      "y__raw": "78",
+      "value__raw": "0"
+    },
+    "measures": {
+      "x": 0.0,
+      "y": 78.0,
+      "value": 0.0
+    }
+  },
+  {
+    "record_id": "14221342-5d29-5446-a6c2-7e87bd8fe8b8",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "page_number": 15,
+    "source_kind": "chart",
+    "source_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "domain": "y_x",
+    "grain": "chart_row",
+    "attributes": {
+      "x__raw": "0",
+      "y__raw": "79",
+      "value__raw": "0"
+    },
+    "measures": {
+      "x": 0.0,
+      "y": 79.0,
+      "value": 0.0
+    }
+  },
+  {
+    "record_id": "8923ea0d-267b-5cf3-991e-62cbe56c3110",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "page_number": 15,
+    "source_kind": "chart",
+    "source_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "domain": "y_x",
+    "grain": "chart_row",
+    "attributes": {
+      "x__raw": "0",
+      "y__raw": "80",
+      "value__raw": "0"
+    },
+    "measures": {
+      "x": 0.0,
+      "y": 80.0,
+      "value": 0.0
+    }
+  },
+  {
+    "record_id": "7d67378a-ca79-55b3-9033-505da17c2d5c",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "page_number": 15,
+    "source_kind": "chart",
+    "source_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "domain": "y_x",
+    "grain": "chart_row",
+    "attributes": {
+      "x__raw": "0",
+      "y__raw": "81",
+      "value__raw": "0"
+    },
+    "measures": {
+      "x": 0.0,
+      "y": 81.0,
+      "value": 0.0
+    }
+  },
+  {
+    "record_id": "ee650b0a-eeff-5614-ac9f-cefca03ec024",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "page_number": 15,
+    "source_kind": "chart",
+    "source_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "domain": "y_x",
+    "grain": "chart_row",
+    "attributes": {
+      "x__raw": "0",
+      "y__raw": "82",
+      "value__raw": "0"
+    },
+    "measures": {
+      "x": 0.0,
+      "y": 82.0,
+      "value": 0.0
+    }
+  },
+  {
+    "record_id": "83a57d82-e8dd-5480-b44e-1ebf3bfa75ee",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "page_number": 15,
+    "source_kind": "chart",
+    "source_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "domain": "y_x",
+    "grain": "chart_row",
+    "attributes": {
+      "x__raw": "0",
+      "y__raw": "83",
+      "value__raw": "0"
+    },
+    "measures": {
+      "x": 0.0,
+      "y": 83.0,
+      "value": 0.0
+    }
+  },
+  {
+    "record_id": "7b73abda-0517-56cf-b135-5472ff93fc95",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "page_number": 15,
+    "source_kind": "chart",
+    "source_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "domain": "y_x",
+    "grain": "chart_row",
+    "attributes": {
+      "x__raw": "0",
+      "y__raw": "84",
+      "value__raw": "0"
+    },
+    "measures": {
+      "x": 0.0,
+      "y": 84.0,
+      "value": 0.0
+    }
+  },
+  {
+    "record_id": "f6b517e9-a5af-5574-8a5a-27543afc1e04",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "page_number": 15,
+    "source_kind": "chart",
+    "source_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "domain": "y_x",
+    "grain": "chart_row",
+    "attributes": {
+      "x__raw": "0",
+      "y__raw": "85",
+      "value__raw": "0"
+    },
+    "measures": {
+      "x": 0.0,
+      "y": 85.0,
+      "value": 0.0
+    }
+  },
+  {
+    "record_id": "8ef3ba2a-e855-5048-b6d9-bc5644072947",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "page_number": 15,
+    "source_kind": "chart",
+    "source_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "domain": "y_x",
+    "grain": "chart_row",
+    "attributes": {
+      "x__raw": "0",
+      "y__raw": "86",
+      "value__raw": "0"
+    },
+    "measures": {
+      "x": 0.0,
+      "y": 86.0,
+      "value": 0.0
+    }
+  },
+  {
+    "record_id": "98b982b9-7596-5d31-9c5c-83a337ea9809",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "page_number": 15,
+    "source_kind": "chart",
+    "source_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "domain": "y_x",
+    "grain": "chart_row",
+    "attributes": {
+      "x__raw": "0",
+      "y__raw": "87",
+      "value__raw": "0"
+    },
+    "measures": {
+      "x": 0.0,
+      "y": 87.0,
+      "value": 0.0
+    }
+  },
+  {
+    "record_id": "2b1988da-3ff3-5004-b0e2-3c7be5a976c4",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "page_number": 15,
+    "source_kind": "chart",
+    "source_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "domain": "y_x",
+    "grain": "chart_row",
+    "attributes": {
+      "x__raw": "0",
+      "y__raw": "88",
+      "value__raw": "0"
+    },
+    "measures": {
+      "x": 0.0,
+      "y": 88.0,
+      "value": 0.0
+    }
+  },
+  {
+    "record_id": "22344b69-dfcb-55c8-9b27-26ff478b9c39",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "page_number": 15,
+    "source_kind": "chart",
+    "source_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "domain": "y_x",
+    "grain": "chart_row",
+    "attributes": {
+      "x__raw": "0",
+      "y__raw": "89",
+      "value__raw": "0"
+    },
+    "measures": {
+      "x": 0.0,
+      "y": 89.0,
+      "value": 0.0
+    }
+  },
+  {
+    "record_id": "b69dd033-6e45-5c9b-8532-7e3fa1ac98f2",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "page_number": 15,
+    "source_kind": "chart",
+    "source_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "domain": "y_x",
+    "grain": "chart_row",
+    "attributes": {
+      "x__raw": "0",
+      "y__raw": "90",
+      "value__raw": "0"
+    },
+    "measures": {
+      "x": 0.0,
+      "y": 90.0,
+      "value": 0.0
+    }
+  },
+  {
+    "record_id": "ba7e0ff0-0460-51c6-97e1-07a0bea740a5",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "page_number": 15,
+    "source_kind": "chart",
+    "source_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "domain": "y_x",
+    "grain": "chart_row",
+    "attributes": {
+      "x__raw": "0",
+      "y__raw": "91",
+      "value__raw": "0"
+    },
+    "measures": {
+      "x": 0.0,
+      "y": 91.0,
+      "value": 0.0
+    }
+  },
+  {
+    "record_id": "433c89fc-e357-5074-933c-0b553cab8d5d",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "page_number": 15,
+    "source_kind": "chart",
+    "source_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "domain": "y_x",
+    "grain": "chart_row",
+    "attributes": {
+      "x__raw": "0",
+      "y__raw": "92",
+      "value__raw": "0"
+    },
+    "measures": {
+      "x": 0.0,
+      "y": 92.0,
+      "value": 0.0
+    }
+  },
+  {
+    "record_id": "8d42577e-bae2-5da7-88cd-2698c632f2dd",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "page_number": 15,
+    "source_kind": "chart",
+    "source_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "domain": "y_x",
+    "grain": "chart_row",
+    "attributes": {
+      "x__raw": "0",
+      "y__raw": "93",
+      "value__raw": "0"
+    },
+    "measures": {
+      "x": 0.0,
+      "y": 93.0,
+      "value": 0.0
+    }
+  },
+  {
+    "record_id": "fc1e0a4f-616b-5a77-8091-7b04f3107322",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "page_number": 15,
+    "source_kind": "chart",
+    "source_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "domain": "y_x",
+    "grain": "chart_row",
+    "attributes": {
+      "x__raw": "0",
+      "y__raw": "94",
+      "value__raw": "0"
+    },
+    "measures": {
+      "x": 0.0,
+      "y": 94.0,
+      "value": 0.0
+    }
+  },
+  {
+    "record_id": "97043bca-89e1-56d5-9115-6f49b08b12ba",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "page_number": 15,
+    "source_kind": "chart",
+    "source_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "domain": "y_x",
+    "grain": "chart_row",
+    "attributes": {
+      "x__raw": "0",
+      "y__raw": "95",
+      "value__raw": "0"
+    },
+    "measures": {
+      "x": 0.0,
+      "y": 95.0,
+      "value": 0.0
+    }
+  },
+  {
+    "record_id": "efa038ac-544e-5933-be25-594b08f51a76",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "page_number": 15,
+    "source_kind": "chart",
+    "source_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "domain": "y_x",
+    "grain": "chart_row",
+    "attributes": {
+      "x__raw": "0",
+      "y__raw": "96",
+      "value__raw": "0"
+    },
+    "measures": {
+      "x": 0.0,
+      "y": 96.0,
+      "value": 0.0
+    }
+  },
+  {
+    "record_id": "80025428-7d16-508f-9d11-082645469a26",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "page_number": 15,
+    "source_kind": "chart",
+    "source_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "domain": "y_x",
+    "grain": "chart_row",
+    "attributes": {
+      "x__raw": "0",
+      "y__raw": "97",
+      "value__raw": "0"
+    },
+    "measures": {
+      "x": 0.0,
+      "y": 97.0,
+      "value": 0.0
+    }
+  },
+  {
+    "record_id": "c59f21e5-d9ba-5a36-bca7-1bd4bee51894",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "page_number": 15,
+    "source_kind": "chart",
+    "source_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "domain": "y_x",
+    "grain": "chart_row",
+    "attributes": {
+      "x__raw": "0",
+      "y__raw": "98",
+      "value__raw": "0"
+    },
+    "measures": {
+      "x": 0.0,
+      "y": 98.0,
+      "value": 0.0
+    }
+  },
+  {
+    "record_id": "56a0240c-3274-5148-90bc-27aaa0498e13",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "page_number": 15,
+    "source_kind": "chart",
+    "source_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "domain": "y_x",
+    "grain": "chart_row",
+    "attributes": {
+      "x__raw": "0",
+      "y__raw": "99",
+      "value__raw": "0"
+    },
+    "measures": {
+      "x": 0.0,
+      "y": 99.0,
+      "value": 0.0
+    }
+  },
+  {
+    "record_id": "00f2ebca-5d8a-5f69-8eed-820b7dc6c5c6",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "page_number": 15,
+    "source_kind": "chart",
+    "source_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "domain": "y_x",
+    "grain": "chart_row",
+    "attributes": {
+      "x__raw": "0",
+      "y__raw": "100",
+      "value__raw": "0"
+    },
+    "measures": {
+      "x": 0.0,
+      "y": 100.0,
+      "value": 0.0
+    }
+  },
+  {
+    "record_id": "1e5db37c-5a8c-5f9f-a22b-1fb7ee9f8bb0",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "page_number": 15,
+    "source_kind": "chart",
+    "source_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "domain": "y_x",
+    "grain": "chart_row",
+    "attributes": {
+      "x__raw": "0",
+      "y__raw": "101",
+      "value__raw": "0"
+    },
+    "measures": {
+      "x": 0.0,
+      "y": 101.0,
+      "value": 0.0
+    }
+  },
+  {
+    "record_id": "715e50f5-078c-5c01-a081-9f28cee3cb38",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "page_number": 15,
+    "source_kind": "chart",
+    "source_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "domain": "y_x",
+    "grain": "chart_row",
+    "attributes": {
+      "x__raw": "0",
+      "y__raw": "102",
+      "value__raw": "0"
+    },
+    "measures": {
+      "x": 0.0,
+      "y": 102.0,
+      "value": 0.0
+    }
+  },
+  {
+    "record_id": "0681d410-69eb-5d30-aa9a-1a0b79f2cc4f",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "page_number": 15,
+    "source_kind": "chart",
+    "source_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "domain": "y_x",
+    "grain": "chart_row",
+    "attributes": {
+      "x__raw": "0",
+      "y__raw": "103",
+      "value__raw": "0"
+    },
+    "measures": {
+      "x": 0.0,
+      "y": 103.0,
+      "value": 0.0
+    }
+  },
+  {
+    "record_id": "2ce88102-896a-52c8-8a58-998374d3bf87",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "page_number": 15,
+    "source_kind": "chart",
+    "source_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "domain": "y_x",
+    "grain": "chart_row",
+    "attributes": {
+      "x__raw": "0",
+      "y__raw": "104",
+      "value__raw": "0"
+    },
+    "measures": {
+      "x": 0.0,
+      "y": 104.0,
+      "value": 0.0
+    }
+  },
+  {
+    "record_id": "ccddd8db-b5d3-512f-8119-6bb750f90970",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "page_number": 15,
+    "source_kind": "chart",
+    "source_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "domain": "y_x",
+    "grain": "chart_row",
+    "attributes": {
+      "x__raw": "0",
+      "y__raw": "105",
+      "value__raw": "0"
+    },
+    "measures": {
+      "x": 0.0,
+      "y": 105.0,
+      "value": 0.0
+    }
+  },
+  {
+    "record_id": "11f1fedf-6635-5950-ade5-9278074fa686",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "page_number": 15,
+    "source_kind": "chart",
+    "source_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "domain": "y_x",
+    "grain": "chart_row",
+    "attributes": {
+      "x__raw": "0",
+      "y__raw": "106",
+      "value__raw": "0"
+    },
+    "measures": {
+      "x": 0.0,
+      "y": 106.0,
+      "value": 0.0
+    }
+  },
+  {
+    "record_id": "4a835959-e6ec-559f-879b-d018b12f1765",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "page_number": 15,
+    "source_kind": "chart",
+    "source_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "domain": "y_x",
+    "grain": "chart_row",
+    "attributes": {
+      "x__raw": "0",
+      "y__raw": "107",
+      "value__raw": "0"
+    },
+    "measures": {
+      "x": 0.0,
+      "y": 107.0,
+      "value": 0.0
+    }
+  },
+  {
+    "record_id": "ab39410f-8ae8-5293-9e37-1bafa10fb4e1",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "page_number": 15,
+    "source_kind": "chart",
+    "source_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "domain": "y_x",
+    "grain": "chart_row",
+    "attributes": {
+      "x__raw": "0",
+      "y__raw": "108",
+      "value__raw": "0"
+    },
+    "measures": {
+      "x": 0.0,
+      "y": 108.0,
+      "value": 0.0
+    }
+  },
+  {
+    "record_id": "f4eec37b-177b-514f-a125-55a1b4d20e6b",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "page_number": 15,
+    "source_kind": "chart",
+    "source_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "domain": "y_x",
+    "grain": "chart_row",
+    "attributes": {
+      "x__raw": "0",
+      "y__raw": "109",
+      "value__raw": "0"
+    },
+    "measures": {
+      "x": 0.0,
+      "y": 109.0,
+      "value": 0.0
+    }
+  },
+  {
+    "record_id": "f5199508-3a26-5988-a2e9-d8be0f1731d0",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "page_number": 15,
+    "source_kind": "chart",
+    "source_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "domain": "y_x",
+    "grain": "chart_row",
+    "attributes": {
+      "x__raw": "0",
+      "y__raw": "110",
+      "value__raw": "0"
+    },
+    "measures": {
+      "x": 0.0,
+      "y": 110.0,
+      "value": 0.0
+    }
+  },
+  {
+    "record_id": "e4ecce41-af16-5d39-bb92-012fb4e4934f",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "page_number": 15,
+    "source_kind": "chart",
+    "source_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "domain": "y_x",
+    "grain": "chart_row",
+    "attributes": {
+      "x__raw": "0",
+      "y__raw": "111",
+      "value__raw": "0"
+    },
+    "measures": {
+      "x": 0.0,
+      "y": 111.0,
+      "value": 0.0
+    }
+  },
+  {
+    "record_id": "963aad42-d1bf-52db-95e7-54e818690512",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "page_number": 15,
+    "source_kind": "chart",
+    "source_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "domain": "y_x",
+    "grain": "chart_row",
+    "attributes": {
+      "x__raw": "0",
+      "y__raw": "112",
+      "value__raw": "0"
+    },
+    "measures": {
+      "x": 0.0,
+      "y": 112.0,
+      "value": 0.0
+    }
+  },
+  {
+    "record_id": "1c1b3b37-daf4-5ab0-b9d6-45794bb45ae6",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "page_number": 15,
+    "source_kind": "chart",
+    "source_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "domain": "y_x",
+    "grain": "chart_row",
+    "attributes": {
+      "x__raw": "0",
+      "y__raw": "113",
+      "value__raw": "0"
+    },
+    "measures": {
+      "x": 0.0,
+      "y": 113.0,
+      "value": 0.0
+    }
+  },
+  {
+    "record_id": "aab34f64-1b61-50fd-8a09-0d3e4549c8e5",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "page_number": 15,
+    "source_kind": "chart",
+    "source_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "domain": "y_x",
+    "grain": "chart_row",
+    "attributes": {
+      "x__raw": "0",
+      "y__raw": "114",
+      "value__raw": "0"
+    },
+    "measures": {
+      "x": 0.0,
+      "y": 114.0,
+      "value": 0.0
+    }
+  },
+  {
+    "record_id": "5afda9e7-0084-5981-b426-4bc91beb95cc",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "page_number": 15,
+    "source_kind": "chart",
+    "source_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "domain": "y_x",
+    "grain": "chart_row",
+    "attributes": {
+      "x__raw": "0",
+      "y__raw": "115",
+      "value__raw": "0"
+    },
+    "measures": {
+      "x": 0.0,
+      "y": 115.0,
+      "value": 0.0
+    }
+  },
+  {
+    "record_id": "dfd7bc65-fcc3-57e4-be7a-109a4ea08fc7",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "page_number": 15,
+    "source_kind": "chart",
+    "source_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "domain": "y_x",
+    "grain": "chart_row",
+    "attributes": {
+      "x__raw": "0",
+      "y__raw": "116",
+      "value__raw": "0"
+    },
+    "measures": {
+      "x": 0.0,
+      "y": 116.0,
+      "value": 0.0
+    }
+  },
+  {
+    "record_id": "fc6113f9-f732-5441-ab3e-36a475104238",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "page_number": 15,
+    "source_kind": "chart",
+    "source_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "domain": "y_x",
+    "grain": "chart_row",
+    "attributes": {
+      "x__raw": "0",
+      "y__raw": "117",
+      "value__raw": "0"
+    },
+    "measures": {
+      "x": 0.0,
+      "y": 117.0,
+      "value": 0.0
+    }
+  },
+  {
+    "record_id": "f0f2aca6-3e8f-59e7-bee8-bd0509c9f96f",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "page_number": 15,
+    "source_kind": "chart",
+    "source_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "domain": "y_x",
+    "grain": "chart_row",
+    "attributes": {
+      "x__raw": "0",
+      "y__raw": "118",
+      "value__raw": "0"
+    },
+    "measures": {
+      "x": 0.0,
+      "y": 118.0,
+      "value": 0.0
+    }
+  },
+  {
+    "record_id": "b465cbd3-3408-58f7-8b6e-d5e324e5549d",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "page_number": 15,
+    "source_kind": "chart",
+    "source_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "domain": "y_x",
+    "grain": "chart_row",
+    "attributes": {
+      "x__raw": "0",
+      "y__raw": "119",
+      "value__raw": "0"
+    },
+    "measures": {
+      "x": 0.0,
+      "y": 119.0,
+      "value": 0.0
+    }
+  },
+  {
+    "record_id": "af436e39-6204-5720-8c8c-aebf619ecb04",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "page_number": 15,
+    "source_kind": "chart",
+    "source_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "domain": "y_x",
+    "grain": "chart_row",
+    "attributes": {
+      "x__raw": "0",
+      "y__raw": "120",
+      "value__raw": "0"
+    },
+    "measures": {
+      "x": 0.0,
+      "y": 120.0,
+      "value": 0.0
+    }
+  },
+  {
+    "record_id": "a04e77b2-197f-5a10-9fc0-3316d424825e",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "page_number": 15,
+    "source_kind": "chart",
+    "source_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "domain": "y_x",
+    "grain": "chart_row",
+    "attributes": {
+      "x__raw": "0",
+      "y__raw": "121",
+      "value__raw": "0"
+    },
+    "measures": {
+      "x": 0.0,
+      "y": 121.0,
+      "value": 0.0
+    }
+  },
+  {
+    "record_id": "e58c3f70-fd7e-5d9e-9b59-4448cf869209",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "page_number": 15,
+    "source_kind": "chart",
+    "source_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "domain": "y_x",
+    "grain": "chart_row",
+    "attributes": {
+      "x__raw": "0",
+      "y__raw": "122",
+      "value__raw": "0"
+    },
+    "measures": {
+      "x": 0.0,
+      "y": 122.0,
+      "value": 0.0
+    }
+  },
+  {
+    "record_id": "bf5a16cd-5242-566e-8585-f3dbdb6b7146",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "page_number": 15,
+    "source_kind": "chart",
+    "source_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "domain": "y_x",
+    "grain": "chart_row",
+    "attributes": {
+      "x__raw": "0",
+      "y__raw": "123",
+      "value__raw": "0"
+    },
+    "measures": {
+      "x": 0.0,
+      "y": 123.0,
+      "value": 0.0
+    }
+  },
+  {
+    "record_id": "4a2a31e7-31d9-513a-82e7-01459346910c",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "page_number": 15,
+    "source_kind": "chart",
+    "source_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "domain": "y_x",
+    "grain": "chart_row",
+    "attributes": {
+      "x__raw": "0",
+      "y__raw": "124",
+      "value__raw": "0"
+    },
+    "measures": {
+      "x": 0.0,
+      "y": 124.0,
+      "value": 0.0
+    }
+  },
+  {
+    "record_id": "a2eee3e1-2f4e-56cb-9da8-72f59693f7df",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "page_number": 15,
+    "source_kind": "chart",
+    "source_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "domain": "y_x",
+    "grain": "chart_row",
+    "attributes": {
+      "x__raw": "0",
+      "y__raw": "125",
+      "value__raw": "0"
+    },
+    "measures": {
+      "x": 0.0,
+      "y": 125.0,
+      "value": 0.0
+    }
+  },
+  {
+    "record_id": "f6030090-9712-5e9f-a633-0e0409a71b96",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "page_number": 15,
+    "source_kind": "chart",
+    "source_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "domain": "y_x",
+    "grain": "chart_row",
+    "attributes": {
+      "x__raw": "0",
+      "y__raw": "126",
+      "value__raw": "0"
+    },
+    "measures": {
+      "x": 0.0,
+      "y": 126.0,
+      "value": 0.0
+    }
+  },
+  {
+    "record_id": "f93d59fb-4649-5c1a-babe-806f6cf18b8f",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "page_number": 15,
+    "source_kind": "chart",
+    "source_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "domain": "y_x",
+    "grain": "chart_row",
+    "attributes": {
+      "x__raw": "0",
+      "y__raw": "127",
+      "value__raw": "0"
+    },
+    "measures": {
+      "x": 0.0,
+      "y": 127.0,
+      "value": 0.0
+    }
+  },
+  {
+    "record_id": "689ea55f-b005-5947-b493-6828a2265a41",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "page_number": 15,
+    "source_kind": "chart",
+    "source_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "domain": "y_x",
+    "grain": "chart_row",
+    "attributes": {
+      "x__raw": "0",
+      "y__raw": "128",
+      "value__raw": "0"
+    },
+    "measures": {
+      "x": 0.0,
+      "y": 128.0,
+      "value": 0.0
+    }
+  },
+  {
+    "record_id": "53207a00-686e-5f4b-af1a-991501b06972",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "page_number": 15,
+    "source_kind": "chart",
+    "source_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "domain": "y_x",
+    "grain": "chart_row",
+    "attributes": {
+      "x__raw": "0",
+      "y__raw": "129",
+      "value__raw": "0"
+    },
+    "measures": {
+      "x": 0.0,
+      "y": 129.0,
+      "value": 0.0
+    }
+  },
+  {
+    "record_id": "f1baadab-f98e-5940-b36f-bb368b38dab8",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "page_number": 15,
+    "source_kind": "chart",
+    "source_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "domain": "y_x",
+    "grain": "chart_row",
+    "attributes": {
+      "x__raw": "0",
+      "y__raw": "130",
+      "value__raw": "0"
+    },
+    "measures": {
+      "x": 0.0,
+      "y": 130.0,
+      "value": 0.0
+    }
+  },
+  {
+    "record_id": "3593017f-cad6-5210-a0ab-cb1c0782ab49",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "page_number": 15,
+    "source_kind": "chart",
+    "source_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "domain": "y_x",
+    "grain": "chart_row",
+    "attributes": {
+      "x__raw": "0",
+      "y__raw": "131",
+      "value__raw": "0"
+    },
+    "measures": {
+      "x": 0.0,
+      "y": 131.0,
+      "value": 0.0
+    }
+  },
+  {
+    "record_id": "fd6861d3-cce8-501b-8212-087194d9631b",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "page_number": 15,
+    "source_kind": "chart",
+    "source_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "domain": "y_x",
+    "grain": "chart_row",
+    "attributes": {
+      "x__raw": "0",
+      "y__raw": "132",
+      "value__raw": "0"
+    },
+    "measures": {
+      "x": 0.0,
+      "y": 132.0,
+      "value": 0.0
+    }
+  },
+  {
+    "record_id": "64bb3e0f-aad8-59f1-9fe5-ac59e8f1aec0",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "page_number": 15,
+    "source_kind": "chart",
+    "source_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "domain": "y_x",
+    "grain": "chart_row",
+    "attributes": {
+      "x__raw": "0",
+      "y__raw": "133",
+      "value__raw": "0"
+    },
+    "measures": {
+      "x": 0.0,
+      "y": 133.0,
+      "value": 0.0
+    }
+  },
+  {
+    "record_id": "368c9870-9465-5c75-b793-9f5c1e00c06b",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "page_number": 15,
+    "source_kind": "chart",
+    "source_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "domain": "y_x",
+    "grain": "chart_row",
+    "attributes": {
+      "x__raw": "0",
+      "y__raw": "134",
+      "value__raw": "0"
+    },
+    "measures": {
+      "x": 0.0,
+      "y": 134.0,
+      "value": 0.0
+    }
+  },
+  {
+    "record_id": "8172b69f-7625-5c8b-b9a2-c170877915ae",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "page_number": 15,
+    "source_kind": "chart",
+    "source_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "domain": "y_x",
+    "grain": "chart_row",
+    "attributes": {
+      "x__raw": "0",
+      "y__raw": "135",
+      "value__raw": "0"
+    },
+    "measures": {
+      "x": 0.0,
+      "y": 135.0,
+      "value": 0.0
+    }
+  },
+  {
+    "record_id": "f01ad33d-78ac-5880-821f-5eec1bd18b86",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "page_number": 15,
+    "source_kind": "chart",
+    "source_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "domain": "y_x",
+    "grain": "chart_row",
+    "attributes": {
+      "x__raw": "0",
+      "y__raw": "136",
+      "value__raw": "0"
+    },
+    "measures": {
+      "x": 0.0,
+      "y": 136.0,
+      "value": 0.0
+    }
+  },
+  {
+    "record_id": "dd709e55-bde6-59d1-96eb-b5d5173d4b69",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "page_number": 15,
+    "source_kind": "chart",
+    "source_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "domain": "y_x",
+    "grain": "chart_row",
+    "attributes": {
+      "x__raw": "0",
+      "y__raw": "137",
+      "value__raw": "0"
+    },
+    "measures": {
+      "x": 0.0,
+      "y": 137.0,
+      "value": 0.0
+    }
+  },
+  {
+    "record_id": "b065cdf9-7850-5b98-ab17-33e2dc1426d4",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "page_number": 15,
+    "source_kind": "chart",
+    "source_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "domain": "y_x",
+    "grain": "chart_row",
+    "attributes": {
+      "x__raw": "0",
+      "y__raw": "138",
+      "value__raw": "0"
+    },
+    "measures": {
+      "x": 0.0,
+      "y": 138.0,
+      "value": 0.0
+    }
+  },
+  {
+    "record_id": "9e56801e-a7e5-520c-ae3f-57b80d29a71d",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "page_number": 15,
+    "source_kind": "chart",
+    "source_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "domain": "y_x",
+    "grain": "chart_row",
+    "attributes": {
+      "x__raw": "0",
+      "y__raw": "139",
+      "value__raw": "0"
+    },
+    "measures": {
+      "x": 0.0,
+      "y": 139.0,
+      "value": 0.0
+    }
+  },
+  {
+    "record_id": "221d002f-4874-5766-8fb9-eba2cf6d12b3",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "page_number": 15,
+    "source_kind": "chart",
+    "source_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "domain": "y_x",
+    "grain": "chart_row",
+    "attributes": {
+      "x__raw": "0",
+      "y__raw": "140",
+      "value__raw": "0"
+    },
+    "measures": {
+      "x": 0.0,
+      "y": 140.0,
+      "value": 0.0
+    }
+  },
+  {
+    "record_id": "7f0a0672-b002-5aab-aa8e-29b4dda5cc74",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "page_number": 15,
+    "source_kind": "chart",
+    "source_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "domain": "y_x",
+    "grain": "chart_row",
+    "attributes": {
+      "x__raw": "0",
+      "y__raw": "141",
+      "value__raw": "0"
+    },
+    "measures": {
+      "x": 0.0,
+      "y": 141.0,
+      "value": 0.0
+    }
+  },
+  {
+    "record_id": "bdd594d7-3a44-5b17-a2c6-418008aa0fe4",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "page_number": 15,
+    "source_kind": "chart",
+    "source_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "domain": "y_x",
+    "grain": "chart_row",
+    "attributes": {
+      "x__raw": "0",
+      "y__raw": "142",
+      "value__raw": "0"
+    },
+    "measures": {
+      "x": 0.0,
+      "y": 142.0,
+      "value": 0.0
+    }
+  },
+  {
+    "record_id": "fe00e486-d5c7-55a1-8c46-4ea088ccd447",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "page_number": 15,
+    "source_kind": "chart",
+    "source_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "domain": "y_x",
+    "grain": "chart_row",
+    "attributes": {
+      "x__raw": "0",
+      "y__raw": "143",
+      "value__raw": "0"
+    },
+    "measures": {
+      "x": 0.0,
+      "y": 143.0,
+      "value": 0.0
+    }
+  },
+  {
+    "record_id": "fd343b83-59ae-5b31-a741-743452835934",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "page_number": 15,
+    "source_kind": "chart",
+    "source_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "domain": "y_x",
+    "grain": "chart_row",
+    "attributes": {
+      "x__raw": "0",
+      "y__raw": "144",
+      "value__raw": "0"
+    },
+    "measures": {
+      "x": 0.0,
+      "y": 144.0,
+      "value": 0.0
+    }
+  },
+  {
+    "record_id": "be4bdcab-caf6-520e-a475-7b2007207030",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "page_number": 15,
+    "source_kind": "chart",
+    "source_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "domain": "y_x",
+    "grain": "chart_row",
+    "attributes": {
+      "x__raw": "0",
+      "y__raw": "145",
+      "value__raw": "0"
+    },
+    "measures": {
+      "x": 0.0,
+      "y": 145.0,
+      "value": 0.0
+    }
+  },
+  {
+    "record_id": "435b9741-e7b2-57f6-8611-78db9ceb84e4",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "page_number": 15,
+    "source_kind": "chart",
+    "source_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "domain": "y_x",
+    "grain": "chart_row",
+    "attributes": {
+      "x__raw": "0",
+      "y__raw": "146",
+      "value__raw": "0"
+    },
+    "measures": {
+      "x": 0.0,
+      "y": 146.0,
+      "value": 0.0
+    }
+  },
+  {
+    "record_id": "1550f6bf-d0c9-5187-925e-3afca9c517d8",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "page_number": 15,
+    "source_kind": "chart",
+    "source_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "domain": "y_x",
+    "grain": "chart_row",
+    "attributes": {
+      "x__raw": "0",
+      "y__raw": "147",
+      "value__raw": "0"
+    },
+    "measures": {
+      "x": 0.0,
+      "y": 147.0,
+      "value": 0.0
+    }
+  },
+  {
+    "record_id": "6dee870b-781d-5e8e-b0f8-54e23042c80b",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "page_number": 15,
+    "source_kind": "chart",
+    "source_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "domain": "y_x",
+    "grain": "chart_row",
+    "attributes": {
+      "x__raw": "0",
+      "y__raw": "148",
+      "value__raw": "0"
+    },
+    "measures": {
+      "x": 0.0,
+      "y": 148.0,
+      "value": 0.0
+    }
+  },
+  {
+    "record_id": "57871af4-3716-5a91-a010-edf72722c355",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "page_number": 15,
+    "source_kind": "chart",
+    "source_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "domain": "y_x",
+    "grain": "chart_row",
+    "attributes": {
+      "x__raw": "0",
+      "y__raw": "149",
+      "value__raw": "0"
+    },
+    "measures": {
+      "x": 0.0,
+      "y": 149.0,
+      "value": 0.0
+    }
+  },
+  {
+    "record_id": "036f35eb-2ddf-561e-b768-108b232b5299",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "page_number": 15,
+    "source_kind": "chart",
+    "source_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "domain": "y_x",
+    "grain": "chart_row",
+    "attributes": {
+      "x__raw": "0",
+      "y__raw": "150",
+      "value__raw": "0"
+    },
+    "measures": {
+      "x": 0.0,
+      "y": 150.0,
+      "value": 0.0
+    }
+  },
+  {
+    "record_id": "236ffb79-8d12-5efc-83bf-4c8d1d96ed24",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "page_number": 15,
+    "source_kind": "chart",
+    "source_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "domain": "y_x",
+    "grain": "chart_row",
+    "attributes": {
+      "x__raw": "0",
+      "y__raw": "151",
+      "value__raw": "0"
+    },
+    "measures": {
+      "x": 0.0,
+      "y": 151.0,
+      "value": 0.0
+    }
+  },
+  {
+    "record_id": "22e5c5f1-8f85-5645-86d0-03209b40743b",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "page_number": 15,
+    "source_kind": "chart",
+    "source_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "domain": "y_x",
+    "grain": "chart_row",
+    "attributes": {
+      "x__raw": "0",
+      "y__raw": "152",
+      "value__raw": "0"
+    },
+    "measures": {
+      "x": 0.0,
+      "y": 152.0,
+      "value": 0.0
+    }
+  },
+  {
+    "record_id": "31ebe581-a7d2-5ea9-a874-740711fe7183",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "page_number": 15,
+    "source_kind": "chart",
+    "source_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "domain": "y_x",
+    "grain": "chart_row",
+    "attributes": {
+      "x__raw": "0",
+      "y__raw": "153",
+      "value__raw": "0"
+    },
+    "measures": {
+      "x": 0.0,
+      "y": 153.0,
+      "value": 0.0
+    }
+  },
+  {
+    "record_id": "6a30815f-80c8-5cfc-af5d-64657761fd30",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "page_number": 15,
+    "source_kind": "chart",
+    "source_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "domain": "y_x",
+    "grain": "chart_row",
+    "attributes": {
+      "x__raw": "0",
+      "y__raw": "154",
+      "value__raw": "0"
+    },
+    "measures": {
+      "x": 0.0,
+      "y": 154.0,
+      "value": 0.0
+    }
+  },
+  {
+    "record_id": "155fa1c5-865f-5ea2-b13f-27a17970f97a",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "page_number": 15,
+    "source_kind": "chart",
+    "source_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "domain": "y_x",
+    "grain": "chart_row",
+    "attributes": {
+      "x__raw": "0",
+      "y__raw": "155",
+      "value__raw": "0"
+    },
+    "measures": {
+      "x": 0.0,
+      "y": 155.0,
+      "value": 0.0
+    }
+  },
+  {
+    "record_id": "0ed3f09d-69a3-53aa-8350-dbec4edbe5a1",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "page_number": 15,
+    "source_kind": "chart",
+    "source_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "domain": "y_x",
+    "grain": "chart_row",
+    "attributes": {
+      "x__raw": "0",
+      "y__raw": "156",
+      "value__raw": "0"
+    },
+    "measures": {
+      "x": 0.0,
+      "y": 156.0,
+      "value": 0.0
+    }
+  },
+  {
+    "record_id": "8c24872f-a86e-5c81-afef-a3d7def89f6f",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "page_number": 15,
+    "source_kind": "chart",
+    "source_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "domain": "y_x",
+    "grain": "chart_row",
+    "attributes": {
+      "x__raw": "0",
+      "y__raw": "157",
+      "value__raw": "0"
+    },
+    "measures": {
+      "x": 0.0,
+      "y": 157.0,
+      "value": 0.0
+    }
+  },
+  {
+    "record_id": "8baab594-d6bc-5a63-9095-1ef4fcb906c6",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "page_number": 15,
+    "source_kind": "chart",
+    "source_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "domain": "y_x",
+    "grain": "chart_row",
+    "attributes": {
+      "x__raw": "0",
+      "y__raw": "158",
+      "value__raw": "0"
+    },
+    "measures": {
+      "x": 0.0,
+      "y": 158.0,
+      "value": 0.0
+    }
+  },
+  {
+    "record_id": "cf718431-adfc-5257-98fe-9a759e902a9b",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "page_number": 15,
+    "source_kind": "chart",
+    "source_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "domain": "y_x",
+    "grain": "chart_row",
+    "attributes": {
+      "x__raw": "0",
+      "y__raw": "159",
+      "value__raw": "0"
+    },
+    "measures": {
+      "x": 0.0,
+      "y": 159.0,
+      "value": 0.0
+    }
+  },
+  {
+    "record_id": "2e64f8a8-de67-52fa-a4d4-05f5ed57ded5",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "page_number": 15,
+    "source_kind": "chart",
+    "source_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "domain": "y_x",
+    "grain": "chart_row",
+    "attributes": {
+      "x__raw": "0",
+      "y__raw": "160",
+      "value__raw": "0"
+    },
+    "measures": {
+      "x": 0.0,
+      "y": 160.0,
+      "value": 0.0
+    }
+  },
+  {
+    "record_id": "4b2a7a97-8e5a-5dae-a470-990c2b7b0119",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "page_number": 15,
+    "source_kind": "chart",
+    "source_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "domain": "y_x",
+    "grain": "chart_row",
+    "attributes": {
+      "x__raw": "0",
+      "y__raw": "161",
+      "value__raw": "0"
+    },
+    "measures": {
+      "x": 0.0,
+      "y": 161.0,
+      "value": 0.0
+    }
+  },
+  {
+    "record_id": "ed89154c-ac62-5495-847e-0323c336d126",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "page_number": 15,
+    "source_kind": "chart",
+    "source_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "domain": "y_x",
+    "grain": "chart_row",
+    "attributes": {
+      "x__raw": "0",
+      "y__raw": "162",
+      "value__raw": "0"
+    },
+    "measures": {
+      "x": 0.0,
+      "y": 162.0,
+      "value": 0.0
+    }
+  },
+  {
+    "record_id": "7b8fa61c-3101-57eb-8baa-01cce437f2b7",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "page_number": 15,
+    "source_kind": "chart",
+    "source_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "domain": "y_x",
+    "grain": "chart_row",
+    "attributes": {
+      "x__raw": "0",
+      "y__raw": "163",
+      "value__raw": "0"
+    },
+    "measures": {
+      "x": 0.0,
+      "y": 163.0,
+      "value": 0.0
+    }
+  },
+  {
+    "record_id": "ce434bdc-f6c3-5a4d-839e-7cd8a49a718b",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "page_number": 15,
+    "source_kind": "chart",
+    "source_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "domain": "y_x",
+    "grain": "chart_row",
+    "attributes": {
+      "x__raw": "0",
+      "y__raw": "164",
+      "value__raw": "0"
+    },
+    "measures": {
+      "x": 0.0,
+      "y": 164.0,
+      "value": 0.0
+    }
+  },
+  {
+    "record_id": "b819044c-a008-5d45-bbd9-5bb9ea7a53f5",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "page_number": 15,
+    "source_kind": "chart",
+    "source_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "domain": "y_x",
+    "grain": "chart_row",
+    "attributes": {
+      "x__raw": "0",
+      "y__raw": "165",
+      "value__raw": "0"
+    },
+    "measures": {
+      "x": 0.0,
+      "y": 165.0,
+      "value": 0.0
+    }
+  },
+  {
+    "record_id": "a493b5cb-fc65-5366-84aa-c37e858fe02b",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "page_number": 15,
+    "source_kind": "chart",
+    "source_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "domain": "y_x",
+    "grain": "chart_row",
+    "attributes": {
+      "x__raw": "0",
+      "y__raw": "166",
+      "value__raw": "0"
+    },
+    "measures": {
+      "x": 0.0,
+      "y": 166.0,
+      "value": 0.0
+    }
+  },
+  {
+    "record_id": "84248861-2788-5e73-9f60-e8e112af59ff",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "page_number": 15,
+    "source_kind": "chart",
+    "source_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "domain": "y_x",
+    "grain": "chart_row",
+    "attributes": {
+      "x__raw": "0",
+      "y__raw": "167",
+      "value__raw": "0"
+    },
+    "measures": {
+      "x": 0.0,
+      "y": 167.0,
+      "value": 0.0
+    }
+  },
+  {
+    "record_id": "893638d1-63e7-575d-aa31-0b4473f61d3c",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "page_number": 15,
+    "source_kind": "chart",
+    "source_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "domain": "y_x",
+    "grain": "chart_row",
+    "attributes": {
+      "x__raw": "0",
+      "y__raw": "168",
+      "value__raw": "0"
+    },
+    "measures": {
+      "x": 0.0,
+      "y": 168.0,
+      "value": 0.0
+    }
+  },
+  {
+    "record_id": "efa698d0-89cb-5237-b4c9-98c441d6b1c7",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "page_number": 15,
+    "source_kind": "chart",
+    "source_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+    "section_id": "1eef4a8f-346f-5bb1-976c-d91a0e63d972",
+    "section_title": "Y | X",
+    "domain": "y_x",
+    "grain": "chart_row",
+    "attributes": {
+      "x__raw": "0",
+      "y": "",
+      "value": ""
+    },
+    "measures": {
+      "x": 0.0
+    }
+  }
+]

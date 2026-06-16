@@ -1,0 +1,209 @@
+{
+  "tipo_artefato": "validacao_layout_signature",
+  "empresa": "Cury",
+  "documento_origem": {
+    "arquivo_pdf": "resultados_contrutoras/fontes_pdfs/cury.pdf",
+    "pasta_de_extracao": "dados-desestruturados/extraction_cury",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad"
+  },
+  "contrato_semantico": {
+    "arquivo": "contrato_semantico_construtora.json",
+    "versao": "1.2.0"
+  },
+  "layout_signature": {
+    "arquivo": "layout_signature_cury_deterministico.json",
+    "versao_artefato": "4.0.0"
+  },
+  "contexto_execucao": {
+    "modo_resolucao": "deterministico",
+    "executado_em": "2026-05-29",
+    "llm_necessaria": false,
+    "fallback_acionado": false,
+    "calculos_de_variacao_executados": false
+  },
+  "status_compatibilidade": {
+    "status": "compativel",
+    "campos_obrigatorios_total": 12,
+    "campos_obrigatorios_resolvidos": 12,
+    "valores_brutos_esperados": 10,
+    "valores_brutos_resolvidos": 10,
+    "valores_brutos_nao_resolvidos": 0,
+    "codigos_alerta": []
+  },
+  "regras_executadas": [
+    {
+      "id_regra": "SEC_LANC_001",
+      "status": "aprovada",
+      "tipo_teste": "secao_existe",
+      "evidencias": [
+        {
+          "section_id": "e3434b27-4bc1-5a63-b58b-066506c86d7e",
+          "title_canonical": "l_a_n_c_a_m_e_n_t_o_s",
+          "page_number": 4
+        },
+        {
+          "section_id": "12097fa3-49c1-5fbc-91b2-4fdbabc67f64",
+          "title_canonical": "r_26468_milhoes",
+          "page_number": 4
+        }
+      ]
+    },
+    {
+      "id_regra": "SEC_VEND_001",
+      "status": "aprovada",
+      "tipo_teste": "secao_existe",
+      "evidencias": [
+        {
+          "section_id": "e0af7ca8-647e-531c-9ec8-84d5cf4255f0",
+          "title_canonical": "v_e_n_d_a_s_l_i_q_u_i_d_a_s",
+          "page_number": 7
+        }
+      ]
+    },
+    {
+      "id_regra": "TAB_LANC_001",
+      "status": "aprovada",
+      "tipo_teste": "arquivo_existe",
+      "evidencia": {
+        "arquivo_origem": "tables/table001.json",
+        "table_id": "f0f1e575-5a8e-5ad1-a589-ebfd43615a48"
+      }
+    },
+    {
+      "id_regra": "TAB_VEND_001",
+      "status": "aprovada",
+      "tipo_teste": "arquivo_existe",
+      "evidencia": {
+        "arquivo_origem": "tables/table002.json",
+        "table_id": "199923b8-996b-5fcd-a7ca-da62fea90867"
+      }
+    },
+    {
+      "id_regra": "ROW_LANC_UNID_001",
+      "status": "aprovada",
+      "tipo_teste": "linha_existe_em_tabela",
+      "evidencia": {
+        "arquivo_origem": "tables/table001.json",
+        "row_index": 2,
+        "column_index": 0,
+        "value_raw": "Número de Unidades"
+      }
+    },
+    {
+      "id_regra": "ROW_VEND_UNID_001",
+      "status": "aprovada",
+      "tipo_teste": "linha_existe_em_tabela",
+      "evidencia": {
+        "arquivo_origem": "tables/table002.json",
+        "row_index": 1,
+        "column_index": 0,
+        "value_raw": "Número de Unidades"
+      }
+    },
+    {
+      "id_regra": "COL_LANC_PERIODOS_BRUTOS_001",
+      "status": "aprovada",
+      "tipo_teste": "perfil_colunas_periodo_existe_em_tabela",
+      "evidencia": {
+        "arquivo_origem": "tables/table001.json",
+        "papeis_periodo_resolvidos": [
+          {
+            "papel_periodo": "periodo_referencia",
+            "indice_coluna": 1,
+            "cabecalho_encontrado": "1T26"
+          },
+          {
+            "papel_periodo": "periodo_comparativo_anterior",
+            "indice_coluna": 2,
+            "cabecalho_encontrado": "4T25"
+          },
+          {
+            "papel_periodo": "mesmo_periodo_ano_anterior",
+            "indice_coluna": 4,
+            "cabecalho_encontrado": "1T25"
+          },
+          {
+            "papel_periodo": "periodo_12m_atual",
+            "indice_coluna": 6,
+            "cabecalho_encontrado": "1T26 UDM*"
+          },
+          {
+            "papel_periodo": "periodo_12m_anterior",
+            "indice_coluna": 7,
+            "cabecalho_encontrado": "1T25 UDM*"
+          }
+        ]
+      }
+    },
+    {
+      "id_regra": "COL_VEND_PERIODOS_BRUTOS_001",
+      "status": "aprovada",
+      "tipo_teste": "perfil_colunas_periodo_existe_em_tabela",
+      "evidencia": {
+        "arquivo_origem": "tables/table002.json",
+        "papeis_periodo_resolvidos": [
+          {
+            "papel_periodo": "periodo_referencia",
+            "indice_coluna": 1,
+            "cabecalho_encontrado": "1T26"
+          },
+          {
+            "papel_periodo": "periodo_comparativo_anterior",
+            "indice_coluna": 2,
+            "cabecalho_encontrado": "4T25"
+          },
+          {
+            "papel_periodo": "mesmo_periodo_ano_anterior",
+            "indice_coluna": 4,
+            "cabecalho_encontrado": "1T25"
+          },
+          {
+            "papel_periodo": "periodo_12m_atual",
+            "indice_coluna": 6,
+            "cabecalho_encontrado": "1T26 UDM*"
+          },
+          {
+            "papel_periodo": "periodo_12m_anterior",
+            "indice_coluna": 7,
+            "cabecalho_encontrado": "1T25 UDM*"
+          }
+        ]
+      }
+    },
+    {
+      "id_regra": "VAL_LANC_UNID_PERIODO_REFERENCIA_001",
+      "status": "aprovada",
+      "tipo_teste": "valor_normalizavel",
+      "evidencia": {
+        "arquivo_origem": "tables/table001.json",
+        "papel_periodo": "periodo_referencia",
+        "cabecalho_encontrado": "1T26",
+        "row_index": 2,
+        "column_index": 1,
+        "valor_bruto": "8.001",
+        "valor_normalizado": 8001.0,
+        "normalizacao": "numero_pt_br_para_numero"
+      }
+    },
+    {
+      "id_regra": "VAL_VEND_UNID_PERIODO_REFERENCIA_001",
+      "status": "aprovada",
+      "tipo_teste": "valor_normalizavel",
+      "evidencia": {
+        "arquivo_origem": "tables/table002.json",
+        "papel_periodo": "periodo_referencia",
+        "cabecalho_encontrado": "1T26",
+        "row_index": 1,
+        "column_index": 1,
+        "valor_bruto": "7.786",
+        "valor_normalizado": 7786.0,
+        "normalizacao": "numero_pt_br_para_numero"
+      }
+    }
+  ],
+  "decisao_final": {
+    "schema_saida_pode_ser_materializado": true,
+    "schema_saida_materializado_sem_llm": true,
+    "revisao_manual_recomendada": false
+  }
+}

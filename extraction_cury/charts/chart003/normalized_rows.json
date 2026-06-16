@@ -1,0 +1,62 @@
+[
+  {
+    "record_id": "e57eceea-a316-58ab-af69-344bf2449d68",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "page_number": 8,
+    "source_kind": "chart",
+    "source_id": "032b4dbc-4dae-59f8-a392-b12c6519b1cb",
+    "section_id": "f71976cd-2996-529f-bd29-88699823d11d",
+    "section_title": "VSO Líquido (%) | Quarter",
+    "domain": "vso_liquido_quarter",
+    "grain": "chart_row",
+    "attributes": {
+      "quarter": "1T25",
+      "vso_liquido__raw": "45.4",
+      "vendas_liquidas_r_milhoes__raw": "2105.6"
+    },
+    "measures": {
+      "vso_liquido": 45.4,
+      "vendas_liquidas_r_milhoes": 2105.6
+    }
+  },
+  {
+    "record_id": "e4a10acc-4134-57bf-af87-081f2e5956e0",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "page_number": 8,
+    "source_kind": "chart",
+    "source_id": "032b4dbc-4dae-59f8-a392-b12c6519b1cb",
+    "section_id": "f71976cd-2996-529f-bd29-88699823d11d",
+    "section_title": "VSO Líquido (%) | Quarter",
+    "domain": "vso_liquido_quarter",
+    "grain": "chart_row",
+    "attributes": {
+      "quarter": "4T25",
+      "vso_liquido__raw": "39.3",
+      "vendas_liquidas_r_milhoes__raw": "1556.3"
+    },
+    "measures": {
+      "vso_liquido": 39.3,
+      "vendas_liquidas_r_milhoes": 1556.3
+    }
+  },
+  {
+    "record_id": "30a6a5d1-6003-5737-bf73-e30f26bcb847",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "page_number": 8,
+    "source_kind": "chart",
+    "source_id": "032b4dbc-4dae-59f8-a392-b12c6519b1cb",
+    "section_id": "f71976cd-2996-529f-bd29-88699823d11d",
+    "section_title": "VSO Líquido (%) | Quarter",
+    "domain": "vso_liquido_quarter",
+    "grain": "chart_row",
+    "attributes": {
+      "quarter": "1T26",
+      "vso_liquido__raw": "45.1",
+      "vendas_liquidas_r_milhoes__raw": "2304.6"
+    },
+    "measures": {
+      "vso_liquido": 45.1,
+      "vendas_liquidas_r_milhoes": 2304.6
+    }
+  }
+]

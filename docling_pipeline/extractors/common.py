@@ -5,7 +5,15 @@ from typing import Any, Optional
 
 import pandas as pd
 
-from ..helpers import normalize_columns, normalize_space, parse_flexible_number, slugify, stable_id
+from ..helpers import (
+    item_parent_ref,
+    item_self_ref,
+    normalize_columns,
+    normalize_space,
+    parse_flexible_number,
+    slugify,
+    stable_id,
+)
 from ..models import BoundingBox, NormalizedRowRecord, SectionRecord
 
 DIMENSION_COLUMN_HINTS = {
@@ -107,15 +115,55 @@ def nearest_section(
     *,
     page_number: Optional[int],
     anchor_bbox: Optional[BoundingBox] = None,
+    order_index: Optional[int] = None,
 ) -> Optional[SectionRecord]:
     candidates = [s for s in sections if s.page_number == page_number]
+    if not candidates and page_number is not None:
+        previous_page_sections = [
+            s for s in sections if s.page_number is not None and s.page_number < page_number
+        ]
+        if previous_page_sections:
+            return max(previous_page_sections, key=lambda section: (section.page_number or 0, section.order_index))
+        return None
     if not candidates:
         return None
+    if order_index is not None:
+        preceding = [s for s in candidates if s.order_index <= order_index]
+        if preceding:
+            candidates = preceding
     if anchor_bbox is not None:
         with_bbox = [s for s in candidates if s.bbox is not None]
         if with_bbox:
             return min(with_bbox, key=lambda section: _section_match_score(anchor_bbox, section.bbox))  # type: ignore[arg-type]
     return candidates[-1]
+
+
+def resolve_section_for_item(
+    sections: list[SectionRecord],
+    *,
+    item: Any,
+    page_number: Optional[int],
+    anchor_bbox: Optional[BoundingBox] = None,
+    order_index: Optional[int] = None,
+) -> Optional[SectionRecord]:
+    sections_by_self_ref = {section.self_ref: section for section in sections if section.self_ref}
+    item_self = item_self_ref(item)
+    item_parent = item_parent_ref(item)
+
+    if item_parent and item_parent in sections_by_self_ref:
+        return sections_by_self_ref[item_parent]
+
+    if item_self:
+        for section in sections:
+            if item_self in section.child_refs:
+                return section
+
+    return nearest_section(
+        sections,
+        page_number=page_number,
+        anchor_bbox=anchor_bbox,
+        order_index=order_index,
+    )
 
 
 def dataframe_to_normalized_rows(

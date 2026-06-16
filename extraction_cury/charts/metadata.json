@@ -1,0 +1,118 @@
+{
+  "kind": "chart",
+  "source_file": "pdf_construturas/cury.pdf",
+  "items": [
+    {
+      "name": "VGV Lançamentos (R$ milhões) | Quarter",
+      "path": "charts/chart001.json",
+      "metadata_path": "charts/chart001/metadata.json",
+      "chart_id": "9edd5a17-6fad-5786-b0e5-0a3f212f2078",
+      "page_number": 5,
+      "section_title": "VGV Lançamentos (R$ milhões) | Quarter",
+      "chart_type": "bar_chart",
+      "schema": [
+        "Quarter",
+        "VGV Lançamentos (R$ milhões)",
+        "VGV Lançamentos (%)",
+        "Preço Médio por unidade (R$ mil)",
+        "Preço Médio por unidade (%)"
+      ]
+    },
+    {
+      "name": "VGV Lançamentos (R$ milhões) | Category",
+      "path": "charts/chart002.json",
+      "metadata_path": "charts/chart002/metadata.json",
+      "chart_id": "8ae53d1f-87d2-5844-b1fd-bbc722752ded",
+      "page_number": 6,
+      "section_title": "VGV Lançamentos (R$ milhões) | Category",
+      "chart_type": "bar_chart",
+      "schema": [
+        "Category",
+        "VGV Lançamentos (R$ milhões)",
+        "Preço Médio por unidade (R$ mil)"
+      ]
+    },
+    {
+      "name": "VSO Líquido (%) | Quarter",
+      "path": "charts/chart003.json",
+      "metadata_path": "charts/chart003/metadata.json",
+      "chart_id": "032b4dbc-4dae-59f8-a392-b12c6519b1cb",
+      "page_number": 8,
+      "section_title": "VSO Líquido (%) | Quarter",
+      "chart_type": "bar_chart",
+      "schema": [
+        "Quarter",
+        "VSO Líquido (%)",
+        "Vendas Líquidas (R$ milhões)"
+      ]
+    },
+    {
+      "name": "Value | Period",
+      "path": "charts/chart004.json",
+      "metadata_path": "charts/chart004/metadata.json",
+      "chart_id": "74281cbe-ce3c-5e52-94b4-af394347f7f8",
+      "page_number": 9,
+      "section_title": "Value | Period",
+      "chart_type": "bar_chart",
+      "schema": [
+        "Period",
+        "Value",
+        "Percentage"
+      ]
+    },
+    {
+      "name": "Value | Category",
+      "path": "charts/chart005.json",
+      "metadata_path": "charts/chart005/metadata.json",
+      "chart_id": "843b5176-37ff-5c5e-b7f5-cfb6fcd056b3",
+      "page_number": 9,
+      "section_title": "Value | Category",
+      "chart_type": "bar_chart",
+      "schema": [
+        "Category",
+        "Value",
+        "Percentage"
+      ]
+    },
+    {
+      "name": "A Cury encerrou o 1T26 com estoque de R$ 2.805,2 milhões.",
+      "path": "charts/chart006.json",
+      "metadata_path": "charts/chart006/metadata.json",
+      "chart_id": "b7ac5251-b6ae-5e62-9900-7ec7ac9d07d1",
+      "page_number": 12,
+      "section_title": "A Cury encerrou o 1T26 com estoque de R$ 2.805,2 milhões.",
+      "chart_type": "pie_chart",
+      "schema": [
+        "Category",
+        "Percentage"
+      ]
+    },
+    {
+      "name": "/ / G E R A Ç Ã O D E C A I X A",
+      "path": "charts/chart007.json",
+      "metadata_path": "charts/chart007/metadata.json",
+      "chart_id": "eadc1401-2a98-558a-a955-c31d90a41144",
+      "page_number": 14,
+      "section_title": "/ / G E R A Ç Ã O D E C A I X A",
+      "chart_type": "bar_chart",
+      "schema": [
+        "Category",
+        "Value (R$ milhões)"
+      ]
+    },
+    {
+      "name": "Y | X",
+      "path": "charts/chart008.json",
+      "metadata_path": "charts/chart008/metadata.json",
+      "chart_id": "54c5ebf6-1737-5133-a0de-d396e7399605",
+      "page_number": 15,
+      "section_title": "Y | X",
+      "chart_type": "bar_chart",
+      "schema": [
+        "X",
+        "Y",
+        "Value"
+      ]
+    }
+  ]
+}

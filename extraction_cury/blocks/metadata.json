@@ -1,0 +1,34 @@
+{
+  "kind": "blocks",
+  "source_file": "pdf_construturas/cury.pdf",
+  "path": "blocks/blocks.jsonl",
+  "record_count": 51,
+  "schema": [
+    "text",
+    "role_hint",
+    "section_title",
+    "item_type"
+  ],
+  "fields": [
+    "block_id",
+    "document_id",
+    "page_number",
+    "section_id",
+    "section_title",
+    "parent_block_id",
+    "order_index",
+    "level_hint",
+    "item_type",
+    "label_raw",
+    "label_canonical",
+    "role_hint",
+    "text",
+    "self_ref",
+    "parent_ref",
+    "child_refs",
+    "caption_refs",
+    "reference_refs",
+    "bbox",
+    "provenance_kind"
+  ]
+}

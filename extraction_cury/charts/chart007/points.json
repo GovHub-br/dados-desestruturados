@@ -1,0 +1,97 @@
+[
+  {
+    "point_id": "0c724130-d756-5286-8721-ded997161baf",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "chart_id": "eadc1401-2a98-558a-a955-c31d90a41144",
+    "page_number": 14,
+    "section_id": "9300b5a2-0b60-5a2a-85bf-ebad01a197cb",
+    "section_title": "/ / G E R A Ç Ã O D E C A I X A",
+    "chart_type": "bar_chart",
+    "chart_title_raw": "/ / G E R A Ç Ã O D E C A I X A",
+    "chart_title_canonical": "g_e_r_a_c_a_o_d_e_c_a_i_x_a",
+    "series_name": "1T25",
+    "category_name": "Value (R$ milhões)",
+    "value_numeric": 25.7,
+    "value_text": "25.7",
+    "raw_row": {
+      "Category": "1T25",
+      "Value (R$ milhões)": "25.7"
+    }
+  },
+  {
+    "point_id": "2c9888b3-723f-57a8-9f63-ba579f26cace",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "chart_id": "eadc1401-2a98-558a-a955-c31d90a41144",
+    "page_number": 14,
+    "section_id": "9300b5a2-0b60-5a2a-85bf-ebad01a197cb",
+    "section_title": "/ / G E R A Ç Ã O D E C A I X A",
+    "chart_type": "bar_chart",
+    "chart_title_raw": "/ / G E R A Ç Ã O D E C A I X A",
+    "chart_title_canonical": "g_e_r_a_c_a_o_d_e_c_a_i_x_a",
+    "series_name": "4T25",
+    "category_name": "Value (R$ milhões)",
+    "value_numeric": 321.1,
+    "value_text": "321.1",
+    "raw_row": {
+      "Category": "4T25",
+      "Value (R$ milhões)": "321.1"
+    }
+  },
+  {
+    "point_id": "719e51a0-ef3b-5195-b888-8740ff7b448d",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "chart_id": "eadc1401-2a98-558a-a955-c31d90a41144",
+    "page_number": 14,
+    "section_id": "9300b5a2-0b60-5a2a-85bf-ebad01a197cb",
+    "section_title": "/ / G E R A Ç Ã O D E C A I X A",
+    "chart_type": "bar_chart",
+    "chart_title_raw": "/ / G E R A Ç Ã O D E C A I X A",
+    "chart_title_canonical": "g_e_r_a_c_a_o_d_e_c_a_i_x_a",
+    "series_name": "1T26",
+    "category_name": "Value (R$ milhões)",
+    "value_numeric": 93.4,
+    "value_text": "93.4",
+    "raw_row": {
+      "Category": "1T26",
+      "Value (R$ milhões)": "93.4"
+    }
+  },
+  {
+    "point_id": "f66f2b73-4aef-5440-ac3f-cb0a1c45fa12",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "chart_id": "eadc1401-2a98-558a-a955-c31d90a41144",
+    "page_number": 14,
+    "section_id": "9300b5a2-0b60-5a2a-85bf-ebad01a197cb",
+    "section_title": "/ / G E R A Ç Ã O D E C A I X A",
+    "chart_type": "bar_chart",
+    "chart_title_raw": "/ / G E R A Ç Ã O D E C A I X A",
+    "chart_title_canonical": "g_e_r_a_c_a_o_d_e_c_a_i_x_a",
+    "series_name": "1T25 UDM*",
+    "category_name": "Value (R$ milhões)",
+    "value_numeric": 475.3,
+    "value_text": "475.3",
+    "raw_row": {
+      "Category": "1T25 UDM*",
+      "Value (R$ milhões)": "475.3"
+    }
+  },
+  {
+    "point_id": "d0a1c8f8-1351-520f-9bc3-16f3fa90ec7c",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "chart_id": "eadc1401-2a98-558a-a955-c31d90a41144",
+    "page_number": 14,
+    "section_id": "9300b5a2-0b60-5a2a-85bf-ebad01a197cb",
+    "section_title": "/ / G E R A Ç Ã O D E C A I X A",
+    "chart_type": "bar_chart",
+    "chart_title_raw": "/ / G E R A Ç Ã O D E C A I X A",
+    "chart_title_canonical": "g_e_r_a_c_a_o_d_e_c_a_i_x_a",
+    "series_name": "1T26 UDM*",
+    "category_name": "Value (R$ milhões)",
+    "value_numeric": 750.9,
+    "value_text": "750.9",
+    "raw_row": {
+      "Category": "1T26 UDM*",
+      "Value (R$ milhões)": "750.9"
+    }
+  }
+]

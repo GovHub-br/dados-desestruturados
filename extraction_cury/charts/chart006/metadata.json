@@ -1,0 +1,16 @@
+{
+  "kind": "chart",
+  "chart_id": "b7ac5251-b6ae-5e62-9900-7ec7ac9d07d1",
+  "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+  "page_number": 12,
+  "section_id": "61a26201-0320-5e72-9da8-db4a342db33e",
+  "section_title": "A Cury encerrou o 1T26 com estoque de R$ 2.805,2 milhões.",
+  "chart_type": "pie_chart",
+  "chart_title_raw": "A Cury encerrou o 1T26 com estoque de R$ 2.805,2 milhões.",
+  "chart_title_canonical": "a_cury_encerrou_o_1t26_com_estoque_de_r_28052_milhoes",
+  "schema": [
+    "Category",
+    "Percentage"
+  ],
+  "point_count": 4
+}

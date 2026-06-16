@@ -1,0 +1,61 @@
+[
+  {
+    "record_id": "d146ede7-9e25-5dd7-a326-58ede4c5ea17",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "page_number": 9,
+    "source_kind": "chart",
+    "source_id": "74281cbe-ce3c-5e52-94b4-af394347f7f8",
+    "section_id": "4159eab3-0222-5751-885d-0625cc7fb726",
+    "section_title": "Value | Period",
+    "domain": "value_period",
+    "grain": "chart_row",
+    "attributes": {
+      "period": "1T25",
+      "value__raw": "310.2",
+      "percentage__raw": "4.9%"
+    },
+    "measures": {
+      "value": 310.2,
+      "percentage": 4.9
+    }
+  },
+  {
+    "record_id": "d09a80ef-4bef-512b-81a3-03504d29e8a9",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "page_number": 9,
+    "source_kind": "chart",
+    "source_id": "74281cbe-ce3c-5e52-94b4-af394347f7f8",
+    "section_id": "4159eab3-0222-5751-885d-0625cc7fb726",
+    "section_title": "Value | Period",
+    "domain": "value_period",
+    "grain": "chart_row",
+    "attributes": {
+      "period": "4T25",
+      "value__raw": "314.8",
+      "percentage__raw": "3.4%"
+    },
+    "measures": {
+      "value": 314.8,
+      "percentage": 3.4
+    }
+  },
+  {
+    "record_id": "813879ad-6ec5-53af-9ec3-9315a2afc05a",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "page_number": 9,
+    "source_kind": "chart",
+    "source_id": "74281cbe-ce3c-5e52-94b4-af394347f7f8",
+    "section_id": "4159eab3-0222-5751-885d-0625cc7fb726",
+    "section_title": "Value | Period",
+    "domain": "value_period",
+    "grain": "chart_row",
+    "attributes": {
+      "period": "1T26",
+      "value__raw": "325.4",
+      "percentage": ""
+    },
+    "measures": {
+      "value": 325.4
+    }
+  }
+]

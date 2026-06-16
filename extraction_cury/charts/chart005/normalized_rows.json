@@ -1,0 +1,40 @@
+[
+  {
+    "record_id": "3e86ec63-8b2d-5af2-8ba6-1dff277252f9",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "page_number": 9,
+    "source_kind": "chart",
+    "source_id": "843b5176-37ff-5c5e-b7f5-cfb6fcd056b3",
+    "section_id": "e4791e59-b42e-555f-8202-043c3d47f612",
+    "section_title": "Value | Category",
+    "domain": "value_category",
+    "grain": "chart_row",
+    "attributes": {
+      "category": "1T25 UDM*",
+      "value__raw": "308.5",
+      "percentage": ""
+    },
+    "measures": {
+      "value": 308.5
+    }
+  },
+  {
+    "record_id": "0b324d9b-23ca-590b-9659-612aa39da4a1",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "page_number": 9,
+    "source_kind": "chart",
+    "source_id": "843b5176-37ff-5c5e-b7f5-cfb6fcd056b3",
+    "section_id": "e4791e59-b42e-555f-8202-043c3d47f612",
+    "section_title": "Value | Category",
+    "domain": "value_category",
+    "grain": "chart_row",
+    "attributes": {
+      "category": "1T26 UDM*",
+      "value__raw": "312.6",
+      "percentage": ""
+    },
+    "measures": {
+      "value": 312.6
+    }
+  }
+]

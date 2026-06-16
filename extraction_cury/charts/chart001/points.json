@@ -1,0 +1,68 @@
+[
+  {
+    "point_id": "24282f91-5513-53b0-b0e3-5007aac26466",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "chart_id": "9edd5a17-6fad-5786-b0e5-0a3f212f2078",
+    "page_number": 5,
+    "section_id": "14318449-52ae-556c-8983-fc18d1be0988",
+    "section_title": "VGV Lançamentos (R$ milhões) | Quarter",
+    "chart_type": "bar_chart",
+    "chart_title_raw": "VGV Lançamentos (R$ milhões) | Quarter",
+    "chart_title_canonical": "vgv_lancamentos_r_milhoes_quarter",
+    "series_name": "1T25",
+    "category_name": "VGV Lançamentos (R$ milhões)",
+    "value_numeric": 2783.5,
+    "value_text": "2783.5",
+    "raw_row": {
+      "Quarter": "1T25",
+      "VGV Lançamentos (R$ milhões)": "2783.5",
+      "VGV Lançamentos (%)": "-4.9",
+      "Preço Médio por unidade (R$ mil)": "304.8",
+      "Preço Médio por unidade (%)": "8.5"
+    }
+  },
+  {
+    "point_id": "9621eabb-5ad5-520d-a1ed-ce36d7a8a91c",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "chart_id": "9edd5a17-6fad-5786-b0e5-0a3f212f2078",
+    "page_number": 5,
+    "section_id": "14318449-52ae-556c-8983-fc18d1be0988",
+    "section_title": "VGV Lançamentos (R$ milhões) | Quarter",
+    "chart_type": "bar_chart",
+    "chart_title_raw": "VGV Lançamentos (R$ milhões) | Quarter",
+    "chart_title_canonical": "vgv_lancamentos_r_milhoes_quarter",
+    "series_name": "4T25",
+    "category_name": "VGV Lançamentos (R$ milhões)",
+    "value_numeric": 1289.5,
+    "value_text": "1289.5",
+    "raw_row": {
+      "Quarter": "4T25",
+      "VGV Lançamentos (R$ milhões)": "1289.5",
+      "VGV Lançamentos (%)": "105.3",
+      "Preço Médio por unidade (R$ mil)": "336.4",
+      "Preço Médio por unidade (%)": "-1.7"
+    }
+  },
+  {
+    "point_id": "48112d5f-12b2-506a-8388-9275b1f998e8",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "chart_id": "9edd5a17-6fad-5786-b0e5-0a3f212f2078",
+    "page_number": 5,
+    "section_id": "14318449-52ae-556c-8983-fc18d1be0988",
+    "section_title": "VGV Lançamentos (R$ milhões) | Quarter",
+    "chart_type": "bar_chart",
+    "chart_title_raw": "VGV Lançamentos (R$ milhões) | Quarter",
+    "chart_title_canonical": "vgv_lancamentos_r_milhoes_quarter",
+    "series_name": "1T26",
+    "category_name": "VGV Lançamentos (R$ milhões)",
+    "value_numeric": 2646.8,
+    "value_text": "2646.8",
+    "raw_row": {
+      "Quarter": "1T26",
+      "VGV Lançamentos (R$ milhões)": "2646.8",
+      "VGV Lançamentos (%)": "",
+      "Preço Médio por unidade (R$ mil)": "330.8",
+      "Preço Médio por unidade (%)": ""
+    }
+  }
+]

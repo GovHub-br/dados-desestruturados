@@ -1,0 +1,72 @@
+[
+  {
+    "record_id": "6c28e60c-d63b-5a03-af85-4d3f13670a70",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "page_number": 5,
+    "source_kind": "chart",
+    "source_id": "9edd5a17-6fad-5786-b0e5-0a3f212f2078",
+    "section_id": "14318449-52ae-556c-8983-fc18d1be0988",
+    "section_title": "VGV Lançamentos (R$ milhões) | Quarter",
+    "domain": "vgv_lancamentos_r_milhoes_quarter",
+    "grain": "chart_row",
+    "attributes": {
+      "quarter": "1T25",
+      "vgv_lancamentos_r_milhoes__raw": "2783.5",
+      "vgv_lancamentos__raw": "-4.9",
+      "preco_medio_por_unidade_r_mil__raw": "304.8",
+      "preco_medio_por_unidade__raw": "8.5"
+    },
+    "measures": {
+      "vgv_lancamentos_r_milhoes": 2783.5,
+      "vgv_lancamentos": -4.9,
+      "preco_medio_por_unidade_r_mil": 304.8,
+      "preco_medio_por_unidade": 8.5
+    }
+  },
+  {
+    "record_id": "06e13bf6-fe55-5933-b749-1b512b488167",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "page_number": 5,
+    "source_kind": "chart",
+    "source_id": "9edd5a17-6fad-5786-b0e5-0a3f212f2078",
+    "section_id": "14318449-52ae-556c-8983-fc18d1be0988",
+    "section_title": "VGV Lançamentos (R$ milhões) | Quarter",
+    "domain": "vgv_lancamentos_r_milhoes_quarter",
+    "grain": "chart_row",
+    "attributes": {
+      "quarter": "4T25",
+      "vgv_lancamentos_r_milhoes__raw": "1289.5",
+      "vgv_lancamentos__raw": "105.3",
+      "preco_medio_por_unidade_r_mil__raw": "336.4",
+      "preco_medio_por_unidade__raw": "-1.7"
+    },
+    "measures": {
+      "vgv_lancamentos_r_milhoes": 1289.5,
+      "vgv_lancamentos": 105.3,
+      "preco_medio_por_unidade_r_mil": 336.4,
+      "preco_medio_por_unidade": -1.7
+    }
+  },
+  {
+    "record_id": "2a064a04-ef39-577a-8a15-1c7a975e18d8",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "page_number": 5,
+    "source_kind": "chart",
+    "source_id": "9edd5a17-6fad-5786-b0e5-0a3f212f2078",
+    "section_id": "14318449-52ae-556c-8983-fc18d1be0988",
+    "section_title": "VGV Lançamentos (R$ milhões) | Quarter",
+    "domain": "vgv_lancamentos_r_milhoes_quarter",
+    "grain": "chart_row",
+    "attributes": {
+      "quarter": "1T26",
+      "vgv_lancamentos_r_milhoes__raw": "2646.8",
+      "vgv_lancamentos": "",
+      "preco_medio_por_unidade_r_mil__raw": "330.8",
+      "preco_medio_por_unidade": ""
+    },
+    "measures": {
+      "vgv_lancamentos_r_milhoes": 2646.8,
+      "preco_medio_por_unidade_r_mil": 330.8
+    }
+  }
+]

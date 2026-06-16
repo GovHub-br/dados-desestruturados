@@ -1,0 +1,96 @@
+{
+  "fonte": "Balanços trimestrais das empresas",
+  "periodo_referencia": "1T26",
+  "periodos_disponiveis": {
+    "periodo_referencia": "1T26",
+    "periodo_comparativo_anterior": "4T25",
+    "mesmo_periodo_ano_anterior": "1T25",
+    "periodo_12m_atual": "1T26 UDM*",
+    "periodo_12m_anterior": "1T25 UDM*"
+  },
+  "balancos_das_empresas": {
+    "titulo": "Balanços das empresas",
+    "lancamentos": {
+      "titulo": "Lançamentos",
+      "tipo": "valor_bruto",
+      "tipo_operacao": "lancamento",
+      "indicador": "numero_de_unidades",
+      "unidade": "unidades",
+      "dados": [
+        {
+          "empresa": "Cury",
+          "valores": [
+            {
+              "periodo": "1T26",
+              "escopo_periodo": "trimestre",
+              "valor": 8001.0
+            },
+            {
+              "periodo": "4T25",
+              "escopo_periodo": "trimestre",
+              "valor": 3833.0
+            },
+            {
+              "periodo": "1T25",
+              "escopo_periodo": "trimestre",
+              "valor": 9132.0
+            },
+            {
+              "periodo": "1T26 UDM*",
+              "escopo_periodo": "ultimos_12_meses",
+              "valor": 25235.0
+            },
+            {
+              "periodo": "1T25 UDM*",
+              "escopo_periodo": "ultimos_12_meses",
+              "valor": 23938.0
+            }
+          ]
+        }
+      ]
+    },
+    "vendas": {
+      "titulo": "Vendas",
+      "tipo": "valor_bruto",
+      "tipo_operacao": "venda",
+      "indicador": "numero_de_unidades",
+      "unidade": "unidades",
+      "dados": [
+        {
+          "empresa": "Cury",
+          "valores": [
+            {
+              "periodo": "1T26",
+              "escopo_periodo": "trimestre",
+              "valor": 7786.0
+            },
+            {
+              "periodo": "4T25",
+              "escopo_periodo": "trimestre",
+              "valor": 5445.0
+            },
+            {
+              "periodo": "1T25",
+              "escopo_periodo": "trimestre",
+              "valor": 7173.0
+            },
+            {
+              "periodo": "1T26 UDM*",
+              "escopo_periodo": "ultimos_12_meses",
+              "valor": 28145.0
+            },
+            {
+              "periodo": "1T25 UDM*",
+              "escopo_periodo": "ultimos_12_meses",
+              "valor": 23572.0
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "metricas_calculadas": {
+    "observacao": "Variações percentuais devem ser calculadas em etapa posterior usando os valores brutos por período.",
+    "status": "nao_calculadas_na_extracao"
+  }
+}

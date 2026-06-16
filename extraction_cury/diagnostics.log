@@ -1,0 +1,245 @@
+[diag +    0.00s pid=69952] python=3.12.10 executable=/opt/homebrew/Caskroom/miniforge/base/bin/python
+[diag +    0.01s pid=69952] platform=macOS-26.5-arm64-arm-64bit machine=arm64
+[diag +    0.01s pid=69952] env DOCLING_DEVICE='mps'
+[diag +    0.01s pid=69952] env PYTORCH_ENABLE_MPS_FALLBACK='1'
+[diag +    0.01s pid=69952] env PYTORCH_MPS_HIGH_WATERMARK_RATIO=None
+[diag +    0.01s pid=69952] env PYTORCH_MPS_LOW_WATERMARK_RATIO=None
+[diag +    0.01s pid=69952] env OMP_NUM_THREADS=None
+[diag +    0.76s pid=69952] torch=2.10.0 mps_built=True mps_available=True
+[diag +    0.76s pid=69952] pipeline start: input=pdf_construtoras/cury.pdf chart_extraction=True ocr=True llm_text=True
+[diag +    0.76s pid=69952] standard converter: building
+[diag +    6.65s pid=69952] standard converter: starting Docling convert
+[diag +    6.65s pid=69952] monitor start: standard_converter.convert
+[diag +    6.65s pid=69952] monitor stop: standard_converter.convert
+[diag +    0.00s pid=70567] python=3.12.10 executable=/opt/homebrew/Caskroom/miniforge/base/bin/python
+[diag +    0.01s pid=70567] platform=macOS-26.5-arm64-arm-64bit machine=arm64
+[diag +    0.01s pid=70567] env DOCLING_DEVICE='mps'
+[diag +    0.01s pid=70567] env PYTORCH_ENABLE_MPS_FALLBACK='1'
+[diag +    0.01s pid=70567] env PYTORCH_MPS_HIGH_WATERMARK_RATIO=None
+[diag +    0.01s pid=70567] env PYTORCH_MPS_LOW_WATERMARK_RATIO=None
+[diag +    0.01s pid=70567] env OMP_NUM_THREADS=None
+[diag +    0.47s pid=70567] torch=2.10.0 mps_built=True mps_available=True
+[diag +    0.47s pid=70567] pipeline start: input=pdf_construturas/cury.pdf chart_extraction=True ocr=True llm_text=True
+[diag +    0.47s pid=70567] standard converter: building
+[diag +    3.23s pid=70567] standard converter: starting Docling convert
+[diag +    3.23s pid=70567] monitor start: standard_converter.convert
+[diag +    4.65s pid=70567] monitor stop: standard_converter.convert
+[diag +    0.00s pid=71040] python=3.12.10 executable=/opt/homebrew/Caskroom/miniforge/base/bin/python
+[diag +    0.01s pid=71040] platform=macOS-26.5-arm64-arm-64bit machine=arm64
+[diag +    0.01s pid=71040] env DOCLING_DEVICE='mps'
+[diag +    0.01s pid=71040] env PYTORCH_ENABLE_MPS_FALLBACK='1'
+[diag +    0.01s pid=71040] env PYTORCH_MPS_HIGH_WATERMARK_RATIO=None
+[diag +    0.01s pid=71040] env PYTORCH_MPS_LOW_WATERMARK_RATIO=None
+[diag +    0.01s pid=71040] env OMP_NUM_THREADS=None
+[diag +    0.47s pid=71040] torch=2.10.0 mps_built=True mps_available=True
+[diag +    0.47s pid=71040] pipeline start: input=pdf_construturas/cury.pdf chart_extraction=True ocr=True llm_text=True
+[diag +    0.47s pid=71040] standard converter: building
+[diag +    3.21s pid=71040] standard converter: starting Docling convert
+[diag +    3.21s pid=71040] monitor start: standard_converter.convert
+[diag +    4.39s pid=71040] monitor stop: standard_converter.convert
+[diag +    0.00s pid=71664] python=3.14.5 executable=/Users/lablivre/Desktop/ocr-cidades/dados-desestruturados/.venv-chart/bin/python
+[diag +    0.01s pid=71664] platform=macOS-26.5-arm64-arm-64bit-Mach-O machine=arm64
+[diag +    0.01s pid=71664] env DOCLING_DEVICE='mps'
+[diag +    0.01s pid=71664] env PYTORCH_ENABLE_MPS_FALLBACK='1'
+[diag +    0.01s pid=71664] env PYTORCH_MPS_HIGH_WATERMARK_RATIO=None
+[diag +    0.01s pid=71664] env PYTORCH_MPS_LOW_WATERMARK_RATIO=None
+[diag +    0.01s pid=71664] env OMP_NUM_THREADS=None
+[diag +    0.44s pid=71664] torch=2.12.0 mps_built=True mps_available=True
+[diag +    0.44s pid=71664] pipeline start: input=pdf_construturas/cury.pdf chart_extraction=True ocr=True llm_text=True
+[diag +    0.44s pid=71664] standard converter: building
+[diag +    2.62s pid=71664] standard converter: starting Docling convert
+[diag +    2.62s pid=71664] monitor start: standard_converter.convert
+[diag +    7.65s pid=71664] monitor standard_converter.convert: rss_kb vsz_kb cpu mem etime = 1863248 472903184 148.2 0.7 00:08
+[diag +   12.68s pid=71664] monitor standard_converter.convert: rss_kb vsz_kb cpu mem etime = 2676384 473590112 148.4 1.0 00:13
+[diag +   17.71s pid=71664] monitor standard_converter.convert: rss_kb vsz_kb cpu mem etime = 1637264 467069344 338.2 0.6 00:18
+[diag +   22.75s pid=71664] monitor standard_converter.convert: rss_kb vsz_kb cpu mem etime = 3120576 465912464 146.6 1.2 00:23
+[diag +   27.80s pid=71664] monitor standard_converter.convert: rss_kb vsz_kb cpu mem etime = 2908896 461918064 98.4 1.1 00:28
+[diag +   32.87s pid=71664] monitor standard_converter.convert: rss_kb vsz_kb cpu mem etime = 3049184 462019552 64.2 1.1 00:33
+[diag +   37.90s pid=71664] monitor standard_converter.convert: rss_kb vsz_kb cpu mem etime = 2906160 464081664 48.7 1.1 00:38
+[diag +   42.94s pid=71664] monitor standard_converter.convert: rss_kb vsz_kb cpu mem etime = 3006368 464439088 47.2 1.1 00:43
+[diag +   47.97s pid=71664] monitor standard_converter.convert: rss_kb vsz_kb cpu mem etime = 2799792 461439200 54.1 1.0 00:48
+[diag +   53.01s pid=71664] monitor standard_converter.convert: rss_kb vsz_kb cpu mem etime = 2836352 461439200 51.5 1.1 00:53
+[diag +   58.04s pid=71664] monitor standard_converter.convert: rss_kb vsz_kb cpu mem etime = 2958752 467522416 53.0 1.1 00:58
+[diag +   63.08s pid=71664] monitor standard_converter.convert: rss_kb vsz_kb cpu mem etime = 3093840 476198496 47.7 1.2 01:03
+[diag +   68.12s pid=71664] monitor standard_converter.convert: rss_kb vsz_kb cpu mem etime = 3223536 484854096 41.6 1.2 01:08
+[diag +   73.17s pid=71664] monitor standard_converter.convert: rss_kb vsz_kb cpu mem etime = 3344128 484854656 43.8 1.2 01:13
+[diag +   77.98s pid=71664] monitor stop: standard_converter.convert
+[diag +   77.98s pid=71664] standard converter: conversion finished
+[diag +   77.98s pid=71664] extract sections
+[diag +   77.99s pid=71664] extract sections: count=42
+[diag +   77.99s pid=71664] extract blocks
+[diag +   77.99s pid=71664] extract blocks: count=51
+[diag +   77.99s pid=71664] extract cases
+[diag +   77.99s pid=71664] extract cases: count=42
+[diag +   77.99s pid=71664] extract metrics
+[diag +   77.99s pid=71664] extract metrics: count=35
+[diag +   77.99s pid=71664] extract tables
+[diag +   78.00s pid=71664] extract tables: tables=6 rows=35
+[diag +   78.00s pid=71664] extract charts
+[diag +   78.02s pid=71664] extract charts: points=192 rows=192
+[diag +   78.02s pid=71664] extract text candidates
+[diag +   78.03s pid=71664] extract text candidates: count=18
+[diag +   78.03s pid=71664] extract text structures with LLM
+[diag +   78.03s pid=71664] monitor start: extract_text_structures
+[diag +   83.11s pid=71664] monitor extract_text_structures: rss_kb vsz_kb cpu mem etime = 3460544 484854608 13.8 1.3 01:23
+[diag +   88.17s pid=71664] monitor extract_text_structures: rss_kb vsz_kb cpu mem etime = 3460544 484854608 0.0 1.3 01:29
+[diag +   93.25s pid=71664] monitor extract_text_structures: rss_kb vsz_kb cpu mem etime = 3460576 484854608 13.5 1.3 01:34
+[diag +   98.28s pid=71664] monitor extract_text_structures: rss_kb vsz_kb cpu mem etime = 3460576 484854608 0.0 1.3 01:39
+[diag +  103.36s pid=71664] monitor extract_text_structures: rss_kb vsz_kb cpu mem etime = 3460576 484854608 0.0 1.3 01:44
+[diag +  108.43s pid=71664] monitor extract_text_structures: rss_kb vsz_kb cpu mem etime = 3460592 484854608 3.0 1.3 01:49
+[diag +  113.48s pid=71664] monitor extract_text_structures: rss_kb vsz_kb cpu mem etime = 3460592 484854608 0.0 1.3 01:54
+[diag +  118.52s pid=71664] monitor extract_text_structures: rss_kb vsz_kb cpu mem etime = 3460592 484854608 0.0 1.3 01:59
+[diag +  123.57s pid=71664] monitor extract_text_structures: rss_kb vsz_kb cpu mem etime = 3460608 484854608 0.0 1.3 02:04
+[diag +  128.62s pid=71664] monitor extract_text_structures: rss_kb vsz_kb cpu mem etime = 3460608 484854608 0.0 1.3 02:09
+[diag +  133.67s pid=71664] monitor extract_text_structures: rss_kb vsz_kb cpu mem etime = 3460608 484854608 7.4 1.3 02:14
+[diag +  138.73s pid=71664] monitor extract_text_structures: rss_kb vsz_kb cpu mem etime = 3460608 484854608 0.0 1.3 02:19
+[diag +  143.79s pid=71664] monitor extract_text_structures: rss_kb vsz_kb cpu mem etime = 3460608 484854608 9.3 1.3 02:24
+[diag +  148.84s pid=71664] monitor extract_text_structures: rss_kb vsz_kb cpu mem etime = 3460624 484854608 0.0 1.3 02:29
+[diag +  153.88s pid=71664] monitor extract_text_structures: rss_kb vsz_kb cpu mem etime = 3460624 484854608 0.0 1.3 02:34
+[diag +  158.93s pid=71664] monitor extract_text_structures: rss_kb vsz_kb cpu mem etime = 3460624 484854608 0.0 1.3 02:39
+[diag +  163.98s pid=71664] monitor extract_text_structures: rss_kb vsz_kb cpu mem etime = 3460624 484854608 0.0 1.3 02:44
+[diag +  169.02s pid=71664] monitor extract_text_structures: rss_kb vsz_kb cpu mem etime = 3460624 484854608 0.0 1.3 02:49
+[diag +  174.08s pid=71664] monitor extract_text_structures: rss_kb vsz_kb cpu mem etime = 3460624 484854608 9.5 1.3 02:54
+[diag +  179.13s pid=71664] monitor extract_text_structures: rss_kb vsz_kb cpu mem etime = 3460624 484854608 0.0 1.3 02:59
+[diag +  184.18s pid=71664] monitor extract_text_structures: rss_kb vsz_kb cpu mem etime = 3460624 484854608 0.0 1.3 03:05
+[diag +  189.22s pid=71664] monitor extract_text_structures: rss_kb vsz_kb cpu mem etime = 3460624 484854608 6.0 1.3 03:10
+[diag +  194.27s pid=71664] monitor extract_text_structures: rss_kb vsz_kb cpu mem etime = 3460624 484854608 0.0 1.3 03:15
+[diag +  199.32s pid=71664] monitor extract_text_structures: rss_kb vsz_kb cpu mem etime = 3460624 484854608 8.6 1.3 03:20
+[diag +  204.37s pid=71664] monitor extract_text_structures: rss_kb vsz_kb cpu mem etime = 3460624 484854608 0.0 1.3 03:25
+[diag +  209.42s pid=71664] monitor extract_text_structures: rss_kb vsz_kb cpu mem etime = 3460624 484854608 0.0 1.3 03:30
+[diag +  214.46s pid=71664] monitor extract_text_structures: rss_kb vsz_kb cpu mem etime = 3460624 484854608 7.2 1.3 03:35
+[diag +  219.51s pid=71664] monitor extract_text_structures: rss_kb vsz_kb cpu mem etime = 3460624 484854608 0.0 1.3 03:40
+[diag +  224.55s pid=71664] monitor extract_text_structures: rss_kb vsz_kb cpu mem etime = 3460624 484854608 0.0 1.3 03:45
+[diag +  229.60s pid=71664] monitor extract_text_structures: rss_kb vsz_kb cpu mem etime = 3460624 484854608 6.0 1.3 03:50
+[diag +  234.66s pid=71664] monitor extract_text_structures: rss_kb vsz_kb cpu mem etime = 3460624 484854608 0.0 1.3 03:55
+[diag +  239.71s pid=71664] monitor extract_text_structures: rss_kb vsz_kb cpu mem etime = 3460624 484854608 7.9 1.3 04:00
+[diag +  244.76s pid=71664] monitor extract_text_structures: rss_kb vsz_kb cpu mem etime = 3460624 484854608 0.0 1.3 04:05
+[diag +  249.81s pid=71664] monitor extract_text_structures: rss_kb vsz_kb cpu mem etime = 3460624 484854608 0.0 1.3 04:10
+[diag +  254.87s pid=71664] monitor extract_text_structures: rss_kb vsz_kb cpu mem etime = 3460624 484854608 6.0 1.3 04:15
+[diag +  259.93s pid=71664] monitor extract_text_structures: rss_kb vsz_kb cpu mem etime = 3460624 484854608 0.0 1.3 04:20
+[diag +  264.99s pid=71664] monitor extract_text_structures: rss_kb vsz_kb cpu mem etime = 3460624 484854608 7.8 1.3 04:25
+[diag +  270.04s pid=71664] monitor extract_text_structures: rss_kb vsz_kb cpu mem etime = 3460624 484854608 0.0 1.3 04:30
+[diag +  275.09s pid=71664] monitor extract_text_structures: rss_kb vsz_kb cpu mem etime = 3460624 484854608 0.0 1.3 04:35
+[diag +  280.15s pid=71664] monitor extract_text_structures: rss_kb vsz_kb cpu mem etime = 3460624 484854608 0.0 1.3 04:40
+[diag +  285.19s pid=71664] monitor extract_text_structures: rss_kb vsz_kb cpu mem etime = 3460624 484854608 0.0 1.3 04:46
+[diag +  290.24s pid=71664] monitor extract_text_structures: rss_kb vsz_kb cpu mem etime = 3460624 484854608 7.5 1.3 04:51
+[diag +  295.29s pid=71664] monitor extract_text_structures: rss_kb vsz_kb cpu mem etime = 3460624 484854608 0.0 1.3 04:56
+[diag +  300.33s pid=71664] monitor extract_text_structures: rss_kb vsz_kb cpu mem etime = 3460624 484854608 0.0 1.3 05:01
+[diag +  305.38s pid=71664] monitor extract_text_structures: rss_kb vsz_kb cpu mem etime = 3460624 484854608 3.0 1.3 05:06
+[diag +  310.42s pid=71664] monitor extract_text_structures: rss_kb vsz_kb cpu mem etime = 3460624 484854608 0.0 1.3 05:11
+[diag +  315.48s pid=71664] monitor extract_text_structures: rss_kb vsz_kb cpu mem etime = 3460624 484854608 0.0 1.3 05:16
+[diag +  320.53s pid=71664] monitor extract_text_structures: rss_kb vsz_kb cpu mem etime = 3460624 484854608 0.0 1.3 05:21
+[diag +  325.58s pid=71664] monitor extract_text_structures: rss_kb vsz_kb cpu mem etime = 3460624 484854608 0.0 1.3 05:26
+[diag +  330.64s pid=71664] monitor extract_text_structures: rss_kb vsz_kb cpu mem etime = 3460624 484854608 6.0 1.3 05:31
+[diag +  335.68s pid=71664] monitor extract_text_structures: rss_kb vsz_kb cpu mem etime = 3460624 484854608 0.0 1.3 05:36
+[diag +  340.73s pid=71664] monitor extract_text_structures: rss_kb vsz_kb cpu mem etime = 3460624 484854608 0.0 1.3 05:41
+[diag +  345.77s pid=71664] monitor extract_text_structures: rss_kb vsz_kb cpu mem etime = 3460624 484854608 7.3 1.3 05:46
+[diag +  350.82s pid=71664] monitor extract_text_structures: rss_kb vsz_kb cpu mem etime = 3460624 484854608 0.0 1.3 05:51
+[diag +  355.87s pid=71664] monitor extract_text_structures: rss_kb vsz_kb cpu mem etime = 3460624 484854608 0.0 1.3 05:56
+[diag +  360.91s pid=71664] monitor extract_text_structures: rss_kb vsz_kb cpu mem etime = 3460624 484854608 0.0 1.3 06:01
+[diag +  365.96s pid=71664] monitor extract_text_structures: rss_kb vsz_kb cpu mem etime = 3460624 484854608 3.0 1.3 06:06
+[diag +  371.00s pid=71664] monitor extract_text_structures: rss_kb vsz_kb cpu mem etime = 3460608 484854608 0.0 1.3 06:11
+[diag +  376.05s pid=71664] monitor extract_text_structures: rss_kb vsz_kb cpu mem etime = 3460576 484854608 0.0 1.3 06:16
+[diag +  381.11s pid=71664] monitor extract_text_structures: rss_kb vsz_kb cpu mem etime = 3460576 484854608 3.0 1.3 06:21
+[diag +  386.16s pid=71664] monitor extract_text_structures: rss_kb vsz_kb cpu mem etime = 3460576 484854608 0.0 1.3 06:26
+[diag +  391.21s pid=71664] monitor extract_text_structures: rss_kb vsz_kb cpu mem etime = 3460576 484854608 3.1 1.3 06:32
+[diag +  396.26s pid=71664] monitor extract_text_structures: rss_kb vsz_kb cpu mem etime = 3460576 484854608 0.0 1.3 06:37
+[diag +  401.31s pid=71664] monitor extract_text_structures: rss_kb vsz_kb cpu mem etime = 3460576 484854608 9.1 1.3 06:42
+[diag +  406.37s pid=71664] monitor extract_text_structures: rss_kb vsz_kb cpu mem etime = 3460576 484854608 0.0 1.3 06:47
+[diag +  411.42s pid=71664] monitor extract_text_structures: rss_kb vsz_kb cpu mem etime = 3460576 484854608 0.0 1.3 06:52
+[diag +  416.47s pid=71664] monitor extract_text_structures: rss_kb vsz_kb cpu mem etime = 3460576 484854608 6.0 1.3 06:57
+[diag +  421.52s pid=71664] monitor extract_text_structures: rss_kb vsz_kb cpu mem etime = 3460576 484854608 0.0 1.3 07:02
+[diag +  426.57s pid=71664] monitor extract_text_structures: rss_kb vsz_kb cpu mem etime = 3460576 484854608 8.7 1.3 07:07
+[diag +  431.62s pid=71664] monitor extract_text_structures: rss_kb vsz_kb cpu mem etime = 3460576 484854608 0.0 1.3 07:12
+[diag +  436.67s pid=71664] monitor extract_text_structures: rss_kb vsz_kb cpu mem etime = 3460576 484854608 0.0 1.3 07:17
+[diag +  441.71s pid=71664] monitor extract_text_structures: rss_kb vsz_kb cpu mem etime = 3460576 484854608 7.6 1.3 07:22
+[diag +  446.76s pid=71664] monitor extract_text_structures: rss_kb vsz_kb cpu mem etime = 3460576 484854608 0.0 1.3 07:27
+[diag +  451.81s pid=71664] monitor extract_text_structures: rss_kb vsz_kb cpu mem etime = 3460576 484854608 0.0 1.3 07:32
+[diag +  456.86s pid=71664] monitor extract_text_structures: rss_kb vsz_kb cpu mem etime = 3460576 484854608 3.0 1.3 07:37
+[diag +  461.91s pid=71664] monitor extract_text_structures: rss_kb vsz_kb cpu mem etime = 3460576 484854608 0.0 1.3 07:42
+[diag +  466.96s pid=71664] monitor extract_text_structures: rss_kb vsz_kb cpu mem etime = 3460576 484854608 8.3 1.3 07:47
+[diag +  472.03s pid=71664] monitor extract_text_structures: rss_kb vsz_kb cpu mem etime = 3460576 484854608 0.0 1.3 07:52
+[diag +  477.08s pid=71664] monitor extract_text_structures: rss_kb vsz_kb cpu mem etime = 3460576 484854608 9.1 1.3 07:57
+[diag +  482.13s pid=71664] monitor extract_text_structures: rss_kb vsz_kb cpu mem etime = 3460576 484854608 0.0 1.3 08:02
+[diag +  487.19s pid=71664] monitor extract_text_structures: rss_kb vsz_kb cpu mem etime = 3460576 484854608 0.0 1.3 08:08
+[diag +  492.24s pid=71664] monitor extract_text_structures: rss_kb vsz_kb cpu mem etime = 3460576 484854608 3.0 1.3 08:13
+[diag +  497.29s pid=71664] monitor extract_text_structures: rss_kb vsz_kb cpu mem etime = 3460576 484854608 0.0 1.3 08:18
+[diag +  502.34s pid=71664] monitor extract_text_structures: rss_kb vsz_kb cpu mem etime = 3460576 484854608 9.3 1.3 08:23
+[diag +  507.39s pid=71664] monitor extract_text_structures: rss_kb vsz_kb cpu mem etime = 3460576 484854608 0.0 1.3 08:28
+[diag +  512.44s pid=71664] monitor extract_text_structures: rss_kb vsz_kb cpu mem etime = 3460576 484854608 0.0 1.3 08:33
+[diag +  517.48s pid=71664] monitor extract_text_structures: rss_kb vsz_kb cpu mem etime = 3460576 484854608 6.0 1.3 08:38
+[diag +  522.53s pid=71664] monitor extract_text_structures: rss_kb vsz_kb cpu mem etime = 3460576 484854608 0.0 1.3 08:43
+[diag +  527.59s pid=71664] monitor extract_text_structures: rss_kb vsz_kb cpu mem etime = 3460576 484854608 11.1 1.3 08:48
+[diag +  532.64s pid=71664] monitor extract_text_structures: rss_kb vsz_kb cpu mem etime = 3460576 484854608 0.0 1.3 08:53
+[diag +  537.68s pid=71664] monitor extract_text_structures: rss_kb vsz_kb cpu mem etime = 3460576 484854608 0.0 1.3 08:58
+[diag +  542.73s pid=71664] monitor extract_text_structures: rss_kb vsz_kb cpu mem etime = 3460576 484854608 8.4 1.3 09:03
+[diag +  547.78s pid=71664] monitor extract_text_structures: rss_kb vsz_kb cpu mem etime = 3460576 484854608 0.0 1.3 09:08
+[diag +  552.82s pid=71664] monitor extract_text_structures: rss_kb vsz_kb cpu mem etime = 3454576 484854608 0.0 1.3 09:13
+[diag +  557.87s pid=71664] monitor extract_text_structures: rss_kb vsz_kb cpu mem etime = 3454576 484854608 0.0 1.3 09:18
+[diag +  562.94s pid=71664] monitor extract_text_structures: rss_kb vsz_kb cpu mem etime = 3454576 484854608 3.0 1.3 09:23
+[diag +  568.01s pid=71664] monitor extract_text_structures: rss_kb vsz_kb cpu mem etime = 3454576 484854608 0.0 1.3 09:28
+[diag +  573.09s pid=71664] monitor extract_text_structures: rss_kb vsz_kb cpu mem etime = 3454576 484854608 3.0 1.3 09:33
+[diag +  578.14s pid=71664] monitor extract_text_structures: rss_kb vsz_kb cpu mem etime = 3454576 484854608 0.0 1.3 09:38
+[diag +  583.18s pid=71664] monitor extract_text_structures: rss_kb vsz_kb cpu mem etime = 3454576 484854608 7.0 1.3 09:44
+[diag +  588.24s pid=71664] monitor extract_text_structures: rss_kb vsz_kb cpu mem etime = 3454576 484854608 0.0 1.3 09:49
+[diag +  593.29s pid=71664] monitor extract_text_structures: rss_kb vsz_kb cpu mem etime = 3454576 484854608 0.0 1.3 09:54
+[diag +  598.36s pid=71664] monitor extract_text_structures: rss_kb vsz_kb cpu mem etime = 3454576 484854608 13.8 1.3 09:59
+[diag +  603.43s pid=71664] monitor extract_text_structures: rss_kb vsz_kb cpu mem etime = 3454576 484854608 0.0 1.3 10:04
+[diag +  608.49s pid=71664] monitor extract_text_structures: rss_kb vsz_kb cpu mem etime = 3454576 484854608 12.9 1.3 10:09
+[diag +  613.56s pid=71664] monitor extract_text_structures: rss_kb vsz_kb cpu mem etime = 3454576 484854608 0.0 1.3 10:14
+[diag +  618.63s pid=71664] monitor extract_text_structures: rss_kb vsz_kb cpu mem etime = 3454576 484854608 14.3 1.3 10:19
+[diag +  623.70s pid=71664] monitor extract_text_structures: rss_kb vsz_kb cpu mem etime = 3454576 484854608 0.0 1.3 10:24
+[diag +  628.78s pid=71664] monitor extract_text_structures: rss_kb vsz_kb cpu mem etime = 3454576 484854608 17.1 1.3 10:29
+[diag +  633.85s pid=71664] monitor extract_text_structures: rss_kb vsz_kb cpu mem etime = 3454576 484854608 0.0 1.3 10:34
+[diag +  638.92s pid=71664] monitor extract_text_structures: rss_kb vsz_kb cpu mem etime = 3454576 484854608 14.3 1.3 10:39
+[diag +  644.00s pid=71664] monitor extract_text_structures: rss_kb vsz_kb cpu mem etime = 3454576 484854608 0.0 1.3 10:44
+[diag +  649.06s pid=71664] monitor extract_text_structures: rss_kb vsz_kb cpu mem etime = 3454576 484854608 14.3 1.3 10:49
+[diag +  654.15s pid=71664] monitor extract_text_structures: rss_kb vsz_kb cpu mem etime = 3454576 484854608 0.0 1.3 10:54
+[diag +  659.22s pid=71664] monitor extract_text_structures: rss_kb vsz_kb cpu mem etime = 3454576 484854608 12.8 1.3 11:00
+[diag +  664.29s pid=71664] monitor extract_text_structures: rss_kb vsz_kb cpu mem etime = 3454576 484854608 0.0 1.3 11:05
+[diag +  669.37s pid=71664] monitor extract_text_structures: rss_kb vsz_kb cpu mem etime = 3454576 484854608 14.1 1.3 11:10
+[diag +  674.44s pid=71664] monitor extract_text_structures: rss_kb vsz_kb cpu mem etime = 3454576 484854608 0.0 1.3 11:15
+[diag +  679.53s pid=71664] monitor extract_text_structures: rss_kb vsz_kb cpu mem etime = 3454576 484854608 10.8 1.3 11:20
+[diag +  684.60s pid=71664] monitor extract_text_structures: rss_kb vsz_kb cpu mem etime = 3454576 484854608 0.0 1.3 11:25
+[diag +  689.67s pid=71664] monitor extract_text_structures: rss_kb vsz_kb cpu mem etime = 3454576 484854608 9.9 1.3 11:30
+[diag +  694.72s pid=71664] monitor extract_text_structures: rss_kb vsz_kb cpu mem etime = 3454576 484854608 0.0 1.3 11:35
+[diag +  699.75s pid=71664] monitor extract_text_structures: rss_kb vsz_kb cpu mem etime = 3454576 484854608 0.0 1.3 11:40
+[diag +  704.81s pid=71664] monitor extract_text_structures: rss_kb vsz_kb cpu mem etime = 3454576 484854608 6.0 1.3 11:45
+[diag +  709.89s pid=71664] monitor extract_text_structures: rss_kb vsz_kb cpu mem etime = 3454576 484854608 0.0 1.3 11:50
+[diag +  714.97s pid=71664] monitor extract_text_structures: rss_kb vsz_kb cpu mem etime = 3454576 484854608 10.0 1.3 11:55
+[diag +  720.04s pid=71664] monitor extract_text_structures: rss_kb vsz_kb cpu mem etime = 3454576 484854608 0.0 1.3 12:00
+[diag +  725.11s pid=71664] monitor extract_text_structures: rss_kb vsz_kb cpu mem etime = 3454576 484854608 6.0 1.3 12:05
+[diag +  730.19s pid=71664] monitor extract_text_structures: rss_kb vsz_kb cpu mem etime = 3454576 484854608 0.0 1.3 12:11
+[diag +  735.25s pid=71664] monitor extract_text_structures: rss_kb vsz_kb cpu mem etime = 3454576 484854608 6.6 1.3 12:16
+[diag +  740.30s pid=71664] monitor extract_text_structures: rss_kb vsz_kb cpu mem etime = 3454576 484854608 0.0 1.3 12:21
+[diag +  745.38s pid=71664] monitor extract_text_structures: rss_kb vsz_kb cpu mem etime = 3454576 484854608 12.6 1.3 12:26
+[diag +  750.46s pid=71664] monitor extract_text_structures: rss_kb vsz_kb cpu mem etime = 3454576 484854608 0.0 1.3 12:31
+[diag +  755.53s pid=71664] monitor extract_text_structures: rss_kb vsz_kb cpu mem etime = 3454576 484854608 9.0 1.3 12:36
+[diag +  760.61s pid=71664] monitor extract_text_structures: rss_kb vsz_kb cpu mem etime = 3454576 484854608 0.0 1.3 12:41
+[diag +  765.67s pid=71664] monitor extract_text_structures: rss_kb vsz_kb cpu mem etime = 3454576 484854608 12.4 1.3 12:46
+[diag +  770.74s pid=71664] monitor extract_text_structures: rss_kb vsz_kb cpu mem etime = 3454576 484854608 0.0 1.3 12:51
+[diag +  775.81s pid=71664] monitor extract_text_structures: rss_kb vsz_kb cpu mem etime = 3454576 484854608 14.8 1.3 12:56
+[diag +  780.87s pid=71664] monitor extract_text_structures: rss_kb vsz_kb cpu mem etime = 3454576 484854608 0.0 1.3 13:01
+[diag +  785.94s pid=71664] monitor extract_text_structures: rss_kb vsz_kb cpu mem etime = 3454576 484854608 13.8 1.3 13:06
+[diag +  791.01s pid=71664] monitor extract_text_structures: rss_kb vsz_kb cpu mem etime = 3454576 484854608 0.0 1.3 13:11
+[diag +  796.09s pid=71664] monitor extract_text_structures: rss_kb vsz_kb cpu mem etime = 3454576 484854608 15.5 1.3 13:16
+[diag +  801.16s pid=71664] monitor extract_text_structures: rss_kb vsz_kb cpu mem etime = 3454576 484854608 0.0 1.3 13:21
+[diag +  806.23s pid=71664] monitor extract_text_structures: rss_kb vsz_kb cpu mem etime = 3454576 484854608 15.3 1.3 13:27
+[diag +  811.31s pid=71664] monitor extract_text_structures: rss_kb vsz_kb cpu mem etime = 3454576 484854608 0.0 1.3 13:32
+[diag +  816.39s pid=71664] monitor extract_text_structures: rss_kb vsz_kb cpu mem etime = 3454576 484854608 15.6 1.3 13:37
+[diag +  821.45s pid=71664] monitor extract_text_structures: rss_kb vsz_kb cpu mem etime = 3454576 484854608 0.0 1.3 13:42
+[diag +  826.52s pid=71664] monitor extract_text_structures: rss_kb vsz_kb cpu mem etime = 3454576 484854608 13.8 1.3 13:47
+[diag +  831.60s pid=71664] monitor extract_text_structures: rss_kb vsz_kb cpu mem etime = 3454576 484854608 0.0 1.3 13:52
+[diag +  836.67s pid=71664] monitor extract_text_structures: rss_kb vsz_kb cpu mem etime = 3454576 484854608 15.3 1.3 13:57
+[diag +  841.74s pid=71664] monitor extract_text_structures: rss_kb vsz_kb cpu mem etime = 3454576 484854608 0.0 1.3 14:02
+[diag +  846.81s pid=71664] monitor extract_text_structures: rss_kb vsz_kb cpu mem etime = 3454576 484854608 14.2 1.3 14:07
+[diag +  851.88s pid=71664] monitor extract_text_structures: rss_kb vsz_kb cpu mem etime = 3454576 484854608 0.0 1.3 14:12
+[diag +  856.96s pid=71664] monitor extract_text_structures: rss_kb vsz_kb cpu mem etime = 3454576 484854608 16.5 1.3 14:17
+[diag +  862.02s pid=71664] monitor extract_text_structures: rss_kb vsz_kb cpu mem etime = 3454576 484854608 0.0 1.3 14:22
+[diag +  867.09s pid=71664] monitor extract_text_structures: rss_kb vsz_kb cpu mem etime = 3454576 484854608 0.0 1.3 14:27
+[diag +  872.16s pid=71664] monitor extract_text_structures: rss_kb vsz_kb cpu mem etime = 3454576 484854608 3.0 1.3 14:32
+[diag +  877.23s pid=71664] monitor extract_text_structures: rss_kb vsz_kb cpu mem etime = 3454576 484854608 0.0 1.3 14:38
+[diag +  881.76s pid=71664] monitor stop: extract_text_structures
+[diag +  881.76s pid=71664] extract text structures: count=15
+[diag +  881.76s pid=71664] persist bundle: starting
+[diag +  881.79s pid=71664] persist bundle: finished

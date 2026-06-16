@@ -1,0 +1,397 @@
+[
+  {
+    "record_id": "095942ba-225c-5d3a-9fdb-53c28ca3767e",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "page_number": 7,
+    "source_kind": "table",
+    "source_id": "199923b8-996b-5fcd-a7ca-da62fea90867",
+    "section_id": "e0af7ca8-647e-531c-9ec8-84d5cf4255f0",
+    "section_title": "/ / V E N D A S L Í Q U I D A S",
+    "domain": "v_e_n_d_a_s_l_i_q_u_i_d_a_s",
+    "grain": "table_row",
+    "attributes": {
+      "vendas_vso": "Vendas Brutas (R$ milhões VGV)",
+      "1t26__raw": "2.533,9",
+      "4t25__raw": "1.714,1",
+      "t_t__raw": "47,8%",
+      "1t25__raw": "2.225,4",
+      "a_a__raw": "13,9%",
+      "1t26_udm__raw": "8.797,8",
+      "1t25_udm__raw": "7.272,9",
+      "a_a_2__raw": "21,0%"
+    },
+    "measures": {
+      "1t26": 2533.9,
+      "4t25": 1714.1,
+      "t_t": 47.8,
+      "1t25": 2225.4,
+      "a_a": 13.9,
+      "1t26_udm": 8797.8,
+      "1t25_udm": 7272.9,
+      "a_a_2": 21.0
+    }
+  },
+  {
+    "record_id": "0bde4432-51f3-5901-92f9-2b552b069721",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "page_number": 7,
+    "source_kind": "table",
+    "source_id": "199923b8-996b-5fcd-a7ca-da62fea90867",
+    "section_id": "e0af7ca8-647e-531c-9ec8-84d5cf4255f0",
+    "section_title": "/ / V E N D A S L Í Q U I D A S",
+    "domain": "v_e_n_d_a_s_l_i_q_u_i_d_a_s",
+    "grain": "table_row",
+    "attributes": {
+      "vendas_vso": "Número de Unidades",
+      "1t26__raw": "7.786",
+      "4t25__raw": "5.445",
+      "t_t__raw": "43,0%",
+      "1t25__raw": "7.173,0",
+      "a_a__raw": "8,5%",
+      "1t26_udm__raw": "28.145",
+      "1t25_udm__raw": "23.572",
+      "a_a_2__raw": "19,4%"
+    },
+    "measures": {
+      "1t26": 7786.0,
+      "4t25": 5445.0,
+      "t_t": 43.0,
+      "1t25": 7173.0,
+      "a_a": 8.5,
+      "1t26_udm": 28145.0,
+      "1t25_udm": 23572.0,
+      "a_a_2": 19.4
+    }
+  },
+  {
+    "record_id": "55a8b4c0-aa4d-5f7a-b376-b93ac6655d6e",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "page_number": 7,
+    "source_kind": "table",
+    "source_id": "199923b8-996b-5fcd-a7ca-da62fea90867",
+    "section_id": "e0af7ca8-647e-531c-9ec8-84d5cf4255f0",
+    "section_title": "/ / V E N D A S L Í Q U I D A S",
+    "domain": "v_e_n_d_a_s_l_i_q_u_i_d_a_s",
+    "grain": "table_row",
+    "attributes": {
+      "vendas_vso": "Preço Médio/Unid. (R$ mil)",
+      "1t26__raw": "325,4",
+      "4t25__raw": "314,8",
+      "t_t__raw": "3,4%",
+      "1t25__raw": "310,2",
+      "a_a__raw": "4,9%",
+      "1t26_udm__raw": "312,6",
+      "1t25_udm__raw": "308,5",
+      "a_a_2__raw": "1,3%"
+    },
+    "measures": {
+      "1t26": 325.4,
+      "4t25": 314.8,
+      "t_t": 3.4,
+      "1t25": 310.2,
+      "a_a": 4.9,
+      "1t26_udm": 312.6,
+      "1t25_udm": 308.5,
+      "a_a_2": 1.3
+    }
+  },
+  {
+    "record_id": "9a1e65ee-4b43-5f48-a16d-a389c33688b7",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "page_number": 7,
+    "source_kind": "table",
+    "source_id": "199923b8-996b-5fcd-a7ca-da62fea90867",
+    "section_id": "e0af7ca8-647e-531c-9ec8-84d5cf4255f0",
+    "section_title": "/ / V E N D A S L Í Q U I D A S",
+    "domain": "v_e_n_d_a_s_l_i_q_u_i_d_a_s",
+    "grain": "table_row",
+    "attributes": {
+      "vendas_vso": "VSO Bruta (%)",
+      "1t26__raw": "47,5%",
+      "4t25__raw": "41,6%",
+      "t_t": "5,9 p.p.",
+      "1t25__raw": "46,8%",
+      "a_a": "0,7 p.p.",
+      "1t26_udm__raw": "75,8%",
+      "1t25_udm__raw": "74,2%",
+      "a_a_2": "1,6 p.p."
+    },
+    "measures": {
+      "1t26": 47.5,
+      "4t25": 41.6,
+      "1t25": 46.8,
+      "1t26_udm": 75.8,
+      "1t25_udm": 74.2
+    }
+  },
+  {
+    "record_id": "0ab619c3-41d4-5a44-99a1-82ec0ddc916b",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "page_number": 7,
+    "source_kind": "table",
+    "source_id": "199923b8-996b-5fcd-a7ca-da62fea90867",
+    "section_id": "e0af7ca8-647e-531c-9ec8-84d5cf4255f0",
+    "section_title": "/ / V E N D A S L Í Q U I D A S",
+    "domain": "v_e_n_d_a_s_l_i_q_u_i_d_a_s",
+    "grain": "table_row",
+    "attributes": {
+      "vendas_vso": "Distratos (R$ milhões)",
+      "1t26__raw": "229,3",
+      "4t25__raw": "157,7",
+      "t_t__raw": "45,4%",
+      "1t25__raw": "119,8",
+      "a_a__raw": "91,4%",
+      "1t26_udm__raw": "848,5",
+      "1t25_udm__raw": "557,2",
+      "a_a_2__raw": "52,3%"
+    },
+    "measures": {
+      "1t26": 229.3,
+      "4t25": 157.7,
+      "t_t": 45.4,
+      "1t25": 119.8,
+      "a_a": 91.4,
+      "1t26_udm": 848.5,
+      "1t25_udm": 557.2,
+      "a_a_2": 52.3
+    }
+  },
+  {
+    "record_id": "2b43df08-7563-59dd-bc71-b054998aa048",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "page_number": 7,
+    "source_kind": "table",
+    "source_id": "199923b8-996b-5fcd-a7ca-da62fea90867",
+    "section_id": "e0af7ca8-647e-531c-9ec8-84d5cf4255f0",
+    "section_title": "/ / V E N D A S L Í Q U I D A S",
+    "domain": "v_e_n_d_a_s_l_i_q_u_i_d_a_s",
+    "grain": "table_row",
+    "attributes": {
+      "vendas_vso": "Vendas Líquidas (R$ milhões VGV)",
+      "1t26__raw": "2.304,6",
+      "4t25__raw": "1.556,3",
+      "t_t__raw": "48,1%",
+      "1t25__raw": "2.105,6",
+      "a_a__raw": "9,5%",
+      "1t26_udm__raw": "7.949,4",
+      "1t25_udm__raw": "6.715,7",
+      "a_a_2__raw": "18,4%"
+    },
+    "measures": {
+      "1t26": 2304.6,
+      "4t25": 1556.3,
+      "t_t": 48.1,
+      "1t25": 2105.6,
+      "a_a": 9.5,
+      "1t26_udm": 7949.4,
+      "1t25_udm": 6715.7,
+      "a_a_2": 18.4
+    }
+  },
+  {
+    "record_id": "a4ca173a-354c-5e8c-9969-36363b352bec",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "page_number": 7,
+    "source_kind": "table",
+    "source_id": "199923b8-996b-5fcd-a7ca-da62fea90867",
+    "section_id": "e0af7ca8-647e-531c-9ec8-84d5cf4255f0",
+    "section_title": "/ / V E N D A S L Í Q U I D A S",
+    "domain": "v_e_n_d_a_s_l_i_q_u_i_d_a_s",
+    "grain": "table_row",
+    "attributes": {
+      "vendas_vso": "%Lançamentos",
+      "1t26__raw": "57,7%",
+      "4t25__raw": "37,3%",
+      "t_t": "20,4 p.p.",
+      "1t25__raw": "72,8%",
+      "a_a": "-15,1 p.p.",
+      "1t26_udm__raw": "52,6%",
+      "1t25_udm__raw": "62,0%",
+      "a_a_2": "-9,4 p.p."
+    },
+    "measures": {
+      "1t26": 57.7,
+      "4t25": 37.3,
+      "1t25": 72.8,
+      "1t26_udm": 52.6,
+      "1t25_udm": 62.0
+    }
+  },
+  {
+    "record_id": "aa6bd8bc-b738-52ba-8253-7f1fe75cd438",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "page_number": 7,
+    "source_kind": "table",
+    "source_id": "199923b8-996b-5fcd-a7ca-da62fea90867",
+    "section_id": "e0af7ca8-647e-531c-9ec8-84d5cf4255f0",
+    "section_title": "/ / V E N D A S L Í Q U I D A S",
+    "domain": "v_e_n_d_a_s_l_i_q_u_i_d_a_s",
+    "grain": "table_row",
+    "attributes": {
+      "vendas_vso": "%Estoque",
+      "1t26__raw": "42,3%",
+      "4t25__raw": "62,7%",
+      "t_t": "-20,4 p.p.",
+      "1t25__raw": "27,2%",
+      "a_a": "15,1 p.p.",
+      "1t26_udm__raw": "47,4%",
+      "1t25_udm__raw": "38,0%",
+      "a_a_2": "9,4 p.p."
+    },
+    "measures": {
+      "1t26": 42.3,
+      "4t25": 62.7,
+      "1t25": 27.2,
+      "1t26_udm": 47.4,
+      "1t25_udm": 38.0
+    }
+  },
+  {
+    "record_id": "64338a82-740f-5cf5-ae7c-6a22a2cd9146",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "page_number": 7,
+    "source_kind": "table",
+    "source_id": "199923b8-996b-5fcd-a7ca-da62fea90867",
+    "section_id": "e0af7ca8-647e-531c-9ec8-84d5cf4255f0",
+    "section_title": "/ / V E N D A S L Í Q U I D A S",
+    "domain": "v_e_n_d_a_s_l_i_q_u_i_d_a_s",
+    "grain": "table_row",
+    "attributes": {
+      "vendas_vso": "Distratos / Vendas Brutas",
+      "1t26__raw": "9,0%",
+      "4t25__raw": "9,2%",
+      "t_t": "-0,2 p.p.",
+      "1t25__raw": "5,4%",
+      "a_a": "3,6 p.p.",
+      "1t26_udm__raw": "9,6%",
+      "1t25_udm__raw": "7,7%",
+      "a_a_2": "1,9 p.p."
+    },
+    "measures": {
+      "1t26": 9.0,
+      "4t25": 9.2,
+      "1t25": 5.4,
+      "1t26_udm": 9.6,
+      "1t25_udm": 7.7
+    }
+  },
+  {
+    "record_id": "8a6314d5-e106-5ccc-8974-bef6b9fbb067",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "page_number": 7,
+    "source_kind": "table",
+    "source_id": "199923b8-996b-5fcd-a7ca-da62fea90867",
+    "section_id": "e0af7ca8-647e-531c-9ec8-84d5cf4255f0",
+    "section_title": "/ / V E N D A S L Í Q U I D A S",
+    "domain": "v_e_n_d_a_s_l_i_q_u_i_d_a_s",
+    "grain": "table_row",
+    "attributes": {
+      "vendas_vso": "VSO Líquida (%)",
+      "1t26__raw": "45,1%",
+      "4t25__raw": "39,3%",
+      "t_t": "5,8 p.p.",
+      "1t25__raw": "45,4%",
+      "a_a": "-0,3 p.p.",
+      "1t26_udm__raw": "73,9%",
+      "1t25_udm__raw": "72,6%",
+      "a_a_2": "1,3 p.p."
+    },
+    "measures": {
+      "1t26": 45.1,
+      "4t25": 39.3,
+      "1t25": 45.4,
+      "1t26_udm": 73.9,
+      "1t25_udm": 72.6
+    }
+  },
+  {
+    "record_id": "c76a670e-b5e2-5378-b175-cfa04c5b642e",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "page_number": 7,
+    "source_kind": "table",
+    "source_id": "199923b8-996b-5fcd-a7ca-da62fea90867",
+    "section_id": "e0af7ca8-647e-531c-9ec8-84d5cf4255f0",
+    "section_title": "/ / V E N D A S L Í Q U I D A S",
+    "domain": "v_e_n_d_a_s_l_i_q_u_i_d_a_s",
+    "grain": "table_row",
+    "attributes": {
+      "vendas_vso": "VSO LíquidaUDM (últimos doze meses - %)",
+      "1t26__raw": "73,9%",
+      "4t25__raw": "76,3%",
+      "t_t": "-2,4 p.p.",
+      "1t25__raw": "72,6%",
+      "a_a": "1,3 p.p.",
+      "1t26_udm__raw": "73,9%",
+      "1t25_udm__raw": "72,6%",
+      "a_a_2": "1,3 p.p."
+    },
+    "measures": {
+      "1t26": 73.9,
+      "4t25": 76.3,
+      "1t25": 72.6,
+      "1t26_udm": 73.9,
+      "1t25_udm": 72.6
+    }
+  },
+  {
+    "record_id": "bed49a95-d66b-5d54-bc2d-9e1230915bb4",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "page_number": 7,
+    "source_kind": "table",
+    "source_id": "199923b8-996b-5fcd-a7ca-da62fea90867",
+    "section_id": "e0af7ca8-647e-531c-9ec8-84d5cf4255f0",
+    "section_title": "/ / V E N D A S L Í Q U I D A S",
+    "domain": "v_e_n_d_a_s_l_i_q_u_i_d_a_s",
+    "grain": "table_row",
+    "attributes": {
+      "vendas_vso": "Parte Cury Vendas Líquidas (R$ milhões VGV)",
+      "1t26__raw": "1.893,6",
+      "4t25__raw": "1.434,7",
+      "t_t__raw": "32,0%",
+      "1t25__raw": "1.919,2",
+      "a_a__raw": "-1,3%",
+      "1t26_udm__raw": "6.965,8",
+      "1t25_udm__raw": "6.091,4",
+      "a_a_2__raw": "14,4%"
+    },
+    "measures": {
+      "1t26": 1893.6,
+      "4t25": 1434.7,
+      "t_t": 32.0,
+      "1t25": 1919.2,
+      "a_a": -1.3,
+      "1t26_udm": 6965.8,
+      "1t25_udm": 6091.4,
+      "a_a_2": 14.4
+    }
+  },
+  {
+    "record_id": "d92fb627-f64b-56dd-863d-c41330d17616",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "page_number": 7,
+    "source_kind": "table",
+    "source_id": "199923b8-996b-5fcd-a7ca-da62fea90867",
+    "section_id": "e0af7ca8-647e-531c-9ec8-84d5cf4255f0",
+    "section_title": "/ / V E N D A S L Í Q U I D A S",
+    "domain": "v_e_n_d_a_s_l_i_q_u_i_d_a_s",
+    "grain": "table_row",
+    "attributes": {
+      "vendas_vso": "Parte Cury Vendas Líquidas (%)",
+      "1t26__raw": "82,2%",
+      "4t25__raw": "92,2%",
+      "t_t": "-10,0 p.p.",
+      "1t25__raw": "91,1%",
+      "a_a": "-8,9 p.p.",
+      "1t26_udm__raw": "87,6%",
+      "1t25_udm__raw": "90,7%",
+      "a_a_2": "-3,1 p.p."
+    },
+    "measures": {
+      "1t26": 82.2,
+      "4t25": 92.2,
+      "1t25": 91.1,
+      "1t26_udm": 87.6,
+      "1t25_udm": 90.7
+    }
+  }
+]

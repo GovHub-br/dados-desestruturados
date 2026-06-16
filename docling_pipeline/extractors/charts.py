@@ -11,8 +11,8 @@ import pandas as pd
 
 from ..helpers import chart_grid_to_dataframe, item_bbox, item_page_number, normalize_space, parse_flexible_number, stable_id
 from ..helpers import slugify
-from ..models import ChartPointRecord, NormalizedRowRecord, SectionRecord
-from .common import dataframe_to_normalized_rows, nearest_section
+from ..models import ChartPointRecord, NormalizedRowRecord, SectionRecord, TableRecord
+from .common import dataframe_to_normalized_rows, resolve_section_for_item
 
 NON_MEASURE_COLUMN_HINTS = {
     "percentage",
@@ -70,6 +70,420 @@ def _looks_like_period_label(value: str) -> bool:
             flags=re.IGNORECASE,
         )
     )
+
+
+def _period_key(value: str) -> tuple[int, int] | None:
+    match = re.fullmatch(r"(\d+)T\s*(\d{4})", normalize_space(value), flags=re.IGNORECASE)
+    if match:
+        return int(match.group(2)), int(match.group(1))
+    match = re.fullmatch(r"(\d{4})", normalize_space(value))
+    if match:
+        return int(match.group(1)), 0
+    return None
+
+
+def _periods_from_text(value: str) -> list[str]:
+    periods = re.findall(r"\b\d+T\s*\d{4}\b|\b\d{4}\b", normalize_space(value), flags=re.IGNORECASE)
+    return [normalize_space(period).upper() for period in periods]
+
+
+def _table_to_dataframe(table: TableRecord) -> pd.DataFrame:
+    rows = [["" for _ in table.columns_raw] for _ in range(table.row_count)]
+    for cell in table.cells:
+        if 0 <= cell.row_index < table.row_count and 0 <= cell.column_index < len(table.columns_raw):
+            rows[cell.row_index][cell.column_index] = cell.value_raw
+    return pd.DataFrame(rows, columns=table.columns_raw)
+
+
+def _column_values(df: pd.DataFrame, column: Any) -> list[str]:
+    selected = df[column]
+    if isinstance(selected, pd.DataFrame):
+        values: list[str] = []
+        for _, row in selected.iterrows():
+            for value in row.tolist():
+                normalized = normalize_space(str(value))
+                if normalized:
+                    values.append(normalized)
+                    break
+        return values
+    return [normalize_space(str(value)) for value in selected.tolist()]
+
+
+def _dimension_column(df: pd.DataFrame) -> str | None:
+    if df.empty:
+        return None
+    for column in df.columns:
+        non_empty = [value for value in _column_values(df, column) if value]
+        if not non_empty:
+            continue
+        numeric_hits = sum(parse_flexible_number(value, column_name=str(column)) is not None for value in non_empty)
+        if numeric_hits < len(non_empty) / 2:
+            return str(column)
+    return str(df.columns[0]) if len(df.columns) else None
+
+
+def _period_columns(df: pd.DataFrame) -> list[str]:
+    columns = [str(column) for column in df.columns if _looks_like_period_label(str(column))]
+    return sorted(columns, key=lambda column: _period_key(column) or (9999, 99))
+
+
+def _find_total_row(df: pd.DataFrame, dimension: str) -> pd.Series | None:
+    for _, row in df.iterrows():
+        value = normalize_space(str(row.get(dimension, ""))).lower()
+        if value in {"total", "total geral", "geral"}:
+            return row
+    return None
+
+
+def _non_total_rows(df: pd.DataFrame, dimension: str) -> list[pd.Series]:
+    rows: list[pd.Series] = []
+    for _, row in df.iterrows():
+        label = normalize_space(str(row.get(dimension, "")))
+        if not label or label.lower() in {"total", "total geral", "geral"}:
+            continue
+        rows.append(row)
+    return rows
+
+
+def _row_value(row: pd.Series, column: str) -> tuple[float | None, str]:
+    value_text = normalize_space(str(row.get(column, "")))
+    return parse_flexible_number(value_text, column_name=column), value_text
+
+
+def _chart_section_candidates(sections: list[SectionRecord]) -> list[SectionRecord]:
+    markers = (
+        "comparativo",
+        "comparison",
+        "evolucao",
+        "evolução",
+        "acumulado",
+        "accumulated",
+        "annual",
+        "anual",
+    )
+    candidates: list[SectionRecord] = []
+    for section in sections:
+        title = normalize_space(section.title_raw)
+        lowered = title.lower()
+        if "comparativo" not in lowered and re.search(r"\d[\d.,]*\s*(?:unidades?|%)\b", lowered):
+            continue
+        if any(marker in lowered for marker in markers) or len(_periods_from_text(section.title_raw)) >= 2:
+            candidates.append(section)
+    return candidates
+
+
+def _add_chart_point(
+    *,
+    chart_points: list[ChartPointRecord],
+    normalized_rows: list[NormalizedRowRecord],
+    document_id: str,
+    chart_id: str,
+    page_number: int | None,
+    section: SectionRecord | None,
+    chart_type: str,
+    chart_title: str,
+    series_name: str | None,
+    category_name: str | None,
+    value_numeric: float | None,
+    value_text: str,
+    raw_row: dict[str, Any],
+) -> None:
+    point_id = stable_id(chart_id, len(chart_points), raw_row)
+    chart_points.append(
+        ChartPointRecord(
+            point_id=point_id,
+            document_id=document_id,
+            chart_id=chart_id,
+            page_number=page_number,
+            section_id=section.section_id if section else None,
+            section_title=section.title_raw if section else None,
+            chart_type=chart_type,
+            chart_title_raw=chart_title,
+            chart_title_canonical=slugify(chart_title),
+            series_name=series_name,
+            category_name=category_name,
+            value_numeric=value_numeric,
+            value_text=value_text,
+            raw_row=raw_row,
+        )
+    )
+    normalized_rows.append(
+        NormalizedRowRecord(
+            record_id=stable_id(point_id, "normalized"),
+            document_id=document_id,
+            page_number=page_number,
+            source_kind="chart",
+            source_id=chart_id,
+            section_id=section.section_id if section else None,
+            section_title=section.title_raw if section else None,
+            domain=chart_title,
+            grain="chart_point",
+            attributes={
+                "series_name": series_name,
+                "category_name": category_name,
+                "chart_type": chart_type,
+            },
+            measures={
+                "value": value_numeric if value_numeric is not None else value_text,
+            },
+        )
+    )
+
+
+def _build_period_comparison_chart(
+    *,
+    document_id: str,
+    table: TableRecord,
+    df: pd.DataFrame,
+    dimension: str,
+    section: SectionRecord,
+    columns: list[str],
+) -> tuple[list[ChartPointRecord], list[NormalizedRowRecord]]:
+    chart_points: list[ChartPointRecord] = []
+    normalized_rows: list[NormalizedRowRecord] = []
+    chart_id = stable_id(document_id, "table_derived_chart", table.table_id, section.section_id, columns)
+    chart_title = section.title_raw
+
+    for row in _non_total_rows(df, dimension):
+        category = normalize_space(str(row.get(dimension, "")))
+        for column in columns:
+            numeric, text = _row_value(row, column)
+            if numeric is None and not text:
+                continue
+            _add_chart_point(
+                chart_points=chart_points,
+                normalized_rows=normalized_rows,
+                document_id=document_id,
+                chart_id=chart_id,
+                page_number=section.page_number or table.page_number,
+                section=section,
+                chart_type="table_derived_period_comparison",
+                chart_title=chart_title,
+                series_name=column,
+                category_name=category,
+                value_numeric=numeric,
+                value_text=text,
+                raw_row={dimension: category, "series": column, "value": text},
+            )
+    return chart_points, normalized_rows
+
+
+def _build_accumulated_chart(
+    *,
+    document_id: str,
+    table: TableRecord,
+    df: pd.DataFrame,
+    dimension: str,
+    section: SectionRecord,
+    period_columns: list[str],
+) -> tuple[list[ChartPointRecord], list[NormalizedRowRecord]]:
+    target_periods = _periods_from_text(section.title_raw)
+    selected_columns = period_columns
+    if target_periods:
+        target_key = _period_key(target_periods[-1])
+        keyed_columns = [(column, _period_key(column)) for column in period_columns]
+        if target_key:
+            eligible = [item for item in keyed_columns if item[1] and item[1] <= target_key]
+            selected_columns = [column for column, _key in eligible[-4:]]
+    else:
+        selected_columns = period_columns[-4:]
+
+    if not selected_columns:
+        return [], []
+
+    chart_points: list[ChartPointRecord] = []
+    normalized_rows: list[NormalizedRowRecord] = []
+    chart_id = stable_id(document_id, "table_derived_chart", table.table_id, section.section_id, "accumulated", selected_columns)
+    chart_title = section.title_raw
+
+    for row in _non_total_rows(df, dimension):
+        category = normalize_space(str(row.get(dimension, "")))
+        values: list[float] = []
+        raw_values: dict[str, str] = {}
+        for column in selected_columns:
+            numeric, text = _row_value(row, column)
+            raw_values[column] = text
+            if numeric is not None:
+                values.append(numeric)
+        if not values:
+            continue
+        total = sum(values)
+        _add_chart_point(
+            chart_points=chart_points,
+            normalized_rows=normalized_rows,
+            document_id=document_id,
+            chart_id=chart_id,
+            page_number=section.page_number or table.page_number,
+            section=section,
+            chart_type="table_derived_accumulated",
+            chart_title=chart_title,
+            series_name=" + ".join(selected_columns),
+            category_name=category,
+            value_numeric=total,
+            value_text=str(int(total)) if total.is_integer() else str(total),
+            raw_row={dimension: category, "series": " + ".join(selected_columns), "value": total},
+        )
+    return chart_points, normalized_rows
+
+
+def _build_total_timeseries_chart(
+    *,
+    document_id: str,
+    table: TableRecord,
+    df: pd.DataFrame,
+    dimension: str,
+    period_columns: list[str],
+) -> tuple[list[ChartPointRecord], list[NormalizedRowRecord]]:
+    total_row = _find_total_row(df, dimension)
+    if total_row is None or len(period_columns) < 2:
+        return [], []
+
+    chart_points: list[ChartPointRecord] = []
+    normalized_rows: list[NormalizedRowRecord] = []
+    chart_title = f"{table.title_raw or table.section_title or 'Tabela'} | série temporal total"
+    chart_id = stable_id(document_id, "table_derived_chart", table.table_id, "total_timeseries")
+
+    for column in period_columns:
+        numeric, text = _row_value(total_row, column)
+        if numeric is None and not text:
+            continue
+        _add_chart_point(
+            chart_points=chart_points,
+            normalized_rows=normalized_rows,
+            document_id=document_id,
+            chart_id=chart_id,
+            page_number=table.page_number,
+            section=None,
+            chart_type="table_derived_total_timeseries",
+            chart_title=chart_title,
+            series_name=table.title_raw or table.section_title,
+            category_name=column,
+            value_numeric=numeric,
+            value_text=text,
+            raw_row={"period": column, "value": text},
+        )
+    return chart_points, normalized_rows
+
+
+def _build_annual_total_chart(
+    *,
+    document_id: str,
+    table: TableRecord,
+    df: pd.DataFrame,
+    dimension: str,
+    section: SectionRecord,
+    period_columns: list[str],
+) -> tuple[list[ChartPointRecord], list[NormalizedRowRecord]]:
+    total_row = _find_total_row(df, dimension)
+    if total_row is None:
+        return [], []
+
+    by_year: dict[int, list[str]] = {}
+    for column in period_columns:
+        key = _period_key(column)
+        if key and key[0] > 0:
+            by_year.setdefault(key[0], []).append(column)
+    by_year = {year: columns for year, columns in by_year.items() if len(columns) > 1}
+    if len(by_year) < 2:
+        return [], []
+
+    chart_points: list[ChartPointRecord] = []
+    normalized_rows: list[NormalizedRowRecord] = []
+    chart_id = stable_id(document_id, "table_derived_chart", table.table_id, section.section_id, "annual_total")
+    chart_title = section.title_raw
+
+    for year, columns in sorted(by_year.items()):
+        values: list[float] = []
+        raw_values: dict[str, str] = {}
+        for column in columns:
+            numeric, text = _row_value(total_row, column)
+            raw_values[column] = text
+            if numeric is not None:
+                values.append(numeric)
+        if not values:
+            continue
+        total = sum(values)
+        _add_chart_point(
+            chart_points=chart_points,
+            normalized_rows=normalized_rows,
+            document_id=document_id,
+            chart_id=chart_id,
+            page_number=section.page_number or table.page_number,
+            section=section,
+            chart_type="table_derived_annual_total",
+            chart_title=chart_title,
+            series_name=" + ".join(columns),
+            category_name=str(year),
+            value_numeric=total,
+            value_text=str(int(total)) if total.is_integer() else str(total),
+            raw_row={"year": year, "series": " + ".join(columns), "value": total},
+        )
+    return chart_points, normalized_rows
+
+
+def extract_table_derived_charts(
+    document_id: str,
+    tables: list[TableRecord],
+    sections: list[SectionRecord],
+) -> tuple[list[ChartPointRecord], list[NormalizedRowRecord]]:
+    chart_points: list[ChartPointRecord] = []
+    normalized_rows: list[NormalizedRowRecord] = []
+    candidate_sections = _chart_section_candidates(sections)
+
+    for table in tables:
+        df = _table_to_dataframe(table)
+        dimension = _dimension_column(df)
+        periods = _period_columns(df)
+        if not dimension or len(periods) < 2:
+            continue
+
+        points, rows = _build_total_timeseries_chart(
+            document_id=document_id,
+            table=table,
+            df=df,
+            dimension=dimension,
+            period_columns=periods,
+        )
+        chart_points.extend(points)
+        normalized_rows.extend(rows)
+
+        for section in candidate_sections:
+            title = normalize_space(section.title_raw)
+            lowered = title.lower()
+            section_periods = [period for period in _periods_from_text(title) if period in periods]
+            if "acumulado" in lowered or "accumulated" in lowered or "12m" in lowered or "12 meses" in lowered:
+                points, rows = _build_accumulated_chart(
+                    document_id=document_id,
+                    table=table,
+                    df=df,
+                    dimension=dimension,
+                    section=section,
+                    period_columns=periods,
+                )
+            elif "anual" in lowered or "annual" in lowered:
+                points, rows = _build_annual_total_chart(
+                    document_id=document_id,
+                    table=table,
+                    df=df,
+                    dimension=dimension,
+                    section=section,
+                    period_columns=periods,
+                )
+            elif len(section_periods) >= 2:
+                points, rows = _build_period_comparison_chart(
+                    document_id=document_id,
+                    table=table,
+                    df=df,
+                    dimension=dimension,
+                    section=section,
+                    columns=section_periods[:2],
+                )
+            else:
+                continue
+            chart_points.extend(points)
+            normalized_rows.extend(rows)
+
+    return chart_points, normalized_rows
 
 
 def _humanize_chart_dimension(column_name: str) -> str | None:
@@ -188,7 +602,13 @@ def extract_charts(
 
         page_number = item_page_number(item)
         bbox = item_bbox(item)
-        section = nearest_section(sections, page_number=page_number, anchor_bbox=bbox)
+        section = resolve_section_for_item(
+            sections,
+            item=item,
+            page_number=page_number,
+            anchor_bbox=bbox,
+            order_index=idx,
+        )
         chart_id = stable_id(document_id, "chart", page_number, idx)
 
         classification = getattr(meta, "classification", None)

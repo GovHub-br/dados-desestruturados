@@ -1,0 +1,66 @@
+[
+  {
+    "record_id": "008991b8-dd31-582e-8862-a3af02af3bbc",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "page_number": 10,
+    "source_kind": "table",
+    "source_id": "e0e41f2f-3c8b-541e-b512-7a0a29619639",
+    "section_id": "841c26ba-4f1b-5033-8fd2-c07271bda0b3",
+    "section_title": "AUMENTO DE 31,3%",
+    "domain": "aumento_de_313",
+    "grain": "table_row",
+    "attributes": {
+      "repasses": "VGV Repassado (R$ milhões)",
+      "1t26__raw": "1.339,8",
+      "4t25__raw": "1.492,3",
+      "t_t__raw": "-10,2%",
+      "1t25__raw": "1.122,9",
+      "a_a__raw": "19,3%",
+      "1t26_udm__raw": "6.468,6",
+      "1t25_udm__raw": "4.926,4",
+      "a_a_2__raw": "31,3%"
+    },
+    "measures": {
+      "1t26": 1339.8,
+      "4t25": 1492.3,
+      "t_t": -10.2,
+      "1t25": 1122.9,
+      "a_a": 19.3,
+      "1t26_udm": 6468.6,
+      "1t25_udm": 4926.4,
+      "a_a_2": 31.3
+    }
+  },
+  {
+    "record_id": "ea6a3e78-f425-5e8d-8249-cfac03e64b0a",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "page_number": 10,
+    "source_kind": "table",
+    "source_id": "e0e41f2f-3c8b-541e-b512-7a0a29619639",
+    "section_id": "841c26ba-4f1b-5033-8fd2-c07271bda0b3",
+    "section_title": "AUMENTO DE 31,3%",
+    "domain": "aumento_de_313",
+    "grain": "table_row",
+    "attributes": {
+      "repasses": "Unidades Repassadas",
+      "1t26__raw": "4.364",
+      "4t25__raw": "5.001",
+      "t_t__raw": "-12,7%",
+      "1t25__raw": "3.783",
+      "a_a__raw": "15,4%",
+      "1t26_udm__raw": "21.621",
+      "1t25_udm__raw": "16.741",
+      "a_a_2__raw": "29,1%"
+    },
+    "measures": {
+      "1t26": 4364.0,
+      "4t25": 5001.0,
+      "t_t": -12.7,
+      "1t25": 3783.0,
+      "a_a": 15.4,
+      "1t26_udm": 21621.0,
+      "1t25_udm": 16741.0,
+      "a_a_2": 29.1
+    }
+  }
+]

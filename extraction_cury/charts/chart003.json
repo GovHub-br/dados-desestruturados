@@ -1,0 +1,31 @@
+{
+  "kind": "chart",
+  "name": "VSO Líquido (%) | Quarter",
+  "schema": [
+    "Quarter",
+    "VSO Líquido (%)",
+    "Vendas Líquidas (R$ milhões)"
+  ],
+  "rows": [
+    [
+      "1T25",
+      "45.4",
+      "2105.6"
+    ],
+    [
+      "4T25",
+      "39.3",
+      "1556.3"
+    ],
+    [
+      "1T26",
+      "45.1",
+      "2304.6"
+    ]
+  ],
+  "files": {
+    "metadata": "charts/chart003/metadata.json",
+    "points": "charts/chart003/points.json",
+    "normalized_rows": "charts/chart003/normalized_rows.json"
+  }
+}

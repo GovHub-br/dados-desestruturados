@@ -1,0 +1,31 @@
+{
+  "kind": "table",
+  "table_id": "e0e41f2f-3c8b-541e-b512-7a0a29619639",
+  "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+  "page_number": 10,
+  "section_id": "841c26ba-4f1b-5033-8fd2-c07271bda0b3",
+  "section_title": "AUMENTO DE 31,3%",
+  "title_raw": "AUMENTO DE 31,3%",
+  "title_canonical": "aumento_de_313",
+  "bbox": {
+    "page_number": 10,
+    "left": 78.10074615478516,
+    "top": 347.1611328125,
+    "right": 873.2966918945312,
+    "bottom": 252.25662231445312,
+    "coord_origin": "BOTTOMLEFT"
+  },
+  "row_count": 2,
+  "column_count": 9,
+  "schema": [
+    "Repasses",
+    "1T26",
+    "4T25",
+    "% T/T",
+    "1T25",
+    "% A/A",
+    "1T26 UDM*",
+    "1T25 UDM*",
+    "% A/A"
+  ]
+}

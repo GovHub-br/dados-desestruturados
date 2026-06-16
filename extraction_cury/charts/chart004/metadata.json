@@ -1,0 +1,17 @@
+{
+  "kind": "chart",
+  "chart_id": "74281cbe-ce3c-5e52-94b4-af394347f7f8",
+  "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+  "page_number": 9,
+  "section_id": "4159eab3-0222-5751-885d-0625cc7fb726",
+  "section_title": "Value | Period",
+  "chart_type": "bar_chart",
+  "chart_title_raw": "Value | Period",
+  "chart_title_canonical": "value_period",
+  "schema": [
+    "Period",
+    "Value",
+    "Percentage"
+  ],
+  "point_count": 3
+}

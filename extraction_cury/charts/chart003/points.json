@@ -1,0 +1,62 @@
+[
+  {
+    "point_id": "ba80146b-ff7a-5e33-8ada-2f55074cda0b",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "chart_id": "032b4dbc-4dae-59f8-a392-b12c6519b1cb",
+    "page_number": 8,
+    "section_id": "f71976cd-2996-529f-bd29-88699823d11d",
+    "section_title": "VSO Líquido (%) | Quarter",
+    "chart_type": "bar_chart",
+    "chart_title_raw": "VSO Líquido (%) | Quarter",
+    "chart_title_canonical": "vso_liquido_quarter",
+    "series_name": "1T25",
+    "category_name": "VSO Líquido (%)",
+    "value_numeric": 45.4,
+    "value_text": "45.4",
+    "raw_row": {
+      "Quarter": "1T25",
+      "VSO Líquido (%)": "45.4",
+      "Vendas Líquidas (R$ milhões)": "2105.6"
+    }
+  },
+  {
+    "point_id": "d97f6865-21a0-5932-adf4-2d5ba210ec21",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "chart_id": "032b4dbc-4dae-59f8-a392-b12c6519b1cb",
+    "page_number": 8,
+    "section_id": "f71976cd-2996-529f-bd29-88699823d11d",
+    "section_title": "VSO Líquido (%) | Quarter",
+    "chart_type": "bar_chart",
+    "chart_title_raw": "VSO Líquido (%) | Quarter",
+    "chart_title_canonical": "vso_liquido_quarter",
+    "series_name": "4T25",
+    "category_name": "VSO Líquido (%)",
+    "value_numeric": 39.3,
+    "value_text": "39.3",
+    "raw_row": {
+      "Quarter": "4T25",
+      "VSO Líquido (%)": "39.3",
+      "Vendas Líquidas (R$ milhões)": "1556.3"
+    }
+  },
+  {
+    "point_id": "cbb5200b-3169-5072-ae02-b00692bd7ba8",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "chart_id": "032b4dbc-4dae-59f8-a392-b12c6519b1cb",
+    "page_number": 8,
+    "section_id": "f71976cd-2996-529f-bd29-88699823d11d",
+    "section_title": "VSO Líquido (%) | Quarter",
+    "chart_type": "bar_chart",
+    "chart_title_raw": "VSO Líquido (%) | Quarter",
+    "chart_title_canonical": "vso_liquido_quarter",
+    "series_name": "1T26",
+    "category_name": "VSO Líquido (%)",
+    "value_numeric": 45.1,
+    "value_text": "45.1",
+    "raw_row": {
+      "Quarter": "1T26",
+      "VSO Líquido (%)": "45.1",
+      "Vendas Líquidas (R$ milhões)": "2304.6"
+    }
+  }
+]

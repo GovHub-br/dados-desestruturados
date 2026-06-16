@@ -1,0 +1,31 @@
+{
+  "kind": "table",
+  "table_id": "a849e6c6-1a6c-5c1f-97ba-75929ebbf841",
+  "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+  "page_number": 11,
+  "section_id": "a3e6a78a-c415-5ad0-a747-41bf265bd69d",
+  "section_title": "4.633 UNIDADES,",
+  "title_raw": "4.633 UNIDADES,",
+  "title_canonical": "4633_unidades",
+  "bbox": {
+    "page_number": 11,
+    "left": 65.17361450195312,
+    "top": 253.73648071289062,
+    "right": 876.6547241210938,
+    "bottom": 114.41867065429688,
+    "coord_origin": "BOTTOMLEFT"
+  },
+  "row_count": 3,
+  "column_count": 9,
+  "schema": [
+    "Produção",
+    "1T26",
+    "4T25",
+    "%T/T",
+    "1T25",
+    "%A/A",
+    "1T26 UDM*1T25",
+    "UDM*",
+    "%A/A"
+  ]
+}

@@ -1,0 +1,74 @@
+[
+  {
+    "record_id": "9d7420ac-17e9-5d62-bc5d-2e0fcf829105",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "page_number": 12,
+    "source_kind": "chart",
+    "source_id": "b7ac5251-b6ae-5e62-9900-7ec7ac9d07d1",
+    "section_id": "61a26201-0320-5e72-9da8-db4a342db33e",
+    "section_title": "A Cury encerrou o 1T26 com estoque de R$ 2.805,2 milhões.",
+    "domain": "a_cury_encerrou_o_1t26_com_estoque_de_r_28052_milhoes",
+    "grain": "chart_row",
+    "attributes": {
+      "category": "Até 3 meses",
+      "percentage__raw": "40%"
+    },
+    "measures": {
+      "percentage": 40.0
+    }
+  },
+  {
+    "record_id": "157fc9c7-32f9-5dd4-9d3f-21f8737b8f57",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "page_number": 12,
+    "source_kind": "chart",
+    "source_id": "b7ac5251-b6ae-5e62-9900-7ec7ac9d07d1",
+    "section_id": "61a26201-0320-5e72-9da8-db4a342db33e",
+    "section_title": "A Cury encerrou o 1T26 com estoque de R$ 2.805,2 milhões.",
+    "domain": "a_cury_encerrou_o_1t26_com_estoque_de_r_28052_milhoes",
+    "grain": "chart_row",
+    "attributes": {
+      "category": "Até 6 meses",
+      "percentage__raw": "12%"
+    },
+    "measures": {
+      "percentage": 12.0
+    }
+  },
+  {
+    "record_id": "c57c3f9f-ef83-5f9b-88ff-c3e94a64f804",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "page_number": 12,
+    "source_kind": "chart",
+    "source_id": "b7ac5251-b6ae-5e62-9900-7ec7ac9d07d1",
+    "section_id": "61a26201-0320-5e72-9da8-db4a342db33e",
+    "section_title": "A Cury encerrou o 1T26 com estoque de R$ 2.805,2 milhões.",
+    "domain": "a_cury_encerrou_o_1t26_com_estoque_de_r_28052_milhoes",
+    "grain": "chart_row",
+    "attributes": {
+      "category": "Até 1 ano",
+      "percentage__raw": "20%"
+    },
+    "measures": {
+      "percentage": 20.0
+    }
+  },
+  {
+    "record_id": "989732fb-f848-5b71-ba22-0402e92a118a",
+    "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+    "page_number": 12,
+    "source_kind": "chart",
+    "source_id": "b7ac5251-b6ae-5e62-9900-7ec7ac9d07d1",
+    "section_id": "61a26201-0320-5e72-9da8-db4a342db33e",
+    "section_title": "A Cury encerrou o 1T26 com estoque de R$ 2.805,2 milhões.",
+    "domain": "a_cury_encerrou_o_1t26_com_estoque_de_r_28052_milhoes",
+    "grain": "chart_row",
+    "attributes": {
+      "category": "Mais de 1 ano",
+      "percentage__raw": "28%"
+    },
+    "measures": {
+      "percentage": 28.0
+    }
+  }
+]

@@ -1,0 +1,28 @@
+{
+  "kind": "table",
+  "table_id": "e02683e7-f13f-5520-80d9-9cc77d6650aa",
+  "document_id": "cdce3fea-723b-5de2-b3e8-a3dbb90939ad",
+  "page_number": 13,
+  "section_id": "c3bdf8e2-e5cf-5fff-93ea-51818c4da48a",
+  "section_title": "R$ 24.924,6 MILHÕES EM VGV POTENCIAL,",
+  "title_raw": "R$ 24.924,6 MILHÕES EM VGV POTENCIAL,",
+  "title_canonical": "r_249246_milhoes_em_vgv_potencial",
+  "bbox": {
+    "page_number": 13,
+    "left": 98.8639907836914,
+    "top": 274.2799377441406,
+    "right": 828.6278686523438,
+    "bottom": 138.24478149414062,
+    "coord_origin": "BOTTOMLEFT"
+  },
+  "row_count": 4,
+  "column_count": 6,
+  "schema": [
+    "Banco de Terrenos",
+    "1T26",
+    "4T25",
+    "% T/T",
+    "1T25",
+    "% A/A"
+  ]
+}
