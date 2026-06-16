@@ -122,6 +122,12 @@ Pasta de extração por documento, com arquivos como:
 Essa DAG não gera `schema_saida`.
 Ela só prepara o terreno para as DAGs seguintes.
 
+O processamento pesado do `docling_pipeline` pode ocorrer em um runner remoto.
+Nesse caso, a DAG envia o PDF ao runner, recebe `extraction.tar.gz`, extrai a
+pasta localmente e persiste os mesmos artefatos no MinIO. A fronteira entre as
+DAGs permanece a pasta de extração já materializada no data lake; as DAGs
+seguintes não precisam saber se o Docling rodou localmente ou no Mac Studio.
+
 
 ## DAG 2: resolver schema de saída
 

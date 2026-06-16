@@ -140,6 +140,52 @@ class HttpClient:
         except (URLError, json.JSONDecodeError) as exc:
             raise RuntimeError(f"Falha ao consumir stream da API {url}: {exc}") from exc
 
+    def post_bytes(
+        self,
+        url: str,
+        data: bytes,
+        *,
+        content_type: str,
+        timeout: int = 40,
+        headers: dict[str, str] | None = None,
+    ) -> HttpResponse:
+        """Envia dados binarios via POST e retorna a resposta sem decodificar.
+
+        Este helper existe para chamadas que nao seguem o contrato JSON/NDJSON
+        usado pelo restante do projeto. No fluxo remoto do Docling, ele envia o
+        PDF como `application/pdf` e recebe `extraction.tar.gz` como bytes.
+
+        Headers adicionais podem ser usados para metadados da execucao, como
+        `X-Execution-Id` e flags do pipeline. Erros HTTP incluem o corpo textual
+        da resposta para preservar mensagens JSON retornadas pelo runner.
+        """
+        request_headers = {
+            **self.default_headers,
+            "Accept": "application/gzip,application/json,*/*",
+            "Content-Type": content_type,
+            **(headers or {}),
+        }
+        request = Request(
+            url,
+            data=data,
+            headers=request_headers,
+            method="POST",
+        )
+        try:
+            with urlopen(request, timeout=timeout) as response:
+                return HttpResponse(
+                    url=response.geturl(),
+                    body=response.read(),
+                    content_type=response.headers.get("Content-Type", ""),
+                )
+        except HTTPError as exc:
+            response_body = exc.read().decode("utf-8", errors="replace")
+            raise RuntimeError(
+                f"Falha ao chamar API {url}: HTTP {exc.code} {exc.reason}. Corpo: {response_body}"
+            ) from exc
+        except URLError as exc:
+            raise RuntimeError(f"Falha ao chamar API {url}: {exc}") from exc
+
     @staticmethod
     def filename_from_url(url: str, *, fallback: str = "documento.pdf") -> str:
         """Infere um nome de arquivo a partir da URL final, usando fallback quando necessario."""

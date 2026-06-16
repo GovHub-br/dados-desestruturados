@@ -175,9 +175,10 @@ class DetectaPdfExtraiService:
                 do_chart_extraction=do_chart_extraction,
                 enable_llm_text_extraction=enable_llm_text_extraction,
             )
-            runner_result = self.docling_client.run_extract_command(
+            runner_result = self.docling_client.run_extract_file_command(
                 input_path=document["local_pdf_path"],
                 output_dir=str(output_dir),
+                execution_id=execution_id,
                 do_chart_extraction=do_chart_extraction,
                 enable_llm_text_extraction=enable_llm_text_extraction,
             )
