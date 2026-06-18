@@ -96,7 +96,7 @@ class ConstrutorasPayloadBuilder:
                     execution_id=execution_id,
                     tipo_artefato="validacao_layout_signature",
                     bucket_name=config.minio_bucket,
-                    object_key=f"{resolution_prefix}/validacao_layout_signature.json",
+                    object_key=f"{resolution_prefix}/report_validacao.json",
                 ),
                 self.metadata_client.build_artifact_record(
                     execution_id=execution_id,
@@ -108,7 +108,7 @@ class ConstrutorasPayloadBuilder:
                     execution_id=execution_id,
                     tipo_artefato="auditoria_resolucao",
                     bucket_name=config.minio_bucket,
-                    object_key=f"{resolution_prefix}/auditoria_resolucao.json",
+                    object_key=f"{resolution_prefix}/log_execucao.json",
                 ),
             ],
         }

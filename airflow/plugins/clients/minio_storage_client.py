@@ -74,6 +74,24 @@ class MinioStorageClient:
         data = json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True).encode("utf-8")
         return self.put_bytes(object_key=object_key, data=data, content_type="application/json")
 
+    def get_bytes(self, *, object_key: str) -> bytes:
+        """Le bytes de um objeto no MinIO."""
+        client = self._client()
+        response = client.get_object(self.config.minio_bucket, object_key)
+        try:
+            return response.read()
+        finally:
+            response.close()
+            response.release_conn()
+
+    def get_json(self, *, object_key: str) -> dict[str, object]:
+        """Le e desserializa um JSON armazenado no MinIO."""
+        payload = self.get_bytes(object_key=object_key)
+        loaded = json.loads(payload.decode("utf-8"))
+        if not isinstance(loaded, dict):
+            raise RuntimeError(f"Objeto JSON esperado como dict em {object_key}.")
+        return loaded
+
     def upload_directory(
         self,
         *,
