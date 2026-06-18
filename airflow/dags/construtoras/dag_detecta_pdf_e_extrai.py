@@ -11,8 +11,8 @@ from plugins.services import DETECTA_PDF_EXTRAI_SERVICE
 
 
 @task
-def montar_contexto_janela_divulgacao(reference_date: str | None = None) -> dict[str, object]:
-    resolved_reference_date = REFERENCE_DATE_RESOLVER.resolve(reference_date)
+def montar_contexto_janela_divulgacao() -> dict[str, object]:
+    resolved_reference_date = REFERENCE_DATE_RESOLVER.resolve()
     context = DETECTA_PDF_EXTRAI_SERVICE.build_detection_context(today=resolved_reference_date)
     if not context["should_check"]:
         raise AirflowSkipException(
@@ -60,6 +60,7 @@ def registrar_resumo(
     schedule="0 8 * 2,3,4,5,7,8,10,11 *",
     start_date=AirflowDefaults.start_date,
     catchup=False,
+    max_active_runs=1,
     default_args=AirflowDefaults.default_args(),
     tags=AirflowDefaults.tags("extracao"),
 )
@@ -67,9 +68,7 @@ def dag_detecta_pdf_e_extrai() -> None:
     inicio = EmptyOperator(task_id="inicio")
     fim = EmptyOperator(task_id="fim")
 
-    context = montar_contexto_janela_divulgacao(
-        reference_date="{{ dag_run.conf.get('reference_date', '') if dag_run and dag_run.conf else '' }}"
-    )
+    context = montar_contexto_janela_divulgacao()
     candidates = detectar_pdfs(context)
     documents = baixar_e_persistir_pdfs(candidates)
     extractions = extrair_e_persistir_resultados(documents)

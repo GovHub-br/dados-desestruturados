@@ -8,7 +8,7 @@ class ReferenceDateResolver:
     """Resolve uma data de referencia opcional para simular a janela da DAG."""
 
     def __init__(self, env_var_names: tuple[str, ...] | None = None) -> None:
-        self.env_var_names = env_var_names or ("REFERENCE_DATE", "PIPELINE_REFERENCE_DATE")
+        self.env_var_names = env_var_names or ("REFERENCE_DATE",)
 
     def resolve(self, explicit_value: str | None = None) -> date | None:
         """Prioriza valor explicito e cai para variaveis de ambiente quando necessario."""
