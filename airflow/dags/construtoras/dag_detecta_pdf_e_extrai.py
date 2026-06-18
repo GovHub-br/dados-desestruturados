@@ -4,6 +4,7 @@ import logging
 
 from airflow.decorators import dag, task
 from airflow.exceptions import AirflowSkipException
+from airflow.operators.python import get_current_context
 from airflow.providers.standard.operators.empty import EmptyOperator
 
 from helpers import AirflowDefaults, REFERENCE_DATE_RESOLVER
@@ -13,6 +14,12 @@ from plugins.services import DETECTA_PDF_EXTRAI_SERVICE
 @task
 def montar_contexto_janela_divulgacao() -> dict[str, object]:
     resolved_reference_date = REFERENCE_DATE_RESOLVER.resolve()
+    if resolved_reference_date is None:
+        context = get_current_context()
+        logical_date = context.get("logical_date")
+        if logical_date is not None:
+            resolved_reference_date = logical_date.in_timezone("America/Sao_Paulo").date()
+
     context = DETECTA_PDF_EXTRAI_SERVICE.build_detection_context(today=resolved_reference_date)
     if not context["should_check"]:
         raise AirflowSkipException(

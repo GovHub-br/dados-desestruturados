@@ -156,11 +156,26 @@ class DetectaPdfExtraiService:
     def extract_and_persist_outputs(self, documents: list[dict[str, Any]]) -> list[dict[str, Any]]:
         """Roda o pipeline Docling para PDFs novos e persiste a pasta de saida no MinIO."""
         results: list[dict[str, Any]] = []
+        do_ocr = self.config.docling_do_ocr
         do_chart_extraction = self.config.docling_do_chart_extraction
         enable_llm_text_extraction = self.config.docling_enable_llm_text_extraction
 
+        logging.info(
+            "Iniciando extracao Docling para %s documento(s). "
+            "(do_ocr=%s, do_chart_extraction=%s, llm_text_extraction=%s)",
+            len(documents),
+            do_ocr,
+            do_chart_extraction,
+            enable_llm_text_extraction,
+        )
         for document in documents:
             if not document.get("should_extract"):
+                candidate = document["candidate"]
+                logging.info(
+                    "Pulando extracao para %s %s (documento duplicado e FORCE_EXTRACT=false).",
+                    candidate["company_slug"],
+                    candidate["period_label"],
+                )
                 results.append({**document, "extraction_status": "pulada_pdf_duplicado"})
                 continue
 
@@ -169,19 +184,38 @@ class DetectaPdfExtraiService:
             output_dir = Path(self.config.pipeline_tmp_dir) / execution_id / "extraction"
             output_dir.mkdir(parents=True, exist_ok=True)
 
+            logging.info(
+                "Iniciando extracao para %s %s (execution_id=%s). PDF=%s, output_dir=%s",
+                candidate["company_slug"],
+                candidate["period_label"],
+                execution_id,
+                document["local_pdf_path"],
+                output_dir,
+            )
             command = self.docling_client.render_extract_command(
                 input_path=document["local_pdf_path"],
                 output_dir=str(output_dir),
+                do_ocr=do_ocr,
                 do_chart_extraction=do_chart_extraction,
                 enable_llm_text_extraction=enable_llm_text_extraction,
+            )
+            logging.info(
+                "Chamando docling-runner para execution_id=%s "
+                "(do_ocr=%s, chart_extraction=%s, llm_text_extraction=%s).",
+                execution_id,
+                do_ocr,
+                do_chart_extraction,
+                enable_llm_text_extraction,
             )
             runner_result = self.docling_client.run_extract_file_command(
                 input_path=document["local_pdf_path"],
                 output_dir=str(output_dir),
                 execution_id=execution_id,
+                do_ocr=do_ocr,
                 do_chart_extraction=do_chart_extraction,
                 enable_llm_text_extraction=enable_llm_text_extraction,
             )
+            logging.info("Docling-runner concluiu execution_id=%s.", execution_id)
             runner_log_tail = str(runner_result.get("log_tail", "")).strip()
             if runner_log_tail:
                 logging.info(
@@ -195,7 +229,17 @@ class DetectaPdfExtraiService:
                 f"{self.config.minio_execution_prefix}/{candidate['company_slug']}/"
                 f"document_id={document['document_id']}/execution_id={execution_id}/extraction"
             )
+            logging.info(
+                "Iniciando upload dos artefatos no MinIO para execution_id=%s em %s.",
+                execution_id,
+                object_prefix,
+            )
             artifact_uris = self.minio_client.upload_directory(directory=output_dir, object_prefix=object_prefix)
+            logging.info(
+                "Upload concluido para execution_id=%s (%s artefato(s)).",
+                execution_id,
+                len(artifact_uris),
+            )
             execution_manifest = {
                 "execution_id": execution_id,
                 "document_id": document["document_id"],
@@ -210,6 +254,11 @@ class DetectaPdfExtraiService:
                 object_key=f"{object_prefix}/manifesto_execucao.json",
                 payload=execution_manifest,
             )
+            logging.info(
+                "Manifesto de execucao salvo para execution_id=%s em %s.",
+                execution_id,
+                manifest_uri,
+            )
             results.append(
                 {
                     **document,
@@ -220,6 +269,7 @@ class DetectaPdfExtraiService:
                 }
             )
 
+        logging.info("Extracao Docling finalizada. Total processado: %s documento(s).", len(results))
         return results
 
     def summarize_detection_run(
