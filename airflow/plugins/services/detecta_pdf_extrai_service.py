@@ -226,7 +226,7 @@ class DetectaPdfExtraiService:
                 )
 
             object_prefix = (
-                f"{self.config.minio_execution_prefix}/{candidate['company_slug']}/"
+                f"{self.config.minio_extract_prefix}/{candidate['company_slug']}/"
                 f"document_id={document['document_id']}/execution_id={execution_id}/extraction"
             )
             logging.info(

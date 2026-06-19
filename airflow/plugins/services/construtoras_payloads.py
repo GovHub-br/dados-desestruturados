@@ -33,7 +33,7 @@ class ConstrutorasPayloadBuilder:
         execution_id = self._execution_id("dag_detecta_pdf_e_extrai")
         document_id = self._document_id(config.entidade)
         extraction_prefix = (
-            f"{config.minio_execution_prefix}/{config.entidade}/"
+            f"{config.minio_extract_prefix}/{config.entidade}/"
             f"document_id={document_id}/execution_id={execution_id}/extraction"
         )
 
@@ -67,7 +67,7 @@ class ConstrutorasPayloadBuilder:
         execution_id = self._execution_id("dag_resolve_schema_saida")
         document_id = self._document_id(config.entidade)
         resolution_prefix = (
-            f"{config.minio_execution_prefix}/{config.entidade}/"
+            f"{config.minio_resolution_prefix}/{config.entidade}/"
             f"document_id={document_id}/execution_id={execution_id}/resolution"
         )
 
@@ -176,7 +176,7 @@ class ConstrutorasPayloadBuilder:
             "source": {
                 "schema_saida_resolvido": (
                     f"minio://{config.minio_bucket}/"
-                    f"{config.minio_execution_prefix}/{config.entidade}/"
+                    f"{config.minio_resolution_prefix}/{config.entidade}/"
                     f"document_id={document_id}/execution_id={execution_id}/resolution/schema_saida_resolvido.json"
                 ),
             },

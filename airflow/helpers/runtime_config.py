@@ -12,7 +12,8 @@ class LocalPlatformConfig:
     minio_secure: bool
     minio_bucket: str
     minio_document_prefix: str
-    minio_execution_prefix: str
+    minio_extract_prefix: str
+    minio_resolution_prefix: str
     minio_contract_prefix: str
     minio_layout_prefix: str
     pipeline_tmp_dir: str
@@ -26,6 +27,7 @@ class LocalPlatformConfig:
     dominio: str
     entidade: str
     tipo_documento: str
+    docling_do_ocr: bool
     docling_do_chart_extraction: bool
     docling_enable_llm_text_extraction: bool
 
@@ -58,9 +60,13 @@ class RuntimeConfigLoader:
                 "MINIO_DOCUMENT_PREFIX",
                 "documentos-origem/construtoras",
             ),
-            minio_execution_prefix=os.getenv(
-                "MINIO_EXECUTION_PREFIX",
-                "execucoes/construtoras",
+            minio_extract_prefix=os.getenv(
+                "MINIO_EXTRACT_PREFIX",
+                "execucoes/construtoras/extracao",
+            ),
+            minio_resolution_prefix=os.getenv(
+                "MINIO_RESOLUTION_PREFIX",
+                "execucoes/construtoras/resolucao",
             ),
             minio_contract_prefix=os.getenv(
                 "MINIO_CONTRACT_PREFIX",
@@ -73,12 +79,12 @@ class RuntimeConfigLoader:
             pipeline_tmp_dir=os.getenv("PIPELINE_TMP_DIR", "/opt/pipeline-tmp"),
             docling_runner_base_url=os.getenv("DOCLING_RUNNER_BASE_URL", "http://docling-runner:8081"),
             docling_runner_timeout_seconds=self._as_int(
-                os.getenv("DOCLING_RUNNER_TIMEOUT_SECONDS", "1800"),
-                default=1800,
+                os.getenv("DOCLING_RUNNER_TIMEOUT_SECONDS", "4000"),
+                default=4000,
             ),
             docling_runner_execution_timeout_seconds=self._as_int(
-                os.getenv("DOCLING_RUNNER_EXECUTION_TIMEOUT_SECONDS", "1500"),
-                default=1500,
+                os.getenv("DOCLING_RUNNER_EXECUTION_TIMEOUT_SECONDS", "3600"),
+                default=3600,
             ),
             ri_download_timeout_seconds=self._as_int(
                 os.getenv("RI_DOWNLOAD_TIMEOUT_SECONDS", "120"),
@@ -99,8 +105,11 @@ class RuntimeConfigLoader:
                 "PIPELINE_TIPO_DOCUMENTO",
                 "relatorio_trimestral_construtora",
             ),
+            docling_do_ocr=self._as_bool(
+                os.getenv("DOCLING_DO_OCR", "true")
+            ),
             docling_do_chart_extraction=self._as_bool(
-                os.getenv("DOCLING_DO_CHART_EXTRACTION", "true")
+                os.getenv("DOCLING_DO_CHART_EXTRACTION", "false")
             ),
             docling_enable_llm_text_extraction=self._resolve_llm_text_extraction_flag(),
         )
