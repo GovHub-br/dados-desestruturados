@@ -92,6 +92,18 @@ class MinioStorageClient:
             raise RuntimeError(f"Objeto JSON esperado como dict em {object_key}.")
         return loaded
 
+    def list_object_keys(self, *, prefix: str, suffix: str | None = None) -> list[str]:
+        """Lista object keys do bucket filtrando por prefixo e sufixo opcional."""
+        client = self._client()
+        objects = client.list_objects(self.config.minio_bucket, prefix=prefix, recursive=True)
+        keys: list[str] = []
+        for item in objects:
+            name = str(item.object_name)
+            if suffix and not name.endswith(suffix):
+                continue
+            keys.append(name)
+        return sorted(keys)
+
     def upload_directory(
         self,
         *,

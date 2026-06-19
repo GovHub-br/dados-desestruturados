@@ -4,6 +4,7 @@ import logging
 
 from airflow.decorators import dag, task
 from airflow.providers.standard.operators.empty import EmptyOperator
+from airflow.utils.trigger_rule import TriggerRule
 
 from helpers import AirflowDefaults
 from plugins.services import CONSTRUTORAS_PAYLOAD_BUILDER, SCHEMA_RESOLUTION_SERVICE
@@ -15,61 +16,32 @@ def montar_runtime() -> dict[str, object]:
 
 
 @task
-def carregar_contrato_e_layout_signature(runtime: dict[str, object]) -> dict[str, object]:
-    loaded = SCHEMA_RESOLUTION_SERVICE.load_inputs(runtime)
+def processar_execucoes_resolucao(runtime: dict[str, object]) -> dict[str, object]:
+    summary = SCHEMA_RESOLUTION_SERVICE.process_all_extractions(runtime)
     logging.info(
-        "Entradas carregadas para DAG 2. extraction_root=%s",
-        loaded["extraction_root"],
+        "DAG 2 processou %s execucao(oes) com %s mudanca(s) de layout.",
+        summary.get("processed_count"),
+        summary.get("layout_changed_count"),
     )
-    return loaded
+    return summary
 
 
 @task
-def validar_regras_deterministicas(loaded: dict[str, object]) -> dict[str, object]:
-    report = SCHEMA_RESOLUTION_SERVICE.validate_deterministic_rules(loaded)
-    logging.info(
-        "Validacao deterministica concluida. status=%s aprovadas=%s/%s",
-        report["status_compatibilidade"]["status"],
-        report["status_compatibilidade"]["regras_aprovadas"],
-        report["status_compatibilidade"]["regras_total"],
-    )
-    return report
+def detectar_alteracao_layout(summary: dict[str, object]) -> dict[str, object]:
+    layout_alterado = bool(summary.get("layout_alterado"))
+    detection = {"layout_alterado": layout_alterado, "summary": summary}
+    if layout_alterado:
+        logging.warning("Mudanca de layout detectada: %s", detection)
+    else:
+        logging.info("Sem mudanca de layout detectada: %s", detection)
+    return detection
 
 
-@task
-def resolver_mapeamento_canonico(
-    loaded: dict[str, object],
-    report_validacao: dict[str, object],
-) -> dict[str, object]:
-    resolved = SCHEMA_RESOLUTION_SERVICE.resolve_canonical_mapping(loaded, report_validacao)
-    logging.info(
-        "Mapeamento canonico resolvido. periodo_referencia=%s",
-        resolved["schema_saida"].get("periodo_referencia"),
-    )
-    return resolved
-
-
-@task
-def montar_log_execucao(
-    loaded: dict[str, object],
-    report_validacao: dict[str, object],
-    resolved: dict[str, object],
-) -> dict[str, object]:
-    execution_log = SCHEMA_RESOLUTION_SERVICE.build_execution_log(loaded, report_validacao, resolved)
-    logging.info("Log de execucao montado para execution_id=%s", execution_log.get("execution_id"))
-    return execution_log
-
-
-@task
-def persistir_saidas(
-    loaded: dict[str, object],
-    report_validacao: dict[str, object],
-    resolved: dict[str, object],
-    execution_log: dict[str, object],
-) -> dict[str, object]:
-    outputs = SCHEMA_RESOLUTION_SERVICE.persist_outputs(loaded, report_validacao, resolved, execution_log)
-    logging.info("Saidas persistidas no MinIO: %s", outputs)
-    return outputs
+@task.branch
+def decidir_fluxo_remapeamento(layout_detection: dict[str, object]) -> str:
+    if bool(layout_detection.get("layout_alterado")):
+        return "placeholder_trigger_remapeamento_layout"
+    return "fim"
 
 
 @dag(
@@ -82,16 +54,19 @@ def persistir_saidas(
 )
 def dag_resolve_schema_saida() -> None:
     inicio = EmptyOperator(task_id="inicio")
-    fim = EmptyOperator(task_id="fim")
+    placeholder_trigger_remapeamento_layout = EmptyOperator(
+        task_id="placeholder_trigger_remapeamento_layout"
+    )
+    fim = EmptyOperator(task_id="fim", trigger_rule=TriggerRule.NONE_FAILED_MIN_ONE_SUCCESS)
 
     runtime = montar_runtime()
-    loaded = carregar_contrato_e_layout_signature(runtime)
-    report_validacao = validar_regras_deterministicas(loaded)
-    resolved = resolver_mapeamento_canonico(loaded, report_validacao)
-    execution_log = montar_log_execucao(loaded, report_validacao, resolved)
-    saidas = persistir_saidas(loaded, report_validacao, resolved, execution_log)
+    summary = processar_execucoes_resolucao(runtime)
+    layout_detection = detectar_alteracao_layout(summary)
+    decisao_remapeamento = decidir_fluxo_remapeamento(layout_detection)
 
-    inicio >> runtime >> loaded >> report_validacao >> resolved >> execution_log >> saidas >> fim
+    inicio >> runtime >> summary >> layout_detection >> decisao_remapeamento
+    decisao_remapeamento >> placeholder_trigger_remapeamento_layout >> fim
+    decisao_remapeamento >> fim
 
 
 dag_resolve_schema_saida()

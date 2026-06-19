@@ -32,6 +32,73 @@ class SchemaResolutionService:
             self._minio_client = MinioStorageClient(config)
         return self._minio_client
 
+    def process_all_extractions(self, runtime: dict[str, Any]) -> dict[str, Any]:
+        """Processa todas as extracoes encontradas no MinIO e persiste as resolucoes."""
+        manifests = self._discover_extraction_manifests()
+        if not manifests:
+            logging.warning("Nenhum manifesto de extracao encontrado no MinIO para resolver schema.")
+            return {
+                "processed_count": 0,
+                "layout_changed_count": 0,
+                "layout_alterado": False,
+                "items": [],
+            }
+
+        processed_items: list[dict[str, Any]] = []
+        layout_changed_count = 0
+        for manifest_key in manifests:
+            loaded = self._load_inputs_from_manifest(runtime, manifest_key=manifest_key)
+            validation = self.validate_deterministic_rules(loaded)
+            layout_alterado = validation["status_compatibilidade"]["status"] != "compativel"
+
+            if layout_alterado:
+                layout_changed_count += 1
+                execution_log = self.build_execution_log(
+                    loaded,
+                    validation,
+                    resolved={"schema_saida": {"periodo_referencia": None}},
+                )
+                persist_uris = self.persist_outputs(
+                    loaded,
+                    validation,
+                    resolved={"schema_saida": {}},
+                    execution_log=execution_log,
+                )
+                processed_items.append(
+                    {
+                        "manifest_key": manifest_key,
+                        "company_slug": loaded["execution"]["company_slug"],
+                        "execution_id": loaded["execution"]["execution_id"],
+                        "document_id": loaded["execution"]["document_id"],
+                        "layout_alterado": True,
+                        "status_compatibilidade": validation["status_compatibilidade"]["status"],
+                        "persisted": persist_uris,
+                    }
+                )
+                continue
+
+            resolved = self.resolve_canonical_mapping(loaded, validation)
+            execution_log = self.build_execution_log(loaded, validation, resolved)
+            persist_uris = self.persist_outputs(loaded, validation, resolved, execution_log)
+            processed_items.append(
+                {
+                    "manifest_key": manifest_key,
+                    "company_slug": loaded["execution"]["company_slug"],
+                    "execution_id": loaded["execution"]["execution_id"],
+                    "document_id": loaded["execution"]["document_id"],
+                    "layout_alterado": False,
+                    "status_compatibilidade": validation["status_compatibilidade"]["status"],
+                    "persisted": persist_uris,
+                }
+            )
+
+        return {
+            "processed_count": len(processed_items),
+            "layout_changed_count": layout_changed_count,
+            "layout_alterado": layout_changed_count > 0,
+            "items": processed_items,
+        }
+
     def load_inputs(self, runtime: dict[str, Any]) -> dict[str, Any]:
         """Carrega contrato, layout signature e paths de extracao."""
         contrato = self._load_json_from_uri_or_local(
@@ -150,7 +217,7 @@ class SchemaResolutionService:
     ) -> dict[str, Any]:
         """Monta log de execucao com resumo da resolucao."""
         runtime = loaded["runtime"]
-        execution = runtime.get("execution", {})
+        execution = loaded.get("execution", runtime.get("execution", {}))
         status = "concluida" if validation["status_compatibilidade"]["status"] == "compativel" else "incompleta"
         return {
             "tipo_artefato": "log_execucao",
@@ -174,28 +241,111 @@ class SchemaResolutionService:
         execution_log: dict[str, Any],
     ) -> dict[str, Any]:
         """Persiste os 3 artefatos finais no MinIO."""
-        runtime = loaded["runtime"]
-        artifacts = list(runtime.get("artifacts", []))
-        key_by_type = {str(item.get("tipo_artefato")): str(item.get("object_key")) for item in artifacts}
-
-        validation_key = key_by_type.get("validacao_layout_signature")
-        resolved_key = key_by_type.get("schema_saida_resolvido")
-        log_key = key_by_type.get("auditoria_resolucao")
-        if not validation_key or not resolved_key or not log_key:
-            raise RuntimeError("Runtime da DAG 2 sem object_key esperado para persistencia.")
+        output_keys = loaded.get("output_keys")
+        if isinstance(output_keys, dict):
+            validation_key = str(output_keys["report_validacao"])
+            resolved_key = str(output_keys["schema_saida_resolvido"])
+            log_key = str(output_keys["log_execucao"])
+        else:
+            runtime = loaded["runtime"]
+            artifacts = list(runtime.get("artifacts", []))
+            key_by_type = {str(item.get("tipo_artefato")): str(item.get("object_key")) for item in artifacts}
+            validation_key = key_by_type.get("validacao_layout_signature")
+            resolved_key = key_by_type.get("schema_saida_resolvido")
+            log_key = key_by_type.get("auditoria_resolucao")
+            if not validation_key or not resolved_key or not log_key:
+                raise RuntimeError("Runtime da DAG 2 sem object_key esperado para persistencia.")
 
         # Nomes pedidos no diagrama.
         validation["tipo_artefato"] = "report_validacao"
         execution_log["tipo_artefato"] = "log_execucao"
 
         report_uri = self.minio_client.put_json(object_key=validation_key, payload=validation)
-        schema_uri = self.minio_client.put_json(object_key=resolved_key, payload=resolved["schema_saida"])
+        schema_uri = self.minio_client.put_json(
+            object_key=resolved_key,
+            payload=resolved.get("schema_saida", {}),
+        )
         log_uri = self.minio_client.put_json(object_key=log_key, payload=execution_log)
         return {
             "report_validacao_uri": report_uri,
             "schema_saida_resolvido_uri": schema_uri,
             "log_execucao_uri": log_uri,
         }
+
+    def _discover_extraction_manifests(self) -> list[str]:
+        config = self.config_loader.load_local_platform_config()
+        manifests = self.minio_client.list_object_keys(
+            prefix=f"{config.minio_extract_prefix.rstrip('/')}/",
+            suffix="/manifesto_execucao.json",
+        )
+        # Compatibilidade retroativa com prefixo antigo.
+        if not manifests:
+            manifests = self.minio_client.list_object_keys(
+                prefix="execucoes/construtoras/",
+                suffix="/manifesto_execucao.json",
+            )
+        return manifests
+
+    def _load_inputs_from_manifest(self, runtime: dict[str, Any], *, manifest_key: str) -> dict[str, Any]:
+        manifest = self.minio_client.get_json(object_key=manifest_key)
+        candidate = manifest.get("candidate") if isinstance(manifest.get("candidate"), dict) else {}
+        company_slug = str(candidate.get("company_slug") or "empresa_desconhecida")
+        execution_id = str(manifest.get("execution_id") or "execucao_desconhecida")
+        document_id = str(manifest.get("document_id") or "documento_desconhecido")
+
+        artifact_uris = manifest.get("artifact_uris")
+        if not isinstance(artifact_uris, list) or not artifact_uris:
+            raise RuntimeError(f"Manifesto sem artifact_uris: {manifest_key}")
+
+        extraction_root = self._materialize_extraction_artifacts(
+            execution_id=execution_id,
+            artifact_uris=[str(item) for item in artifact_uris],
+        )
+        config = self.config_loader.load_local_platform_config()
+        contrato = self._load_json_from_uri_or_local(
+            f"minio://{config.minio_bucket}/{config.minio_contract_prefix}/v1.2.0/contrato_semantico_construtora.json",
+            local_fallback="resultados_contrutoras/contrato_semantico_construtora.json",
+        )
+        layout = self._load_json_from_uri_or_local(
+            (
+                f"minio://{config.minio_bucket}/{config.minio_layout_prefix}/"
+                f"{company_slug}/v4.0.0/layout_signature_deterministico.json"
+            ),
+            local_fallback="resultados_contrutoras/layout_signature_cury_deterministico.json",
+        )
+        layout["empresa"] = layout.get("empresa") or company_slug
+
+        resolution_prefix = (
+            f"{config.minio_resolution_prefix.rstrip('/')}/{company_slug}/"
+            f"document_id={document_id}/execution_id={execution_id}/resolution"
+        )
+        return {
+            "runtime": runtime,
+            "execution": {
+                "company_slug": company_slug,
+                "execution_id": execution_id,
+                "document_id": document_id,
+            },
+            "contrato_semantico": contrato,
+            "layout_signature": layout,
+            "extraction_root": str(extraction_root),
+            "output_keys": {
+                "report_validacao": f"{resolution_prefix}/report_validacao.json",
+                "schema_saida_resolvido": f"{resolution_prefix}/schema_saida_resolvido.json",
+                "log_execucao": f"{resolution_prefix}/log_execucao.json",
+            },
+        }
+
+    def _materialize_extraction_artifacts(self, *, execution_id: str, artifact_uris: list[str]) -> Path:
+        target_root = Path(self.project_paths.path("airflow", "state", "resolution_inputs", execution_id, "extraction"))
+        target_root.mkdir(parents=True, exist_ok=True)
+        for uri in artifact_uris:
+            object_key = self._parse_minio_uri(uri)
+            relative = object_key.rsplit("/extraction/", maxsplit=1)[-1]
+            destination = target_root / relative
+            destination.parent.mkdir(parents=True, exist_ok=True)
+            destination.write_bytes(self.minio_client.get_bytes(object_key=object_key))
+        return target_root
 
     def _resolve_extraction_root(self, layout: dict[str, Any]) -> Path:
         raw = str(layout.get("documento_origem", {}).get("pasta_de_extracao", "")).strip()
@@ -252,6 +402,15 @@ class SchemaResolutionService:
             }
 
         if rule_type in {"linha_existe_em_tabela", "perfil_colunas_periodo_existe_em_tabela", "valor_normalizavel"}:
+            if not origin_path.exists():
+                return {
+                    **base,
+                    "status": "reprovada",
+                    "evidencia": {
+                        "arquivo_origem": origin_file,
+                        "erro": "arquivo_origem_ausente",
+                    },
+                }
             table = self._read_json(origin_path)
             if rule_type == "linha_existe_em_tabela":
                 label_col = int(rule.get("coluna_rotulo", 0))
