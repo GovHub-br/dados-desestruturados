@@ -34,7 +34,7 @@ class SchemaResolutionService:
 
     def process_all_extractions(self, runtime: dict[str, Any]) -> dict[str, Any]:
         """Processa todas as extracoes encontradas no MinIO e persiste as resolucoes."""
-        manifests = self._discover_extraction_manifests()
+        manifests = self.discover_extraction_manifests()
         if not manifests:
             logging.warning("Nenhum manifesto de extracao encontrado no MinIO para resolver schema.")
             return {
@@ -45,58 +45,61 @@ class SchemaResolutionService:
             }
 
         processed_items: list[dict[str, Any]] = []
-        layout_changed_count = 0
         for manifest_key in manifests:
-            loaded = self._load_inputs_from_manifest(runtime, manifest_key=manifest_key)
-            validation = self.validate_deterministic_rules(loaded)
-            layout_alterado = validation["status_compatibilidade"]["status"] != "compativel"
+            processed_items.append(self.process_extraction_manifest(runtime, manifest_key=manifest_key))
 
-            if layout_alterado:
-                layout_changed_count += 1
-                execution_log = self.build_execution_log(
-                    loaded,
-                    validation,
-                    resolved={"schema_saida": {"periodo_referencia": None}},
-                )
-                persist_uris = self.persist_outputs(
-                    loaded,
-                    validation,
-                    resolved={"schema_saida": {}},
-                    execution_log=execution_log,
-                )
-                processed_items.append(
-                    {
-                        "manifest_key": manifest_key,
-                        "company_slug": loaded["execution"]["company_slug"],
-                        "execution_id": loaded["execution"]["execution_id"],
-                        "document_id": loaded["execution"]["document_id"],
-                        "layout_alterado": True,
-                        "status_compatibilidade": validation["status_compatibilidade"]["status"],
-                        "persisted": persist_uris,
-                    }
-                )
-                continue
-
-            resolved = self.resolve_canonical_mapping(loaded, validation)
-            execution_log = self.build_execution_log(loaded, validation, resolved)
-            persist_uris = self.persist_outputs(loaded, validation, resolved, execution_log)
-            processed_items.append(
-                {
-                    "manifest_key": manifest_key,
-                    "company_slug": loaded["execution"]["company_slug"],
-                    "execution_id": loaded["execution"]["execution_id"],
-                    "document_id": loaded["execution"]["document_id"],
-                    "layout_alterado": False,
-                    "status_compatibilidade": validation["status_compatibilidade"]["status"],
-                    "persisted": persist_uris,
-                }
-            )
+        layout_changed_count = len([item for item in processed_items if item.get("layout_alterado")])
 
         return {
             "processed_count": len(processed_items),
             "layout_changed_count": layout_changed_count,
             "layout_alterado": layout_changed_count > 0,
             "items": processed_items,
+        }
+
+    def discover_extraction_manifests(self) -> list[str]:
+        """Lista manifestos de extracao da DAG1 para resolver em lote."""
+        return self._discover_extraction_manifests()
+
+    def process_extraction_manifest(self, runtime: dict[str, Any], *, manifest_key: str) -> dict[str, Any]:
+        """Processa um manifesto individual de extracao e persiste saidas da DAG2."""
+        loaded = self._load_inputs_from_manifest(runtime, manifest_key=manifest_key)
+        validation = self.validate_deterministic_rules(loaded)
+        layout_alterado = validation["status_compatibilidade"]["status"] != "compativel"
+
+        if layout_alterado:
+            execution_log = self.build_execution_log(
+                loaded,
+                validation,
+                resolved={"schema_saida": {"periodo_referencia": None}},
+            )
+            persist_uris = self.persist_outputs(
+                loaded,
+                validation,
+                resolved={"schema_saida": {}},
+                execution_log=execution_log,
+            )
+            return {
+                "manifest_key": manifest_key,
+                "company_slug": loaded["execution"]["company_slug"],
+                "execution_id": loaded["execution"]["execution_id"],
+                "document_id": loaded["execution"]["document_id"],
+                "layout_alterado": True,
+                "status_compatibilidade": validation["status_compatibilidade"]["status"],
+                "persisted": persist_uris,
+            }
+
+        resolved = self.resolve_canonical_mapping(loaded, validation)
+        execution_log = self.build_execution_log(loaded, validation, resolved)
+        persist_uris = self.persist_outputs(loaded, validation, resolved, execution_log)
+        return {
+            "manifest_key": manifest_key,
+            "company_slug": loaded["execution"]["company_slug"],
+            "execution_id": loaded["execution"]["execution_id"],
+            "document_id": loaded["execution"]["document_id"],
+            "layout_alterado": False,
+            "status_compatibilidade": validation["status_compatibilidade"]["status"],
+            "persisted": persist_uris,
         }
 
     def load_inputs(self, runtime: dict[str, Any]) -> dict[str, Any]:

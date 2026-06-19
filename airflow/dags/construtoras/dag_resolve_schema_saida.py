@@ -16,12 +16,41 @@ def montar_runtime() -> dict[str, object]:
 
 
 @task
-def processar_execucoes_resolucao(runtime: dict[str, object]) -> dict[str, object]:
-    summary = SCHEMA_RESOLUTION_SERVICE.process_all_extractions(runtime)
+def descobrir_execucoes_para_resolucao() -> list[str]:
+    manifests = SCHEMA_RESOLUTION_SERVICE.discover_extraction_manifests()
     logging.info(
-        "DAG 2 processou %s execucao(oes) com %s mudanca(s) de layout.",
-        summary.get("processed_count"),
-        summary.get("layout_changed_count"),
+        "DAG 2 encontrou %s manifesto(s) de extracao para processar.",
+        len(manifests),
+    )
+    return manifests
+
+
+@task
+def processar_execucao_resolucao(runtime: dict[str, object], manifest_key: str) -> dict[str, object]:
+    result = SCHEMA_RESOLUTION_SERVICE.process_extraction_manifest(runtime, manifest_key=manifest_key)
+    logging.info(
+        "Manifesto processado: company=%s execution_id=%s layout_alterado=%s",
+        result.get("company_slug"),
+        result.get("execution_id"),
+        result.get("layout_alterado"),
+    )
+    return result
+
+
+@task(trigger_rule=TriggerRule.NONE_FAILED)
+def consolidar_resultados_execucoes(resultados: list[dict[str, object]]) -> dict[str, object]:
+    items = list(resultados or [])
+    layout_changed_count = len([item for item in items if item.get("layout_alterado")])
+    summary = {
+        "processed_count": len(items),
+        "layout_changed_count": layout_changed_count,
+        "layout_alterado": layout_changed_count > 0,
+        "items": items,
+    }
+    logging.info(
+        "Resumo DAG2: processados=%s com_alteracao_layout=%s",
+        summary["processed_count"],
+        summary["layout_changed_count"],
     )
     return summary
 
@@ -60,11 +89,13 @@ def dag_resolve_schema_saida() -> None:
     fim = EmptyOperator(task_id="fim", trigger_rule=TriggerRule.NONE_FAILED_MIN_ONE_SUCCESS)
 
     runtime = montar_runtime()
-    summary = processar_execucoes_resolucao(runtime)
+    manifests = descobrir_execucoes_para_resolucao()
+    resultados = processar_execucao_resolucao.partial(runtime=runtime).expand(manifest_key=manifests)
+    summary = consolidar_resultados_execucoes(resultados)
     layout_detection = detectar_alteracao_layout(summary)
     decisao_remapeamento = decidir_fluxo_remapeamento(layout_detection)
 
-    inicio >> runtime >> summary >> layout_detection >> decisao_remapeamento
+    inicio >> runtime >> manifests >> resultados >> summary >> layout_detection >> decisao_remapeamento
     decisao_remapeamento >> placeholder_trigger_remapeamento_layout >> fim
     decisao_remapeamento >> fim
 
