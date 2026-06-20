@@ -3,6 +3,7 @@ from __future__ import annotations
 import logging
 
 from airflow.decorators import dag, task
+from airflow.operators.trigger_dagrun import TriggerDagRunOperator
 from airflow.providers.standard.operators.empty import EmptyOperator
 from airflow.utils.trigger_rule import TriggerRule
 
@@ -56,20 +57,32 @@ def consolidar_resultados_execucoes(resultados: list[dict[str, object]]) -> dict
 
 
 @task
-def detectar_alteracao_layout(summary: dict[str, object]) -> dict[str, object]:
-    layout_alterado = bool(summary.get("layout_alterado"))
-    detection = {"layout_alterado": layout_alterado, "summary": summary}
-    if layout_alterado:
-        logging.warning("Mudanca de layout detectada: %s", detection)
+def filtrar_execucoes_para_remapeamento(resultados: list[dict[str, object]]) -> list[dict[str, object]]:
+    itens = list(resultados or [])
+    confs: list[dict[str, object]] = []
+    for item in itens:
+        if not bool(item.get("layout_alterado")):
+            continue
+        confs.append(
+            {
+                "company_slug": item.get("company_slug"),
+                "execution_id": item.get("execution_id"),
+                "document_id": item.get("document_id"),
+                "manifest_key": item.get("manifest_key"),
+                "trigger_origin_dag": "dag_resolve_schema_saida",
+            }
+        )
+    if confs:
+        logging.warning("Encontradas %s execucao(oes) para remapeamento semantico.", len(confs))
     else:
-        logging.info("Sem mudanca de layout detectada: %s", detection)
-    return detection
+        logging.info("Nenhuma execucao precisa de remapeamento semantico.")
+    return confs
 
 
 @task.branch
-def decidir_fluxo_remapeamento(layout_detection: dict[str, object]) -> str:
-    if bool(layout_detection.get("layout_alterado")):
-        return "placeholder_trigger_remapeamento_layout"
+def decidir_fluxo_remapeamento(confs_remapeamento: list[dict[str, object]]) -> str:
+    if confs_remapeamento:
+        return "disparar_remapeamento_llm"
     return "fim"
 
 
@@ -83,20 +96,23 @@ def decidir_fluxo_remapeamento(layout_detection: dict[str, object]) -> str:
 )
 def dag_resolve_schema_saida() -> None:
     inicio = EmptyOperator(task_id="inicio")
-    placeholder_trigger_remapeamento_layout = EmptyOperator(
-        task_id="placeholder_trigger_remapeamento_layout"
-    )
     fim = EmptyOperator(task_id="fim", trigger_rule=TriggerRule.NONE_FAILED_MIN_ONE_SUCCESS)
 
     runtime = montar_runtime()
     manifests = descobrir_execucoes_para_resolucao()
     resultados = processar_execucao_resolucao.partial(runtime=runtime).expand(manifest_key=manifests)
     summary = consolidar_resultados_execucoes(resultados)
-    layout_detection = detectar_alteracao_layout(summary)
-    decisao_remapeamento = decidir_fluxo_remapeamento(layout_detection)
+    confs_remapeamento = filtrar_execucoes_para_remapeamento(resultados)
+    decisao_remapeamento = decidir_fluxo_remapeamento(confs_remapeamento)
+    disparar_remapeamento_llm = TriggerDagRunOperator.partial(
+        task_id="disparar_remapeamento_llm",
+        trigger_dag_id="dag_valida_e_fallback_llm",
+        wait_for_completion=False,
+        reset_dag_run=False,
+    ).expand(conf=confs_remapeamento)
 
-    inicio >> runtime >> manifests >> resultados >> summary >> layout_detection >> decisao_remapeamento
-    decisao_remapeamento >> placeholder_trigger_remapeamento_layout >> fim
+    inicio >> runtime >> manifests >> resultados >> summary >> confs_remapeamento >> decisao_remapeamento
+    decisao_remapeamento >> disparar_remapeamento_llm >> fim
     decisao_remapeamento >> fim
 
 
