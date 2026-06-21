@@ -8,7 +8,7 @@ from airflow.operators.python import get_current_context
 from airflow.providers.standard.operators.empty import EmptyOperator
 
 from helpers import AirflowDefaults
-from plugins.services import CONSTRUTORAS_PAYLOAD_BUILDER
+from plugins.services import CONSTRUTORAS_PAYLOAD_BUILDER, FALLBACK_LLM_SERVICE
 
 
 REQUIRED_FALLBACK_CONF_FIELDS = (
@@ -53,14 +53,26 @@ def validar_conf_fallback() -> dict[str, object]:
 
 
 @task
+def carregar_artefatos_fallback(fallback_context: dict[str, object]) -> dict[str, object]:
+    try:
+        loaded_context = FALLBACK_LLM_SERVICE.load_fallback_context(fallback_context)
+    except RuntimeError as exc:
+        raise AirflowFailException(str(exc)) from exc
+    logging.info("Artefatos de fallback carregados: %s", loaded_context)
+    return loaded_context
+
+
+@task
 def registrar_planejamento(
     runtime: dict[str, object],
     fallback_context: dict[str, object],
+    loaded_context: dict[str, object],
 ) -> dict[str, object]:
     planning = {
         "runtime": runtime,
         "fallback_context": fallback_context,
-        "status": "contrato_operacional_validado",
+        "loaded_context": loaded_context,
+        "status": "artefatos_dag2_carregados",
     }
     logging.info("Planejamento DAG 3: %s", planning)
     return planning
@@ -80,9 +92,10 @@ def dag_valida_e_fallback_llm() -> None:
 
     runtime = montar_runtime()
     fallback_context = validar_conf_fallback()
-    planejamento = registrar_planejamento(runtime, fallback_context)
+    loaded_context = carregar_artefatos_fallback(fallback_context)
+    planejamento = registrar_planejamento(runtime, fallback_context, loaded_context)
 
-    inicio >> runtime >> fallback_context >> planejamento >> fim
+    inicio >> runtime >> fallback_context >> loaded_context >> planejamento >> fim
 
 
 dag_valida_e_fallback_llm()
