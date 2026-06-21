@@ -376,12 +376,13 @@ services:
     depends_on:
       openmetadata-server:
         condition: service_healthy
-    entrypoint: ["/bin/bash", "-lc"]
-    command: "sleep infinity"
+    entrypoint: ["/bin/bash", "-lc", "sleep infinity"]
     environment:
       OPENMETADATA_SERVER_URL: http://openmetadata-server:8585/api
       AIRFLOW_HOST: airflow-webserver
       AIRFLOW_PORT: "8080"
+    volumes:
+      - ./:/opt/project/dados-desestruturados
     networks:
       - ocr_net
 

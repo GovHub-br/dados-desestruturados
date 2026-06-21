@@ -32,9 +32,6 @@ class CompanySource:
     mziq_categories: tuple[str, ...] = ()
     keywords: tuple[str, ...] = (
         "previa operacional",
-        "performance preview",
-        "operational preview",
-        "operating results preview",
     )
 
 
@@ -99,8 +96,8 @@ class RiResultsClient:
                 slug="cury",
                 display_name="Cury",
                 provider="mziq",
-                results_page_url="https://ri.cury.net/en/investor-information/results-center/",
-                language="en_US",
+                results_page_url="https://ri.cury.net/informacoes-aos-investidores/central-de-resultados/",
+                language="pt_BR",
                 mziq_company_id="702b9586-4f10-4a79-a7e6-232ce8803136",
                 mziq_categories=("previa_operacional ", "previa_operacional"),
             ),

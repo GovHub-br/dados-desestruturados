@@ -241,14 +241,18 @@
       "obrigatorio": true
     },
     "periodo_referencia": {
-      "tipo_origem": "bloco_textual",
-      "arquivo_origem": "blocks/blocks.jsonl",
-      "section_id": "9dbabb99-216d-576c-9488-c2a968b0eb98",
-      "section_title": "PRÉVIA OPERACIONAL",
-      "page_number": 2,
-      "block_id": "24b3231c-2232-54c9-b9e0-01c1cb23865d",
-      "modo_extracao": "regex",
-      "padrao": "[1-4]T[0-9]{2}",
+      "tipo_origem": "cabecalho_de_tabela",
+      "arquivo_origem": "tables/table001.json",
+      "arquivo_metadados": "tables/table001/metadata.json",
+      "page_number": 4,
+      "section_id": "12097fa3-49c1-5fbc-91b2-4fdbabc67f64",
+      "papel_periodo": "periodo_referencia",
+      "seletor_coluna": {
+        "estrategia": "posicao_relativa",
+        "indice_coluna_esperado": 1,
+        "escopo_periodo": "trimestre",
+        "padrao_cabecalho_aceito": "^[1-4]T[0-9]{2}$"
+      },
       "obrigatorio": true
     },
     "periodos_disponiveis.periodo_referencia": {

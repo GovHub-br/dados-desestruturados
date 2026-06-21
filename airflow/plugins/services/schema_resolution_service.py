@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import logging
 import re
+import unicodedata
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
@@ -67,28 +68,6 @@ class SchemaResolutionService:
         validation = self.validate_deterministic_rules(loaded)
         layout_alterado = validation["status_compatibilidade"]["status"] != "compativel"
 
-        if layout_alterado:
-            execution_log = self.build_execution_log(
-                loaded,
-                validation,
-                resolved={"schema_saida": {"periodo_referencia": None}},
-            )
-            persist_uris = self.persist_outputs(
-                loaded,
-                validation,
-                resolved={"schema_saida": {}},
-                execution_log=execution_log,
-            )
-            return {
-                "manifest_key": manifest_key,
-                "company_slug": loaded["execution"]["company_slug"],
-                "execution_id": loaded["execution"]["execution_id"],
-                "document_id": loaded["execution"]["document_id"],
-                "layout_alterado": True,
-                "status_compatibilidade": validation["status_compatibilidade"]["status"],
-                "persisted": persist_uris,
-            }
-
         resolved = self.resolve_canonical_mapping(loaded, validation)
         execution_log = self.build_execution_log(loaded, validation, resolved)
         persist_uris = self.persist_outputs(loaded, validation, resolved, execution_log)
@@ -97,7 +76,7 @@ class SchemaResolutionService:
             "company_slug": loaded["execution"]["company_slug"],
             "execution_id": loaded["execution"]["execution_id"],
             "document_id": loaded["execution"]["document_id"],
-            "layout_alterado": False,
+            "layout_alterado": layout_alterado,
             "status_compatibilidade": validation["status_compatibilidade"]["status"],
             "persisted": persist_uris,
         }
@@ -129,7 +108,7 @@ class SchemaResolutionService:
         fail_codes: list[str] = []
 
         for rule in rules:
-            result = self._execute_rule(rule, extraction_root)
+            result = self._execute_rule(rule, extraction_root, loaded["contrato_semantico"])
             results.append(result)
             if result["status"] == "reprovada":
                 fail_codes.append(str(rule.get("codigo_falha", "FALHA_DETERMINISTICA")))
@@ -138,7 +117,7 @@ class SchemaResolutionService:
         rejected = len(results) - approved
         compatible = rejected == 0
         report = {
-            "tipo_artefato": "report_validacao",
+            "tipo_artefato": "validacao_layout_signature",
             "empresa": layout.get("empresa"),
             "executado_em": datetime.now(UTC).isoformat(),
             "status_compatibilidade": {
@@ -153,63 +132,41 @@ class SchemaResolutionService:
         return report
 
     def resolve_canonical_mapping(self, loaded: dict[str, Any], validation: dict[str, Any]) -> dict[str, Any]:
-        """Resolve campos canonicos principais a partir de blocos e tabelas."""
+        """Resolve o schema de saida usando o contrato semantico e o mapeamento canonico."""
+        contrato = loaded["contrato_semantico"]
         layout = loaded["layout_signature"]
         extraction_root = Path(loaded["extraction_root"])
         mapping = layout.get("mapeamento_canonico", {})
 
-        lanc_table_path = extraction_root / "tables/table001.json"
-        vend_table_path = extraction_root / "tables/table002.json"
-        lanc_table = self._read_json(lanc_table_path)
-        vend_table = self._read_json(vend_table_path)
+        schema_saida = self._build_schema_template(contrato.get("schema_saida", {}))
+        resolved_by_path: dict[str, Any] = {}
+        audit: list[dict[str, Any]] = []
+        for mapping_path, mapping_entry in mapping.items():
+            if not isinstance(mapping_entry, dict):
+                continue
+            result = self._resolve_mapping_entry(
+                contrato=contrato,
+                mapping_path=str(mapping_path),
+                mapping_entry=mapping_entry,
+                extraction_root=extraction_root,
+                resolved_by_path=resolved_by_path,
+            )
+            resolved_by_path[str(mapping_path)] = result["valor_resolvido"]
+            audit.append(result)
+            if result["status_resolucao"] == "resolvido":
+                self._set_schema_value(
+                    target=schema_saida,
+                    contract_template=contrato.get("schema_saida", {}),
+                    mapping_path=str(mapping_path),
+                    value=result["valor_resolvido"],
+                )
 
-        periodos = self._resolve_period_headers(lanc_table)
-        periodo_referencia = self._resolve_periodo_referencia(
-            extraction_root=extraction_root,
-            mapping_entry=mapping.get("periodo_referencia", {}),
-            fallback=periodos.get("periodo_referencia"),
-        )
-
-        if periodos.get("periodo_referencia") is None and periodo_referencia:
-            periodos["periodo_referencia"] = periodo_referencia
-
-        schema_saida = {
-            "fonte": self._resolve_fonte(mapping.get("fonte", {})),
-            "periodo_referencia": periodo_referencia,
-            "periodos_disponiveis": {
-                "periodo_referencia": periodos.get("periodo_referencia"),
-                "periodo_comparativo_anterior": periodos.get("periodo_comparativo_anterior"),
-                "mesmo_periodo_ano_anterior": periodos.get("mesmo_periodo_ano_anterior"),
-                "periodo_12m_atual": periodos.get("periodo_12m_atual"),
-                "periodo_12m_anterior": periodos.get("periodo_12m_anterior"),
-            },
-            "balancos_das_empresas": {
-                "titulo": "Balancos das empresas",
-                "lancamentos": self._resolve_operacao(
-                    layout=layout,
-                    table=lanc_table,
-                    tipo_operacao="lancamento",
-                    periodos=periodos,
-                ),
-                "vendas": self._resolve_operacao(
-                    layout=layout,
-                    table=vend_table,
-                    tipo_operacao="venda",
-                    periodos=periodos,
-                ),
-            },
-            "metricas_calculadas": {
-                "observacao": (
-                    "Variacoes percentuais devem ser calculadas em etapa posterior "
-                    "usando os valores brutos por periodo."
-                ),
-                "status": "nao_calculadas_na_extracao",
-            },
-        }
+        schema_saida = self._strip_internal_schema_metadata(schema_saida)
 
         return {
             "schema_saida": schema_saida,
             "validation_status": validation["status_compatibilidade"]["status"],
+            "auditoria_resolucao": audit,
         }
 
     def build_execution_log(
@@ -223,7 +180,7 @@ class SchemaResolutionService:
         execution = loaded.get("execution", runtime.get("execution", {}))
         status = "concluida" if validation["status_compatibilidade"]["status"] == "compativel" else "incompleta"
         return {
-            "tipo_artefato": "log_execucao",
+            "tipo_artefato": "auditoria_resolucao",
             "dag_name": runtime.get("dag_name"),
             "execution_id": execution.get("execution_id"),
             "document_id": execution.get("document_id"),
@@ -233,7 +190,16 @@ class SchemaResolutionService:
                 "validation_status": validation["status_compatibilidade"]["status"],
                 "periodo_referencia": resolved["schema_saida"].get("periodo_referencia"),
                 "empresa": loaded["layout_signature"].get("empresa"),
+                "campos_mapeamento_resolvidos": len(resolved.get("auditoria_resolucao", [])),
+                "campos_mapeamento_com_falha": len(
+                    [
+                        item
+                        for item in resolved.get("auditoria_resolucao", [])
+                        if item.get("status_resolucao") != "resolvido"
+                    ]
+                ),
             },
+            "auditoria_resolucao": resolved.get("auditoria_resolucao", []),
         }
 
     def persist_outputs(
@@ -246,9 +212,9 @@ class SchemaResolutionService:
         """Persiste os 3 artefatos finais no MinIO."""
         output_keys = loaded.get("output_keys")
         if isinstance(output_keys, dict):
-            validation_key = str(output_keys["report_validacao"])
+            validation_key = str(output_keys["validacao_layout_signature"])
             resolved_key = str(output_keys["schema_saida_resolvido"])
-            log_key = str(output_keys["log_execucao"])
+            log_key = str(output_keys["auditoria_resolucao"])
         else:
             runtime = loaded["runtime"]
             artifacts = list(runtime.get("artifacts", []))
@@ -259,20 +225,19 @@ class SchemaResolutionService:
             if not validation_key or not resolved_key or not log_key:
                 raise RuntimeError("Runtime da DAG 2 sem object_key esperado para persistencia.")
 
-        # Nomes pedidos no diagrama.
-        validation["tipo_artefato"] = "report_validacao"
-        execution_log["tipo_artefato"] = "log_execucao"
+        validation["tipo_artefato"] = "validacao_layout_signature"
+        execution_log["tipo_artefato"] = "auditoria_resolucao"
 
-        report_uri = self.minio_client.put_json(object_key=validation_key, payload=validation)
+        validation_uri = self.minio_client.put_json(object_key=validation_key, payload=validation)
         schema_uri = self.minio_client.put_json(
             object_key=resolved_key,
             payload=resolved.get("schema_saida", {}),
         )
-        log_uri = self.minio_client.put_json(object_key=log_key, payload=execution_log)
+        audit_uri = self.minio_client.put_json(object_key=log_key, payload=execution_log)
         return {
-            "report_validacao_uri": report_uri,
+            "validacao_layout_signature_uri": validation_uri,
             "schema_saida_resolvido_uri": schema_uri,
-            "log_execucao_uri": log_uri,
+            "auditoria_resolucao_uri": audit_uri,
         }
 
     def _discover_extraction_manifests(self) -> list[str]:
@@ -333,9 +298,9 @@ class SchemaResolutionService:
             "layout_signature": layout,
             "extraction_root": str(extraction_root),
             "output_keys": {
-                "report_validacao": f"{resolution_prefix}/report_validacao.json",
+                "validacao_layout_signature": f"{resolution_prefix}/validacao_layout_signature.json",
                 "schema_saida_resolvido": f"{resolution_prefix}/schema_saida_resolvido.json",
-                "log_execucao": f"{resolution_prefix}/log_execucao.json",
+                "auditoria_resolucao": f"{resolution_prefix}/auditoria_resolucao.json",
             },
         }
 
@@ -366,7 +331,12 @@ class SchemaResolutionService:
             return default_root
         raise RuntimeError("Nao foi possivel localizar pasta de extracao para DAG 2.")
 
-    def _execute_rule(self, rule: dict[str, Any], extraction_root: Path) -> dict[str, Any]:
+    def _execute_rule(
+        self,
+        rule: dict[str, Any],
+        extraction_root: Path,
+        contrato: dict[str, Any],
+    ) -> dict[str, Any]:
         rule_id = str(rule.get("id_regra", "regra_sem_id"))
         rule_type = str(rule.get("tipo_teste", "desconhecido"))
         origin_file = str(rule.get("arquivo_origem", ""))
@@ -417,7 +387,10 @@ class SchemaResolutionService:
             table = self._read_json(origin_path)
             if rule_type == "linha_existe_em_tabela":
                 label_col = int(rule.get("coluna_rotulo", 0))
-                accepted = {self._normalize_text(str(item)) for item in rule.get("valores_aceitos", [])}
+                accepted = self._expand_accepted_labels_from_contract(
+                    contrato=contrato,
+                    values=[str(item) for item in rule.get("valores_aceitos", [])],
+                )
                 row_index = self._find_row_index(table, accepted, label_col)
                 return {
                     **base,
@@ -451,8 +424,11 @@ class SchemaResolutionService:
 
             if rule_type == "valor_normalizavel":
                 label_col = 0
-                row_label = self._normalize_text(str(rule.get("linha_rotulo", "")))
-                row_index = self._find_row_index(table, {row_label}, label_col)
+                accepted = self._expand_accepted_labels_from_contract(
+                    contrato=contrato,
+                    values=[str(rule.get("linha_rotulo", ""))],
+                )
+                row_index = self._find_row_index(table, accepted, label_col)
                 idx = int(rule.get("indice_coluna_esperado", -1))
                 raw_value = None
                 normalized = None
@@ -481,17 +457,96 @@ class SchemaResolutionService:
             "evidencia": {"erro": f"tipo_teste nao suportado: {rule_type}"},
         }
 
-    def _resolve_fonte(self, mapping_entry: dict[str, Any]) -> str:
-        value = str(mapping_entry.get("valor_fixo", "")).strip()
-        return value or "Balancos trimestrais das empresas"
-
-    def _resolve_periodo_referencia(
+    def _resolve_mapping_entry(
         self,
         *,
+        contrato: dict[str, Any],
+        mapping_path: str,
+        mapping_entry: dict[str, Any],
+        extraction_root: Path,
+        resolved_by_path: dict[str, Any],
+    ) -> dict[str, Any]:
+        tipo_origem = str(mapping_entry.get("tipo_origem", "")).strip()
+        base = {
+            "campo_saida": mapping_path,
+            "tipo_origem": tipo_origem,
+            "arquivo_origem": mapping_entry.get("arquivo_origem"),
+            "obrigatorio": bool(mapping_entry.get("obrigatorio", False)),
+        }
+
+        try:
+            if tipo_origem == "valor_fixo":
+                value = mapping_entry.get("valor_fixo")
+                return {
+                    **base,
+                    "status_resolucao": "resolvido",
+                    "valor_resolvido": value,
+                    "evidencia": {"valor_fixo": value},
+                }
+
+            if tipo_origem == "campo_derivado":
+                source_path = str(mapping_entry.get("campo_origem", "")).strip()
+                value = resolved_by_path.get(source_path)
+                return {
+                    **base,
+                    "status_resolucao": "resolvido" if value is not None else "nao_resolvido",
+                    "valor_resolvido": value,
+                    "evidencia": {"campo_origem": source_path},
+                }
+
+            if tipo_origem == "bloco_textual":
+                value, evidence = self._resolve_text_block_mapping(extraction_root, mapping_entry)
+                return {
+                    **base,
+                    "status_resolucao": "resolvido" if value is not None else "nao_resolvido",
+                    "valor_resolvido": value,
+                    "evidencia": evidence,
+                }
+
+            if tipo_origem == "cabecalho_de_tabela":
+                value, evidence = self._resolve_table_header_mapping(extraction_root, mapping_entry)
+                return {
+                    **base,
+                    "status_resolucao": "resolvido" if value is not None else "nao_resolvido",
+                    "valor_resolvido": value,
+                    "evidencia": evidence,
+                }
+
+            if tipo_origem == "celula_de_tabela":
+                value, evidence = self._resolve_table_cell_mapping(
+                    contrato=contrato,
+                    mapping_path=mapping_path,
+                    extraction_root=extraction_root,
+                    mapping_entry=mapping_entry,
+                    resolved_by_path=resolved_by_path,
+                )
+                return {
+                    **base,
+                    "status_resolucao": "resolvido" if value.get("valor") is not None else "nao_resolvido",
+                    "valor_resolvido": value,
+                    "evidencia": evidence,
+                }
+        except Exception as exc:
+            logging.exception("Falha ao resolver mapeamento canonico %s", mapping_path)
+            return {
+                **base,
+                "status_resolucao": "erro",
+                "valor_resolvido": None,
+                "evidencia": {"erro": str(exc)},
+            }
+
+        return {
+            **base,
+            "status_resolucao": "nao_suportado",
+            "valor_resolvido": None,
+            "evidencia": {"erro": f"tipo_origem nao suportado: {tipo_origem}"},
+        }
+
+    def _resolve_text_block_mapping(
+        self,
         extraction_root: Path,
         mapping_entry: dict[str, Any],
-        fallback: str | None,
-    ) -> str | None:
+    ) -> tuple[str | None, dict[str, Any]]:
         block_file = str(mapping_entry.get("arquivo_origem", "blocks/blocks.jsonl"))
         block_id = str(mapping_entry.get("block_id", "")).strip()
         pattern = str(mapping_entry.get("padrao", r"[1-4]T[0-9]{2}"))
@@ -503,59 +558,282 @@ class SchemaResolutionService:
             text = str(block.get("text", ""))
             match = re.search(pattern, text)
             if match:
-                return match.group(0)
-        return fallback
+                return match.group(0), {
+                    "arquivo_origem": block_file,
+                    "block_id": block.get("block_id"),
+                    "section_id": block.get("section_id"),
+                    "padrao": pattern,
+                    "texto": text,
+                }
+        return None, {"arquivo_origem": block_file, "block_id": block_id or None, "padrao": pattern}
 
-    def _resolve_period_headers(self, table: dict[str, Any]) -> dict[str, str | None]:
+    def _resolve_table_header_mapping(
+        self,
+        extraction_root: Path,
+        mapping_entry: dict[str, Any],
+    ) -> tuple[str | None, dict[str, Any]]:
+        origin_file = str(mapping_entry.get("arquivo_origem", ""))
+        table = self._read_json(extraction_root / origin_file)
         schema = list(table.get("schema", []))
-        pick = lambda idx: schema[idx] if idx < len(schema) else None
-        return {
-            "periodo_referencia": pick(1),
-            "periodo_comparativo_anterior": pick(2),
-            "mesmo_periodo_ano_anterior": pick(4),
-            "periodo_12m_atual": pick(6),
-            "periodo_12m_anterior": pick(7),
+        selector = dict(mapping_entry.get("seletor_coluna", {}))
+        idx = int(selector.get("indice_coluna_esperado", -1))
+        header = schema[idx] if idx >= 0 and idx < len(schema) else None
+        pattern = str(selector.get("padrao_cabecalho_aceito", ".*"))
+        ok = header is not None and re.search(pattern, str(header)) is not None
+        return (str(header) if ok else None), {
+            "arquivo_origem": origin_file,
+            "indice_coluna": idx,
+            "cabecalho_encontrado": header,
+            "padrao_cabecalho_aceito": pattern,
+            "papel_periodo": mapping_entry.get("papel_periodo"),
         }
 
-    def _resolve_operacao(
+    def _resolve_table_cell_mapping(
         self,
         *,
-        layout: dict[str, Any],
-        table: dict[str, Any],
-        tipo_operacao: str,
-        periodos: dict[str, str | None],
-    ) -> dict[str, Any]:
-        empresa = str(layout.get("empresa", "empresa_desconhecida"))
-        row_index = self._find_row_index(table, {self._normalize_text("Numero de Unidades")}, 0)
-        values: list[dict[str, Any]] = []
-        if row_index is not None:
-            row = list(table.get("rows", []))[row_index]
-            for key, col_idx, escopo in [
-                ("periodo_referencia", 1, "trimestre"),
-                ("periodo_comparativo_anterior", 2, "trimestre"),
-                ("mesmo_periodo_ano_anterior", 4, "trimestre"),
-                ("periodo_12m_atual", 6, "ultimos_12_meses"),
-                ("periodo_12m_anterior", 7, "ultimos_12_meses"),
-            ]:
-                if col_idx >= len(row):
-                    continue
-                periodo = periodos.get(key)
-                values.append(
-                    {
-                        "periodo": periodo,
-                        "escopo_periodo": escopo,
-                        "valor": parse_flexible_number(row[col_idx]),
-                    }
-                )
+        contrato: dict[str, Any],
+        mapping_path: str,
+        extraction_root: Path,
+        mapping_entry: dict[str, Any],
+        resolved_by_path: dict[str, Any],
+    ) -> tuple[dict[str, Any], dict[str, Any]]:
+        origin_file = str(mapping_entry.get("arquivo_origem", ""))
+        table = self._read_json(extraction_root / origin_file)
+        schema = list(table.get("schema", []))
+        rows = list(table.get("rows", []))
 
-        return {
-            "titulo": "Lancamentos" if tipo_operacao == "lancamento" else "Vendas",
-            "tipo": "valor_bruto",
-            "tipo_operacao": tipo_operacao,
-            "indicador": "numero_de_unidades",
-            "unidade": "unidades",
-            "dados": [{"empresa": empresa, "valores": values}],
+        row_selector = dict(mapping_entry.get("seletor_linha", {}))
+        column_selector = dict(mapping_entry.get("seletor_coluna", {}))
+        label_col = int(row_selector.get("coluna_rotulo", 0))
+        accepted = self._expand_accepted_labels_from_contract(
+            contrato=contrato,
+            values=[str(row_selector.get("valor_aceito", ""))],
+            mapping_path=mapping_path,
+            resolved_by_path=resolved_by_path,
+        )
+        row_index = self._find_row_index(table, accepted, label_col)
+        col_idx = int(column_selector.get("indice_coluna_esperado", -1))
+        header = schema[col_idx] if col_idx >= 0 and col_idx < len(schema) else None
+        header_pattern = str(column_selector.get("padrao_cabecalho_aceito", ".*"))
+        header_ok = header is not None and re.search(header_pattern, str(header)) is not None
+
+        raw_value = None
+        normalized_value = None
+        if row_index is not None and row_index < len(rows):
+            row = list(rows[row_index])
+            if col_idx >= 0 and col_idx < len(row) and header_ok:
+                raw_value = row[col_idx]
+                normalized_value = parse_flexible_number(raw_value)
+
+        value = {
+            "periodo": str(header) if header_ok and header is not None else None,
+            "escopo_periodo": mapping_entry.get("escopo_periodo") or column_selector.get("escopo_periodo"),
+            "valor": normalized_value,
         }
+        evidence = {
+            "arquivo_origem": origin_file,
+            "row_index": row_index,
+            "column_index": col_idx,
+            "linha_rotulo_aceita": row_selector.get("valor_aceito"),
+            "linha_rotulo_sinonimos_aceitos": sorted(accepted),
+            "cabecalho_encontrado": header,
+            "padrao_cabecalho_aceito": header_pattern,
+            "papel_periodo": mapping_entry.get("papel_periodo"),
+            "valor_bruto": raw_value,
+            "valor_normalizado": normalized_value,
+        }
+        return value, evidence
+
+    @staticmethod
+    def _build_schema_template(contract_node: Any) -> Any:
+        if isinstance(contract_node, dict):
+            return {key: SchemaResolutionService._build_schema_template(value) for key, value in contract_node.items()}
+        if isinstance(contract_node, list):
+            return []
+        return None
+
+    @staticmethod
+    def _parse_mapping_path(mapping_path: str) -> list[dict[str, str | tuple[str, str]]]:
+        tokens: list[dict[str, str | tuple[str, str]]] = []
+        for raw_part in mapping_path.split("."):
+            match = re.fullmatch(r"([^\[\]]+)(?:\[([^=\]]+)=([^\]]+)\])?", raw_part)
+            if not match:
+                raise RuntimeError(f"Caminho de mapeamento canonico invalido: {mapping_path}")
+            token: dict[str, str | tuple[str, str]] = {"field": match.group(1)}
+            if match.group(2) is not None:
+                token["selector"] = (match.group(2), match.group(3))
+            tokens.append(token)
+        return tokens
+
+    def _set_schema_value(
+        self,
+        *,
+        target: dict[str, Any],
+        contract_template: Any,
+        mapping_path: str,
+        value: Any,
+    ) -> None:
+        tokens = self._parse_mapping_path(mapping_path)
+        current: Any = target
+        current_contract: Any = contract_template
+
+        for index, token in enumerate(tokens):
+            field = str(token["field"])
+            selector = token.get("selector")
+            is_last = index == len(tokens) - 1
+
+            if not isinstance(current, dict):
+                raise RuntimeError(f"Caminho nao compativel com schema_saida do contrato: {mapping_path}")
+
+            if selector is None:
+                if not self._contract_has_field(current_contract, field):
+                    return
+                if is_last:
+                    current[field] = value
+                    return
+                child_contract = self._contract_child_template(current_contract, field)
+                if field not in current or current[field] is None:
+                    current[field] = self._build_schema_template(child_contract)
+                current = current[field]
+                current_contract = child_contract
+                continue
+
+            if not self._contract_has_field(current_contract, field):
+                return
+            array_contract = self._contract_child_template(current_contract, field)
+            item_contract = array_contract[0] if isinstance(array_contract, list) and array_contract else {}
+            if not isinstance(current.get(field), list):
+                current[field] = []
+            item = self._find_or_create_schema_array_item(
+                items=current[field],
+                item_contract=item_contract,
+                selector=selector,
+            )
+            if is_last:
+                if isinstance(item, dict) and isinstance(value, dict):
+                    item.update(value)
+                else:
+                    item = value
+                return
+            current = item
+            current_contract = item_contract
+
+    @staticmethod
+    def _contract_child_template(contract_node: Any, field: str) -> Any:
+        if isinstance(contract_node, dict):
+            return contract_node.get(field)
+        return None
+
+    @staticmethod
+    def _contract_has_field(contract_node: Any, field: str) -> bool:
+        return isinstance(contract_node, dict) and field in contract_node
+
+    def _find_or_create_schema_array_item(
+        self,
+        *,
+        items: list[Any],
+        item_contract: Any,
+        selector: str | tuple[str, str],
+    ) -> dict[str, Any]:
+        selector_key, selector_value = selector
+        for item in items:
+            if not isinstance(item, dict):
+                continue
+            selectors = item.get("__selectors__")
+            if isinstance(selectors, dict) and selectors.get(selector_key) == selector_value:
+                return item
+
+        item = self._build_schema_template(item_contract)
+        if not isinstance(item, dict):
+            item = {}
+        item["__selectors__"] = {selector_key: selector_value}
+        if selector_key in item and item[selector_key] is None:
+            item[selector_key] = selector_value
+        items.append(item)
+        return item
+
+    def _strip_internal_schema_metadata(self, value: Any) -> Any:
+        if isinstance(value, dict):
+            return {
+                key: self._strip_internal_schema_metadata(item)
+                for key, item in value.items()
+                if key != "__selectors__"
+            }
+        if isinstance(value, list):
+            return [self._strip_internal_schema_metadata(item) for item in value]
+        return value
+
+    def _expand_accepted_labels_from_contract(
+        self,
+        *,
+        contrato: dict[str, Any],
+        values: list[str],
+        mapping_path: str | None = None,
+        resolved_by_path: dict[str, Any] | None = None,
+    ) -> set[str]:
+        accepted = {self._normalize_text(value) for value in values if str(value).strip()}
+        semantic = dict(contrato.get("contrato_semantico", {}))
+        source_values = set(accepted)
+        metric_context = self._semantic_metric_context(
+            mapping_path=mapping_path,
+            resolved_by_path=resolved_by_path or {},
+        )
+
+        for entity_name, entity_spec in dict(semantic.get("entidades", {})).items():
+            if not isinstance(entity_spec, dict):
+                continue
+            candidates = self._semantic_candidates(entity_name, entity_spec)
+            if source_values.intersection({self._normalize_text(item) for item in candidates}):
+                accepted.update(self._normalize_text(item) for item in candidates)
+
+        for metric_name, metric_spec in dict(semantic.get("metricas", {})).items():
+            if not isinstance(metric_spec, dict):
+                continue
+            if str(metric_spec.get("tipo")) == "metrica_calculada":
+                continue
+            metric_matches_context = self._metric_matches_context(metric_name, metric_spec, metric_context)
+            for indicator_name, indicator_spec in dict(metric_spec.get("indicadores", {})).items():
+                if not isinstance(indicator_spec, dict):
+                    continue
+                candidates = self._semantic_candidates(indicator_name, indicator_spec)
+                normalized_candidates = {self._normalize_text(item) for item in candidates}
+                if metric_matches_context or source_values.intersection(normalized_candidates):
+                    accepted.update(normalized_candidates)
+
+        return accepted
+
+    def _semantic_metric_context(
+        self,
+        *,
+        mapping_path: str | None,
+        resolved_by_path: dict[str, Any],
+    ) -> dict[str, str]:
+        if not mapping_path:
+            return {}
+        prefix = re.split(r"\.dados\[|\.valores\[", mapping_path, maxsplit=1)[0]
+        context: dict[str, str] = {}
+        for field in ("tipo_operacao", "indicador", "unidade"):
+            value = resolved_by_path.get(f"{prefix}.{field}")
+            if value is not None:
+                context[field] = str(value)
+        return context
+
+    @staticmethod
+    def _semantic_candidates(name: str, spec: dict[str, Any]) -> list[str]:
+        candidates = [name]
+        for key in ("dominio", "sinonimos"):
+            values = spec.get(key)
+            if isinstance(values, list):
+                candidates.extend(str(item) for item in values)
+        return candidates
+
+    @staticmethod
+    def _metric_matches_context(metric_name: str, metric_spec: dict[str, Any], context: dict[str, str]) -> bool:
+        if not context:
+            return False
+        if context.get("tipo_operacao") and str(metric_spec.get("tipo_operacao")) == context["tipo_operacao"]:
+            return True
+        return metric_name in context.values()
 
     def _load_json_from_uri_or_local(self, uri: str, *, local_fallback: str) -> dict[str, Any]:
         if uri.startswith("minio://"):
@@ -600,7 +878,9 @@ class SchemaResolutionService:
 
     @staticmethod
     def _normalize_text(value: str) -> str:
-        return re.sub(r"\s+", " ", value).strip().lower().replace("ú", "u").replace("ç", "c")
+        normalized = unicodedata.normalize("NFKD", value)
+        ascii_value = normalized.encode("ascii", "ignore").decode("ascii")
+        return re.sub(r"\s+", " ", ascii_value).strip().lower()
 
     def _find_row_index(self, table: dict[str, Any], accepted: set[str], label_col: int) -> int | None:
         rows = list(table.get("rows", []))

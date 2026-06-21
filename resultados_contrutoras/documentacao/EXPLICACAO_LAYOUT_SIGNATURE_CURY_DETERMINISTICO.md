@@ -64,9 +64,9 @@ Exemplos reais que já estão no arquivo:
 - `tables/table002.json` como fonte primária de `vendas`;
 - página `4` para lançamentos;
 - página `7` para vendas;
-- coluna `%T/T`;
-- coluna `%A/A`;
 - cabeçalhos `4T25`, `1T25`, `1T26 UDM*`, `1T25 UDM*`.
+- colunas observáveis de comparação como `%T/T` e `%A/A`, que ajudam a
+  entender o layout mas não entram no `schema_saida_resolvido`.
 
 O que ele não contém é o valor final já resolvido, por exemplo:
 
@@ -357,17 +357,21 @@ O que você deve encontrar:
 
 ### Exemplo 4: conferir o mapeamento de lançamentos para `Número de Unidades`
 
-No layout signature, o campo:
+No layout signature, os campos de valores brutos de lançamentos apontam para:
 
-- `balancos_das_empresas.lancamentos.dados[empresa=Cury].variacao_vs_periodo_comparativo_anterior`
+- `balancos_das_empresas.lancamentos.dados[empresa=Cury].valores[papel_periodo=periodo_referencia]`
+- `balancos_das_empresas.lancamentos.dados[empresa=Cury].valores[papel_periodo=periodo_comparativo_anterior]`
+- `balancos_das_empresas.lancamentos.dados[empresa=Cury].valores[papel_periodo=mesmo_periodo_ano_anterior]`
+- `balancos_das_empresas.lancamentos.dados[empresa=Cury].valores[papel_periodo=periodo_12m_atual]`
+- `balancos_das_empresas.lancamentos.dados[empresa=Cury].valores[papel_periodo=periodo_12m_anterior]`
 
 aponta para:
 
 - `tables/table001.json`
 - linha `Número de Unidades`
-- coluna `%T/T`
+- colunas de período bruto, como `1T26`, `4T25`, `1T25`, `1T26 UDM*` e `1T25 UDM*`
 - `indice_linha_esperado = 2`
-- `indice_coluna_esperado = 3`
+- `indice_coluna_esperado` conforme o papel de período
 
 Onde conferir:
 
@@ -377,32 +381,29 @@ Onde conferir:
 O que você deve encontrar em `cells.json`:
 
 - `row_index = 2`, `column_index = 0`, `value_raw = Número de Unidades`
-- `row_index = 2`, `column_index = 3`, `value_raw = 108,7%`
-- `row_index = 2`, `column_index = 5`, `value_raw = -12,4%`
-- `row_index = 2`, `column_index = 8`, `value_raw = 5,4%`
+- valores brutos nas colunas dos períodos mapeados
 
 O que você deve encontrar em `normalized_rows.json`:
 
 - um registro com `attributes.lancamentos = Número de Unidades`
-- `measures.t_t = 108.7`
-- `measures.a_a = -12.4`
-- `measures.a_a_2 = 5.4`
+- medidas associadas aos cabeçalhos de período bruto
 
-Se isso bater, a DAG conseguiria resolver corretamente:
+As colunas `%T/T` e `%A/A` podem aparecer na tabela como evidência estrutural
+observável, mas não pertencem ao `schema_saida_resolvido` e não devem ser
+prometidas pelo `mapeamento_canonico`.
 
-- `variacao_vs_periodo_comparativo_anterior = 108.7`
-- `variacao_vs_mesmo_periodo_ano_anterior = -12.4`
-- `variacao_12m_periodo_atual_vs_12m_periodo_anterior = 5.4`
+Se isso bater, a DAG conseguiria resolver corretamente os valores brutos de
+lançamentos por período.
 
 
 ### Exemplo 5: conferir os períodos comparativos em lançamentos
 
 No layout signature, estes campos usam cabeçalhos de `table001`:
 
-- `periodos_comparacao.periodo_comparativo_anterior -> 4T25`
-- `periodos_comparacao.mesmo_periodo_ano_anterior -> 1T25`
-- `periodos_comparacao.periodo_12m_atual -> 1T26 UDM*`
-- `periodos_comparacao.periodo_12m_anterior -> 1T25 UDM*`
+- `periodos_disponiveis.periodo_comparativo_anterior -> 4T25`
+- `periodos_disponiveis.mesmo_periodo_ano_anterior -> 1T25`
+- `periodos_disponiveis.periodo_12m_atual -> 1T26 UDM*`
+- `periodos_disponiveis.periodo_12m_anterior -> 1T25 UDM*`
 
 Onde conferir:
 
@@ -450,17 +451,21 @@ O que você deve encontrar:
 
 ### Exemplo 7: conferir o mapeamento de vendas para `Número de Unidades`
 
-No layout signature, o campo:
+No layout signature, os campos de valores brutos de vendas apontam para:
 
-- `balancos_das_empresas.vendas.dados[empresa=Cury].variacao_vs_periodo_comparativo_anterior`
+- `balancos_das_empresas.vendas.dados[empresa=Cury].valores[papel_periodo=periodo_referencia]`
+- `balancos_das_empresas.vendas.dados[empresa=Cury].valores[papel_periodo=periodo_comparativo_anterior]`
+- `balancos_das_empresas.vendas.dados[empresa=Cury].valores[papel_periodo=mesmo_periodo_ano_anterior]`
+- `balancos_das_empresas.vendas.dados[empresa=Cury].valores[papel_periodo=periodo_12m_atual]`
+- `balancos_das_empresas.vendas.dados[empresa=Cury].valores[papel_periodo=periodo_12m_anterior]`
 
 aponta para:
 
 - `tables/table002.json`
 - linha `Número de Unidades`
-- coluna `%T/T`
+- colunas de período bruto, como `1T26`, `4T25`, `1T25`, `1T26 UDM*` e `1T25 UDM*`
 - `indice_linha_esperado = 1`
-- `indice_coluna_esperado = 3`
+- `indice_coluna_esperado` conforme o papel de período
 
 Onde conferir:
 
@@ -470,22 +475,19 @@ Onde conferir:
 O que você deve encontrar em `cells.json`:
 
 - `row_index = 1`, `column_index = 0`, `value_raw = Número de Unidades`
-- `row_index = 1`, `column_index = 3`, `value_raw = 43,0%`
-- `row_index = 1`, `column_index = 5`, `value_raw = 8,5%`
-- `row_index = 1`, `column_index = 8`, `value_raw = 19,4%`
+- valores brutos nas colunas dos períodos mapeados
 
 O que você deve encontrar em `normalized_rows.json`:
 
 - um registro com `attributes.vendas_vso = Número de Unidades`
-- `measures.t_t = 43.0`
-- `measures.a_a = 8.5`
-- `measures.a_a_2 = 19.4`
+- medidas associadas aos cabeçalhos de período bruto
 
-Se isso bater, a DAG conseguiria resolver corretamente:
+As colunas `%T/T` e `%A/A` podem aparecer na tabela como evidência estrutural
+observável, mas não pertencem ao `schema_saida_resolvido` e não devem ser
+prometidas pelo `mapeamento_canonico`.
 
-- `variacao_vs_periodo_comparativo_anterior = 43.0`
-- `variacao_vs_mesmo_periodo_ano_anterior = 8.5`
-- `variacao_12m_periodo_atual_vs_12m_periodo_anterior = 19.4`
+Se isso bater, a DAG conseguiria resolver corretamente os valores brutos de
+vendas por período.
 
 
 ### Exemplo 8: conferir com artefatos textuais auxiliares
@@ -735,18 +737,20 @@ Isso detecta mudança semântica ou mudança da tabela.
 
 Exemplo:
 
-- procurar `%T/T` ou `%A/A`.
+- procurar cabeçalhos de períodos brutos, como `1T26`, `4T25`, `1T25` ou `1T26 UDM*`.
 
-Isso detecta se o formato da comparação mudou.
+Isso detecta se o perfil temporal da tabela mudou. Colunas de comparação como
+`%T/T` e `%A/A` podem ser observadas como parte do layout, mas não são campos do
+`schema_saida_resolvido`.
 
 #### `valor_normalizavel`
 
 Exemplo:
 
 - pegar o valor na célula esperada;
-- testar se a normalização `percentual_pt_br_para_numero` funciona.
+- testar se a normalização `numero_pt_br_para_numero` funciona.
 
-Isso detecta mudança de formato no conteúdo, mesmo quando a tabela continua existindo.
+Isso detecta mudança de formato no conteúdo bruto, mesmo quando a tabela continua existindo.
 
 ### Por que isso é importante
 
@@ -786,8 +790,8 @@ Exemplos:
 
 - `fonte`
 - `periodo_referencia`
-- `periodos_comparacao.periodo_comparativo_anterior`
-- `balancos_das_empresas.lancamentos.dados[empresa=Cury].variacao_vs_periodo_comparativo_anterior`
+- `periodos_disponiveis.periodo_comparativo_anterior`
+- `balancos_das_empresas.lancamentos.dados[empresa=Cury].valores[papel_periodo=periodo_referencia]`
 
 Em outras palavras:
 
@@ -805,7 +809,7 @@ Exemplos:
 
 - `fonte = "Balanços trimestrais das empresas"`
 - `balancos_das_empresas.titulo = "Balanços das empresas"`
-- `balancos_das_empresas.lancamentos.tipo = "variacao_percentual"`
+- `balancos_das_empresas.lancamentos.tipo = "valor_bruto"`
 
 Uso pela DAG:
 
@@ -849,7 +853,7 @@ Usado quando um campo depende de outro já resolvido.
 
 Exemplo:
 
-- `periodos_comparacao.periodo_referencia`
+- `periodos_disponiveis.periodo_referencia`
 
 Nesse caso:
 
@@ -868,10 +872,10 @@ Usado quando o valor esperado está no cabeçalho de uma tabela.
 
 Exemplos:
 
-- `periodos_comparacao.periodo_comparativo_anterior`
-- `periodos_comparacao.mesmo_periodo_ano_anterior`
-- `periodos_comparacao.periodo_12m_atual`
-- `periodos_comparacao.periodo_12m_anterior`
+- `periodos_disponiveis.periodo_comparativo_anterior`
+- `periodos_disponiveis.mesmo_periodo_ano_anterior`
+- `periodos_disponiveis.periodo_12m_atual`
+- `periodos_disponiveis.periodo_12m_anterior`
 
 Esses campos usam cabeçalhos reais como:
 
@@ -893,7 +897,7 @@ Esse é o tipo mais importante para os indicadores principais.
 
 Exemplo:
 
-- `balancos_das_empresas.vendas.dados[empresa=Cury].variacao_vs_periodo_comparativo_anterior`
+- `balancos_das_empresas.vendas.dados[empresa=Cury].valores[papel_periodo=periodo_referencia]`
 
 Quando a origem é `celula_de_tabela`, o arquivo traz:
 
@@ -935,15 +939,15 @@ Exemplo:
 ```json
 "seletor_coluna": {
   "tipo_match": "exato",
-  "cabecalho_aceito": "%T/T",
-  "indice_coluna_esperado": 3
+  "cabecalho_aceito": "1T26",
+  "indice_coluna_esperado": 1
 }
 ```
 
 Significa:
 
 - a coluna deve ser localizada pelo cabeçalho;
-- o cabeçalho esperado é `%T/T`;
+- o cabeçalho esperado é um período bruto;
 - o índice esperado ajuda como verificação.
 
 ### `normalizacao`
@@ -951,7 +955,7 @@ Significa:
 Exemplo:
 
 ```json
-"normalizacao": "percentual_pt_br_para_numero"
+"normalizacao": "numero_pt_br_para_numero"
 ```
 
 Significa:
@@ -961,8 +965,8 @@ Significa:
 
 Exemplo conceitual:
 
-- `"43%"` -> `43.0`
-- `"108,7%"` -> `108.7`
+- `"4.633"` -> `4633`
+- `"18.060"` -> `18060`
 
 ### `bbox`
 
@@ -982,8 +986,7 @@ Usado quando o campo existe no contrato, mas não foi encontrado neste PDF da em
 
 Exemplo:
 
-- `periodos_comparacao.periodo_12m_base`
-- `variacao_12m_periodo_anterior_vs_12m_periodo_base`
+- `periodos_disponiveis.periodo_12m_base`
 
 Significa:
 
@@ -1061,8 +1064,8 @@ Exemplo:
 - a seção de vendas existe?
 - `tables/table002.json` existe?
 - existe a linha `Número de Unidades`?
-- existe a coluna `%T/T`?
-- o valor da célula pode ser normalizado?
+- existem as colunas de período bruto esperadas?
+- o valor bruto da célula pode ser normalizado?
 
 Se tudo isso passa, a DAG entende que ainda consegue usar o mapeamento com confiança.
 
@@ -1129,7 +1132,7 @@ Porque regenerar tudo:
 Exemplo:
 
 - a tabela de vendas mudou de página;
-- o cabeçalho `%T/T` virou `T/T (%)`;
+- o cabeçalho `1T26 UDM*` virou `UDM 1T26`;
 - a linha `Número de Unidades` virou `Unidades Vendidas`.
 
 Nesses casos, a LLM pode sugerir somente atualização para:

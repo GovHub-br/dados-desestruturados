@@ -79,13 +79,6 @@ def filtrar_execucoes_para_remapeamento(resultados: list[dict[str, object]]) -> 
     return confs
 
 
-@task.branch
-def decidir_fluxo_remapeamento(confs_remapeamento: list[dict[str, object]]) -> str:
-    if confs_remapeamento:
-        return "disparar_remapeamento_llm"
-    return "fim"
-
-
 @dag(
     dag_id="dag_resolve_schema_saida",
     schedule=None,
@@ -103,7 +96,6 @@ def dag_resolve_schema_saida() -> None:
     resultados = processar_execucao_resolucao.partial(runtime=runtime).expand(manifest_key=manifests)
     summary = consolidar_resultados_execucoes(resultados)
     confs_remapeamento = filtrar_execucoes_para_remapeamento(resultados)
-    decisao_remapeamento = decidir_fluxo_remapeamento(confs_remapeamento)
     disparar_remapeamento_llm = TriggerDagRunOperator.partial(
         task_id="disparar_remapeamento_llm",
         trigger_dag_id="dag_valida_e_fallback_llm",
@@ -111,9 +103,9 @@ def dag_resolve_schema_saida() -> None:
         reset_dag_run=False,
     ).expand(conf=confs_remapeamento)
 
-    inicio >> runtime >> manifests >> resultados >> summary >> confs_remapeamento >> decisao_remapeamento
-    decisao_remapeamento >> disparar_remapeamento_llm >> fim
-    decisao_remapeamento >> fim
+    inicio >> runtime >> manifests >> resultados >> summary >> confs_remapeamento
+    confs_remapeamento >> disparar_remapeamento_llm >> fim
+    confs_remapeamento >> fim
 
 
 dag_resolve_schema_saida()
