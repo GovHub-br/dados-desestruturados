@@ -63,16 +63,38 @@ def carregar_artefatos_fallback(fallback_context: dict[str, object]) -> dict[str
 
 
 @task
+def classificar_falha_fallback(loaded_context: dict[str, object]) -> dict[str, object]:
+    classification = loaded_context.get("fallback_classification")
+    if not isinstance(classification, dict):
+        raise AirflowFailException(
+            "Classificacao de fallback ausente no contexto carregado da DAG 3."
+        )
+
+    scope = str(classification.get("fallback_scope", "")).strip()
+    if scope == FALLBACK_LLM_SERVICE.UNSUPPORTED_SCOPE:
+        reasons = classification.get("motivos", [])
+        raise AirflowFailException(
+            "Fallback automatico recusado para esta falha. "
+            f"Classificacao: {scope}. Motivos: {reasons}."
+        )
+
+    logging.info("Classificacao deterministica de fallback: %s", classification)
+    return classification
+
+
+@task
 def registrar_planejamento(
     runtime: dict[str, object],
     fallback_context: dict[str, object],
     loaded_context: dict[str, object],
+    fallback_classification: dict[str, object],
 ) -> dict[str, object]:
     planning = {
         "runtime": runtime,
         "fallback_context": fallback_context,
         "loaded_context": loaded_context,
-        "status": "artefatos_dag2_carregados",
+        "fallback_classification": fallback_classification,
+        "status": "artefatos_dag2_carregados_e_falha_classificada",
     }
     logging.info("Planejamento DAG 3: %s", planning)
     return planning
@@ -93,9 +115,15 @@ def dag_valida_e_fallback_llm() -> None:
     runtime = montar_runtime()
     fallback_context = validar_conf_fallback()
     loaded_context = carregar_artefatos_fallback(fallback_context)
-    planejamento = registrar_planejamento(runtime, fallback_context, loaded_context)
+    fallback_classification = classificar_falha_fallback(loaded_context)
+    planejamento = registrar_planejamento(
+        runtime,
+        fallback_context,
+        loaded_context,
+        fallback_classification,
+    )
 
-    inicio >> runtime >> fallback_context >> loaded_context >> planejamento >> fim
+    inicio >> runtime >> fallback_context >> loaded_context >> fallback_classification >> planejamento >> fim
 
 
 dag_valida_e_fallback_llm()
