@@ -561,7 +561,13 @@ class SchemaResolutionService:
                 return match.group(0), {
                     "arquivo_origem": block_file,
                     "block_id": block.get("block_id"),
+                    "document_id": block.get("document_id"),
+                    "page_number": block.get("page_number"),
                     "section_id": block.get("section_id"),
+                    "section_title": block.get("section_title"),
+                    "bbox": block.get("bbox"),
+                    "order_index": block.get("order_index"),
+                    "role_hint": block.get("role_hint"),
                     "padrao": pattern,
                     "texto": text,
                 }
@@ -574,6 +580,7 @@ class SchemaResolutionService:
     ) -> tuple[str | None, dict[str, Any]]:
         origin_file = str(mapping_entry.get("arquivo_origem", ""))
         table = self._read_json(extraction_root / origin_file)
+        table_metadata = self._load_table_metadata(extraction_root, origin_file, table)
         schema = list(table.get("schema", []))
         selector = dict(mapping_entry.get("seletor_coluna", {}))
         idx = int(selector.get("indice_coluna_esperado", -1))
@@ -582,6 +589,7 @@ class SchemaResolutionService:
         ok = header is not None and re.search(pattern, str(header)) is not None
         return (str(header) if ok else None), {
             "arquivo_origem": origin_file,
+            **self._table_structural_evidence(table_metadata),
             "indice_coluna": idx,
             "cabecalho_encontrado": header,
             "padrao_cabecalho_aceito": pattern,
@@ -599,6 +607,7 @@ class SchemaResolutionService:
     ) -> tuple[dict[str, Any], dict[str, Any]]:
         origin_file = str(mapping_entry.get("arquivo_origem", ""))
         table = self._read_json(extraction_root / origin_file)
+        table_metadata = self._load_table_metadata(extraction_root, origin_file, table)
         schema = list(table.get("schema", []))
         rows = list(table.get("rows", []))
 
@@ -632,6 +641,7 @@ class SchemaResolutionService:
         }
         evidence = {
             "arquivo_origem": origin_file,
+            **self._table_structural_evidence(table_metadata),
             "row_index": row_index,
             "column_index": col_idx,
             "linha_rotulo_aceita": row_selector.get("valor_aceito"),
@@ -643,6 +653,46 @@ class SchemaResolutionService:
             "valor_normalizado": normalized_value,
         }
         return value, evidence
+
+    def _load_table_metadata(
+        self,
+        extraction_root: Path,
+        origin_file: str,
+        table: dict[str, Any],
+    ) -> dict[str, Any]:
+        """Carrega metadados estruturais da tabela, quando a extracao os disponibiliza."""
+        metadata_file = str(table.get("files", {}).get("metadata", "")).strip()
+        if not metadata_file and origin_file.endswith(".json"):
+            metadata_file = origin_file.removesuffix(".json") + "/metadata.json"
+        if not metadata_file:
+            return {}
+
+        metadata_path = extraction_root / metadata_file
+        if not metadata_path.exists():
+            return {}
+        try:
+            return self._read_json(metadata_path)
+        except Exception:
+            logging.exception("Falha ao carregar metadados da tabela %s", metadata_file)
+            return {}
+
+    @staticmethod
+    def _table_structural_evidence(metadata: dict[str, Any]) -> dict[str, Any]:
+        """Seleciona campos estruturais uteis para auditoria e fallback."""
+        if not metadata:
+            return {}
+        return {
+            "table_id": metadata.get("table_id"),
+            "document_id": metadata.get("document_id"),
+            "page_number": metadata.get("page_number"),
+            "section_id": metadata.get("section_id"),
+            "section_title": metadata.get("section_title"),
+            "title_raw": metadata.get("title_raw"),
+            "title_canonical": metadata.get("title_canonical"),
+            "bbox": metadata.get("bbox"),
+            "row_count": metadata.get("row_count"),
+            "column_count": metadata.get("column_count"),
+        }
 
     @staticmethod
     def _build_schema_template(contract_node: Any) -> Any:
