@@ -5,7 +5,15 @@ import json
 from typing import Any
 
 from helpers import RUNTIME_CONFIG_LOADER, RuntimeConfigLoader
+from plugins.clients.llm_client import (
+    FALLBACK_LLM_CLIENT,
+    FallbackLlmClient,
+    FallbackLlmClientError,
+)
 from plugins.clients.minio_storage_client import MinioStorageClient
+from pydantic import ValidationError
+
+from .fallback_llm_models import LayoutSignatureCandidate
 
 
 class FallbackLlmService:
@@ -20,10 +28,12 @@ class FallbackLlmService:
         *,
         config_loader: RuntimeConfigLoader | None = None,
         minio_client: MinioStorageClient | None = None,
+        llm_client: FallbackLlmClient | None = None,
     ) -> None:
         """Inicializa dependencias com injecao opcional para testes."""
         self.config_loader = config_loader or RUNTIME_CONFIG_LOADER
         self._minio_client = minio_client
+        self.llm_client = llm_client or FALLBACK_LLM_CLIENT
 
     @property
     def minio_client(self) -> MinioStorageClient:
@@ -62,6 +72,28 @@ class FallbackLlmService:
             manifest=manifest,
             classification=fallback_classification,
         )
+        fallback_problem_context["fallback_context"] = fallback_context
+        fallback_problem_context["layout_signature_base_ref"] = {
+            "versao": layout.get("versao_artefato"),
+            "object_key": layout_key,
+        }
+        fallback_problem_context["layout_signature_base_editable_sections"] = {
+            "fontes_relevantes": layout.get("fontes_relevantes", {}),
+            "regras_deteccao_mudanca": layout.get("regras_deteccao_mudanca", []),
+            "mapeamento_canonico": layout.get("mapeamento_canonico", {}),
+        }
+        fallback_problem_context["layout_signature_base_validation_context"] = {
+            "mapeamento_canonico_paths": sorted(
+                layout.get("mapeamento_canonico", {}).keys()
+                if isinstance(layout.get("mapeamento_canonico"), dict)
+                else []
+            ),
+            "regras_deteccao_mudanca_ids": [
+                str(rule.get("id_regra"))
+                for rule in layout.get("regras_deteccao_mudanca", [])
+                if isinstance(rule, dict) and rule.get("id_regra")
+            ],
+        }
 
         return {
             "fallback_context": fallback_context,
@@ -225,7 +257,14 @@ class FallbackLlmService:
                 "permitir_regeneracao_total": classification.get("fallback_scope") == self.FULL_REMAP_SCOPE,
                 "nao_gerar_schema_saida_resolvido": True,
                 "nao_inventar_campos_fora_do_contrato": True,
-                "alterar_apenas_mapeamento_canonico": True,
+                "alterar_apenas_layout_signature_candidato": True,
+                "permitir_reescrever_fontes_relevantes": True,
+                "permitir_reescrever_regras_deteccao_mudanca": True,
+                "permitir_reescrever_mapeamento_canonico": True,
+                "permitir_atualizar_metadados_estruturais_de_evidencia": True,
+                "nao_alterar_referencia_contrato_semantico": True,
+                "nao_alterar_regras_execucao_governanca": True,
+                "nao_definir_versao_artefato_final": True,
                 "nao_alterar_layouts_versionados_existentes": True,
             },
             "falha": {
@@ -257,6 +296,33 @@ class FallbackLlmService:
             ),
         }
 
+    def generate_candidate_layout(
+        self,
+        fallback_problem_context: dict[str, Any],
+    ) -> dict[str, Any]:
+        """Chama a LLM e valida que a resposta e um layout candidato JSON."""
+        constraints = fallback_problem_context.get("llm_constraints", {})
+        if not isinstance(constraints, dict) or not constraints.get("chamar_llm"):
+            raise RuntimeError("Contexto de fallback nao permite chamada LLM.")
+
+        try:
+            parsed, raw_content = self.llm_client.generate_json(
+                system_prompt=self._candidate_layout_system_prompt(),
+                user_payload=fallback_problem_context,
+            )
+        except FallbackLlmClientError as exc:
+            raise RuntimeError(f"Falha ao chamar LLM de fallback: {exc}") from exc
+
+        candidate_model = self.validate_candidate_layout(
+            parsed,
+            fallback_problem_context,
+        )
+        return {
+            "tipo_artefato": "resposta_llm_layout_signature_candidato",
+            "candidate_layout": candidate_model.model_dump(mode="json", exclude_none=True),
+            "raw_response": raw_content,
+        }
+
     def load_validation_artifact(self, fallback_context: dict[str, str]) -> tuple[str, dict[str, Any]]:
         """Le o `validacao_layout_signature.json` produzido pela DAG 2."""
         key = self._resolution_artifact_key(fallback_context, "validacao_layout_signature.json")
@@ -268,7 +334,7 @@ class FallbackLlmService:
         return key, self._load_json_object(key, "auditoria_resolucao")
 
     def load_base_layout_signature(self, fallback_context: dict[str, str]) -> tuple[str, dict[str, Any]]:
-        """Le a versao vigente do layout usada como base para futura proposta."""
+        """Le a versao vigente do layout usada como base para o candidato."""
         config = self.config_loader.load_local_platform_config()
         key = (
             f"{config.minio_layout_prefix.rstrip('/')}/"
@@ -336,6 +402,292 @@ class FallbackLlmService:
                 ],
             },
         }
+
+    @staticmethod
+    def _candidate_layout_system_prompt() -> str:
+        """Prompt base que limita a LLM a devolver somente um layout candidato."""
+        return (
+            "Voce atua como gerador de layout signature candidato para fallback "
+            "de documentos desestruturados. "
+            "Recebera um contexto ja preparado pela DAG 3 contendo: falhas da DAG 2, "
+            "trechos relevantes do layout signature base, contrato semantico, amostras "
+            "de extracao e escopo permitido de correcao. "
+            "Sua unica saida deve ser um objeto JSON valido representando "
+            "layout_signature_candidato. "
+            "Nao explique, nao use markdown e nao devolva texto fora do JSON. "
+            "Use exatamente o document_id, execution_id_origem e base_layout_signature "
+            "informados no contexto; nao invente nem altere esses identificadores. "
+            "Ajuste somente o necessario para que a DAG 2 possa revalidar o candidato. "
+            "As unicas secoes alteraveis sao: fontes_relevantes, regras_deteccao_mudanca, "
+            "mapeamento_canonico e metadados_estruturais_evidencia. "
+            "Dentro dessas secoes, voce pode atualizar seletores, arquivos de origem, "
+            "caminhos de artefatos e metadados estruturais usados como evidencia. "
+            "Nao gere schema_saida_resolvido. Nao escreva valores finais de negocio. "
+            "Nao crie campos fora do schema_saida do contrato semantico. "
+            "Nao altere referencia_contrato_semantico, regras_execucao, versao_artefato "
+            "final, contrato semantico ou qualquer layout ja publicado. "
+            "Nao gere analise_semantica_llm nem proposta_atualizacao_layout_signature. "
+            "Se o escopo permitido for correcao_parcial_mapeamento, preserve mapeamentos "
+            "nao relacionados a falha e retorne o mapeamento_canonico completo do candidato. "
+            "Se for regeneracao_total_mapeamento, ainda assim "
+            "mantenha o candidato limitado ao contrato semantico recebido. "
+            "O JSON deve seguir este formato exato: "
+            "{"
+            "\"tipo_artefato\":\"layout_signature_candidato\","
+            "\"status_layout\":\"candidato\","
+            "\"escopo_correcao\":\"...\","
+            "\"document_id\":\"...\","
+            "\"execution_id_origem\":\"...\","
+            "\"base_layout_signature\":{\"versao\":\"...\",\"object_key\":\"...\"},"
+            "\"fontes_relevantes\":{},"
+            "\"regras_deteccao_mudanca\":[],"
+            "\"mapeamento_canonico\":{},"
+            "\"metadados_estruturais_evidencia\":{},"
+            "\"publicacao_automatica_habilitada\":true"
+            "}."
+        )
+
+    def validate_candidate_layout(
+        self,
+        candidate: dict[str, Any],
+        fallback_problem_context: dict[str, Any],
+    ) -> LayoutSignatureCandidate:
+        """Valida o candidato da LLM com Pydantic e regras do contrato carregado."""
+        if self._contains_forbidden_llm_key(candidate):
+            raise RuntimeError(
+                "Resposta da LLM tentou alterar campos proibidos para o fallback."
+            )
+
+        try:
+            candidate_model = LayoutSignatureCandidate.model_validate(candidate)
+        except ValidationError as exc:
+            raise RuntimeError(
+                "Resposta da LLM nao respeita o contrato Pydantic do layout "
+                f"signature candidato: {exc}"
+            ) from exc
+
+        schema_roots = self._contract_schema_roots_from_context(fallback_problem_context)
+        schema_paths = self._contract_schema_paths_from_context(fallback_problem_context)
+        for mapping_path in candidate_model.mapeamento_canonico:
+            if not self._mapping_path_is_in_contract(
+                mapping_path,
+                schema_roots,
+                schema_paths,
+            ):
+                raise RuntimeError(
+                    "Resposta da LLM tentou criar candidato com mapeamento para "
+                    f"campo fora do schema_saida do contrato: {mapping_path}."
+                )
+
+        allowed_scope = str(fallback_problem_context.get("escopo_permitido", "")).strip()
+        if allowed_scope and candidate_model.escopo_correcao != allowed_scope:
+            raise RuntimeError(
+                "Resposta da LLM tentou usar escopo diferente do permitido pela "
+                f"classificacao deterministica: {candidate_model.escopo_correcao}."
+            )
+        self._validate_candidate_lineage(candidate_model, fallback_problem_context)
+        self._validate_candidate_allowed_scope(candidate_model, fallback_problem_context)
+        self._validate_candidate_does_not_write_final_values(candidate_model)
+        self._validate_partial_candidate_does_not_remove_unrelated_mappings(
+            candidate_model,
+            fallback_problem_context,
+        )
+        return candidate_model
+
+    @staticmethod
+    def _validate_candidate_lineage(
+        candidate: LayoutSignatureCandidate,
+        fallback_problem_context: dict[str, Any],
+    ) -> None:
+        """Confirma que o candidato usa a linhagem recebida no contexto."""
+        fallback_context = fallback_problem_context.get("fallback_context", {})
+        if not isinstance(fallback_context, dict):
+            raise RuntimeError("Contexto de fallback ausente para validar linhagem do candidato.")
+
+        expected_document_id = str(fallback_context.get("document_id", "")).strip()
+        expected_execution_id = str(fallback_context.get("execution_id", "")).strip()
+        if candidate.document_id != expected_document_id:
+            raise RuntimeError(
+                "Layout candidato retornou document_id diferente do contexto de fallback."
+            )
+        if candidate.execution_id_origem != expected_execution_id:
+            raise RuntimeError(
+                "Layout candidato retornou execution_id_origem diferente do contexto de fallback."
+            )
+
+        base_ref = fallback_problem_context.get("layout_signature_base_ref", {})
+        if not isinstance(base_ref, dict):
+            raise RuntimeError("Referencia do layout base ausente para validar candidato.")
+        expected_base_key = str(base_ref.get("object_key", "")).strip()
+        if candidate.base_layout_signature.object_key != expected_base_key:
+            raise RuntimeError(
+                "Layout candidato retornou base_layout_signature.object_key diferente do layout base."
+            )
+
+    def _validate_candidate_allowed_scope(
+        self,
+        candidate: LayoutSignatureCandidate,
+        fallback_problem_context: dict[str, Any],
+    ) -> None:
+        """Garante que candidato total so apareca em ruptura estrutural ampla."""
+        if candidate.escopo_correcao != self.FULL_REMAP_SCOPE:
+            return
+        allowed_scope = str(fallback_problem_context.get("escopo_permitido", "")).strip()
+        if allowed_scope != self.FULL_REMAP_SCOPE:
+            raise RuntimeError(
+                "Layout candidato tentou regeneracao total sem ruptura estrutural ampla."
+            )
+
+    def _validate_candidate_does_not_write_final_values(
+        self,
+        candidate: LayoutSignatureCandidate,
+    ) -> None:
+        """Bloqueia sinais de valores finais de negocio no candidato de layout."""
+        candidate_dict = candidate.model_dump(mode="json", exclude_none=True)
+        forbidden_keys = {
+            "valor_resolvido",
+            "valor_final",
+            "valor_extraido",
+            "schema_saida_resolvido",
+            "dados_resolvidos",
+            "resultado_resolvido",
+        }
+        if self._contains_any_key(candidate_dict, forbidden_keys):
+            raise RuntimeError(
+                "Layout candidato tentou escrever valores finais em vez de seletores/layout."
+            )
+
+    def _validate_partial_candidate_does_not_remove_unrelated_mappings(
+        self,
+        candidate: LayoutSignatureCandidate,
+        fallback_problem_context: dict[str, Any],
+    ) -> None:
+        """Impede que correcao parcial apague mapeamentos nao relacionados a falha."""
+        if candidate.escopo_correcao != self.PARTIAL_SCOPE:
+            return
+
+        base_context = fallback_problem_context.get("layout_signature_base_validation_context", {})
+        if not isinstance(base_context, dict):
+            return
+        base_paths_raw = base_context.get("mapeamento_canonico_paths", [])
+        if not isinstance(base_paths_raw, list):
+            return
+
+        base_paths = {str(path) for path in base_paths_raw}
+        candidate_paths = set(candidate.mapeamento_canonico)
+        if not base_paths or not candidate_paths:
+            return
+
+        missing_paths = base_paths - candidate_paths
+        if missing_paths:
+            sample = sorted(missing_paths)[:10]
+            raise RuntimeError(
+                "Layout candidato parcial removeu mapeamentos do layout base. "
+                f"Exemplos: {sample}."
+            )
+
+    @staticmethod
+    def _contract_schema_roots_from_context(
+        fallback_problem_context: dict[str, Any],
+    ) -> set[str]:
+        """Extrai campos raiz do schema_saida incluidos no contexto da LLM."""
+        contract = fallback_problem_context.get("contrato_semantico_relevante", {})
+        if not isinstance(contract, dict):
+            return set()
+        roots = contract.get("schema_saida_campos_raiz", [])
+        if not isinstance(roots, list):
+            return set()
+        return {str(root).strip() for root in roots if str(root).strip()}
+
+    @staticmethod
+    def _contract_schema_paths_from_context(
+        fallback_problem_context: dict[str, Any],
+    ) -> set[str]:
+        """Extrai paths declarados no schema_saida incluidos no contexto da LLM."""
+        contract = fallback_problem_context.get("contrato_semantico_relevante", {})
+        if not isinstance(contract, dict):
+            return set()
+        paths = contract.get("schema_saida_paths", [])
+        if not isinstance(paths, list):
+            return set()
+        return {str(path).strip() for path in paths if str(path).strip()}
+
+    @staticmethod
+    def _mapping_path_is_in_contract(
+        path: str,
+        schema_roots: set[str],
+        schema_paths: set[str],
+    ) -> bool:
+        """Confirma que o path de mapeamento aponta para path do contrato."""
+        if not schema_roots:
+            return False
+        normalized = path.strip()
+        if normalized.startswith("mapeamento_canonico."):
+            normalized = normalized.removeprefix("mapeamento_canonico.")
+        normalized = FallbackLlmService._normalize_mapping_path(normalized)
+        if schema_paths and normalized not in schema_paths:
+            return False
+        root = normalized.split(".", maxsplit=1)[0]
+        return root in schema_roots
+
+    @staticmethod
+    def _normalize_mapping_path(path: str) -> str:
+        """Remove filtros de array para comparar mapeamento com schema_saida."""
+        parts = []
+        for part in path.split("."):
+            clean = part.split("[", maxsplit=1)[0].strip()
+            if clean:
+                parts.append(clean)
+        return ".".join(parts)
+
+    def _schema_saida_paths(self, schema_saida: Any) -> list[str]:
+        """Lista paths navegaveis declarados no schema_saida do contrato."""
+        paths: set[str] = set()
+        self._collect_schema_paths(schema_saida, prefix="", paths=paths)
+        return sorted(paths)
+
+    def _collect_schema_paths(self, value: Any, *, prefix: str, paths: set[str]) -> None:
+        """Percorre schema_saida declarando caminhos de objetos e folhas."""
+        if prefix:
+            paths.add(prefix)
+        if isinstance(value, dict):
+            for key, item in value.items():
+                child = f"{prefix}.{key}" if prefix else str(key)
+                self._collect_schema_paths(item, prefix=child, paths=paths)
+            return
+        if isinstance(value, list) and value:
+            self._collect_schema_paths(value[0], prefix=prefix, paths=paths)
+
+    def _contains_forbidden_llm_key(self, value: Any) -> bool:
+        """Bloqueia chaves que indicam tentativa de alterar fronteiras proibidas."""
+        forbidden = {
+            "schema_saida_resolvido",
+            "referencia_contrato_semantico",
+            "contrato_semantico",
+            "regras_execucao",
+            "versao_artefato",
+        }
+        if isinstance(value, dict):
+            for key, item in value.items():
+                if str(key) in forbidden:
+                    return True
+                if self._contains_forbidden_llm_key(item):
+                    return True
+        if isinstance(value, list):
+            return any(self._contains_forbidden_llm_key(item) for item in value)
+        return False
+
+    def _contains_any_key(self, value: Any, forbidden: set[str]) -> bool:
+        """Busca qualquer chave proibida em uma estrutura JSON."""
+        if isinstance(value, dict):
+            for key, item in value.items():
+                if str(key) in forbidden:
+                    return True
+                if self._contains_any_key(item, forbidden):
+                    return True
+        if isinstance(value, list):
+            return any(self._contains_any_key(item, forbidden) for item in value)
+        return False
 
     @staticmethod
     def _rejected_rules(validation: dict[str, Any]) -> list[dict[str, Any]]:
@@ -541,6 +893,7 @@ class FallbackLlmService:
                 if isinstance(contract.get("schema_saida"), dict)
                 else []
             ),
+            "schema_saida_paths": self._schema_saida_paths(contract.get("schema_saida", {})),
             "schema_saida_trechos_relevantes": self._schema_fragments_for_fields(
                 contract.get("schema_saida", {}),
                 broken_fields,

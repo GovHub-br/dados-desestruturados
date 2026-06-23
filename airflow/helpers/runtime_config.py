@@ -30,6 +30,12 @@ class LocalPlatformConfig:
     docling_do_ocr: bool
     docling_do_chart_extraction: bool
     docling_enable_llm_text_extraction: bool
+    fallback_llm_provider: str
+    fallback_llm_api_url: str
+    fallback_llm_api_key: str
+    fallback_llm_model: str
+    fallback_llm_timeout_seconds: int
+    fallback_llm_max_tokens: int
 
 
 class RuntimeConfigLoader:
@@ -112,6 +118,21 @@ class RuntimeConfigLoader:
                 os.getenv("DOCLING_DO_CHART_EXTRACTION", "false")
             ),
             docling_enable_llm_text_extraction=self._resolve_llm_text_extraction_flag(),
+            fallback_llm_provider=os.getenv("FALLBACK_LLM_PROVIDER", "openai").strip().lower(),
+            fallback_llm_api_url=os.getenv("FALLBACK_LLM_API_URL", "").strip(),
+            fallback_llm_api_key=(
+                os.getenv("FALLBACK_LLM_API_KEY", "").strip()
+                or os.getenv("OPENAI_API_KEY", "").strip()
+            ),
+            fallback_llm_model=os.getenv("FALLBACK_LLM_MODEL", "").strip(),
+            fallback_llm_timeout_seconds=self._as_int(
+                os.getenv("FALLBACK_LLM_TIMEOUT_SECONDS", "180"),
+                default=180,
+            ),
+            fallback_llm_max_tokens=self._as_int(
+                os.getenv("FALLBACK_LLM_MAX_TOKENS", "4096"),
+                default=4096,
+            ),
         )
 
     def _resolve_llm_text_extraction_flag(self) -> bool:

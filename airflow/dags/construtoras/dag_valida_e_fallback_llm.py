@@ -94,12 +94,29 @@ def montar_contexto_problema_fallback(loaded_context: dict[str, object]) -> dict
 
 
 @task
+def gerar_layout_candidato_llm(
+    fallback_problem_context: dict[str, object],
+) -> dict[str, object]:
+    try:
+        llm_response = FALLBACK_LLM_SERVICE.generate_candidate_layout(
+            fallback_problem_context
+        )
+    except RuntimeError as exc:
+        raise AirflowFailException(str(exc)) from exc
+
+    candidate_layout = llm_response.get("candidate_layout")
+    logging.info("Layout signature candidato gerado pela LLM: %s", candidate_layout)
+    return llm_response
+
+
+@task
 def registrar_planejamento(
     runtime: dict[str, object],
     fallback_context: dict[str, object],
     loaded_context: dict[str, object],
     fallback_classification: dict[str, object],
     fallback_problem_context: dict[str, object],
+    candidate_layout_response: dict[str, object],
 ) -> dict[str, object]:
     planning = {
         "runtime": runtime,
@@ -107,7 +124,8 @@ def registrar_planejamento(
         "loaded_context": loaded_context,
         "fallback_classification": fallback_classification,
         "fallback_problem_context": fallback_problem_context,
-        "status": "artefatos_dag2_carregados_falha_classificada_e_contexto_montado",
+        "candidate_layout_response": candidate_layout_response,
+        "status": "layout_signature_candidato_gerado",
     }
     logging.info("Planejamento DAG 3: %s", planning)
     return planning
@@ -130,12 +148,14 @@ def dag_valida_e_fallback_llm() -> None:
     loaded_context = carregar_artefatos_fallback(fallback_context)
     fallback_classification = classificar_falha_fallback(loaded_context)
     fallback_problem_context = montar_contexto_problema_fallback(loaded_context)
+    candidate_layout_response = gerar_layout_candidato_llm(fallback_problem_context)
     planejamento = registrar_planejamento(
         runtime,
         fallback_context,
         loaded_context,
         fallback_classification,
         fallback_problem_context,
+        candidate_layout_response,
     )
 
     (
@@ -145,6 +165,7 @@ def dag_valida_e_fallback_llm() -> None:
         >> loaded_context
         >> fallback_classification
         >> fallback_problem_context
+        >> candidate_layout_response
         >> planejamento
         >> fim
     )
