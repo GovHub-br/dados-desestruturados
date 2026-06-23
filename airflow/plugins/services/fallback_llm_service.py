@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import json
+
 from typing import Any
 
 from helpers import RUNTIME_CONFIG_LOADER, RuntimeConfigLoader
@@ -52,6 +54,14 @@ class FallbackLlmService:
         artifact_uris = manifest.get("artifact_uris")
         if not isinstance(artifact_uris, list) or not artifact_uris:
             raise RuntimeError(f"Manifesto de extracao sem artifact_uris: {manifest_key}")
+        fallback_problem_context = self.build_fallback_problem_context(
+            validation=validation,
+            audit=audit,
+            layout=layout,
+            contract=contract,
+            manifest=manifest,
+            classification=fallback_classification,
+        )
 
         return {
             "fallback_context": fallback_context,
@@ -59,6 +69,7 @@ class FallbackLlmService:
             "failure_codes": validation["status_compatibilidade"].get("codigos_alerta", []),
             "fallback_scope": fallback_classification["fallback_scope"],
             "fallback_classification": fallback_classification,
+            "fallback_problem_context": fallback_problem_context,
             "llm_constraints": {
                 "fallback_scope": fallback_classification["fallback_scope"],
                 "chamar_llm": fallback_classification["llm_permitida"],
@@ -182,6 +193,69 @@ class FallbackLlmService:
             unresolved_required=unresolved_required,
             failure_codes=failure_codes,
         )
+
+    def build_fallback_problem_context(
+        self,
+        *,
+        validation: dict[str, Any],
+        audit: dict[str, Any],
+        layout: dict[str, Any],
+        contract: dict[str, Any],
+        manifest: dict[str, Any],
+        classification: dict[str, Any],
+    ) -> dict[str, Any]:
+        """Monta o pacote estruturado que limita o problema para a futura LLM."""
+        rejected_rules = self._rejected_rules(validation)
+        unresolved_required = self._unresolved_required_audit_items(audit)
+        broken_fields = self._broken_output_fields(unresolved_required)
+        origin_files = self._collect_origin_files(
+            rejected_rules=rejected_rules,
+            unresolved_required=unresolved_required,
+            layout=layout,
+            broken_fields=broken_fields,
+        )
+
+        return {
+            "tipo_artefato": "fallback_problem_context",
+            "status": "contexto_montado",
+            "escopo_permitido": classification.get("fallback_scope"),
+            "llm_constraints": {
+                "chamar_llm": bool(classification.get("llm_permitida", False)),
+                "permitir_correcao_parcial": classification.get("fallback_scope") == self.PARTIAL_SCOPE,
+                "permitir_regeneracao_total": classification.get("fallback_scope") == self.FULL_REMAP_SCOPE,
+                "nao_gerar_schema_saida_resolvido": True,
+                "nao_inventar_campos_fora_do_contrato": True,
+                "alterar_apenas_mapeamento_canonico": True,
+                "nao_alterar_layouts_versionados_existentes": True,
+            },
+            "falha": {
+                "status_compatibilidade": validation.get("status_compatibilidade", {}),
+                "codigos_falha": classification.get("codigos_falha", []),
+                "motivos": classification.get("motivos", []),
+                "campos_quebrados": broken_fields,
+                "regras_reprovadas": [
+                    self._truncate_json(rule)
+                    for rule in rejected_rules
+                ],
+                "campos_obrigatorios_nao_resolvidos": [
+                    self._truncate_json(item)
+                    for item in unresolved_required
+                ],
+            },
+            "layout_signature_relevante": self._relevant_layout_context(
+                layout=layout,
+                broken_fields=broken_fields,
+                origin_files=origin_files,
+            ),
+            "contrato_semantico_relevante": self._relevant_contract_context(
+                contract=contract,
+                broken_fields=broken_fields,
+            ),
+            "amostras_extracao": self._load_extraction_samples(
+                manifest=manifest,
+                origin_files=origin_files,
+            ),
+        }
 
     def load_validation_artifact(self, fallback_context: dict[str, str]) -> tuple[str, dict[str, Any]]:
         """Le o `validacao_layout_signature.json` produzido pela DAG 2."""
@@ -363,6 +437,232 @@ class FallbackLlmService:
         if value is None:
             return []
         return [str(value)]
+
+    @staticmethod
+    def _broken_output_fields(unresolved_required: list[dict[str, Any]]) -> list[str]:
+        """Lista campos de saida afetados por falhas de resolucao."""
+        fields = {
+            str(item.get("campo_saida", "")).strip()
+            for item in unresolved_required
+            if str(item.get("campo_saida", "")).strip()
+        }
+        return sorted(fields)
+
+    def _collect_origin_files(
+        self,
+        *,
+        rejected_rules: list[dict[str, Any]],
+        unresolved_required: list[dict[str, Any]],
+        layout: dict[str, Any],
+        broken_fields: list[str],
+    ) -> list[str]:
+        """Coleta arquivos de extracao que explicam as falhas classificadas."""
+        origin_files: set[str] = set()
+
+        for rule in rejected_rules:
+            evidence = rule.get("evidencia", {})
+            if isinstance(evidence, dict):
+                origin = str(evidence.get("arquivo_origem", "")).strip()
+                if origin:
+                    origin_files.add(origin)
+
+        for item in unresolved_required:
+            origin = str(item.get("arquivo_origem", "")).strip()
+            if origin:
+                origin_files.add(origin)
+
+        mapping = layout.get("mapeamento_canonico", {})
+        if isinstance(mapping, dict):
+            for field in broken_fields:
+                entry = mapping.get(field)
+                if isinstance(entry, dict):
+                    origin = str(entry.get("arquivo_origem", "")).strip()
+                    if origin:
+                        origin_files.add(origin)
+
+        return sorted(origin_files)
+
+    def _relevant_layout_context(
+        self,
+        *,
+        layout: dict[str, Any],
+        broken_fields: list[str],
+        origin_files: list[str],
+    ) -> dict[str, Any]:
+        """Recorta o layout signature para os trechos ligados a falha."""
+        mapping = layout.get("mapeamento_canonico", {})
+        relevant_mapping: dict[str, Any] = {}
+        if isinstance(mapping, dict):
+            for path, entry in mapping.items():
+                if not isinstance(entry, dict):
+                    continue
+                origin = str(entry.get("arquivo_origem", "")).strip()
+                path_text = str(path)
+                if path_text in broken_fields or origin in origin_files:
+                    relevant_mapping[path_text] = self._truncate_json(entry)
+
+        rules = layout.get("regras_deteccao_mudanca", [])
+        relevant_rules: list[Any] = []
+        if isinstance(rules, list):
+            for rule in rules:
+                if not isinstance(rule, dict):
+                    continue
+                origin = str(rule.get("arquivo_origem", "")).strip()
+                if origin and origin in origin_files:
+                    relevant_rules.append(self._truncate_json(rule))
+
+        return {
+            "identificacao": {
+                "empresa": layout.get("empresa"),
+                "tipo_documento": layout.get("tipo_documento"),
+                "versao_artefato": layout.get("versao_artefato"),
+                "contrato_semantico_ref": layout.get("contrato_semantico_ref"),
+            },
+            "mapeamento_canonico_relevante": relevant_mapping,
+            "regras_deteccao_mudanca_relevantes": relevant_rules,
+            "fontes_relevantes": origin_files,
+        }
+
+    def _relevant_contract_context(
+        self,
+        *,
+        contract: dict[str, Any],
+        broken_fields: list[str],
+    ) -> dict[str, Any]:
+        """Recorta o contrato semantico sem incluir conteudo desnecessario."""
+        return {
+            "identificacao": {
+                "nome": contract.get("nome"),
+                "versao": contract.get("versao"),
+                "dominio": contract.get("dominio"),
+            },
+            "schema_saida_campos_raiz": sorted(
+                contract.get("schema_saida", {}).keys()
+                if isinstance(contract.get("schema_saida"), dict)
+                else []
+            ),
+            "schema_saida_trechos_relevantes": self._schema_fragments_for_fields(
+                contract.get("schema_saida", {}),
+                broken_fields,
+            ),
+            "entidades": self._truncate_json(contract.get("entidades", {})),
+            "metricas": self._truncate_json(contract.get("metricas", {})),
+        }
+
+    def _schema_fragments_for_fields(
+        self,
+        schema_saida: Any,
+        broken_fields: list[str],
+    ) -> dict[str, Any]:
+        """Extrai fragmentos do schema_saida relacionados aos campos quebrados."""
+        if not isinstance(schema_saida, dict):
+            return {}
+        if not broken_fields:
+            return self._truncate_json(schema_saida, max_depth=2)
+
+        fragments: dict[str, Any] = {}
+        for field in broken_fields:
+            root = field.split(".", maxsplit=1)[0]
+            if root in schema_saida:
+                fragments[root] = self._truncate_json(schema_saida[root], max_depth=4)
+        return fragments
+
+    def _load_extraction_samples(
+        self,
+        *,
+        manifest: dict[str, Any],
+        origin_files: list[str],
+    ) -> dict[str, Any]:
+        """Carrega pequenas amostras dos artefatos de extracao associados a falha."""
+        artifact_uris = manifest.get("artifact_uris", [])
+        if not isinstance(artifact_uris, list):
+            return {}
+
+        samples: dict[str, Any] = {}
+        for origin_file in origin_files[:5]:
+            object_key = self._find_artifact_object_key(
+                artifact_uris=[str(uri) for uri in artifact_uris],
+                origin_file=origin_file,
+            )
+            if not object_key:
+                samples[origin_file] = {"status": "nao_encontrado_no_manifesto"}
+                continue
+            samples[origin_file] = self._load_extraction_sample_object(object_key)
+        return samples
+
+    def _find_artifact_object_key(self, *, artifact_uris: list[str], origin_file: str) -> str | None:
+        """Localiza no manifesto o object key de um arquivo de extracao relativo."""
+        normalized_origin = origin_file.strip("/")
+        for uri in artifact_uris:
+            object_key = self._object_key_from_minio_uri(uri)
+            if object_key.endswith(f"/extraction/{normalized_origin}") or object_key.endswith(normalized_origin):
+                return object_key
+        return None
+
+    def _load_extraction_sample_object(self, object_key: str) -> dict[str, Any]:
+        """Le um artefato de extracao e devolve somente uma amostra truncada."""
+        try:
+            raw = self.minio_client.get_bytes(object_key=object_key)
+        except Exception as exc:
+            return {"object_key": object_key, "status": "erro_ao_carregar", "erro": str(exc)}
+
+        text = raw.decode("utf-8", errors="replace")
+        if object_key.endswith(".json"):
+            try:
+                return {
+                    "object_key": object_key,
+                    "formato": "json",
+                    "sample": self._truncate_json(json.loads(text)),
+                }
+            except Exception:
+                return {
+                    "object_key": object_key,
+                    "formato": "texto",
+                    "sample": text[:2000],
+                }
+
+        if object_key.endswith(".jsonl"):
+            rows: list[Any] = []
+            for line in text.splitlines():
+                if len(rows) >= 5:
+                    break
+                stripped = line.strip()
+                if not stripped:
+                    continue
+                try:
+                    rows.append(self._truncate_json(json.loads(stripped)))
+                except Exception:
+                    rows.append(stripped[:500])
+            return {"object_key": object_key, "formato": "jsonl", "sample": rows}
+
+        return {"object_key": object_key, "formato": "texto", "sample": text[:2000]}
+
+    @staticmethod
+    def _object_key_from_minio_uri(uri: str) -> str:
+        """Extrai object key de uma URI minio://bucket/key ou retorna a propria string."""
+        if not uri.startswith("minio://"):
+            return uri
+        without_scheme = uri.removeprefix("minio://")
+        parts = without_scheme.split("/", maxsplit=1)
+        return parts[1] if len(parts) == 2 else ""
+
+    def _truncate_json(self, value: Any, *, max_depth: int = 5) -> Any:
+        """Reduz estruturas grandes para caberem no contexto de problema."""
+        if max_depth <= 0:
+            return "<truncado>"
+        if isinstance(value, dict):
+            return {
+                str(key): self._truncate_json(item, max_depth=max_depth - 1)
+                for key, item in list(value.items())[:20]
+            }
+        if isinstance(value, list):
+            return [
+                self._truncate_json(item, max_depth=max_depth - 1)
+                for item in value[:8]
+            ]
+        if isinstance(value, str) and len(value) > 800:
+            return f"{value[:800]}..."
+        return value
 
     @staticmethod
     def _assert_validation_requires_fallback(validation: dict[str, Any], object_key: str) -> None:
