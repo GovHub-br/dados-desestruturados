@@ -110,6 +110,8 @@ def filtrar_execucoes_para_remapeamento(resultados: list[dict[str, object]]) -> 
                 "document_id": item.get("document_id"),
                 "manifest_key": item.get("manifest_key"),
                 "trigger_origin_dag": "dag_resolve_schema_saida",
+                "fallback_mode": item.get("fallback_mode"),
+                "motivo": item.get("motivo"),
             }
         )
     if confs:

@@ -84,9 +84,18 @@ class FallbackCandidateValidationService:
                 "Layout candidato retornou execution_id_origem diferente do contexto de fallback."
             )
 
+        if candidate.escopo_correcao == FallbackCandidateValidationService.CREATION_SCOPE:
+            if candidate.base_layout_signature is not None:
+                raise RuntimeError(
+                    "Layout candidato de criacao inicial nao deve declarar layout base."
+                )
+            return
+
         base_ref = fallback_problem_context.get("layout_signature_base_ref", {})
         if not isinstance(base_ref, dict):
             raise RuntimeError("Referencia do layout base ausente para validar candidato.")
+        if candidate.base_layout_signature is None:
+            raise RuntimeError("Layout candidato de remapeamento deve referenciar layout base.")
         expected_base_key = str(base_ref.get("object_key", "")).strip()
         if candidate.base_layout_signature.object_key != expected_base_key:
             raise RuntimeError(

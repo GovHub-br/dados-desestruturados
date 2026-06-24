@@ -64,6 +64,19 @@ class SchemaResolutionService:
 
     def process_extraction_manifest(self, runtime: dict[str, Any], *, manifest_key: str) -> dict[str, Any]:
         """Processa um manifesto individual de extracao e persiste saidas da DAG2."""
+        initial_creation = self._initial_layout_creation_result_if_missing(
+            runtime,
+            manifest_key=manifest_key,
+        )
+        if initial_creation:
+            logging.warning(
+                "Layout signature ausente para company=%s execution_id=%s. "
+                "Acionando criacao inicial por DAG 3.",
+                initial_creation.get("company_slug"),
+                initial_creation.get("execution_id"),
+            )
+            return initial_creation
+
         loaded = self._load_inputs_from_manifest(runtime, manifest_key=manifest_key)
         validation = self.validate_deterministic_rules(loaded)
         layout_alterado = validation["status_compatibilidade"]["status"] != "compativel"
@@ -79,6 +92,41 @@ class SchemaResolutionService:
             "layout_alterado": layout_alterado,
             "status_compatibilidade": validation["status_compatibilidade"]["status"],
             "persisted": persist_uris,
+        }
+
+    def _initial_layout_creation_result_if_missing(
+        self,
+        runtime: dict[str, Any],
+        *,
+        manifest_key: str,
+    ) -> dict[str, Any] | None:
+        """Retorna um gatilho de criacao inicial quando nao ha layout vigente."""
+        if str(runtime.get("modo_execucao", "")).strip() == "revalidacao_layout_candidato":
+            return None
+
+        if runtime.get("layout_signature_override"):
+            return None
+
+        manifest = self.minio_client.get_json(object_key=manifest_key)
+        candidate = manifest.get("candidate") if isinstance(manifest.get("candidate"), dict) else {}
+        company_slug = str(candidate.get("company_slug") or "empresa_desconhecida")
+        execution_id = str(manifest.get("execution_id") or "execucao_desconhecida")
+        document_id = str(manifest.get("document_id") or "documento_desconhecido")
+        layout_key = self._current_layout_signature_object_key(company_slug)
+        if self.minio_client.object_exists(layout_key):
+            return None
+
+        return {
+            "manifest_key": manifest_key,
+            "company_slug": company_slug,
+            "execution_id": execution_id,
+            "document_id": document_id,
+            "layout_alterado": True,
+            "status_compatibilidade": "layout_signature_ausente",
+            "fallback_mode": "criacao_inicial_layout",
+            "motivo": "layout_signature_ausente",
+            "layout_signature_pointer_key_esperado": layout_key,
+            "persisted": {},
         }
 
     def load_inputs(self, runtime: dict[str, Any]) -> dict[str, Any]:
@@ -270,24 +318,23 @@ class SchemaResolutionService:
             artifact_uris=[str(item) for item in artifact_uris],
         )
         config = self.config_loader.load_local_platform_config()
-        contrato = self._load_json_from_uri_or_local(
+        contrato = self._load_json_from_minio_required(
             f"minio://{config.minio_bucket}/{config.minio_contract_prefix}/v1.2.0/contrato_semantico_construtora.json",
-            local_fallback="resultados_contrutoras/contrato_semantico_construtora.json",
+            artifact_name="contrato_semantico",
         )
-        layout_uri = str(
-            runtime.get("inputs", {}).get("layout_signature", "")
-            if isinstance(runtime.get("inputs"), dict)
-            else ""
-        ).strip()
+        layout_override = runtime.get("layout_signature_override")
+        layout_uri = ""
+        if isinstance(layout_override, dict):
+            layout_uri = str(
+                layout_override.get("layout_signature_uri")
+                or layout_override.get("layout_signature_object_key")
+                or ""
+            ).strip()
         if layout_uri and not layout_uri.startswith("minio://"):
             layout_uri = f"minio://{config.minio_bucket}/{layout_uri}"
-        layout = self._load_json_from_uri_or_local(
-            layout_uri
-            or (
-                f"minio://{config.minio_bucket}/{config.minio_layout_prefix}/"
-                f"{company_slug}/v4.0.0/layout_signature_deterministico.json"
-            ),
-            local_fallback="resultados_contrutoras/layout_signature_cury_deterministico.json",
+        layout = self._load_json_from_minio_required(
+            layout_uri or self._minio_uri(self._current_layout_signature_object_key(company_slug)),
+            artifact_name="layout_signature",
         )
         layout["empresa"] = layout.get("empresa") or company_slug
 
@@ -316,6 +363,33 @@ class SchemaResolutionService:
             },
             "layout_signature_override": runtime.get("layout_signature_override"),
         }
+
+    def _current_layout_signature_object_key(self, company_slug: str) -> str:
+        """Resolve pelo ponteiro `current.json` o layout vigente da entidade."""
+        pointer_key = self._current_layout_pointer_object_key(company_slug)
+        if not self.minio_client.object_exists(pointer_key):
+            return pointer_key
+
+        pointer = self.minio_client.get_json(object_key=pointer_key)
+        object_key = str(pointer.get("object_key", "")).strip()
+        if not object_key:
+            raise RuntimeError(
+                f"Ponteiro de layout vigente sem object_key: {pointer_key}"
+            )
+        return object_key
+
+    def _current_layout_pointer_object_key(self, company_slug: str) -> str:
+        """Object key do ponteiro que indica a versao vigente do layout."""
+        config = self.config_loader.load_local_platform_config()
+        return (
+            f"{config.minio_layout_prefix.rstrip('/')}/"
+            f"{company_slug}/current.json"
+        )
+
+    def _minio_uri(self, object_key: str) -> str:
+        """Converte object key para URI MinIO usando o bucket configurado."""
+        config = self.config_loader.load_local_platform_config()
+        return f"minio://{config.minio_bucket}/{object_key}"
 
     def _materialize_extraction_artifacts(self, *, execution_id: str, artifact_uris: list[str]) -> Path:
         target_root = Path(self.project_paths.path("airflow", "state", "resolution_inputs", execution_id, "extraction"))
@@ -906,6 +980,18 @@ class SchemaResolutionService:
             except Exception as exc:
                 logging.warning("Falha ao carregar %s do MinIO (%s). Usando fallback local.", uri, exc)
         return self._read_json(Path(self.project_paths.path(local_fallback)))
+
+    def _load_json_from_minio_required(self, uri: str, *, artifact_name: str) -> dict[str, Any]:
+        """Carrega JSON do MinIO sem fallback local para fluxos reais de DAG."""
+        if not uri.startswith("minio://"):
+            uri = self._minio_uri(uri)
+        try:
+            object_key = self._parse_minio_uri(uri)
+            return self.minio_client.get_json(object_key=object_key)
+        except Exception as exc:
+            raise RuntimeError(
+                f"Nao foi possivel carregar {artifact_name} obrigatorio no MinIO: {uri}"
+            ) from exc
 
     @staticmethod
     def _parse_minio_uri(uri: str) -> str:

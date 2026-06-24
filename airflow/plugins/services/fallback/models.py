@@ -39,7 +39,7 @@ class LayoutSignatureCandidate(BaseModel):
     escopo_correcao: FallbackCorrectionScope
     document_id: str
     execution_id_origem: str
-    base_layout_signature: BaseLayoutSignatureRef
+    base_layout_signature: BaseLayoutSignatureRef | None = None
     fontes_relevantes: dict[str, Any] = Field(default_factory=dict)
     regras_deteccao_mudanca: list[dict[str, Any]] = Field(default_factory=list)
     mapeamento_canonico: dict[str, dict[str, Any]] = Field(default_factory=dict)

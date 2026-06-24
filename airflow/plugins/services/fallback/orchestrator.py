@@ -76,6 +76,13 @@ class FallbackLlmService:
             "manifest_key": self._required_text(conf, "manifest_key"),
             "trigger_origin_dag": self._required_text(conf, "trigger_origin_dag"),
         }
+        for optional_field in ("fallback_mode", "motivo"):
+            value = str(conf.get(optional_field, "")).strip()
+            if value:
+                fallback_context[optional_field] = value
+
+        if self._is_initial_layout_creation_context(fallback_context):
+            return self._load_initial_layout_creation_context(fallback_context)
 
         validation_key, validation = self.load_validation_artifact(fallback_context)
         self._assert_validation_requires_fallback(validation, validation_key)
@@ -158,6 +165,110 @@ class FallbackLlmService:
                 "schema_saida_campos_raiz": len(contract.get("schema_saida", {})),
                 "artefatos_extracao": len(artifact_uris),
                 "itens_inventario": len(inventory.get("items", [])) if isinstance(inventory, dict) else 0,
+            },
+        }
+
+    def _load_initial_layout_creation_context(
+        self,
+        fallback_context: dict[str, str],
+    ) -> dict[str, Any]:
+        """Carrega contexto da DAG 3 quando ainda nao existe layout signature base."""
+        contract_key, contract = self.load_semantic_contract(fallback_context)
+        manifest_key, manifest = self.load_extraction_manifest(fallback_context)
+        fallback_classification = self._initial_layout_creation_classification()
+        inventory_key, inventory = self.inventory_service.load_extraction_inventory(
+            manifest=manifest,
+            load_json_object=self._load_json_object,
+        )
+
+        artifact_uris = manifest.get("artifact_uris")
+        if not isinstance(artifact_uris, list) or not artifact_uris:
+            raise RuntimeError(f"Manifesto de extracao sem artifact_uris: {manifest_key}")
+
+        validation = {
+            "tipo_artefato": "evento_criacao_inicial_layout",
+            "status_compatibilidade": {
+                "status": "layout_signature_ausente",
+                "codigos_alerta": ["LAYOUT_SIGNATURE_AUSENTE"],
+            },
+            "regras_executadas": [],
+        }
+        audit = {"tipo_artefato": "auditoria_resolucao_ausente", "auditoria_resolucao": []}
+        layout: dict[str, Any] = {}
+
+        fallback_problem_context = self.build_fallback_problem_context(
+            validation=validation,
+            audit=audit,
+            layout=layout,
+            contract=contract,
+            manifest=manifest,
+            classification=fallback_classification,
+            inventory=inventory,
+            inventory_key=inventory_key,
+        )
+        fallback_problem_context["fallback_context"] = fallback_context
+        fallback_problem_context["layout_signature_base_ref"] = None
+        fallback_problem_context["layout_signature_base_editable_sections"] = {}
+        fallback_problem_context["layout_signature_base_validation_context"] = {
+            "mapeamento_canonico_paths": [],
+            "regras_deteccao_mudanca_ids": [],
+        }
+        fallback_problem_context["modo_criacao_inicial_layout"] = True
+
+        return {
+            "fallback_context": fallback_context,
+            "validation_status": "layout_signature_ausente",
+            "failure_codes": ["LAYOUT_SIGNATURE_AUSENTE"],
+            "fallback_scope": fallback_classification["fallback_scope"],
+            "fallback_classification": fallback_classification,
+            "fallback_problem_context": fallback_problem_context,
+            "llm_constraints": {
+                "fallback_scope": fallback_classification["fallback_scope"],
+                "chamar_llm": fallback_classification["llm_permitida"],
+                "permitir_correcao_parcial": False,
+                "permitir_regeneracao_total": False,
+                "permitir_criacao_inicial_layout": True,
+            },
+            "object_keys": {
+                "validacao_layout_signature": None,
+                "auditoria_resolucao": None,
+                "layout_signature_base": None,
+                "contrato_semantico": contract_key,
+                "manifesto_extracao": manifest_key,
+                "inventario_extracao": inventory_key,
+            },
+            "artifact_counts": {
+                "regras_executadas": 0,
+                "auditoria_resolucao": 0,
+                "mapeamento_canonico": 0,
+                "schema_saida_campos_raiz": len(contract.get("schema_saida", {})),
+                "artefatos_extracao": len(artifact_uris),
+                "itens_inventario": len(inventory.get("items", [])) if isinstance(inventory, dict) else 0,
+            },
+        }
+
+    @staticmethod
+    def _is_initial_layout_creation_context(fallback_context: dict[str, str]) -> bool:
+        """Identifica o modo em que nao existe layout signature base."""
+        return (
+            str(fallback_context.get("fallback_mode", "")).strip() == "criacao_inicial_layout"
+            or str(fallback_context.get("motivo", "")).strip() == "layout_signature_ausente"
+        )
+
+    def _initial_layout_creation_classification(self) -> dict[str, Any]:
+        """Classificacao deterministica para criacao inicial de layout."""
+        return {
+            "fallback_scope": self.CREATION_SCOPE,
+            "llm_permitida": True,
+            "motivos": ["layout_signature_ausente"],
+            "codigos_falha": ["LAYOUT_SIGNATURE_AUSENTE"],
+            "metricas": {
+                "regras_reprovadas": 0,
+                "campos_obrigatorios_nao_resolvidos": 0,
+            },
+            "evidencias": {
+                "regras_reprovadas": [],
+                "campos_obrigatorios_nao_resolvidos": [],
             },
         }
 
@@ -298,7 +409,7 @@ class FallbackLlmService:
         fallback_context = self._loaded_fallback_context(loaded_context)
         object_keys = loaded_context.get("object_keys", {})
         if not isinstance(object_keys, dict):
-            raise RuntimeError("Contexto carregado sem object_keys para revalidacao.")
+            object_keys = {}
 
         candidate_key = str(persisted_candidate.get("candidate_layout_object_key", "")).strip()
         if not candidate_key:
@@ -318,6 +429,7 @@ class FallbackLlmService:
             "fallback_candidate_object_key": candidate_key,
             "fallback_base_layout_object_key": object_keys.get("layout_signature_base"),
             "fallback_revalidation_prefix": revalidation_prefix,
+            "fallback_mode": fallback_context.get("fallback_mode"),
         }
 
     def evaluate_revalidation_result(
@@ -384,7 +496,11 @@ class FallbackLlmService:
             if isinstance(candidate.get("base_layout_signature"), dict)
             else ""
         ).strip()
-        base_layout = self._load_json_object(base_key, "layout_signature_base")
+        base_layout = (
+            self._load_json_object(base_key, "layout_signature_base")
+            if base_key
+            else {}
+        )
         next_version = self._next_layout_version(company_slug)
         published_key = (
             f"{self.config_loader.load_local_platform_config().minio_layout_prefix.rstrip('/')}/"
@@ -407,12 +523,30 @@ class FallbackLlmService:
             object_key=published_key,
             payload=published_layout,
         )
+        pointer_key = self._current_layout_pointer_object_key(company_slug)
+        pointer_payload = {
+            "tipo_artefato": "layout_signature_current_pointer",
+            "company_slug": company_slug,
+            "current_version": next_version,
+            "object_key": published_key,
+            "uri": published_uri,
+            "updated_at": datetime.now(UTC).isoformat(),
+            "updated_by": "dag_valida_e_fallback_llm",
+            "candidate_layout_object_key": candidate_key,
+            "validation_object_key": revalidation_result.get("validation_object_key"),
+        }
+        pointer_uri = self.minio_client.put_json(
+            object_key=pointer_key,
+            payload=pointer_payload,
+        )
 
         publication = {
             "tipo_artefato": "publicacao_layout_signature",
             "status": "publicado",
             "published_layout_object_key": published_key,
             "published_layout_uri": published_uri,
+            "current_pointer_object_key": pointer_key,
+            "current_pointer_uri": pointer_uri,
             "versao_publicada": next_version,
             "candidate_layout_object_key": candidate_key,
             "base_layout_signature_object_key": base_key,
@@ -616,11 +750,7 @@ class FallbackLlmService:
 
     def load_base_layout_signature(self, fallback_context: dict[str, str]) -> tuple[str, dict[str, Any]]:
         """Le a versao vigente do layout usada como base para o candidato."""
-        config = self.config_loader.load_local_platform_config()
-        key = (
-            f"{config.minio_layout_prefix.rstrip('/')}/"
-            f"{fallback_context['company_slug']}/v4.0.0/layout_signature_deterministico.json"
-        )
+        key = self._current_layout_signature_object_key(fallback_context["company_slug"])
         return key, self._load_json_object(key, "layout_signature_base")
 
     def load_semantic_contract(self, fallback_context: dict[str, str]) -> tuple[str, dict[str, Any]]:
@@ -642,6 +772,22 @@ class FallbackLlmService:
             f"document_id={fallback_context['document_id']}/"
             f"execution_id={fallback_context['execution_id']}/resolution/{filename}"
         )
+
+    def _current_layout_signature_object_key(self, company_slug: str) -> str:
+        """Resolve pelo ponteiro `current.json` qual layout vigente carregar."""
+        pointer_key = self._current_layout_pointer_object_key(company_slug)
+        pointer = self._load_json_object(pointer_key, "layout_signature_current_pointer")
+        object_key = str(pointer.get("object_key", "")).strip()
+        if not object_key:
+            raise RuntimeError(
+                f"Ponteiro de layout vigente sem object_key: {pointer_key}"
+            )
+        return object_key
+
+    def _current_layout_pointer_object_key(self, company_slug: str) -> str:
+        """Object key do ponteiro de layout vigente."""
+        config = self.config_loader.load_local_platform_config()
+        return f"{config.minio_layout_prefix.rstrip('/')}/{company_slug}/current.json"
 
     def _load_json_object(self, object_key: str, artifact_name: str) -> dict[str, Any]:
         """Le um JSON do MinIO e adiciona contexto ao erro de carregamento."""

@@ -50,6 +50,10 @@ def validar_conf_fallback() -> dict[str, object]:
         field: str(conf[field]).strip()
         for field in REQUIRED_FALLBACK_CONF_FIELDS
     }
+    for optional_field in ("fallback_mode", "motivo"):
+        value = str(conf.get(optional_field, "")).strip()
+        if value:
+            fallback_context[optional_field] = value
     logging.info("Contexto de fallback validado: %s", fallback_context)
     return fallback_context
 
