@@ -8,7 +8,8 @@ from airflow.operators.python import get_current_context
 from airflow.providers.standard.operators.empty import EmptyOperator
 
 from helpers import AirflowDefaults
-from plugins.services import CONSTRUTORAS_PAYLOAD_BUILDER, FALLBACK_LLM_SERVICE
+from plugins.services import CONSTRUTORAS_PAYLOAD_BUILDER
+from plugins.services.fallback import FALLBACK_LLM_SERVICE
 
 
 REQUIRED_FALLBACK_CONF_FIELDS = (

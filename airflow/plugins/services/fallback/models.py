@@ -8,6 +8,7 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator
 FallbackCorrectionScope = Literal[
     "correcao_parcial_mapeamento",
     "regeneracao_total_mapeamento",
+    "criacao_inicial_layout",
 ]
 
 
@@ -31,7 +32,7 @@ class BaseLayoutSignatureRef(BaseModel):
 class LayoutSignatureCandidate(BaseModel):
     """Contrato aceito para o layout signature candidato gerado pela LLM."""
 
-    model_config = ConfigDict(extra="forbid")
+    model_config = ConfigDict(extra="allow")
 
     tipo_artefato: Literal["layout_signature_candidato"]
     status_layout: Literal["candidato"]
@@ -61,4 +62,44 @@ class LayoutSignatureCandidate(BaseModel):
     ) -> dict[str, dict[str, Any]]:
         if not value:
             raise ValueError("mapeamento_canonico deve conter pelo menos um campo")
+        return value
+
+
+class ArtifactSelectionItem(BaseModel):
+    """Um artefato da extracao escolhido pela LLM para explorar."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    path: str
+    motivo: str
+    campos_saida: list[str] = Field(default_factory=list)
+
+    @field_validator("path", "motivo")
+    @classmethod
+    def _text_not_empty(cls, value: str) -> str:
+        cleaned = value.strip()
+        if not cleaned:
+            raise ValueError("campo textual obrigatorio vazio")
+        return cleaned
+
+
+class LayoutArtifactSelection(BaseModel):
+    """Contrato da primeira chamada LLM que escolhe artefatos pelo inventario."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    tipo_artefato: Literal["selecao_artefatos_layout"]
+    artifact_paths: list[ArtifactSelectionItem]
+
+    @field_validator("artifact_paths")
+    @classmethod
+    def _must_have_artifacts(
+        cls,
+        value: list[ArtifactSelectionItem],
+    ) -> list[ArtifactSelectionItem]:
+        if not value:
+            raise ValueError("artifact_paths deve conter pelo menos um artefato")
+        paths = [item.path.strip("/") for item in value]
+        if len(paths) != len(set(paths)):
+            raise ValueError("artifact_paths nao pode conter caminhos duplicados")
         return value
