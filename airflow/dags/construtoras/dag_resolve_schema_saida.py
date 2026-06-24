@@ -3,6 +3,7 @@ from __future__ import annotations
 import logging
 
 from airflow.decorators import dag, task
+from airflow.operators.python import get_current_context
 from airflow.operators.trigger_dagrun import TriggerDagRunOperator
 from airflow.providers.standard.operators.empty import EmptyOperator
 from airflow.utils.trigger_rule import TriggerRule
@@ -13,11 +14,43 @@ from plugins.services import CONSTRUTORAS_PAYLOAD_BUILDER, SCHEMA_RESOLUTION_SER
 
 @task
 def montar_runtime() -> dict[str, object]:
-    return CONSTRUTORAS_PAYLOAD_BUILDER.build_resolution_runtime()
+    runtime = CONSTRUTORAS_PAYLOAD_BUILDER.build_resolution_runtime()
+    context = get_current_context()
+    dag_run = context.get("dag_run")
+    conf = getattr(dag_run, "conf", None) or {}
+    if not isinstance(conf, dict):
+        return runtime
+
+    modo_execucao = str(conf.get("modo_execucao", "")).strip()
+    layout_signature_uri = str(conf.get("layout_signature_uri", "")).strip()
+    layout_signature_object_key = str(conf.get("layout_signature_object_key", "")).strip()
+    if modo_execucao:
+        runtime["modo_execucao"] = modo_execucao
+    if layout_signature_uri or layout_signature_object_key:
+        runtime.setdefault("inputs", {})["layout_signature"] = (
+            layout_signature_uri or layout_signature_object_key
+        )
+        runtime["layout_signature_override"] = {
+            "layout_signature_uri": layout_signature_uri,
+            "layout_signature_object_key": layout_signature_object_key,
+            "candidate_layout_object_key": conf.get("candidate_layout_object_key"),
+            "fallback_revalidation_prefix": conf.get("fallback_revalidation_prefix"),
+        }
+    if conf.get("fallback_revalidation_prefix"):
+        runtime["fallback_revalidation_prefix"] = str(conf["fallback_revalidation_prefix"]).strip()
+    return runtime
 
 
 @task
 def descobrir_execucoes_para_resolucao() -> list[str]:
+    context = get_current_context()
+    dag_run = context.get("dag_run")
+    conf = getattr(dag_run, "conf", None) or {}
+    if isinstance(conf, dict) and str(conf.get("manifest_key", "")).strip():
+        manifest_key = str(conf["manifest_key"]).strip()
+        logging.info("DAG 2 rodando manifesto informado por dag_run.conf: %s", manifest_key)
+        return [manifest_key]
+
     manifests = SCHEMA_RESOLUTION_SERVICE.discover_extraction_manifests()
     logging.info(
         "DAG 2 encontrou %s manifesto(s) de extracao para processar.",
@@ -58,6 +91,13 @@ def consolidar_resultados_execucoes(resultados: list[dict[str, object]]) -> dict
 
 @task
 def filtrar_execucoes_para_remapeamento(resultados: list[dict[str, object]]) -> list[dict[str, object]]:
+    context = get_current_context()
+    dag_run = context.get("dag_run")
+    conf = getattr(dag_run, "conf", None) or {}
+    if isinstance(conf, dict) and str(conf.get("modo_execucao", "")).strip() == "revalidacao_layout_candidato":
+        logging.info("Revalidacao de layout candidato nao dispara novo fallback LLM.")
+        return []
+
     itens = list(resultados or [])
     confs: list[dict[str, object]] = []
     for item in itens:
@@ -101,6 +141,7 @@ def dag_resolve_schema_saida() -> None:
         trigger_dag_id="dag_valida_e_fallback_llm",
         wait_for_completion=False,
         reset_dag_run=False,
+        max_active_tis_per_dag=1,
     ).expand(conf=confs_remapeamento)
 
     inicio >> runtime >> manifests >> resultados >> summary >> confs_remapeamento

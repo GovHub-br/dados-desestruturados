@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+from copy import deepcopy
+from datetime import UTC, datetime
+import re
 from typing import Any
 
 from helpers import RUNTIME_CONFIG_LOADER, RuntimeConfigLoader
@@ -257,6 +260,176 @@ class FallbackLlmService:
             "raw_response": raw_content,
         }
 
+    def persist_candidate_layout(
+        self,
+        candidate_layout_response: dict[str, Any],
+        loaded_context: dict[str, Any],
+    ) -> dict[str, Any]:
+        """Materializa o layout candidato em area isolada de fallback."""
+        candidate = candidate_layout_response.get("candidate_layout")
+        if not isinstance(candidate, dict):
+            raise RuntimeError("Resposta LLM sem candidate_layout para persistir.")
+
+        fallback_context = self._loaded_fallback_context(loaded_context)
+        object_key = self._fallback_object_key(
+            fallback_context,
+            "layout_signature_candidato.json",
+        )
+        candidate_to_persist = deepcopy(candidate)
+        candidate_to_persist["persistido_em"] = datetime.now(UTC).isoformat()
+        candidate_to_persist["candidate_layout_object_key"] = object_key
+        candidate_to_persist["secoes_atualizadas"] = self._candidate_updated_sections(candidate)
+
+        uri = self.minio_client.put_json(object_key=object_key, payload=candidate_to_persist)
+        return {
+            "tipo_artefato": "layout_signature_candidato_persistido",
+            "status": "persistido",
+            "candidate_layout_object_key": object_key,
+            "candidate_layout_uri": uri,
+            "fallback_context": fallback_context,
+        }
+
+    def build_revalidation_conf(
+        self,
+        persisted_candidate: dict[str, Any],
+        loaded_context: dict[str, Any],
+    ) -> dict[str, Any]:
+        """Monta o dag_run.conf usado para revalidar o candidato na DAG 2."""
+        fallback_context = self._loaded_fallback_context(loaded_context)
+        object_keys = loaded_context.get("object_keys", {})
+        if not isinstance(object_keys, dict):
+            raise RuntimeError("Contexto carregado sem object_keys para revalidacao.")
+
+        candidate_key = str(persisted_candidate.get("candidate_layout_object_key", "")).strip()
+        if not candidate_key:
+            raise RuntimeError("Layout candidato persistido sem object_key.")
+
+        revalidation_prefix = self._fallback_prefix(fallback_context, "revalidation")
+        return {
+            "company_slug": fallback_context["company_slug"],
+            "document_id": fallback_context["document_id"],
+            "execution_id": fallback_context["execution_id"],
+            "manifest_key": fallback_context["manifest_key"],
+            "trigger_origin_dag": "dag_valida_e_fallback_llm",
+            "modo_execucao": "revalidacao_layout_candidato",
+            "layout_signature_object_key": candidate_key,
+            "layout_signature_uri": self._minio_uri(candidate_key),
+            "candidate_layout_object_key": candidate_key,
+            "fallback_candidate_object_key": candidate_key,
+            "fallback_base_layout_object_key": object_keys.get("layout_signature_base"),
+            "fallback_revalidation_prefix": revalidation_prefix,
+        }
+
+    def evaluate_revalidation_result(
+        self,
+        revalidation_conf: dict[str, Any],
+    ) -> dict[str, Any]:
+        """Le a validacao da DAG 2 contra o candidato e decide se pode publicar."""
+        prefix = str(revalidation_conf.get("fallback_revalidation_prefix", "")).strip()
+        if not prefix:
+            raise RuntimeError("Revalidacao sem fallback_revalidation_prefix.")
+
+        validation_key = f"{prefix.rstrip('/')}/validacao_layout_signature.json"
+        validation = self._load_json_object(validation_key, "validacao_relayout_candidato")
+        status_info = validation.get("status_compatibilidade")
+        if not isinstance(status_info, dict):
+            raise RuntimeError(
+                f"validacao_layout_signature da revalidacao malformada: {validation_key}"
+            )
+
+        status = str(status_info.get("status", "")).strip()
+        result = {
+            "tipo_artefato": "resultado_revalidacao_layout_candidato",
+            "validation_object_key": validation_key,
+            "status_compatibilidade": status,
+            "aprovado_para_publicacao": status == "compativel",
+            "codigos_alerta": status_info.get("codigos_alerta", []),
+            "candidate_layout_object_key": revalidation_conf.get("candidate_layout_object_key"),
+        }
+        status_key = f"{prefix.rstrip('/')}/resultado_revalidacao_candidato.json"
+        result["resultado_revalidacao_object_key"] = status_key
+        result["resultado_revalidacao_uri"] = self.minio_client.put_json(
+            object_key=status_key,
+            payload=result,
+        )
+        if status != "compativel":
+            raise RuntimeError(
+                "Layout candidato reprovado pela DAG 2. "
+                f"Status: {status}. Validacao: {validation_key}."
+            )
+        return result
+
+    def publish_validated_layout_version(
+        self,
+        revalidation_result: dict[str, Any],
+        revalidation_conf: dict[str, Any],
+    ) -> dict[str, Any]:
+        """Publica uma nova versao de layout somente apos revalidacao compativel."""
+        if not bool(revalidation_result.get("aprovado_para_publicacao")):
+            raise RuntimeError("Candidato nao aprovado para publicacao automatica.")
+
+        candidate_key = str(revalidation_conf.get("candidate_layout_object_key", "")).strip()
+        if not candidate_key:
+            raise RuntimeError("Publicacao sem candidate_layout_object_key.")
+        candidate = self._load_json_object(candidate_key, "layout_signature_candidato")
+        if candidate.get("publicacao_automatica_habilitada") is False:
+            raise RuntimeError("Candidato desabilitou publicacao automatica.")
+
+        company_slug = str(revalidation_conf.get("company_slug", "")).strip()
+        if not company_slug:
+            raise RuntimeError("Publicacao sem company_slug.")
+
+        base_key = str(
+            candidate.get("base_layout_signature", {}).get("object_key", "")
+            if isinstance(candidate.get("base_layout_signature"), dict)
+            else ""
+        ).strip()
+        base_layout = self._load_json_object(base_key, "layout_signature_base")
+        next_version = self._next_layout_version(company_slug)
+        published_key = (
+            f"{self.config_loader.load_local_platform_config().minio_layout_prefix.rstrip('/')}/"
+            f"{company_slug}/{next_version}/layout_signature_deterministico.json"
+        )
+        if self.minio_client.object_exists(published_key):
+            raise RuntimeError(
+                "Publicacao recusada para evitar sobrescrita de layout existente: "
+                f"{published_key}"
+            )
+
+        published_layout = self._build_published_layout_from_candidate(
+            base_layout=base_layout,
+            candidate=candidate,
+            version=next_version,
+            candidate_key=candidate_key,
+            revalidation_result=revalidation_result,
+        )
+        published_uri = self.minio_client.put_json(
+            object_key=published_key,
+            payload=published_layout,
+        )
+
+        publication = {
+            "tipo_artefato": "publicacao_layout_signature",
+            "status": "publicado",
+            "published_layout_object_key": published_key,
+            "published_layout_uri": published_uri,
+            "versao_publicada": next_version,
+            "candidate_layout_object_key": candidate_key,
+            "base_layout_signature_object_key": base_key,
+            "validation_object_key": revalidation_result.get("validation_object_key"),
+            "publicado_em": datetime.now(UTC).isoformat(),
+        }
+        publication_key = self._fallback_object_key(
+            self._fallback_context_from_revalidation_conf(revalidation_conf),
+            "publicacao_layout_signature.json",
+        )
+        publication["publication_object_key"] = publication_key
+        publication["publication_uri"] = self.minio_client.put_json(
+            object_key=publication_key,
+            payload=publication,
+        )
+        return publication
+
     def select_relevant_artifacts(
         self,
         fallback_problem_context: dict[str, Any],
@@ -292,6 +465,134 @@ class FallbackLlmService:
             fallback_problem_context=fallback_problem_context,
         )
         return artifact_selection, raw_content
+
+    def _next_layout_version(self, company_slug: str) -> str:
+        """Calcula a proxima versao minor do layout sem depender da LLM."""
+        config = self.config_loader.load_local_platform_config()
+        prefix = f"{config.minio_layout_prefix.rstrip('/')}/{company_slug}/"
+        keys = self.minio_client.list_object_keys(
+            prefix=prefix,
+            suffix="/layout_signature_deterministico.json",
+        )
+        versions: list[tuple[int, int, int]] = []
+        for key in keys:
+            match = re.search(r"/v(\d+)\.(\d+)\.(\d+)/layout_signature_deterministico\.json$", key)
+            if not match:
+                continue
+            versions.append(tuple(int(part) for part in match.groups()))
+
+        if not versions:
+            return "v1.0.0"
+        major, minor, _patch = max(versions)
+        return f"v{major}.{minor + 1}.0"
+
+    @staticmethod
+    def _build_published_layout_from_candidate(
+        *,
+        base_layout: dict[str, Any],
+        candidate: dict[str, Any],
+        version: str,
+        candidate_key: str,
+        revalidation_result: dict[str, Any],
+    ) -> dict[str, Any]:
+        """Aplica o candidato ao layout base e remove metadados exclusivos de candidato."""
+        published = deepcopy(base_layout)
+        candidate_only_keys = {
+            "tipo_artefato",
+            "status_layout",
+            "escopo_correcao",
+            "document_id",
+            "execution_id_origem",
+            "base_layout_signature",
+            "publicacao_automatica_habilitada",
+            "persistido_em",
+            "candidate_layout_object_key",
+            "candidate_layout_uri",
+            "secoes_atualizadas",
+        }
+        for key, value in candidate.items():
+            if key in candidate_only_keys:
+                continue
+            published[key] = value
+
+        published["versao_artefato"] = version.removeprefix("v")
+        published["publicado_em"] = datetime.now(UTC).isoformat()
+        published["lineage_fallback"] = {
+            "candidate_layout_object_key": candidate_key,
+            "base_layout_signature": candidate.get("base_layout_signature"),
+            "document_id": candidate.get("document_id"),
+            "execution_id_origem": candidate.get("execution_id_origem"),
+            "escopo_correcao": candidate.get("escopo_correcao"),
+            "validation_object_key": revalidation_result.get("validation_object_key"),
+        }
+        return published
+
+    def _fallback_object_key(
+        self,
+        fallback_context: dict[str, str],
+        filename: str,
+    ) -> str:
+        """Monta object key de artefatos da DAG 3 sob fallback/..."""
+        return f"{self._fallback_prefix(fallback_context)}/{filename}"
+
+    def _fallback_prefix(
+        self,
+        fallback_context: dict[str, str],
+        suffix: str | None = None,
+    ) -> str:
+        """Prefixo isolado para artefatos de fallback da execucao original."""
+        config = self.config_loader.load_local_platform_config()
+        prefix = (
+            f"fallback/{config.dominio}/{fallback_context['company_slug']}/"
+            f"document_id={fallback_context['document_id']}/"
+            f"execution_id={fallback_context['execution_id']}"
+        )
+        if suffix:
+            return f"{prefix}/{suffix.strip('/')}"
+        return prefix
+
+    def _minio_uri(self, object_key: str) -> str:
+        """Converte object key do bucket configurado para URI minio://."""
+        config = self.config_loader.load_local_platform_config()
+        return f"minio://{config.minio_bucket}/{object_key}"
+
+    @staticmethod
+    def _loaded_fallback_context(loaded_context: dict[str, Any]) -> dict[str, str]:
+        """Extrai o contexto validado retornado por load_fallback_context."""
+        fallback_context = loaded_context.get("fallback_context", {})
+        if not isinstance(fallback_context, dict):
+            raise RuntimeError("Contexto carregado sem fallback_context.")
+        required = ("company_slug", "document_id", "execution_id", "manifest_key")
+        cleaned: dict[str, str] = {}
+        for field in required:
+            value = str(fallback_context.get(field, "")).strip()
+            if not value:
+                raise RuntimeError(f"fallback_context sem campo obrigatorio: {field}")
+            cleaned[field] = value
+        return cleaned
+
+    @staticmethod
+    def _fallback_context_from_revalidation_conf(
+        revalidation_conf: dict[str, Any],
+    ) -> dict[str, str]:
+        """Normaliza o contexto a partir do conf usado para revalidar."""
+        return {
+            "company_slug": str(revalidation_conf["company_slug"]),
+            "document_id": str(revalidation_conf["document_id"]),
+            "execution_id": str(revalidation_conf["execution_id"]),
+            "manifest_key": str(revalidation_conf["manifest_key"]),
+        }
+
+    @staticmethod
+    def _candidate_updated_sections(candidate: dict[str, Any]) -> list[str]:
+        """Lista secoes do layout alteraveis presentes no candidato."""
+        sections = [
+            "fontes_relevantes",
+            "regras_deteccao_mudanca",
+            "mapeamento_canonico",
+            "metadados_estruturais_evidencia",
+        ]
+        return [section for section in sections if section in candidate]
 
     @staticmethod
     def _should_select_artifacts_with_llm(

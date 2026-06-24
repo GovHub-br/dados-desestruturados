@@ -5,6 +5,7 @@ import logging
 from airflow.decorators import dag, task
 from airflow.exceptions import AirflowFailException
 from airflow.operators.python import get_current_context
+from airflow.operators.trigger_dagrun import TriggerDagRunOperator
 from airflow.providers.standard.operators.empty import EmptyOperator
 
 from helpers import AirflowDefaults
@@ -111,6 +112,66 @@ def gerar_layout_candidato_llm(
 
 
 @task
+def persistir_layout_candidato(
+    candidate_layout_response: dict[str, object],
+    loaded_context: dict[str, object],
+) -> dict[str, object]:
+    try:
+        persisted = FALLBACK_LLM_SERVICE.persist_candidate_layout(
+            candidate_layout_response,
+            loaded_context,
+        )
+    except RuntimeError as exc:
+        raise AirflowFailException(str(exc)) from exc
+    logging.info("Layout signature candidato persistido: %s", persisted)
+    return persisted
+
+
+@task
+def montar_conf_revalidacao_dag2(
+    persisted_candidate: dict[str, object],
+    loaded_context: dict[str, object],
+) -> dict[str, object]:
+    try:
+        revalidation_conf = FALLBACK_LLM_SERVICE.build_revalidation_conf(
+            persisted_candidate,
+            loaded_context,
+        )
+    except RuntimeError as exc:
+        raise AirflowFailException(str(exc)) from exc
+    logging.info("Conf para revalidacao do layout candidato na DAG 2: %s", revalidation_conf)
+    return revalidation_conf
+
+
+@task
+def avaliar_revalidacao_candidato(
+    revalidation_conf: dict[str, object],
+) -> dict[str, object]:
+    try:
+        result = FALLBACK_LLM_SERVICE.evaluate_revalidation_result(revalidation_conf)
+    except RuntimeError as exc:
+        raise AirflowFailException(str(exc)) from exc
+    logging.info("Resultado da revalidacao do layout candidato: %s", result)
+    return result
+
+
+@task
+def publicar_nova_versao_layout(
+    revalidation_result: dict[str, object],
+    revalidation_conf: dict[str, object],
+) -> dict[str, object]:
+    try:
+        publication = FALLBACK_LLM_SERVICE.publish_validated_layout_version(
+            revalidation_result,
+            revalidation_conf,
+        )
+    except RuntimeError as exc:
+        raise AirflowFailException(str(exc)) from exc
+    logging.info("Nova versao de layout signature publicada: %s", publication)
+    return publication
+
+
+@task
 def registrar_planejamento(
     runtime: dict[str, object],
     fallback_context: dict[str, object],
@@ -118,6 +179,10 @@ def registrar_planejamento(
     fallback_classification: dict[str, object],
     fallback_problem_context: dict[str, object],
     candidate_layout_response: dict[str, object],
+    persisted_candidate: dict[str, object],
+    revalidation_conf: dict[str, object],
+    revalidation_result: dict[str, object],
+    published_layout: dict[str, object],
 ) -> dict[str, object]:
     planning = {
         "runtime": runtime,
@@ -126,7 +191,11 @@ def registrar_planejamento(
         "fallback_classification": fallback_classification,
         "fallback_problem_context": fallback_problem_context,
         "candidate_layout_response": candidate_layout_response,
-        "status": "layout_signature_candidato_gerado",
+        "persisted_candidate": persisted_candidate,
+        "revalidation_conf": revalidation_conf,
+        "revalidation_result": revalidation_result,
+        "published_layout": published_layout,
+        "status": "layout_signature_publicado_com_nova_versao",
     }
     logging.info("Planejamento DAG 3: %s", planning)
     return planning
@@ -137,6 +206,7 @@ def registrar_planejamento(
     schedule=None,
     start_date=AirflowDefaults.start_date,
     catchup=False,
+    max_active_runs=1,
     default_args=AirflowDefaults.default_args(),
     tags=AirflowDefaults.tags("fallback", "llm"),
 )
@@ -150,6 +220,20 @@ def dag_valida_e_fallback_llm() -> None:
     fallback_classification = classificar_falha_fallback(loaded_context)
     fallback_problem_context = montar_contexto_problema_fallback(loaded_context)
     candidate_layout_response = gerar_layout_candidato_llm(fallback_problem_context)
+    persisted_candidate = persistir_layout_candidato(candidate_layout_response, loaded_context)
+    revalidation_conf = montar_conf_revalidacao_dag2(persisted_candidate, loaded_context)
+    revalidar_candidato_dag2 = TriggerDagRunOperator(
+        task_id="revalidar_candidato_dag2",
+        trigger_dag_id="dag_resolve_schema_saida",
+        conf=revalidation_conf,
+        wait_for_completion=True,
+        reset_dag_run=False,
+        allowed_states=["success"],
+        failed_states=["failed"],
+        poke_interval=20,
+    )
+    revalidation_result = avaliar_revalidacao_candidato(revalidation_conf)
+    published_layout = publicar_nova_versao_layout(revalidation_result, revalidation_conf)
     planejamento = registrar_planejamento(
         runtime,
         fallback_context,
@@ -157,6 +241,10 @@ def dag_valida_e_fallback_llm() -> None:
         fallback_classification,
         fallback_problem_context,
         candidate_layout_response,
+        persisted_candidate,
+        revalidation_conf,
+        revalidation_result,
+        published_layout,
     )
 
     (
@@ -167,6 +255,11 @@ def dag_valida_e_fallback_llm() -> None:
         >> fallback_classification
         >> fallback_problem_context
         >> candidate_layout_response
+        >> persisted_candidate
+        >> revalidation_conf
+        >> revalidar_candidato_dag2
+        >> revalidation_result
+        >> published_layout
         >> planejamento
         >> fim
     )

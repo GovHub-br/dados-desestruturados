@@ -142,15 +142,21 @@ class ConstrutorasPayloadBuilder:
             "artifacts": [
                 self.metadata_client.build_artifact_record(
                     execution_id=execution_id,
-                    tipo_artefato="proposta_novo_mapeamento",
+                    tipo_artefato="layout_signature_candidato",
                     bucket_name=config.minio_bucket,
-                    object_key=f"{fallback_prefix}/proposta_novo_mapeamento.json",
+                    object_key=f"{fallback_prefix}/layout_signature_candidato.json",
                 ),
                 self.metadata_client.build_artifact_record(
                     execution_id=execution_id,
-                    tipo_artefato="analise_semantica_llm",
+                    tipo_artefato="resultado_revalidacao_candidato",
                     bucket_name=config.minio_bucket,
-                    object_key=f"{fallback_prefix}/analise_semantica_llm.json",
+                    object_key=f"{fallback_prefix}/revalidation/resultado_revalidacao_candidato.json",
+                ),
+                self.metadata_client.build_artifact_record(
+                    execution_id=execution_id,
+                    tipo_artefato="publicacao_layout_signature",
+                    bucket_name=config.minio_bucket,
+                    object_key=f"{fallback_prefix}/publicacao_layout_signature.json",
                 ),
             ],
         }

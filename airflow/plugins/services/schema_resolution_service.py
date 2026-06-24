@@ -274,8 +274,16 @@ class SchemaResolutionService:
             f"minio://{config.minio_bucket}/{config.minio_contract_prefix}/v1.2.0/contrato_semantico_construtora.json",
             local_fallback="resultados_contrutoras/contrato_semantico_construtora.json",
         )
+        layout_uri = str(
+            runtime.get("inputs", {}).get("layout_signature", "")
+            if isinstance(runtime.get("inputs"), dict)
+            else ""
+        ).strip()
+        if layout_uri and not layout_uri.startswith("minio://"):
+            layout_uri = f"minio://{config.minio_bucket}/{layout_uri}"
         layout = self._load_json_from_uri_or_local(
-            (
+            layout_uri
+            or (
                 f"minio://{config.minio_bucket}/{config.minio_layout_prefix}/"
                 f"{company_slug}/v4.0.0/layout_signature_deterministico.json"
             ),
@@ -283,10 +291,14 @@ class SchemaResolutionService:
         )
         layout["empresa"] = layout.get("empresa") or company_slug
 
-        resolution_prefix = (
-            f"{config.minio_resolution_prefix.rstrip('/')}/{company_slug}/"
-            f"document_id={document_id}/execution_id={execution_id}/resolution"
-        )
+        revalidation_prefix = str(runtime.get("fallback_revalidation_prefix", "")).strip()
+        if revalidation_prefix:
+            resolution_prefix = revalidation_prefix.rstrip("/")
+        else:
+            resolution_prefix = (
+                f"{config.minio_resolution_prefix.rstrip('/')}/{company_slug}/"
+                f"document_id={document_id}/execution_id={execution_id}/resolution"
+            )
         return {
             "runtime": runtime,
             "execution": {
@@ -302,6 +314,7 @@ class SchemaResolutionService:
                 "schema_saida_resolvido": f"{resolution_prefix}/schema_saida_resolvido.json",
                 "auditoria_resolucao": f"{resolution_prefix}/auditoria_resolucao.json",
             },
+            "layout_signature_override": runtime.get("layout_signature_override"),
         }
 
     def _materialize_extraction_artifacts(self, *, execution_id: str, artifact_uris: list[str]) -> Path:
