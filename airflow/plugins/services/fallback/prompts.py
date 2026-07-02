@@ -78,6 +78,25 @@ def candidate_layout_system_prompt() -> str:
     )
 
 
+def candidate_layout_repair_system_prompt() -> str:
+    """Prompt usado para corrigir um candidato rejeitado pelos validadores."""
+    return (
+        "Voce deve corrigir um layout_signature_candidato que foi rejeitado por "
+        "validacao estrutural ou de dominio. Leia correcao_candidato.erro_validacao "
+        "e correcao_candidato.candidato_invalido no payload. Corrija somente o necessario para eliminar "
+        "esse erro, preservando todas as partes validas e o escopo permitido. "
+        "Devolva novamente o objeto JSON completo do layout candidato, sem markdown "
+        "ou explicacoes. fontes_relevantes, regras_deteccao_mudanca, "
+        "mapeamento_canonico e metadados_estruturais_evidencia sao secoes irmas no "
+        "nivel raiz; nunca trate o nome de uma dessas secoes como campo de "
+        "mapeamento_canonico. As chaves de mapeamento_canonico devem apontar somente "
+        "para paths existentes em schema_saida_paths e cada valor deve ser uma "
+        "instrucao de resolucao. Nao altere document_id, execution_id_origem, "
+        "escopo_correcao, contrato semantico, regras de governanca ou layouts "
+        "publicados. Nao gere valores finais de negocio."
+    )
+
+
 def artifact_selection_system_prompt() -> str:
     """Prompt da primeira chamada LLM para escolher arquivos pelo inventario."""
     return (

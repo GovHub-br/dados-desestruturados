@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from copy import deepcopy
 from datetime import UTC, datetime
+import logging
 import re
 from typing import Any
 
@@ -25,7 +26,11 @@ from .classification import (
 from .context_builder import FallbackProblemContextBuilder
 from .inventory import FALLBACK_INVENTORY_SERVICE, FallbackInventoryService
 from .models import LayoutArtifactSelection, LayoutSignatureCandidate
-from .prompts import artifact_selection_system_prompt, candidate_layout_system_prompt
+from .prompts import (
+    artifact_selection_system_prompt,
+    candidate_layout_repair_system_prompt,
+    candidate_layout_system_prompt,
+)
 
 
 class FallbackLlmService:
@@ -35,6 +40,7 @@ class FallbackLlmService:
     FULL_REMAP_SCOPE = "regeneracao_total_mapeamento"
     CREATION_SCOPE = "criacao_inicial_layout"
     UNSUPPORTED_SCOPE = "falha_nao_suportada_para_fallback_automatico"
+    MAX_CANDIDATE_CORRECTION_ATTEMPTS = 3
 
     def __init__(
         self,
@@ -347,19 +353,55 @@ class FallbackLlmService:
                 }
             )
 
-        try:
-            parsed, raw_content = self.llm_client.generate_json(
-                system_prompt=candidate_layout_system_prompt(),
-                user_payload=enriched_context,
-                response_schema=LayoutSignatureCandidate.model_json_schema(),
-            )
-        except FallbackLlmClientError as exc:
-            raise RuntimeError(f"Falha ao chamar LLM de fallback: {exc}") from exc
-
-        candidate_model = self.candidate_validator.validate_candidate_layout(
-            parsed,
-            enriched_context,
+        parsed, raw_content = self._generate_candidate_json(
+            system_prompt=candidate_layout_system_prompt(),
+            user_payload=enriched_context,
         )
+        validation_errors: list[str] = []
+        corrections_used = 0
+
+        while True:
+            try:
+                candidate_model = self.candidate_validator.validate_candidate_layout(
+                    parsed,
+                    enriched_context,
+                )
+                break
+            except RuntimeError as exc:
+                validation_error = str(exc)
+                validation_errors.append(validation_error)
+                if corrections_used >= self.MAX_CANDIDATE_CORRECTION_ATTEMPTS:
+                    raise RuntimeError(
+                        "Layout candidato continuou invalido apos "
+                        f"{self.MAX_CANDIDATE_CORRECTION_ATTEMPTS} tentativa(s) de "
+                        f"correcao. Ultimo erro: {validation_error}"
+                    ) from exc
+
+                corrections_used += 1
+                logging.warning(
+                    "Layout candidato rejeitado; solicitando correcao %s/%s a LLM: %s",
+                    corrections_used,
+                    self.MAX_CANDIDATE_CORRECTION_ATTEMPTS,
+                    validation_error,
+                )
+                repair_payload = {
+                    **enriched_context,
+                    "correcao_candidato": {
+                        "tentativa": corrections_used,
+                        "maximo_tentativas": self.MAX_CANDIDATE_CORRECTION_ATTEMPTS,
+                        "erro_validacao": validation_error,
+                        "candidato_invalido": parsed,
+                        "instrucao": (
+                            "Corrija somente o erro informado e devolva o candidato "
+                            "completo, preservando as partes validas."
+                        ),
+                    },
+                }
+                parsed, raw_content = self._generate_candidate_json(
+                    system_prompt=candidate_layout_repair_system_prompt(),
+                    user_payload=repair_payload,
+                )
+
         return {
             "tipo_artefato": "resposta_llm_layout_signature_candidato",
             "artifact_selection": (
@@ -370,7 +412,25 @@ class FallbackLlmService:
             "artifact_selection_raw_response": artifact_selection_raw,
             "candidate_layout": candidate_model.model_dump(mode="json", exclude_none=True),
             "raw_response": raw_content,
+            "correction_attempts_used": corrections_used,
+            "validation_errors_repaired": validation_errors,
         }
+
+    def _generate_candidate_json(
+        self,
+        *,
+        system_prompt: str,
+        user_payload: dict[str, Any],
+    ) -> tuple[dict[str, Any], str]:
+        """Executa uma chamada de candidato com schema e erro padronizado."""
+        try:
+            return self.llm_client.generate_json(
+                system_prompt=system_prompt,
+                user_payload=user_payload,
+                response_schema=LayoutSignatureCandidate.model_json_schema(),
+            )
+        except FallbackLlmClientError as exc:
+            raise RuntimeError(f"Falha ao chamar LLM de fallback: {exc}") from exc
 
     def persist_candidate_layout(
         self,
