@@ -176,7 +176,15 @@ class DetectaPdfExtraiService:
                     candidate["company_slug"],
                     candidate["period_label"],
                 )
-                results.append({**document, "extraction_status": "pulada_pdf_duplicado"})
+                results.append(
+                    {
+                        **document,
+                        "company_slug": candidate["company_slug"],
+                        "execution_id": None,
+                        "extraction_status": "pulada_pdf_duplicado",
+                        "extraction_manifest_key": None,
+                    }
+                )
                 continue
 
             candidate = document["candidate"]
@@ -250,8 +258,9 @@ class DetectaPdfExtraiService:
                 "artifact_uris": artifact_uris,
                 "candidate": candidate,
             }
+            extraction_manifest_key = f"{object_prefix}/manifesto_execucao.json"
             manifest_uri = self.minio_client.put_json(
-                object_key=f"{object_prefix}/manifesto_execucao.json",
+                object_key=extraction_manifest_key,
                 payload=execution_manifest,
             )
             logging.info(
@@ -262,8 +271,10 @@ class DetectaPdfExtraiService:
             results.append(
                 {
                     **document,
+                    "company_slug": candidate["company_slug"],
                     "execution_id": execution_id,
                     "extraction_status": "concluida",
+                    "extraction_manifest_key": extraction_manifest_key,
                     "extraction_manifest_uri": manifest_uri,
                     "artifact_uris": artifact_uris,
                 }
@@ -271,6 +282,13 @@ class DetectaPdfExtraiService:
 
         logging.info("Extracao Docling finalizada. Total processado: %s documento(s).", len(results))
         return results
+
+    def extract_and_persist_output(self, document: dict[str, Any]) -> dict[str, Any]:
+        """Processa um documento para permitir mapeamento dinamico no Airflow."""
+        results = self.extract_and_persist_outputs([document])
+        if len(results) != 1:
+            raise RuntimeError("A extracao unitaria nao retornou exatamente um resultado.")
+        return results[0]
 
     def summarize_detection_run(
         self,

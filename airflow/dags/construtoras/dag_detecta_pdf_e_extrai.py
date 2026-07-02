@@ -5,7 +5,9 @@ import logging
 from airflow.decorators import dag, task
 from airflow.exceptions import AirflowSkipException
 from airflow.operators.python import get_current_context
+from airflow.operators.trigger_dagrun import TriggerDagRunOperator
 from airflow.providers.standard.operators.empty import EmptyOperator
+from airflow.utils.trigger_rule import TriggerRule
 
 from helpers import AirflowDefaults, REFERENCE_DATE_RESOLVER
 from plugins.services import DETECTA_PDF_EXTRAI_SERVICE
@@ -43,14 +45,14 @@ def baixar_e_persistir_pdfs(candidates: list[dict[str, object]]) -> list[dict[st
     return documents
 
 
-@task
-def extrair_e_persistir_resultados(documents: list[dict[str, object]]) -> list[dict[str, object]]:
-    results = DETECTA_PDF_EXTRAI_SERVICE.extract_and_persist_outputs(documents)
-    logging.info("Resultados de extracao persistidos no MinIO: %s", results)
-    return results
+@task(pool="docling_extraction_pool", pool_slots=1)
+def extrair_e_persistir_resultado(document: dict[str, object]) -> dict[str, object]:
+    result = DETECTA_PDF_EXTRAI_SERVICE.extract_and_persist_output(document)
+    logging.info("Resultado de extracao persistido no MinIO: %s", result)
+    return result
 
 
-@task
+@task(trigger_rule=TriggerRule.NONE_FAILED)
 def registrar_resumo(
     context: dict[str, object],
     candidates: list[dict[str, object]],
@@ -60,6 +62,29 @@ def registrar_resumo(
     summary = DETECTA_PDF_EXTRAI_SERVICE.summarize_detection_run(context, candidates, documents, extractions)
     logging.info("Resumo DAG 1: %s", summary)
     return summary
+
+
+@task(trigger_rule=TriggerRule.NONE_FAILED)
+def preparar_disparo_dag2(extractions: list[dict[str, object]]) -> list[dict[str, object]]:
+    manifest_keys = list(
+        dict.fromkeys(
+            str(item.get("extraction_manifest_key", "")).strip()
+            for item in extractions or []
+            if item.get("extraction_status") == "concluida"
+            and str(item.get("extraction_manifest_key", "")).strip()
+        )
+    )
+    if not manifest_keys:
+        logging.info("Nenhuma extracao nova concluida; DAG 2 nao sera acionada.")
+        return []
+
+    logging.info("DAG 2 sera acionada para %s manifesto(s).", len(manifest_keys))
+    return [
+        {
+            "manifest_keys": manifest_keys,
+            "trigger_origin_dag": "dag_detecta_pdf_e_extrai",
+        }
+    ]
 
 
 @dag(
@@ -73,15 +98,24 @@ def registrar_resumo(
 )
 def dag_detecta_pdf_e_extrai() -> None:
     inicio = EmptyOperator(task_id="inicio")
-    fim = EmptyOperator(task_id="fim")
+    fim = EmptyOperator(task_id="fim", trigger_rule=TriggerRule.NONE_FAILED_MIN_ONE_SUCCESS)
 
     context = montar_contexto_janela_divulgacao()
     candidates = detectar_pdfs(context)
     documents = baixar_e_persistir_pdfs(candidates)
-    extractions = extrair_e_persistir_resultados(documents)
+    extractions = extrair_e_persistir_resultado.expand(document=documents)
     summary = registrar_resumo(context, candidates, documents, extractions)
+    dag2_confs = preparar_disparo_dag2(extractions)
+    disparar_resolucao_schema = TriggerDagRunOperator.partial(
+        task_id="disparar_resolucao_schema",
+        trigger_dag_id="dag_resolve_schema_saida",
+        wait_for_completion=False,
+        reset_dag_run=False,
+    ).expand(conf=dag2_confs)
 
-    inicio >> context >> candidates >> documents >> extractions >> summary >> fim
+    inicio >> context >> candidates >> documents >> extractions >> summary
+    summary >> dag2_confs >> disparar_resolucao_schema >> fim
+    summary >> fim
 
 
 dag_detecta_pdf_e_extrai()

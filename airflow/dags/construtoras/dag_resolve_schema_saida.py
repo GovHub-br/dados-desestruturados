@@ -51,9 +51,26 @@ def descobrir_execucoes_para_resolucao() -> list[str]:
         logging.info("DAG 2 rodando manifesto informado por dag_run.conf: %s", manifest_key)
         return [manifest_key]
 
-    manifests = SCHEMA_RESOLUTION_SERVICE.discover_extraction_manifests()
+    if isinstance(conf, dict) and "manifest_keys" in conf:
+        configured_keys = conf.get("manifest_keys")
+        if not isinstance(configured_keys, list):
+            raise RuntimeError("dag_run.conf.manifest_keys deve ser uma lista de object keys.")
+        manifest_keys = list(
+            dict.fromkeys(
+                str(item).strip()
+                for item in configured_keys
+                if str(item).strip()
+            )
+        )
+        logging.info(
+            "DAG 2 rodando %s manifesto(s) informados pela DAG 1.",
+            len(manifest_keys),
+        )
+        return manifest_keys
+
+    manifests = SCHEMA_RESOLUTION_SERVICE.discover_latest_unresolved_extraction_manifests()
     logging.info(
-        "DAG 2 encontrou %s manifesto(s) de extracao para processar.",
+        "DAG 2 encontrou %s ultima(s) extracao(oes) pendente(s) para processar.",
         len(manifests),
     )
     return manifests

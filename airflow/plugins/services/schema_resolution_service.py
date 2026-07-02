@@ -62,6 +62,46 @@ class SchemaResolutionService:
         """Lista manifestos de extracao da DAG1 para resolver em lote."""
         return self._discover_extraction_manifests()
 
+    def discover_latest_unresolved_extraction_manifests(self) -> list[str]:
+        """Seleciona a extracao mais recente ainda nao resolvida de cada entidade."""
+        latest_by_company: dict[str, tuple[tuple[str, str, str], str, dict[str, Any]]] = {}
+        for manifest_key in self._discover_extraction_manifests():
+            try:
+                manifest = self.minio_client.get_json(object_key=manifest_key)
+            except Exception:
+                logging.exception("Manifesto de extracao ignorado por falha de leitura: %s", manifest_key)
+                continue
+
+            candidate = manifest.get("candidate") if isinstance(manifest.get("candidate"), dict) else {}
+            company_slug = str(candidate.get("company_slug", "")).strip()
+            execution_id = str(manifest.get("execution_id", "")).strip()
+            document_id = str(manifest.get("document_id", "")).strip()
+            if not company_slug or not execution_id or not document_id:
+                logging.warning(
+                    "Manifesto de extracao ignorado por identidade incompleta: %s",
+                    manifest_key,
+                )
+                continue
+
+            sort_key = self._extraction_execution_sort_key(execution_id, manifest_key)
+            current = latest_by_company.get(company_slug)
+            if current is None or sort_key > current[0]:
+                latest_by_company[company_slug] = (sort_key, manifest_key, manifest)
+
+        pending: list[str] = []
+        for company_slug in sorted(latest_by_company):
+            _, manifest_key, manifest = latest_by_company[company_slug]
+            if self._manifest_resolution_is_complete(manifest):
+                logging.info(
+                    "Ultima extracao de %s ja possui resolucao completa: %s",
+                    company_slug,
+                    manifest_key,
+                )
+                continue
+            pending.append(manifest_key)
+
+        return pending
+
     def process_extraction_manifest(self, runtime: dict[str, Any], *, manifest_key: str) -> dict[str, Any]:
         """Processa um manifesto individual de extracao e persiste saidas da DAG2."""
         initial_creation = self._initial_layout_creation_result_if_missing(
@@ -227,6 +267,11 @@ class SchemaResolutionService:
         runtime = loaded["runtime"]
         execution = loaded.get("execution", runtime.get("execution", {}))
         status = "concluida" if validation["status_compatibilidade"]["status"] == "compativel" else "incompleta"
+        audit_items = list(resolved.get("auditoria_resolucao", []))
+        resolved_count = len(
+            [item for item in audit_items if item.get("status_resolucao") == "resolvido"]
+        )
+        failed_count = len(audit_items) - resolved_count
         return {
             "tipo_artefato": "auditoria_resolucao",
             "dag_name": runtime.get("dag_name"),
@@ -238,16 +283,10 @@ class SchemaResolutionService:
                 "validation_status": validation["status_compatibilidade"]["status"],
                 "periodo_referencia": resolved["schema_saida"].get("periodo_referencia"),
                 "empresa": loaded["layout_signature"].get("empresa"),
-                "campos_mapeamento_resolvidos": len(resolved.get("auditoria_resolucao", [])),
-                "campos_mapeamento_com_falha": len(
-                    [
-                        item
-                        for item in resolved.get("auditoria_resolucao", [])
-                        if item.get("status_resolucao") != "resolvido"
-                    ]
-                ),
+                "campos_mapeamento_resolvidos": resolved_count,
+                "campos_mapeamento_com_falha": failed_count,
             },
-            "auditoria_resolucao": resolved.get("auditoria_resolucao", []),
+            "auditoria_resolucao": audit_items,
         }
 
     def persist_outputs(
@@ -301,6 +340,66 @@ class SchemaResolutionService:
                 suffix="/manifesto_execucao.json",
             )
         return manifests
+
+    @staticmethod
+    def _extraction_execution_sort_key(execution_id: str, manifest_key: str) -> tuple[str, str, str]:
+        """Ordena execucoes pelo timestamp UTC embutido no execution_id."""
+        match = re.search(r"(\d{8}T\d{6}Z)", execution_id)
+        timestamp = match.group(1) if match else ""
+        if not timestamp:
+            logging.warning(
+                "Execution ID sem timestamp reconhecivel; usando ordenacao lexical: %s",
+                execution_id,
+            )
+        return timestamp, execution_id, manifest_key
+
+    def _manifest_resolution_is_complete(self, manifest: dict[str, Any]) -> bool:
+        """Confirma pela auditoria se a execucao mais recente foi totalmente resolvida."""
+        candidate = manifest.get("candidate") if isinstance(manifest.get("candidate"), dict) else {}
+        company_slug = str(candidate.get("company_slug", "")).strip()
+        execution_id = str(manifest.get("execution_id", "")).strip()
+        document_id = str(manifest.get("document_id", "")).strip()
+        if not company_slug or not execution_id or not document_id:
+            return False
+
+        config = self.config_loader.load_local_platform_config()
+        audit_key = (
+            f"{config.minio_resolution_prefix.rstrip('/')}/{company_slug}/"
+            f"document_id={document_id}/execution_id={execution_id}/"
+            "resolution/auditoria_resolucao.json"
+        )
+        if not self.minio_client.object_exists(audit_key):
+            return False
+
+        try:
+            audit = self.minio_client.get_json(object_key=audit_key)
+        except Exception:
+            logging.exception("Auditoria de resolucao malformada ou ilegivel: %s", audit_key)
+            return False
+
+        summary = audit.get("summary")
+        audit_items = audit.get("auditoria_resolucao")
+        if not isinstance(summary, dict) or not isinstance(audit_items, list):
+            logging.warning("Auditoria sem summary ou lista de resolucoes valida: %s", audit_key)
+            return False
+        if any(not isinstance(item, dict) for item in audit_items):
+            logging.warning("Auditoria contem itens de resolucao malformados: %s", audit_key)
+            return False
+
+        if str(summary.get("validation_status", "")).strip() != "compativel":
+            return False
+        try:
+            mapping_failures = int(summary.get("campos_mapeamento_com_falha", -1))
+        except (TypeError, ValueError):
+            return False
+        if mapping_failures != 0:
+            return False
+
+        return not any(
+            bool(item.get("obrigatorio"))
+            and str(item.get("status_resolucao", "")).strip() != "resolvido"
+            for item in audit_items
+        )
 
     def _load_inputs_from_manifest(self, runtime: dict[str, Any], *, manifest_key: str) -> dict[str, Any]:
         manifest = self.minio_client.get_json(object_key=manifest_key)

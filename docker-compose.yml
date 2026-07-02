@@ -283,6 +283,7 @@ services:
     command: >
       bash -c "
       airflow db migrate &&
+      airflow pools set docling_extraction_pool 1 'Extracoes Docling serializadas' &&
       python -c 'import json, os, pathlib; path = pathlib.Path(os.environ[\"AIRFLOW__CORE__SIMPLE_AUTH_MANAGER_PASSWORDS_FILE\"]); path.parent.mkdir(parents=True, exist_ok=True); path.write_text(json.dumps({os.environ[\"AIRFLOW_ADMIN_USER\"]: os.environ[\"AIRFLOW_ADMIN_PASSWORD\"]}) + chr(10))'
       "
     volumes: &airflow-common-volumes
