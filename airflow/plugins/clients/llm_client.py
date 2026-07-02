@@ -28,6 +28,7 @@ class FallbackLlmClient:
         *,
         system_prompt: str,
         user_payload: dict[str, Any],
+        response_schema: dict[str, Any] | None = None,
     ) -> tuple[dict[str, Any], str]:
         """Chama a LLM configurada e exige que o conteudo retornado seja JSON object."""
         config = self.config_loader.load_local_platform_config()
@@ -41,6 +42,7 @@ class FallbackLlmClient:
                 user_payload=user_payload,
                 timeout=config.fallback_llm_timeout_seconds,
                 max_tokens=config.fallback_llm_max_tokens,
+                response_schema=response_schema,
             )
             content = self._extract_openai_content(raw)
             return self._parse_json_content(content), content
@@ -53,6 +55,7 @@ class FallbackLlmClient:
                 user_payload=user_payload,
                 timeout=config.fallback_llm_timeout_seconds,
                 max_tokens=config.fallback_llm_max_tokens,
+                response_schema=response_schema,
             )
             content = self._extract_ollama_content(raw)
             return self._parse_json_content(content), content
@@ -71,6 +74,7 @@ class FallbackLlmClient:
         user_payload: dict[str, Any],
         timeout: int,
         max_tokens: int,
+        response_schema: dict[str, Any] | None,
     ) -> dict[str, Any]:
         """Chama endpoint compativel com OpenAI Chat Completions."""
         if not model:
@@ -119,6 +123,7 @@ class FallbackLlmClient:
         user_payload: dict[str, Any],
         timeout: int,
         max_tokens: int,
+        response_schema: dict[str, Any] | None,
     ) -> dict[str, Any]:
         """Chama Ollama local/remoto usando `/api/chat` com resposta JSON."""
         if not model:
@@ -137,7 +142,7 @@ class FallbackLlmClient:
                 {"role": "user", "content": json.dumps(user_payload, ensure_ascii=False)},
             ],
             "stream": False,
-            "format": "json",
+            "format": response_schema or "json",
             "options": {
                 "temperature": 0,
                 "num_predict": max_tokens,

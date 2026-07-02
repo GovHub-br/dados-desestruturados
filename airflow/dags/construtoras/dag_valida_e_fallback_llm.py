@@ -22,12 +22,12 @@ REQUIRED_FALLBACK_CONF_FIELDS = (
 )
 
 
-@task
+@task(multiple_outputs=False)
 def montar_runtime() -> dict[str, object]:
     return CONSTRUTORAS_PAYLOAD_BUILDER.build_fallback_runtime()
 
 
-@task
+@task(multiple_outputs=False)
 def validar_conf_fallback() -> dict[str, object]:
     context = get_current_context()
     dag_run = context.get("dag_run")
@@ -58,7 +58,7 @@ def validar_conf_fallback() -> dict[str, object]:
     return fallback_context
 
 
-@task
+@task(multiple_outputs=False)
 def carregar_artefatos_fallback(fallback_context: dict[str, object]) -> dict[str, object]:
     try:
         loaded_context = FALLBACK_LLM_SERVICE.load_fallback_context(fallback_context)
@@ -68,7 +68,7 @@ def carregar_artefatos_fallback(fallback_context: dict[str, object]) -> dict[str
     return loaded_context
 
 
-@task
+@task(multiple_outputs=False)
 def classificar_falha_fallback(loaded_context: dict[str, object]) -> dict[str, object]:
     classification = loaded_context.get("fallback_classification")
     if not isinstance(classification, dict):
@@ -88,7 +88,7 @@ def classificar_falha_fallback(loaded_context: dict[str, object]) -> dict[str, o
     return classification
 
 
-@task
+@task(multiple_outputs=False)
 def montar_contexto_problema_fallback(loaded_context: dict[str, object]) -> dict[str, object]:
     problem_context = loaded_context.get("fallback_problem_context")
     if not isinstance(problem_context, dict):
@@ -99,7 +99,7 @@ def montar_contexto_problema_fallback(loaded_context: dict[str, object]) -> dict
     return problem_context
 
 
-@task
+@task(multiple_outputs=False)
 def gerar_layout_candidato_llm(
     fallback_problem_context: dict[str, object],
 ) -> dict[str, object]:
@@ -115,7 +115,7 @@ def gerar_layout_candidato_llm(
     return llm_response
 
 
-@task
+@task(multiple_outputs=False)
 def persistir_layout_candidato(
     candidate_layout_response: dict[str, object],
     loaded_context: dict[str, object],
@@ -131,7 +131,7 @@ def persistir_layout_candidato(
     return persisted
 
 
-@task
+@task(multiple_outputs=False)
 def montar_conf_revalidacao_dag2(
     persisted_candidate: dict[str, object],
     loaded_context: dict[str, object],
@@ -147,7 +147,7 @@ def montar_conf_revalidacao_dag2(
     return revalidation_conf
 
 
-@task
+@task(multiple_outputs=False)
 def avaliar_revalidacao_candidato(
     revalidation_conf: dict[str, object],
 ) -> dict[str, object]:
@@ -159,7 +159,7 @@ def avaliar_revalidacao_candidato(
     return result
 
 
-@task
+@task(multiple_outputs=False)
 def publicar_nova_versao_layout(
     revalidation_result: dict[str, object],
     revalidation_conf: dict[str, object],
@@ -175,7 +175,7 @@ def publicar_nova_versao_layout(
     return publication
 
 
-@task
+@task(multiple_outputs=False)
 def registrar_planejamento(
     runtime: dict[str, object],
     fallback_context: dict[str, object],
@@ -231,6 +231,7 @@ def dag_valida_e_fallback_llm() -> None:
         trigger_dag_id="dag_resolve_schema_saida",
         conf=revalidation_conf,
         wait_for_completion=True,
+        deferrable=True,
         reset_dag_run=False,
         allowed_states=["success"],
         failed_states=["failed"],

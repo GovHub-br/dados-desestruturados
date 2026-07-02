@@ -230,6 +230,10 @@ class FallbackProblemContextBuilder:
         broken_fields: list[str],
     ) -> dict[str, Any]:
         """Recorta o contrato semantico sem incluir conteudo desnecessario."""
+        semantic = contract.get("contrato_semantico", {})
+        if not isinstance(semantic, dict):
+            semantic = {}
+        schema_saida = contract.get("schema_saida", {})
         return {
             "identificacao": {
                 "nome": contract.get("nome"),
@@ -237,17 +241,18 @@ class FallbackProblemContextBuilder:
                 "dominio": contract.get("dominio"),
             },
             "schema_saida_campos_raiz": sorted(
-                contract.get("schema_saida", {}).keys()
-                if isinstance(contract.get("schema_saida"), dict)
+                schema_saida.keys()
+                if isinstance(schema_saida, dict)
                 else []
             ),
-            "schema_saida_paths": self._schema_saida_paths(contract.get("schema_saida", {})),
+            "schema_saida_paths": self._schema_saida_paths(schema_saida),
+            "schema_saida_array_paths": self._schema_saida_array_paths(schema_saida),
             "schema_saida_trechos_relevantes": self._schema_fragments_for_fields(
-                contract.get("schema_saida", {}),
+                schema_saida,
                 broken_fields,
             ),
-            "entidades": self._truncate_json(contract.get("entidades", {})),
-            "metricas": self._truncate_json(contract.get("metricas", {})),
+            "entidades": self._truncate_json(semantic.get("entidades", {})),
+            "metricas": self._truncate_json(semantic.get("metricas", {})),
         }
 
     def _schema_fragments_for_fields(
@@ -273,6 +278,31 @@ class FallbackProblemContextBuilder:
         paths: set[str] = set()
         self._collect_schema_paths(schema_saida, prefix="", paths=paths)
         return sorted(paths)
+
+    def _schema_saida_array_paths(self, schema_saida: Any) -> list[str]:
+        """Lista paths que representam arrays e exigem seletor no mapeamento."""
+        paths: set[str] = set()
+        self._collect_schema_array_paths(schema_saida, prefix="", paths=paths)
+        return sorted(paths)
+
+    def _collect_schema_array_paths(
+        self,
+        value: Any,
+        *,
+        prefix: str,
+        paths: set[str],
+    ) -> None:
+        """Percorre o schema_saida registrando os caminhos declarados como listas."""
+        if isinstance(value, list):
+            if prefix:
+                paths.add(prefix)
+            if value:
+                self._collect_schema_array_paths(value[0], prefix=prefix, paths=paths)
+            return
+        if isinstance(value, dict):
+            for key, item in value.items():
+                child = f"{prefix}.{key}" if prefix else str(key)
+                self._collect_schema_array_paths(item, prefix=child, paths=paths)
 
     def _collect_schema_paths(self, value: Any, *, prefix: str, paths: set[str]) -> None:
         """Percorre schema_saida declarando caminhos de objetos e folhas."""

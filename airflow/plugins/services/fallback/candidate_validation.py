@@ -35,6 +35,9 @@ class FallbackCandidateValidationService:
 
         schema_roots = self._contract_schema_roots_from_context(fallback_problem_context)
         schema_paths = self._contract_schema_paths_from_context(fallback_problem_context)
+        array_paths = self._contract_schema_array_paths_from_context(
+            fallback_problem_context
+        )
         for mapping_path in candidate_model.mapeamento_canonico:
             if not self._mapping_path_is_in_contract(
                 mapping_path,
@@ -44,6 +47,14 @@ class FallbackCandidateValidationService:
                 raise RuntimeError(
                     "Resposta da LLM tentou criar candidato com mapeamento para "
                     f"campo fora do schema_saida do contrato: {mapping_path}."
+                )
+            if not self._mapping_path_has_required_array_selectors(
+                mapping_path,
+                array_paths,
+            ):
+                raise RuntimeError(
+                    "Resposta da LLM criou mapeamento que atravessa array sem "
+                    f"seletor explicito: {mapping_path}."
                 )
 
         allowed_scope = str(fallback_problem_context.get("escopo_permitido", "")).strip()
@@ -209,6 +220,37 @@ class FallbackCandidateValidationService:
         if not isinstance(paths, list):
             return set()
         return {str(path).strip() for path in paths if str(path).strip()}
+
+    @staticmethod
+    def _contract_schema_array_paths_from_context(
+        fallback_problem_context: dict[str, Any],
+    ) -> set[str]:
+        """Extrai caminhos de arrays que exigem seletores no mapeamento."""
+        contract = fallback_problem_context.get("contrato_semantico_relevante", {})
+        if not isinstance(contract, dict):
+            return set()
+        paths = contract.get("schema_saida_array_paths", [])
+        if not isinstance(paths, list):
+            return set()
+        return {str(path).strip() for path in paths if str(path).strip()}
+
+    @staticmethod
+    def _mapping_path_has_required_array_selectors(
+        path: str,
+        array_paths: set[str],
+    ) -> bool:
+        """Exige um filtro `[chave=valor]` em cada segmento de array percorrido."""
+        if not array_paths:
+            return True
+        cumulative: list[str] = []
+        for raw_part in path.split("."):
+            clean_part = raw_part.split("[", maxsplit=1)[0].strip()
+            if not clean_part:
+                continue
+            cumulative.append(clean_part)
+            if ".".join(cumulative) in array_paths and "[" not in raw_part:
+                return False
+        return True
 
     @staticmethod
     def _mapping_path_is_in_contract(

@@ -11,6 +11,14 @@ FallbackCorrectionScope = Literal[
     "criacao_inicial_layout",
 ]
 
+SupportedMappingOrigin = Literal[
+    "valor_fixo",
+    "campo_derivado",
+    "bloco_textual",
+    "cabecalho_de_tabela",
+    "celula_de_tabela",
+]
+
 
 class BaseLayoutSignatureRef(BaseModel):
     """Referencia imutavel ao layout vigente usado como base do candidato."""
@@ -29,6 +37,16 @@ class BaseLayoutSignatureRef(BaseModel):
         return cleaned
 
 
+class CanonicalMappingEntry(BaseModel):
+    """Instrucao de origem aceita pelo resolvedor deterministico da DAG 2."""
+
+    model_config = ConfigDict(extra="allow")
+
+    tipo_origem: SupportedMappingOrigin
+    arquivo_origem: str | None = None
+    obrigatorio: bool = False
+
+
 class LayoutSignatureCandidate(BaseModel):
     """Contrato aceito para o layout signature candidato gerado pela LLM."""
 
@@ -42,7 +60,7 @@ class LayoutSignatureCandidate(BaseModel):
     base_layout_signature: BaseLayoutSignatureRef | None = None
     fontes_relevantes: dict[str, Any] = Field(default_factory=dict)
     regras_deteccao_mudanca: list[dict[str, Any]] = Field(default_factory=list)
-    mapeamento_canonico: dict[str, dict[str, Any]] = Field(default_factory=dict)
+    mapeamento_canonico: dict[str, CanonicalMappingEntry] = Field(default_factory=dict)
     metadados_estruturais_evidencia: dict[str, Any] = Field(default_factory=dict)
     publicacao_automatica_habilitada: bool = True
 
@@ -58,8 +76,8 @@ class LayoutSignatureCandidate(BaseModel):
     @classmethod
     def _must_have_mapping(
         cls,
-        value: dict[str, dict[str, Any]],
-    ) -> dict[str, dict[str, Any]]:
+        value: dict[str, CanonicalMappingEntry],
+    ) -> dict[str, CanonicalMappingEntry]:
         if not value:
             raise ValueError("mapeamento_canonico deve conter pelo menos um campo")
         return value

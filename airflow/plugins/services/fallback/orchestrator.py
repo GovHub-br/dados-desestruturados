@@ -24,7 +24,7 @@ from .classification import (
 )
 from .context_builder import FallbackProblemContextBuilder
 from .inventory import FALLBACK_INVENTORY_SERVICE, FallbackInventoryService
-from .models import LayoutArtifactSelection
+from .models import LayoutArtifactSelection, LayoutSignatureCandidate
 from .prompts import artifact_selection_system_prompt, candidate_layout_system_prompt
 
 
@@ -351,6 +351,7 @@ class FallbackLlmService:
             parsed, raw_content = self.llm_client.generate_json(
                 system_prompt=candidate_layout_system_prompt(),
                 user_payload=enriched_context,
+                response_schema=LayoutSignatureCandidate.model_json_schema(),
             )
         except FallbackLlmClientError as exc:
             raise RuntimeError(f"Falha ao chamar LLM de fallback: {exc}") from exc
@@ -582,6 +583,7 @@ class FallbackLlmService:
             parsed, raw_content = self.llm_client.generate_json(
                 system_prompt=artifact_selection_system_prompt(),
                 user_payload=selection_payload,
+                response_schema=LayoutArtifactSelection.model_json_schema(),
             )
         except FallbackLlmClientError as exc:
             raise RuntimeError(f"Falha ao chamar LLM para selecao de artefatos: {exc}") from exc
