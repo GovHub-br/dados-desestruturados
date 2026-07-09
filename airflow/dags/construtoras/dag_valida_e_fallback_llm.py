@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+import re
 
 from airflow.decorators import dag, task
 from airflow.exceptions import AirflowFailException
@@ -50,6 +51,16 @@ def validar_conf_fallback() -> dict[str, object]:
         field: str(conf[field]).strip()
         for field in REQUIRED_FALLBACK_CONF_FIELDS
     }
+    run_id = str(getattr(dag_run, "run_id", "") or "").strip()
+    normalized_run_id = re.sub(r"[^A-Za-z0-9_.=-]+", "_", run_id).strip("_")
+    if not normalized_run_id:
+        raise AirflowFailException("dag_run.run_id da DAG 3 ausente ou invalido.")
+    if normalized_run_id.startswith("dag_valida_e_fallback_llm__"):
+        fallback_execution_id = normalized_run_id
+    else:
+        fallback_execution_id = f"dag_valida_e_fallback_llm__{normalized_run_id}"
+    fallback_context["source_execution_id"] = fallback_context["execution_id"]
+    fallback_context["fallback_execution_id"] = fallback_execution_id
     for optional_field in ("fallback_mode", "motivo"):
         value = str(conf.get(optional_field, "")).strip()
         if value:

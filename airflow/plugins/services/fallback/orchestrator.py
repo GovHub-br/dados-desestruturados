@@ -82,7 +82,12 @@ class FallbackLlmService:
             "manifest_key": self._required_text(conf, "manifest_key"),
             "trigger_origin_dag": self._required_text(conf, "trigger_origin_dag"),
         }
-        for optional_field in ("fallback_mode", "motivo"):
+        for optional_field in (
+            "fallback_mode",
+            "motivo",
+            "source_execution_id",
+            "fallback_execution_id",
+        ):
             value = str(conf.get(optional_field, "")).strip()
             if value:
                 fallback_context[optional_field] = value
@@ -321,10 +326,14 @@ class FallbackLlmService:
 
         artifact_selection: LayoutArtifactSelection | None = None
         artifact_selection_raw: str | None = None
-        enriched_context = {
-            key: value
-            for key, value in fallback_problem_context.items()
-            if not str(key).startswith("_")
+        fallback_context = self._fallback_context_from_problem_context(
+            fallback_problem_context
+        )
+        enriched_context = self._llm_visible_context(fallback_problem_context)
+        enriched_context["layout_candidate_lineage"] = {
+            "document_id": fallback_context["document_id"],
+            "execution_id_origem": fallback_context["execution_id"],
+            "fallback_execution_id": fallback_context.get("fallback_execution_id"),
         }
 
         if self._should_select_artifacts_with_llm(fallback_problem_context):
@@ -353,15 +362,53 @@ class FallbackLlmService:
                 }
             )
 
-        parsed, raw_content = self._generate_candidate_json(
-            system_prompt=candidate_layout_system_prompt(),
-            user_payload=enriched_context,
-        )
         validation_errors: list[str] = []
         corrections_used = 0
-
+        system_prompt = candidate_layout_system_prompt()
+        user_payload = enriched_context
+        attempt = 0
+        parsed: dict[str, Any] | None = None
+        raw_content = ""
         while True:
             try:
+                parsed, raw_content = self._generate_candidate_json(
+                    system_prompt=system_prompt,
+                    user_payload=user_payload,
+                    fallback_context=fallback_context,
+                    attempt=attempt,
+                )
+            except FallbackLlmClientError as exc:
+                validation_error = str(exc)
+                validation_errors.append(validation_error)
+                if (
+                    not self._is_correctable_llm_response_error(exc)
+                    or corrections_used >= self.MAX_CANDIDATE_CORRECTION_ATTEMPTS
+                ):
+                    raise RuntimeError(
+                        "Falha ao chamar LLM de fallback: "
+                        f"{validation_error}"
+                    ) from exc
+
+                corrections_used += 1
+                logging.warning(
+                    "Resposta LLM invalida; solicitando correcao %s/%s: %s",
+                    corrections_used,
+                    self.MAX_CANDIDATE_CORRECTION_ATTEMPTS,
+                    validation_error,
+                )
+                system_prompt = candidate_layout_repair_system_prompt()
+                user_payload = self._candidate_repair_payload(
+                    enriched_context=enriched_context,
+                    attempt=corrections_used,
+                    validation_error=validation_error,
+                    invalid_candidate=exc.raw_content or "",
+                )
+                attempt = corrections_used
+                continue
+
+            try:
+                if parsed is None:
+                    raise RuntimeError("Resposta LLM ausente apos chamada.")
                 candidate_model = self.candidate_validator.validate_candidate_layout(
                     parsed,
                     enriched_context,
@@ -370,6 +417,14 @@ class FallbackLlmService:
             except RuntimeError as exc:
                 validation_error = str(exc)
                 validation_errors.append(validation_error)
+                self._persist_llm_error(
+                    fallback_context=fallback_context,
+                    stage="layout_signature_candidato",
+                    attempt=attempt,
+                    error=exc,
+                    parsed_response=parsed,
+                    raw_response=raw_content,
+                )
                 if corrections_used >= self.MAX_CANDIDATE_CORRECTION_ATTEMPTS:
                     raise RuntimeError(
                         "Layout candidato continuou invalido apos "
@@ -384,23 +439,14 @@ class FallbackLlmService:
                     self.MAX_CANDIDATE_CORRECTION_ATTEMPTS,
                     validation_error,
                 )
-                repair_payload = {
-                    **enriched_context,
-                    "correcao_candidato": {
-                        "tentativa": corrections_used,
-                        "maximo_tentativas": self.MAX_CANDIDATE_CORRECTION_ATTEMPTS,
-                        "erro_validacao": validation_error,
-                        "candidato_invalido": parsed,
-                        "instrucao": (
-                            "Corrija somente o erro informado e devolva o candidato "
-                            "completo, preservando as partes validas."
-                        ),
-                    },
-                }
-                parsed, raw_content = self._generate_candidate_json(
-                    system_prompt=candidate_layout_repair_system_prompt(),
-                    user_payload=repair_payload,
+                system_prompt = candidate_layout_repair_system_prompt()
+                user_payload = self._candidate_repair_payload(
+                    enriched_context=enriched_context,
+                    attempt=corrections_used,
+                    validation_error=validation_error,
+                    invalid_candidate=parsed,
                 )
+                attempt = corrections_used
 
         return {
             "tipo_artefato": "resposta_llm_layout_signature_candidato",
@@ -421,16 +467,41 @@ class FallbackLlmService:
         *,
         system_prompt: str,
         user_payload: dict[str, Any],
+        fallback_context: dict[str, str],
+        attempt: int,
     ) -> tuple[dict[str, Any], str]:
         """Executa uma chamada de candidato com schema e erro padronizado."""
+        response_schema = LayoutSignatureCandidate.model_json_schema()
+        self._persist_llm_input(
+            fallback_context=fallback_context,
+            stage="layout_signature_candidato",
+            attempt=attempt,
+            system_prompt=system_prompt,
+            user_payload=user_payload,
+            response_schema=response_schema,
+        )
         try:
-            return self.llm_client.generate_json(
+            parsed, raw_content = self.llm_client.generate_json(
                 system_prompt=system_prompt,
                 user_payload=user_payload,
-                response_schema=LayoutSignatureCandidate.model_json_schema(),
+                response_schema=response_schema,
             )
+            self._persist_llm_response(
+                fallback_context=fallback_context,
+                stage="layout_signature_candidato",
+                attempt=attempt,
+                parsed_response=parsed,
+                raw_response=raw_content,
+            )
+            return parsed, raw_content
         except FallbackLlmClientError as exc:
-            raise RuntimeError(f"Falha ao chamar LLM de fallback: {exc}") from exc
+            self._persist_llm_error(
+                fallback_context=fallback_context,
+                stage="layout_signature_candidato",
+                attempt=attempt,
+                error=exc,
+            )
+            raise
 
     def persist_candidate_layout(
         self,
@@ -481,6 +552,14 @@ class FallbackLlmService:
             "company_slug": fallback_context["company_slug"],
             "document_id": fallback_context["document_id"],
             "execution_id": fallback_context["execution_id"],
+            "source_execution_id": fallback_context.get(
+                "source_execution_id",
+                fallback_context["execution_id"],
+            ),
+            "fallback_execution_id": fallback_context.get(
+                "fallback_execution_id",
+                fallback_context["execution_id"],
+            ),
             "manifest_key": fallback_context["manifest_key"],
             "trigger_origin_dag": "dag_valida_e_fallback_llm",
             "modo_execucao": "revalidacao_layout_candidato",
@@ -631,36 +710,264 @@ class FallbackLlmService:
     ) -> tuple[LayoutArtifactSelection, str]:
         """Primeira chamada LLM: escolhe artefatos relevantes a partir do inventario."""
         self._inventory_allowed_paths(fallback_problem_context)
-        selection_payload = {
-            key: value
-            for key, value in fallback_problem_context.items()
-            if not str(key).startswith("_")
-        }
+        fallback_context = self._fallback_context_from_problem_context(
+            fallback_problem_context
+        )
+        selection_payload = self._llm_visible_context(fallback_problem_context)
         selection_payload.pop("artefatos_contexto_llm", None)
         selection_payload.pop("estado_chunking", None)
+        response_schema = LayoutArtifactSelection.model_json_schema()
+        self._persist_llm_input(
+            fallback_context=fallback_context,
+            stage="selecao_artefatos",
+            attempt=0,
+            system_prompt=artifact_selection_system_prompt(),
+            user_payload=selection_payload,
+            response_schema=response_schema,
+        )
 
         try:
             parsed, raw_content = self.llm_client.generate_json(
                 system_prompt=artifact_selection_system_prompt(),
                 user_payload=selection_payload,
-                response_schema=LayoutArtifactSelection.model_json_schema(),
+                response_schema=response_schema,
             )
         except FallbackLlmClientError as exc:
+            self._persist_llm_error(
+                fallback_context=fallback_context,
+                stage="selecao_artefatos",
+                attempt=0,
+                error=exc,
+            )
             raise RuntimeError(f"Falha ao chamar LLM para selecao de artefatos: {exc}") from exc
+        self._persist_llm_response(
+            fallback_context=fallback_context,
+            stage="selecao_artefatos",
+            attempt=0,
+            parsed_response=parsed,
+            raw_response=raw_content,
+        )
 
         try:
             artifact_selection = LayoutArtifactSelection.model_validate(parsed)
         except ValidationError as exc:
+            self._persist_llm_error(
+                fallback_context=fallback_context,
+                stage="selecao_artefatos",
+                attempt=0,
+                error=exc,
+                parsed_response=parsed,
+                raw_response=raw_content,
+            )
             raise RuntimeError(
                 "Resposta da LLM nao respeita o contrato Pydantic da selecao "
                 f"de artefatos: {exc}"
             ) from exc
 
-        self._validate_artifact_selection_paths(
-            artifact_selection=artifact_selection,
-            fallback_problem_context=fallback_problem_context,
+        try:
+            self._validate_artifact_selection_paths(
+                artifact_selection=artifact_selection,
+                fallback_problem_context=fallback_problem_context,
+            )
+        except RuntimeError as exc:
+            self._persist_llm_error(
+                fallback_context=fallback_context,
+                stage="selecao_artefatos",
+                attempt=0,
+                error=exc,
+                parsed_response=parsed,
+                raw_response=raw_content,
+            )
+            raise
+        self._persist_llm_validated(
+            fallback_context=fallback_context,
+            stage="selecao_artefatos",
+            filename="selecao_artefatos_layout.json",
+            payload=artifact_selection.model_dump(mode="json"),
         )
         return artifact_selection, raw_content
+
+    def _persist_llm_input(
+        self,
+        *,
+        fallback_context: dict[str, str],
+        stage: str,
+        attempt: int,
+        system_prompt: str,
+        user_payload: dict[str, Any],
+        response_schema: dict[str, Any] | None,
+    ) -> None:
+        """Persiste exatamente o payload enviado para a LLM."""
+        config = self.config_loader.load_local_platform_config()
+        payload = {
+            "tipo_artefato": f"entrada_llm_{stage}",
+            "stage": stage,
+            "attempt": attempt,
+            "provider": config.fallback_llm_provider,
+            "model": config.fallback_llm_model,
+            "system_prompt": system_prompt,
+            "user_payload": user_payload,
+            "response_schema": response_schema,
+            "persistido_em": datetime.now(UTC).isoformat(),
+        }
+        self.minio_client.put_json(
+            object_key=self._fallback_object_key(
+                fallback_context,
+                self._llm_artifact_filename("entrada_llm", stage, attempt),
+            ),
+            payload=payload,
+        )
+
+    def _persist_llm_response(
+        self,
+        *,
+        fallback_context: dict[str, str],
+        stage: str,
+        attempt: int,
+        parsed_response: dict[str, Any],
+        raw_response: str,
+    ) -> None:
+        """Persiste resposta bruta e resposta parseada antes da validacao final."""
+        payload = {
+            "tipo_artefato": f"resposta_llm_{stage}",
+            "stage": stage,
+            "attempt": attempt,
+            "raw_response": raw_response,
+            "parsed_response": parsed_response,
+            "persistido_em": datetime.now(UTC).isoformat(),
+        }
+        self.minio_client.put_json(
+            object_key=self._fallback_object_key(
+                fallback_context,
+                self._llm_artifact_filename("resposta_llm", stage, attempt),
+            ),
+            payload=payload,
+        )
+
+    def _persist_llm_error(
+        self,
+        *,
+        fallback_context: dict[str, str],
+        stage: str,
+        attempt: int,
+        error: BaseException,
+        parsed_response: dict[str, Any] | None = None,
+        raw_response: str | None = None,
+    ) -> None:
+        """Persiste erro de chamada, parse ou validacao da LLM."""
+        raw_content = raw_response
+        if raw_content is None and isinstance(error, FallbackLlmClientError):
+            raw_content = error.raw_content
+        payload = {
+            "tipo_artefato": f"erro_llm_{stage}",
+            "stage": stage,
+            "attempt": attempt,
+            "error_type": type(error).__name__,
+            "error_message": str(error),
+            "raw_response": raw_content,
+            "parsed_response": parsed_response,
+            "persistido_em": datetime.now(UTC).isoformat(),
+        }
+        self.minio_client.put_json(
+            object_key=self._fallback_object_key(
+                fallback_context,
+                self._llm_artifact_filename("erro_llm", stage, attempt),
+            ),
+            payload=payload,
+        )
+
+    def _persist_llm_validated(
+        self,
+        *,
+        fallback_context: dict[str, str],
+        stage: str,
+        filename: str,
+        payload: dict[str, Any],
+    ) -> None:
+        """Persiste a saida validada de uma etapa LLM."""
+        validated_payload = deepcopy(payload)
+        validated_payload.setdefault("tipo_artefato", stage)
+        validated_payload["validado_em"] = datetime.now(UTC).isoformat()
+        self.minio_client.put_json(
+            object_key=self._fallback_object_key(fallback_context, filename),
+            payload=validated_payload,
+        )
+
+    @staticmethod
+    def _llm_artifact_filename(prefix: str, stage: str, attempt: int) -> str:
+        """Nomeia tentativas sem sobrescrever evidencias anteriores."""
+        base = f"{prefix}_{stage}"
+        if attempt > 0:
+            base = f"{base}_tentativa_{attempt}"
+        return f"{base}.json"
+
+    def _candidate_repair_payload(
+        self,
+        *,
+        enriched_context: dict[str, Any],
+        attempt: int,
+        validation_error: str,
+        invalid_candidate: Any,
+    ) -> dict[str, Any]:
+        """Monta payload minimo para retry corretivo da LLM."""
+        return {
+            **enriched_context,
+            "correcao_candidato": {
+                "tentativa": attempt,
+                "maximo_tentativas": self.MAX_CANDIDATE_CORRECTION_ATTEMPTS,
+                "erro_validacao": validation_error,
+                "candidato_invalido": invalid_candidate,
+                "instrucao": (
+                    "Corrija somente o erro informado e devolva o objeto JSON "
+                    "completo do layout_signature_candidato, sem markdown ou "
+                    "texto externo."
+                ),
+            },
+        }
+
+    @staticmethod
+    def _is_correctable_llm_response_error(error: FallbackLlmClientError) -> bool:
+        """Distingue erro de resposta corrigivel de erro tecnico/configuracao."""
+        if error.raw_content is not None:
+            return True
+        message = str(error).lower()
+        return "json" in message or "conteudo" in message
+
+    @staticmethod
+    def _llm_visible_context(fallback_problem_context: dict[str, Any]) -> dict[str, Any]:
+        """Remove metadados operacionais que nao ajudam a LLM."""
+        hidden_keys = {
+            "tipo_artefato",
+            "status",
+            "manifesto_extracao_ref",
+            "modo_criacao_inicial_layout",
+        }
+        return {
+            key: value
+            for key, value in fallback_problem_context.items()
+            if not str(key).startswith("_") and key not in hidden_keys
+        }
+
+    @staticmethod
+    def _fallback_context_from_problem_context(
+        fallback_problem_context: dict[str, Any],
+    ) -> dict[str, str]:
+        """Extrai contexto de fallback do payload antes de filtrar o prompt."""
+        fallback_context = fallback_problem_context.get("fallback_context")
+        if not isinstance(fallback_context, dict):
+            raise RuntimeError("fallback_problem_context sem fallback_context.")
+        required = ("company_slug", "document_id", "execution_id", "manifest_key")
+        cleaned: dict[str, str] = {}
+        for field in required:
+            value = str(fallback_context.get(field, "")).strip()
+            if not value:
+                raise RuntimeError(f"fallback_context sem campo obrigatorio: {field}")
+            cleaned[field] = value
+        for optional in ("fallback_execution_id", "source_execution_id", "fallback_mode", "motivo"):
+            value = str(fallback_context.get(optional, "")).strip()
+            if value:
+                cleaned[optional] = value
+        return cleaned
 
     def _next_layout_version(self, company_slug: str) -> str:
         """Calcula a proxima versao minor do layout sem depender da LLM."""
@@ -741,7 +1048,7 @@ class FallbackLlmService:
         prefix = (
             f"fallback/{config.dominio}/{fallback_context['company_slug']}/"
             f"document_id={fallback_context['document_id']}/"
-            f"execution_id={fallback_context['execution_id']}"
+            f"execution_id={fallback_context.get('fallback_execution_id') or fallback_context['execution_id']}"
         )
         if suffix:
             return f"{prefix}/{suffix.strip('/')}"
@@ -765,6 +1072,10 @@ class FallbackLlmService:
             if not value:
                 raise RuntimeError(f"fallback_context sem campo obrigatorio: {field}")
             cleaned[field] = value
+        for optional in ("fallback_execution_id", "source_execution_id", "fallback_mode", "motivo"):
+            value = str(fallback_context.get(optional, "")).strip()
+            if value:
+                cleaned[optional] = value
         return cleaned
 
     @staticmethod
@@ -777,6 +1088,14 @@ class FallbackLlmService:
             "document_id": str(revalidation_conf["document_id"]),
             "execution_id": str(revalidation_conf["execution_id"]),
             "manifest_key": str(revalidation_conf["manifest_key"]),
+            "fallback_execution_id": str(
+                revalidation_conf.get("fallback_execution_id")
+                or revalidation_conf["execution_id"]
+            ),
+            "source_execution_id": str(
+                revalidation_conf.get("source_execution_id")
+                or revalidation_conf["execution_id"]
+            ),
         }
 
     @staticmethod

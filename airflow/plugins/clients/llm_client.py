@@ -10,6 +10,10 @@ from plugins.clients.http_client import HTTP_CLIENT, HttpClient
 class FallbackLlmClientError(RuntimeError):
     """Erro padronizado para falhas de configuracao ou resposta da LLM."""
 
+    def __init__(self, message: str, *, raw_content: str | None = None) -> None:
+        super().__init__(message)
+        self.raw_content = raw_content
+
 
 class FallbackLlmClient:
     """Cliente LLM do fallback, compativel com OpenAI Chat Completions e Ollama."""
@@ -181,9 +185,15 @@ class FallbackLlmClient:
         try:
             parsed = json.loads(content)
         except json.JSONDecodeError as exc:
-            raise FallbackLlmClientError("Conteudo da LLM nao e JSON valido.") from exc
+            raise FallbackLlmClientError(
+                "Conteudo da LLM nao e JSON valido.",
+                raw_content=content,
+            ) from exc
         if not isinstance(parsed, dict):
-            raise FallbackLlmClientError("Conteudo JSON da LLM deve ser um objeto.")
+            raise FallbackLlmClientError(
+                "Conteudo JSON da LLM deve ser um objeto.",
+                raw_content=content,
+            )
         return parsed
 
 
