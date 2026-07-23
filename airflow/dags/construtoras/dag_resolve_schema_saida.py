@@ -24,6 +24,7 @@ def montar_runtime() -> dict[str, object]:
     modo_execucao = str(conf.get("modo_execucao", "")).strip()
     layout_signature_uri = str(conf.get("layout_signature_uri", "")).strip()
     layout_signature_object_key = str(conf.get("layout_signature_object_key", "")).strip()
+    contrato_semantico_uri = str(conf.get("contrato_semantico_uri", "")).strip()
     if modo_execucao:
         runtime["modo_execucao"] = modo_execucao
     if layout_signature_uri or layout_signature_object_key:
@@ -36,6 +37,8 @@ def montar_runtime() -> dict[str, object]:
             "candidate_layout_object_key": conf.get("candidate_layout_object_key"),
             "fallback_revalidation_prefix": conf.get("fallback_revalidation_prefix"),
         }
+    if contrato_semantico_uri:
+        runtime.setdefault("inputs", {})["contrato_semantico"] = contrato_semantico_uri
     if conf.get("fallback_revalidation_prefix"):
         runtime["fallback_revalidation_prefix"] = str(conf["fallback_revalidation_prefix"]).strip()
     return runtime

@@ -67,9 +67,7 @@ class FallbackProblemContextBuilder:
             and inventory_has_items
         )
         use_full_inventory = classification.get("fallback_scope") == self.CREATION_SCOPE
-        return {
-            "tipo_artefato": "fallback_problem_context",
-            "status": "contexto_montado",
+        context = {
             "escopo_permitido": classification.get("fallback_scope"),
             "llm_constraints": {
                 "chamar_llm": bool(classification.get("llm_permitida", False)),
@@ -135,7 +133,375 @@ class FallbackProblemContextBuilder:
                 if isinstance(manifest.get("artifact_uris"), list)
                 else 0,
             },
+            "debug_metadata": {
+                "tipo_artefato": "fallback_problem_context",
+                "status": "contexto_montado",
+                "manifesto_extracao_ref": {
+                    "artifact_uris_count": len(manifest.get("artifact_uris", []))
+                    if isinstance(manifest.get("artifact_uris"), list)
+                    else 0,
+                },
+                "inventory_key": inventory_key,
+                "inventory_policy": inventory_policy,
+            },
             "_manifesto_extracao_completo": manifest,
+        }
+        context["llm_payloads"] = self.build_llm_payloads(context)
+        return context
+
+    def build_llm_payloads(self, context: dict[str, Any]) -> dict[str, dict[str, Any]]:
+        """Monta payloads especificos por escopo e etapa LLM."""
+        scope = str(context.get("escopo_permitido", "")).strip()
+        if scope == self.PARTIAL_SCOPE:
+            return {
+                "artifact_selection": self.build_partial_artifact_selection_payload(context),
+                "candidate_generation": self.build_partial_candidate_payload(context),
+            }
+        if scope == self.CREATION_SCOPE:
+            return {
+                "artifact_selection": self.build_initial_creation_artifact_selection_payload(context),
+                "candidate_generation": self.build_initial_creation_candidate_payload(context),
+            }
+        if scope == self.FULL_REMAP_SCOPE:
+            return {
+                "artifact_selection": self.build_full_remap_artifact_selection_payload(context),
+                "candidate_generation": self.build_full_remap_candidate_payload(context),
+            }
+        return {
+            "artifact_selection": self._base_artifact_selection_payload(
+                context,
+                tipo_payload="selecao_artefatos_fallback_nao_suportado",
+            ),
+            "candidate_generation": self._base_candidate_payload(
+                context,
+                tipo_payload="layout_candidato_fallback_nao_suportado",
+            ),
+        }
+
+    @staticmethod
+    def build_partial_artifact_selection_payload(context: dict[str, Any]) -> dict[str, Any]:
+        """Payload da primeira chamada LLM para correcao parcial."""
+        return FallbackProblemContextBuilder._base_artifact_selection_payload(
+            context,
+            tipo_payload="selecao_artefatos_correcao_parcial",
+            include_failure=True,
+            include_relevant_layout=True,
+        )
+
+    @staticmethod
+    def build_partial_candidate_payload(context: dict[str, Any]) -> dict[str, Any]:
+        """Payload da chamada LLM que gera candidato de correcao parcial."""
+        return FallbackProblemContextBuilder._base_candidate_payload(
+            context,
+            tipo_payload="layout_candidato_correcao_parcial",
+            include_failure=True,
+            include_relevant_layout=True,
+            include_base_validation_context=True,
+        )
+
+    @staticmethod
+    def build_initial_creation_artifact_selection_payload(context: dict[str, Any]) -> dict[str, Any]:
+        """Payload da primeira chamada LLM para criacao inicial de layout."""
+        payload = FallbackProblemContextBuilder._base_artifact_selection_payload(
+            context,
+            tipo_payload="selecao_artefatos_criacao_inicial",
+            include_failure=False,
+            include_relevant_layout=False,
+        )
+        payload["objetivo"] = {
+            "selecionar_fontes_para_criar_layout_signature": True,
+            "nao_resolver_valores_finais": True,
+        }
+        return payload
+
+    @staticmethod
+    def build_initial_creation_candidate_payload(context: dict[str, Any]) -> dict[str, Any]:
+        """Payload da chamada LLM que gera o primeiro layout candidato."""
+        return FallbackProblemContextBuilder._base_candidate_payload(
+            context,
+            tipo_payload="layout_candidato_criacao_inicial",
+            include_failure=False,
+            include_relevant_layout=False,
+            include_base_validation_context=False,
+        )
+
+    @staticmethod
+    def build_full_remap_artifact_selection_payload(context: dict[str, Any]) -> dict[str, Any]:
+        """Payload da primeira chamada LLM para regeneracao total."""
+        payload = FallbackProblemContextBuilder._base_artifact_selection_payload(
+            context,
+            tipo_payload="selecao_artefatos_regeneracao_total",
+            include_failure=False,
+            include_relevant_layout=False,
+        )
+        payload["falha_resumida"] = FallbackProblemContextBuilder._failure_summary(context)
+        weak_ref = FallbackProblemContextBuilder._weak_layout_reference(context)
+        if weak_ref:
+            payload["layout_anterior_como_referencia_fraca"] = weak_ref
+        return payload
+
+    @staticmethod
+    def build_full_remap_candidate_payload(context: dict[str, Any]) -> dict[str, Any]:
+        """Payload da chamada LLM que gera candidato completo de regeneracao."""
+        payload = FallbackProblemContextBuilder._base_candidate_payload(
+            context,
+            tipo_payload="layout_candidato_regeneracao_total",
+            include_failure=False,
+            include_relevant_layout=False,
+            include_base_validation_context=False,
+        )
+        base_ref = context.get("layout_signature_base_ref")
+        if isinstance(base_ref, dict) and base_ref:
+            payload["base_layout_signature"] = {
+                **base_ref,
+                "uso": "linhagem_e_referencia_fraca",
+            }
+        payload["falha_resumida"] = FallbackProblemContextBuilder._failure_summary(context)
+        payload["regras_de_saida"] = {
+            "gerar_layout_signature_candidato_completo": True,
+            "nao_gerar_schema_saida_resolvido": True,
+            "nao_gerar_valores_finais": True,
+        }
+        return payload
+
+    @staticmethod
+    def _base_artifact_selection_payload(
+        context: dict[str, Any],
+        *,
+        tipo_payload: str,
+        include_failure: bool = True,
+        include_relevant_layout: bool = True,
+    ) -> dict[str, Any]:
+        """Base compartilhada dos payloads de selecao de artefatos."""
+        payload: dict[str, Any] = {
+            "tipo_payload": tipo_payload,
+            "escopo_permitido": context.get("escopo_permitido"),
+            "contrato_semantico_relevante": (
+                FallbackProblemContextBuilder._artifact_selection_contract_context(
+                    context.get("contrato_semantico_relevante", {})
+                )
+            ),
+            "inventario_extracao": context.get("inventario_extracao", {}),
+        }
+        if include_failure:
+            payload["falha"] = context.get("falha", {})
+        if include_relevant_layout:
+            payload["layout_signature_relevante"] = context.get("layout_signature_relevante", {})
+        return payload
+
+    @staticmethod
+    def _artifact_selection_contract_context(contract_context: Any) -> dict[str, Any]:
+        """Projeta o contrato para a selecao sem expor estrutura de mapeamento.
+
+        A primeira chamada precisa conhecer a semantica das entidades e os poucos
+        campos que requerem evidencia. Paths, arrays e metricas completas sao
+        necessarios ao validador e a geracao do candidato, nao a selecao.
+        """
+        if not isinstance(contract_context, dict):
+            return {}
+
+        semantic = contract_context.get("contrato_semantico", {})
+        structure = contract_context.get("estrutura_schema_saida", {})
+        paths = structure.get("paths_permitidos", []) if isinstance(structure, dict) else []
+        coverage_fields = [
+            str(path)
+            for path in paths
+            if str(path).endswith(".dados.valores.valor")
+        ]
+        identification = contract_context.get("identificacao", {})
+        return {
+            "identificacao": identification if isinstance(identification, dict) else {},
+            "contrato_semantico": {
+                "entidades": (
+                    semantic.get("entidades", {}) if isinstance(semantic, dict) else {}
+                ),
+            },
+            "campos_cobertura_minima_layout": sorted(set(coverage_fields)),
+        }
+
+    @staticmethod
+    def _base_candidate_payload(
+        context: dict[str, Any],
+        *,
+        tipo_payload: str,
+        include_failure: bool = True,
+        include_relevant_layout: bool = True,
+        include_base_validation_context: bool = True,
+    ) -> dict[str, Any]:
+        """Base compartilhada dos payloads de geracao de candidato."""
+        scope = context.get("escopo_permitido")
+        payload: dict[str, Any] = {
+            "tipo_payload": tipo_payload,
+            "escopo_permitido": scope,
+            "contexto_execucao": FallbackProblemContextBuilder._candidate_execution_context(
+                context
+            ),
+            "contrato_semantico_relevante": context.get("contrato_semantico_relevante", {}),
+            "alvos_mapeaveis": FallbackProblemContextBuilder._mappable_targets(
+                context.get("contrato_semantico_relevante", {})
+            ),
+            "exemplo_estrutura_layout_signature": (
+                FallbackProblemContextBuilder._layout_signature_structure_example(context)
+            ),
+        }
+        if include_failure:
+            payload["falha"] = context.get("falha", {})
+        if include_relevant_layout:
+            payload["layout_signature_relevante"] = context.get("layout_signature_relevante", {})
+        base_ref = context.get("layout_signature_base_ref")
+        if base_ref is not None:
+            payload["layout_signature_base_ref"] = base_ref
+        if include_base_validation_context:
+            payload["layout_signature_base_validation_context"] = context.get(
+                "layout_signature_base_validation_context",
+                {},
+            )
+        return payload
+
+    @staticmethod
+    def _layout_signature_structure_example(context: dict[str, Any]) -> dict[str, Any]:
+        """Define um exemplo executavel da estrutura esperada do candidato."""
+        execution_context = FallbackProblemContextBuilder._candidate_execution_context(context)
+        scope = context.get("escopo_permitido")
+        base_ref = context.get("layout_signature_base_ref")
+        return {
+            "cabecalho_obrigatorio": {
+                "tipo_artefato": "layout_signature_candidato",
+                "status_layout": "candidato",
+                "escopo_correcao": scope,
+                "document_id": execution_context.get("document_id"),
+                "execution_id_origem": execution_context.get("execution_id_origem"),
+                "base_layout_signature": (
+                    None if scope == FallbackProblemContextBuilder.CREATION_SCOPE else base_ref
+                ),
+            },
+            "secoes_necessarias": {
+                "fontes_relevantes": "objeto JSON",
+                "regras_deteccao_mudanca": "lista JSON",
+                "mapeamento_canonico": "objeto JSON nao vazio",
+                "metadados_estruturais_evidencia": "objeto JSON",
+            },
+            "tipos_origem_permitidos": [
+                "valor_fixo",
+                "campo_derivado",
+                "bloco_textual",
+                "cabecalho_de_tabela",
+                "celula_de_tabela",
+            ],
+            "formatos_de_origem": {
+                "valor_fixo": {
+                    "tipo_origem": "valor_fixo",
+                    "valor_fixo": "valor estavel declarado pelo layout",
+                    "obrigatorio": True,
+                },
+                "campo_derivado": {
+                    "tipo_origem": "campo_derivado",
+                    "campo_origem": "outro.path.ja.resolvido",
+                    "obrigatorio": True,
+                },
+                "bloco_textual": {
+                    "tipo_origem": "bloco_textual",
+                    "arquivo_origem": "blocks/blocks.jsonl",
+                    "padrao": "expressao regular que encontra o valor",
+                    "obrigatorio": True,
+                },
+                "cabecalho_de_tabela": {
+                    "tipo_origem": "cabecalho_de_tabela",
+                    "arquivo_origem": "tables/table001.json",
+                    "seletor_coluna": {
+                        "indice_coluna_esperado": 1,
+                    },
+                    "obrigatorio": True,
+                },
+                "celula_de_tabela": {
+                    "tipo_origem": "celula_de_tabela",
+                    "arquivo_origem": "tables/table001.json",
+                    "seletor_linha": {
+                        "coluna_rotulo": 0,
+                        "valor_aceito": "rotulo exatamente observado",
+                        "indice_linha_esperado": 0,
+                    },
+                    "seletor_coluna": {
+                        "indice_coluna_esperado": 1,
+                    },
+                    "obrigatorio": True,
+                },
+            },
+            "exemplo_de_mapeamento": {
+                "valor_fixo": {
+                    "campo.de_saida": {
+                        "tipo_origem": "valor_fixo",
+                        "valor_fixo": "unidades",
+                        "obrigatorio": True,
+                    }
+                },
+                "celula_de_tabela_com_seletores": {
+                    "dados[empresa=Empresa].valores[papel_periodo=periodo_referencia]": {
+                        "tipo_origem": "celula_de_tabela",
+                        "arquivo_origem": "tables/table001.json",
+                        "papel_periodo": "periodo_referencia",
+                        "seletor_linha": {
+                            "tipo_match": "exato",
+                            "coluna_rotulo": 0,
+                            "valor_aceito": "Numero de unidades",
+                            "indice_linha_esperado": 12,
+                        },
+                        "seletor_coluna": {
+                            "indice_coluna_esperado": 1,
+                            "escopo_periodo": "trimestre",
+                        },
+                        "obrigatorio": True,
+                    }
+                },
+            },
+        }
+
+    @staticmethod
+    def _candidate_execution_context(context: dict[str, Any]) -> dict[str, Any]:
+        """Monta somente os identificadores que o candidato precisa devolver."""
+        fallback_context = context.get("fallback_context", {})
+        if not isinstance(fallback_context, dict):
+            fallback_context = {}
+        scope = context.get("escopo_permitido")
+        base_ref = context.get("layout_signature_base_ref")
+        return {
+            "document_id": fallback_context.get("document_id"),
+            "execution_id_origem": fallback_context.get("execution_id"),
+            "escopo_correcao": scope,
+            "base_layout_signature": (
+                None if scope == FallbackProblemContextBuilder.CREATION_SCOPE else base_ref
+            ),
+        }
+
+    @staticmethod
+    def _failure_summary(context: dict[str, Any]) -> dict[str, Any]:
+        """Resumo de falha para fluxos de redescoberta ampla."""
+        failure = context.get("falha", {})
+        if not isinstance(failure, dict):
+            return {}
+        return {
+            "codigos_falha": failure.get("codigos_falha", []),
+            "motivos": failure.get("motivos", []),
+        }
+
+    @staticmethod
+    def _weak_layout_reference(context: dict[str, Any]) -> dict[str, Any]:
+        """Referencia fraca ao layout anterior, usada apenas como pista."""
+        layout_context = context.get("layout_signature_relevante", {})
+        if not isinstance(layout_context, dict) or not layout_context:
+            return {}
+        identification = layout_context.get("identificacao", {})
+        return {
+            "empresa": identification.get("empresa") if isinstance(identification, dict) else None,
+            "tipo_documento": (
+                identification.get("tipo_documento")
+                if isinstance(identification, dict)
+                else None
+            ),
+            "fontes_relevantes_antigas": layout_context.get("fontes_relevantes", []),
+            "observacao": (
+                "usar apenas como pista; redescobrir fontes pelo inventario atual"
+            ),
         }
 
     @staticmethod
@@ -234,26 +600,59 @@ class FallbackProblemContextBuilder:
         if not isinstance(semantic, dict):
             semantic = {}
         schema_saida = contract.get("schema_saida", {})
+        structure = {
+            "campos_raiz": sorted(
+                schema_saida.keys()
+                if isinstance(schema_saida, dict)
+                else []
+            ),
+            "paths_permitidos": self._schema_saida_paths(schema_saida),
+            "arrays_que_exigem_seletor": self._schema_saida_array_paths(schema_saida),
+        }
         return {
             "identificacao": {
                 "nome": contract.get("nome"),
                 "versao": contract.get("versao"),
                 "dominio": contract.get("dominio"),
             },
-            "schema_saida_campos_raiz": sorted(
-                schema_saida.keys()
-                if isinstance(schema_saida, dict)
-                else []
-            ),
-            "schema_saida_paths": self._schema_saida_paths(schema_saida),
-            "schema_saida_array_paths": self._schema_saida_array_paths(schema_saida),
-            "schema_saida_trechos_relevantes": self._schema_fragments_for_fields(
-                schema_saida,
-                broken_fields,
-            ),
-            "entidades": self._truncate_json(semantic.get("entidades", {})),
-            "metricas": self._truncate_json(semantic.get("metricas", {})),
+            "contrato_semantico": {
+                "entidades": semantic.get("entidades", {}),
+                "metricas": semantic.get("metricas", {}),
+            },
+            "estrutura_schema_saida": structure,
         }
+
+    @staticmethod
+    def _mappable_targets(contract_context: Any) -> list[dict[str, Any]]:
+        """Deriva alvos de valores brutos para orientar a segunda chamada LLM."""
+        if not isinstance(contract_context, dict):
+            return []
+        structure = contract_context.get("estrutura_schema_saida", {})
+        paths = structure.get("paths_permitidos", []) if isinstance(structure, dict) else []
+        if not isinstance(paths, list):
+            return []
+        period_roles = [
+            path.rsplit(".", maxsplit=1)[-1]
+            for path in paths
+            if str(path).startswith("periodos_disponiveis.")
+        ]
+        targets: list[dict[str, Any]] = []
+        for path in paths:
+            path_text = str(path)
+            if not path_text.endswith(".dados.valores.valor"):
+                continue
+            group = path_text.split(".dados", maxsplit=1)[0].rsplit(".", maxsplit=1)[-1]
+            targets.append(
+                {
+                    "grupo": group,
+                    "valor_path": path_text,
+                    "papeis_periodo_disponiveis": period_roles,
+                    "arrays": [
+                        f"{path_text.split('.valor', maxsplit=1)[0]}",
+                    ],
+                }
+            )
+        return targets
 
     def _schema_fragments_for_fields(
         self,

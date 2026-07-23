@@ -10,9 +10,16 @@ from plugins.clients.http_client import HTTP_CLIENT, HttpClient
 class FallbackLlmClientError(RuntimeError):
     """Erro padronizado para falhas de configuracao ou resposta da LLM."""
 
-    def __init__(self, message: str, *, raw_content: str | None = None) -> None:
+    def __init__(
+        self,
+        message: str,
+        *,
+        raw_content: str | None = None,
+        response_metadata: dict[str, Any] | None = None,
+    ) -> None:
         super().__init__(message)
         self.raw_content = raw_content
+        self.response_metadata = response_metadata
 
 
 class FallbackLlmClient:
@@ -30,11 +37,17 @@ class FallbackLlmClient:
     def generate_json(
         self,
         *,
-        system_prompt: str,
-        user_payload: dict[str, Any],
+        system_prompt: str | None = None,
+        user_payload: dict[str, Any] | None = None,
+        messages: list[dict[str, str]] | None = None,
         response_schema: dict[str, Any] | None = None,
     ) -> tuple[dict[str, Any], str]:
         """Chama a LLM configurada e exige que o conteudo retornado seja JSON object."""
+        chat_messages = self._build_chat_messages(
+            system_prompt=system_prompt,
+            user_payload=user_payload,
+            messages=messages,
+        )
         config = self.config_loader.load_local_platform_config()
         provider = config.fallback_llm_provider
         if provider == "openai":
@@ -42,27 +55,27 @@ class FallbackLlmClient:
                 api_url=config.fallback_llm_api_url or "https://api.openai.com/v1",
                 api_key=config.fallback_llm_api_key,
                 model=config.fallback_llm_model,
-                system_prompt=system_prompt,
-                user_payload=user_payload,
+                messages=chat_messages,
                 timeout=config.fallback_llm_timeout_seconds,
                 max_tokens=config.fallback_llm_max_tokens,
                 response_schema=response_schema,
             )
-            content = self._extract_openai_content(raw)
-            return self._parse_json_content(content), content
+            response_metadata = self._openai_response_metadata(raw)
+            content = self._extract_openai_content(raw, response_metadata=response_metadata)
+            return self._parse_json_with_metadata(content, response_metadata), content
 
         if provider == "ollama":
             raw = self._call_ollama(
                 api_url=config.fallback_llm_api_url or "http://ollama:11434",
                 model=config.fallback_llm_model,
-                system_prompt=system_prompt,
-                user_payload=user_payload,
+                messages=chat_messages,
                 timeout=config.fallback_llm_timeout_seconds,
                 max_tokens=config.fallback_llm_max_tokens,
                 response_schema=response_schema,
             )
-            content = self._extract_ollama_content(raw)
-            return self._parse_json_content(content), content
+            response_metadata = self._ollama_response_metadata(raw)
+            content = self._extract_ollama_content(raw, response_metadata=response_metadata)
+            return self._parse_json_with_metadata(content, response_metadata), content
 
         raise FallbackLlmClientError(
             "FALLBACK_LLM_PROVIDER invalido. Use 'openai' ou 'ollama'."
@@ -74,8 +87,7 @@ class FallbackLlmClient:
         api_url: str,
         api_key: str,
         model: str,
-        system_prompt: str,
-        user_payload: dict[str, Any],
+        messages: list[dict[str, str]],
         timeout: int,
         max_tokens: int,
         response_schema: dict[str, Any] | None,
@@ -100,10 +112,7 @@ class FallbackLlmClient:
 
         payload = {
             "model": model,
-            "messages": [
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": json.dumps(user_payload, ensure_ascii=False)},
-            ],
+            "messages": messages,
             "temperature": 0,
             "max_tokens": max_tokens,
             "response_format": {"type": "json_object"},
@@ -123,8 +132,7 @@ class FallbackLlmClient:
         *,
         api_url: str,
         model: str,
-        system_prompt: str,
-        user_payload: dict[str, Any],
+        messages: list[dict[str, str]],
         timeout: int,
         max_tokens: int,
         response_schema: dict[str, Any] | None,
@@ -141,10 +149,7 @@ class FallbackLlmClient:
 
         payload = {
             "model": model,
-            "messages": [
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": json.dumps(user_payload, ensure_ascii=False)},
-            ],
+            "messages": messages,
             "stream": False,
             "format": response_schema or "json",
             "options": {
@@ -158,26 +163,86 @@ class FallbackLlmClient:
             raise FallbackLlmClientError(str(exc)) from exc
 
     @staticmethod
-    def _extract_openai_content(payload: dict[str, Any]) -> str:
+    def _build_chat_messages(
+        *,
+        system_prompt: str | None,
+        user_payload: dict[str, Any] | None,
+        messages: list[dict[str, str]] | None,
+    ) -> list[dict[str, str]]:
+        """Normaliza chamadas legadas e chamadas com contexto instrucional distribuido."""
+        if messages is not None:
+            if system_prompt is not None or user_payload is not None:
+                raise FallbackLlmClientError(
+                    "Use messages ou system_prompt/user_payload, nunca os dois formatos."
+                )
+            normalized: list[dict[str, str]] = []
+            for message in messages:
+                role = str(message.get("role", "")).strip()
+                content = message.get("content")
+                if role not in {"system", "user"} or not isinstance(content, str) or not content.strip():
+                    raise FallbackLlmClientError(
+                        "Cada mensagem LLM deve ter role system/user e conteudo textual."
+                    )
+                normalized.append({"role": role, "content": content})
+            if not normalized:
+                raise FallbackLlmClientError("Lista de mensagens LLM nao pode ser vazia.")
+            return normalized
+
+        if not isinstance(system_prompt, str) or not system_prompt.strip():
+            raise FallbackLlmClientError("system_prompt e obrigatorio na chamada legada.")
+        if not isinstance(user_payload, dict):
+            raise FallbackLlmClientError("user_payload deve ser um objeto na chamada legada.")
+        return [
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": json.dumps(user_payload, ensure_ascii=False)},
+        ]
+
+    @staticmethod
+    def _extract_openai_content(
+        payload: dict[str, Any],
+        *,
+        response_metadata: dict[str, Any] | None = None,
+    ) -> str:
         try:
             content = payload["choices"][0]["message"]["content"]
         except (KeyError, IndexError, TypeError) as exc:
             raise FallbackLlmClientError(
-                "Resposta OpenAI sem choices[0].message.content."
+                "Resposta OpenAI sem choices[0].message.content.",
+                response_metadata=response_metadata,
             ) from exc
-        return FallbackLlmClient._required_text_content(content)
+        return FallbackLlmClient._required_text_content(
+            content,
+            response_metadata=response_metadata,
+        )
 
     @staticmethod
-    def _extract_ollama_content(payload: dict[str, Any]) -> str:
+    def _extract_ollama_content(
+        payload: dict[str, Any],
+        *,
+        response_metadata: dict[str, Any] | None = None,
+    ) -> str:
         message = payload.get("message")
         if isinstance(message, dict):
-            return FallbackLlmClient._required_text_content(message.get("content"))
-        return FallbackLlmClient._required_text_content(payload.get("response"))
+            return FallbackLlmClient._required_text_content(
+                message.get("content"),
+                response_metadata=response_metadata,
+            )
+        return FallbackLlmClient._required_text_content(
+            payload.get("response"),
+            response_metadata=response_metadata,
+        )
 
     @staticmethod
-    def _required_text_content(content: Any) -> str:
+    def _required_text_content(
+        content: Any,
+        *,
+        response_metadata: dict[str, Any] | None = None,
+    ) -> str:
         if not isinstance(content, str) or not content.strip():
-            raise FallbackLlmClientError("LLM retornou conteudo textual vazio.")
+            raise FallbackLlmClientError(
+                "LLM retornou conteudo textual vazio.",
+                response_metadata=response_metadata,
+            )
         return content.strip()
 
     @staticmethod
@@ -195,6 +260,76 @@ class FallbackLlmClient:
                 raw_content=content,
             )
         return parsed
+
+    @staticmethod
+    def _parse_json_with_metadata(
+        content: str,
+        response_metadata: dict[str, Any],
+    ) -> dict[str, Any]:
+        """Propaga os metadados do envelope quando a resposta textual nao for JSON."""
+        try:
+            return FallbackLlmClient._parse_json_content(content)
+        except FallbackLlmClientError as exc:
+            exc.response_metadata = response_metadata
+            raise
+
+    @staticmethod
+    def _openai_response_metadata(payload: dict[str, Any]) -> dict[str, Any]:
+        """Resume e preserva, de forma sanitizada, a resposta OpenAI compativel."""
+        choice = payload.get("choices", [None])
+        first_choice = choice[0] if isinstance(choice, list) and choice else {}
+        if not isinstance(first_choice, dict):
+            first_choice = {}
+        message = first_choice.get("message", {})
+        if not isinstance(message, dict):
+            message = {}
+        content = message.get("content")
+        reasoning = message.get("reasoning_content")
+        return {
+            "provider": "openai_compatible",
+            "finish_reason": first_choice.get("finish_reason"),
+            "usage": payload.get("usage"),
+            "content_presente": isinstance(content, str) and bool(content.strip()),
+            "content_caracteres": len(content) if isinstance(content, str) else 0,
+            "reasoning_content_presente": isinstance(reasoning, str) and bool(reasoning.strip()),
+            "reasoning_content_caracteres": len(reasoning) if isinstance(reasoning, str) else 0,
+            "envelope_sanitizado": FallbackLlmClient._sanitize_api_envelope(payload),
+        }
+
+    @staticmethod
+    def _ollama_response_metadata(payload: dict[str, Any]) -> dict[str, Any]:
+        """Mantem observabilidade equivalente para respostas do Ollama."""
+        message = payload.get("message", {})
+        content = message.get("content") if isinstance(message, dict) else payload.get("response")
+        return {
+            "provider": "ollama",
+            "finish_reason": payload.get("done_reason"),
+            "usage": {
+                "prompt_eval_count": payload.get("prompt_eval_count"),
+                "eval_count": payload.get("eval_count"),
+            },
+            "content_presente": isinstance(content, str) and bool(content.strip()),
+            "content_caracteres": len(content) if isinstance(content, str) else 0,
+            "envelope_sanitizado": FallbackLlmClient._sanitize_api_envelope(payload),
+        }
+
+    @staticmethod
+    def _sanitize_api_envelope(value: Any) -> Any:
+        """Remove segredos caso um provedor os replique no corpo da resposta."""
+        sensitive_terms = ("api_key", "authorization", "token", "password", "secret")
+        if isinstance(value, dict):
+            sanitized: dict[str, Any] = {}
+            for key, item in value.items():
+                normalized_key = str(key).lower()
+                sanitized[str(key)] = (
+                    "<redigido>"
+                    if any(term in normalized_key for term in sensitive_terms)
+                    else FallbackLlmClient._sanitize_api_envelope(item)
+                )
+            return sanitized
+        if isinstance(value, list):
+            return [FallbackLlmClient._sanitize_api_envelope(item) for item in value]
+        return value
 
 
 FALLBACK_LLM_CLIENT = FallbackLlmClient()

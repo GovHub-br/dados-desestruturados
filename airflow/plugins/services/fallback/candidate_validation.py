@@ -66,6 +66,8 @@ class FallbackCandidateValidationService:
 
         self._validate_candidate_lineage(candidate_model, fallback_problem_context)
         self._validate_candidate_allowed_scope(candidate_model, fallback_problem_context)
+        self._validate_table_mappings_use_indices_only(candidate_model)
+        self._validate_candidate_does_not_override_deterministic_headers(candidate_model)
         self._validate_candidate_extra_sections(candidate_model)
         self._validate_candidate_does_not_write_final_values(candidate_model)
         self._validate_partial_candidate_does_not_remove_unrelated_mappings(
@@ -73,6 +75,31 @@ class FallbackCandidateValidationService:
             fallback_problem_context,
         )
         return candidate_model
+
+    @staticmethod
+    def _validate_table_mappings_use_indices_only(
+        candidate: LayoutSignatureCandidate,
+    ) -> None:
+        """Exige selecao posicional e bloqueia regex em novos layouts de tabela."""
+        table_origins = {"cabecalho_de_tabela", "celula_de_tabela"}
+        for mapping_path, entry in candidate.mapeamento_canonico.items():
+            if entry.tipo_origem not in table_origins:
+                continue
+            payload = entry.model_dump(mode="json", exclude_none=True)
+            selector = payload.get("seletor_coluna")
+            if not isinstance(selector, dict) or not isinstance(
+                selector.get("indice_coluna_esperado"), int
+            ):
+                raise RuntimeError(
+                    "Mapeamento de tabela deve declarar seletor_coluna.indice_coluna_esperado: "
+                    f"{mapping_path}."
+                )
+            if "padrao_cabecalho_aceito" in selector:
+                raise RuntimeError(
+                    "Mapeamento de tabela nao pode usar padrao_cabecalho_aceito; "
+                    "use apenas o indice de coluna observado: "
+                    f"{mapping_path}."
+                )
 
     @staticmethod
     def _validate_candidate_lineage(
@@ -147,6 +174,20 @@ class FallbackCandidateValidationService:
                 "Layout candidato tentou incluir secoes extras em escopo nao permitido."
             )
 
+    @staticmethod
+    def _validate_candidate_does_not_override_deterministic_headers(
+        candidate: LayoutSignatureCandidate,
+    ) -> None:
+        """Impede que a LLM escreva cabecalhos compostos pela DAG."""
+        extra_sections = set((candidate.model_extra or {}).keys())
+        protected_headers = {"empresa", "documento_origem"}
+        overridden = sorted(extra_sections & protected_headers)
+        if overridden:
+            raise RuntimeError(
+                "Layout candidato tentou alterar cabecalhos determinísticos da DAG: "
+                f"{overridden}."
+            )
+
     def _validate_candidate_does_not_write_final_values(
         self,
         candidate: LayoutSignatureCandidate,
@@ -203,7 +244,12 @@ class FallbackCandidateValidationService:
         contract = fallback_problem_context.get("contrato_semantico_relevante", {})
         if not isinstance(contract, dict):
             return set()
-        roots = contract.get("schema_saida_campos_raiz", [])
+        structure = contract.get("estrutura_schema_saida", {})
+        roots = (
+            structure.get("campos_raiz", [])
+            if isinstance(structure, dict)
+            else contract.get("schema_saida_campos_raiz", [])
+        )
         if not isinstance(roots, list):
             return set()
         return {str(root).strip() for root in roots if str(root).strip()}
@@ -216,7 +262,12 @@ class FallbackCandidateValidationService:
         contract = fallback_problem_context.get("contrato_semantico_relevante", {})
         if not isinstance(contract, dict):
             return set()
-        paths = contract.get("schema_saida_paths", [])
+        structure = contract.get("estrutura_schema_saida", {})
+        paths = (
+            structure.get("paths_permitidos", [])
+            if isinstance(structure, dict)
+            else contract.get("schema_saida_paths", [])
+        )
         if not isinstance(paths, list):
             return set()
         return {str(path).strip() for path in paths if str(path).strip()}
@@ -229,7 +280,12 @@ class FallbackCandidateValidationService:
         contract = fallback_problem_context.get("contrato_semantico_relevante", {})
         if not isinstance(contract, dict):
             return set()
-        paths = contract.get("schema_saida_array_paths", [])
+        structure = contract.get("estrutura_schema_saida", {})
+        paths = (
+            structure.get("arrays_que_exigem_seletor", [])
+            if isinstance(structure, dict)
+            else contract.get("schema_saida_array_paths", [])
+        )
         if not isinstance(paths, list):
             return set()
         return {str(path).strip() for path in paths if str(path).strip()}

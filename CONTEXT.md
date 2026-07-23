@@ -36,6 +36,18 @@ _Avoid_: proposta de novo mapeamento, layout temporario
 Parte do layout signature que liga os campos esperados pelo contrato semantico as fontes observaveis no documento.
 _Avoid_: schema de saida, parsing livre
 
+**Campo JSON**:
+Tipo de origem deterministica que le um valor ja existente em um artefato JSON da extracao, por exemplo um campo do `manifesto_execucao.json`. Ele nao transforma, interpreta nem infere o valor lido.
+_Avoid_: campo derivado, parser de periodo, dado fixo
+
+**Seletor Estrutural de Tabela**:
+Descricao de quais linhas e colunas devem ser lidas de uma tabela, por meio de `linha_inicial`, `linha_final`, `segmentos`, `faixas_linhas` e `indices_colunas`. Pode ser usado sozinho para leitura bruta ou junto de um mapeamento semantico nomeado.
+_Avoid_: campo semantico, calculo de metrica, regra de transformacao
+
+**Metadado Normalizado de Periodo**:
+Metadado fornecido antes da resolucao, com rotulo e, quando conhecidos, limites de inicio e fim do periodo. A DAG 2 o consome como dado de origem; nao deve deduzir datas a partir de convencoes de uma empresa ou tipo de PDF.
+_Avoid_: data de execucao, regra especifica de documento
+
 **Schema de Saida**:
 Estrutura final esperada pelo contrato semantico depois da resolucao dos campos do documento.
 _Avoid_: tabela bronze, artefato de extracao

@@ -249,6 +249,11 @@ class SchemaResolutionService:
                     value=result["valor_resolvido"],
                 )
 
+        self._derive_construtoras_global_periods(
+            contrato=contrato,
+            schema_saida=schema_saida,
+            resolved_by_path=resolved_by_path,
+        )
         schema_saida = self._strip_internal_schema_metadata(schema_saida)
 
         return {
@@ -256,6 +261,61 @@ class SchemaResolutionService:
             "validation_status": validation["status_compatibilidade"]["status"],
             "auditoria_resolucao": audit,
         }
+
+    @staticmethod
+    def _derive_construtoras_global_periods(
+        *,
+        contrato: dict[str, Any],
+        schema_saida: dict[str, Any],
+        resolved_by_path: dict[str, Any],
+    ) -> None:
+        """Preenche o resumo de periodos exclusivo do contrato de construtoras.
+
+        Os papeis de periodo sao resolvidos junto aos valores de lancamentos e
+        vendas. O contrato de construtoras tambem expoe um resumo global desses
+        mesmos papeis; ele e derivado aqui para nao duplicar seletores no layout.
+        """
+        contract_schema = contrato.get("schema_saida")
+        if not isinstance(contract_schema, dict) or not isinstance(
+            contract_schema.get("balancos_das_empresas"), dict
+        ):
+            return
+
+        roles = (
+            "periodo_referencia",
+            "periodo_comparativo_anterior",
+            "mesmo_periodo_ano_anterior",
+        )
+        values_by_role: dict[str, set[str]] = {role: set() for role in roles}
+        for mapping_path, value in resolved_by_path.items():
+            match = re.fullmatch(
+                r"balancos_das_empresas\.(?:lancamentos|vendas)\.dados"
+                r"\[empresa=[^\]]+\]\.valores\[papel_periodo=([^\]]+)\](?:\.periodo)?",
+                mapping_path,
+            )
+            if not match or match.group(1) not in values_by_role:
+                continue
+            period = value.get("periodo") if isinstance(value, dict) else value
+            if isinstance(period, str) and period.strip():
+                values_by_role[match.group(1)].add(period.strip())
+
+        periodos_disponiveis = schema_saida.get("periodos_disponiveis")
+        if not isinstance(periodos_disponiveis, dict):
+            return
+
+        for role, values in values_by_role.items():
+            if len(values) != 1:
+                if len(values) > 1:
+                    logging.warning(
+                        "Periodos divergentes para %s no contrato de construtoras: %s",
+                        role,
+                        sorted(values),
+                    )
+                continue
+            value = next(iter(values))
+            periodos_disponiveis[role] = value
+            if role == "periodo_referencia":
+                schema_saida["periodo_referencia"] = value
 
     def build_execution_log(
         self,
@@ -416,9 +476,16 @@ class SchemaResolutionService:
             execution_id=execution_id,
             artifact_uris=[str(item) for item in artifact_uris],
         )
+        (extraction_root / "manifesto_execucao.json").write_text(
+            json.dumps(manifest, ensure_ascii=False, indent=2),
+            encoding="utf-8",
+        )
         config = self.config_loader.load_local_platform_config()
+        contrato_uri = str(runtime.get("inputs", {}).get("contrato_semantico") or (
+            f"minio://{config.minio_bucket}/{config.minio_contract_prefix}/v1.3.0/contrato_semantico_construtora.json"
+        ))
         contrato = self._load_json_from_minio_required(
-            f"minio://{config.minio_bucket}/{config.minio_contract_prefix}/v1.2.0/contrato_semantico_construtora.json",
+            contrato_uri,
             artifact_name="contrato_semantico",
         )
         layout_override = runtime.get("layout_signature_override")
@@ -577,7 +644,14 @@ class SchemaResolutionService:
                     contrato=contrato,
                     values=[str(item) for item in rule.get("valores_aceitos", [])],
                 )
-                row_index = self._find_row_index(table, accepted, label_col)
+                row_index = self._find_row_index(
+                    table,
+                    accepted,
+                    label_col,
+                    preferred_row_index=self._optional_int(
+                        rule.get("indice_linha_esperado")
+                    ),
+                )
                 return {
                     **base,
                     "status": "aprovada" if row_index is not None else "reprovada",
@@ -614,7 +688,14 @@ class SchemaResolutionService:
                     contrato=contrato,
                     values=[str(rule.get("linha_rotulo", ""))],
                 )
-                row_index = self._find_row_index(table, accepted, label_col)
+                row_index = self._find_row_index(
+                    table,
+                    accepted,
+                    label_col,
+                    preferred_row_index=self._optional_int(
+                        rule.get("indice_linha_esperado")
+                    ),
+                )
                 idx = int(rule.get("indice_coluna_esperado", -1))
                 raw_value = None
                 normalized = None
@@ -680,6 +761,15 @@ class SchemaResolutionService:
                     "evidencia": {"campo_origem": source_path},
                 }
 
+            if tipo_origem == "campo_json":
+                value, evidence = self._resolve_json_field_mapping(extraction_root, mapping_entry)
+                return {
+                    **base,
+                    "status_resolucao": "resolvido" if value is not None else "nao_resolvido",
+                    "valor_resolvido": value,
+                    "evidencia": evidence,
+                }
+
             if tipo_origem == "bloco_textual":
                 value, evidence = self._resolve_text_block_mapping(extraction_root, mapping_entry)
                 return {
@@ -706,9 +796,39 @@ class SchemaResolutionService:
                     mapping_entry=mapping_entry,
                     resolved_by_path=resolved_by_path,
                 )
+                output_value = self._project_table_cell_value(
+                    mapping_path=mapping_path,
+                    resolved_cell=value,
+                    raw_value=evidence.get("valor_bruto"),
+                )
                 return {
                     **base,
-                    "status_resolucao": "resolvido" if value.get("valor") is not None else "nao_resolvido",
+                    "status_resolucao": (
+                        "resolvido"
+                        if self._mapping_value_is_resolved(output_value)
+                        else "nao_resolvido"
+                    ),
+                    "valor_resolvido": output_value,
+                    "evidencia": evidence,
+                }
+
+            if tipo_origem == "linhas_de_tabela":
+                value, evidence = self._resolve_table_rows_mapping(extraction_root, mapping_entry)
+                return {
+                    **base,
+                    "status_resolucao": "resolvido" if value else "nao_resolvido",
+                    "valor_resolvido": value,
+                    "evidencia": evidence,
+                }
+
+            if tipo_origem == "juncao_de_registros_json":
+                value, evidence = self._resolve_json_records_join_mapping(
+                    extraction_root,
+                    mapping_entry,
+                )
+                return {
+                    **base,
+                    "status_resolucao": "resolvido" if value else "nao_resolvido",
                     "valor_resolvido": value,
                     "evidencia": evidence,
                 }
@@ -759,6 +879,26 @@ class SchemaResolutionService:
                 }
         return None, {"arquivo_origem": block_file, "block_id": block_id or None, "padrao": pattern}
 
+    def _resolve_json_field_mapping(
+        self,
+        extraction_root: Path,
+        mapping_entry: dict[str, Any],
+    ) -> tuple[Any, dict[str, Any]]:
+        """Lê um campo de um artefato JSON pelo caminho declarado no layout."""
+        origin_file = str(mapping_entry.get("arquivo_origem", "")).strip()
+        json_path = str(mapping_entry.get("caminho_json", "")).strip()
+        payload = self._read_json(extraction_root / origin_file)
+        value: Any = payload
+        for key in json_path.split("."):
+            if not key or not isinstance(value, dict) or key not in value:
+                return None, {"arquivo_origem": origin_file, "caminho_json": json_path}
+            value = value[key]
+
+        return value, {
+            "arquivo_origem": origin_file,
+            "caminho_json": json_path,
+        }
+
     def _resolve_table_header_mapping(
         self,
         extraction_root: Path,
@@ -771,14 +911,11 @@ class SchemaResolutionService:
         selector = dict(mapping_entry.get("seletor_coluna", {}))
         idx = int(selector.get("indice_coluna_esperado", -1))
         header = schema[idx] if idx >= 0 and idx < len(schema) else None
-        pattern = str(selector.get("padrao_cabecalho_aceito", ".*"))
-        ok = header is not None and re.search(pattern, str(header)) is not None
-        return (str(header) if ok else None), {
+        return (str(header) if header is not None else None), {
             "arquivo_origem": origin_file,
             **self._table_structural_evidence(table_metadata),
             "indice_coluna": idx,
             "cabecalho_encontrado": header,
-            "padrao_cabecalho_aceito": pattern,
             "papel_periodo": mapping_entry.get("papel_periodo"),
         }
 
@@ -806,22 +943,27 @@ class SchemaResolutionService:
             mapping_path=mapping_path,
             resolved_by_path=resolved_by_path,
         )
-        row_index = self._find_row_index(table, accepted, label_col)
+        row_index = self._find_row_index(
+            table,
+            accepted,
+            label_col,
+            preferred_row_index=self._optional_int(
+                row_selector.get("indice_linha_esperado")
+            ),
+        )
         col_idx = int(column_selector.get("indice_coluna_esperado", -1))
         header = schema[col_idx] if col_idx >= 0 and col_idx < len(schema) else None
-        header_pattern = str(column_selector.get("padrao_cabecalho_aceito", ".*"))
-        header_ok = header is not None and re.search(header_pattern, str(header)) is not None
 
         raw_value = None
         normalized_value = None
         if row_index is not None and row_index < len(rows):
             row = list(rows[row_index])
-            if col_idx >= 0 and col_idx < len(row) and header_ok:
+            if col_idx >= 0 and col_idx < len(row):
                 raw_value = row[col_idx]
                 normalized_value = parse_flexible_number(raw_value)
 
         value = {
-            "periodo": str(header) if header_ok and header is not None else None,
+            "periodo": str(header) if header is not None else None,
             "escopo_periodo": mapping_entry.get("escopo_periodo") or column_selector.get("escopo_periodo"),
             "valor": normalized_value,
         }
@@ -833,12 +975,266 @@ class SchemaResolutionService:
             "linha_rotulo_aceita": row_selector.get("valor_aceito"),
             "linha_rotulo_sinonimos_aceitos": sorted(accepted),
             "cabecalho_encontrado": header,
-            "padrao_cabecalho_aceito": header_pattern,
             "papel_periodo": mapping_entry.get("papel_periodo"),
             "valor_bruto": raw_value,
             "valor_normalizado": normalized_value,
         }
         return value, evidence
+
+    @staticmethod
+    def _project_table_cell_value(
+        *,
+        mapping_path: str,
+        resolved_cell: dict[str, Any],
+        raw_value: Any,
+    ) -> Any:
+        """Compatibiliza celulas mapeadas como registro ou como campo terminal.
+
+        Um mapeamento que termina em ``valores[papel=...]`` representa toda a
+        observacao e recebe o registro ``periodo``, ``escopo_periodo`` e ``valor``.
+        Quando o contrato pede explicitamente um campo terminal, como
+        ``...valores[papel=...].valor``, o resolvedor insere apenas esse campo.
+        Outros campos de tabela, como ``empresa``, recebem o texto bruto da celula.
+        """
+        tokens = SchemaResolutionService._parse_mapping_path(mapping_path)
+        if not tokens:
+            return resolved_cell
+        terminal_field = str(tokens[-1]["field"])
+        if terminal_field == "valores":
+            return resolved_cell
+        if terminal_field in resolved_cell:
+            return resolved_cell[terminal_field]
+        return raw_value
+
+    @staticmethod
+    def _mapping_value_is_resolved(value: Any) -> bool:
+        """Evita considerar uma observacao de tabela vazia como resolvida."""
+        if isinstance(value, dict) and "valor" in value:
+            return value.get("valor") is not None
+        return value is not None
+
+    def _resolve_table_rows_mapping(
+        self,
+        extraction_root: Path,
+        mapping_entry: dict[str, Any],
+    ) -> tuple[list[dict[str, Any]], dict[str, Any]]:
+        """Extrai linhas por seletores estruturais ou pelo formato legado com campos nomeados."""
+        origin_file = str(mapping_entry.get("arquivo_origem", ""))
+        table = self._read_json(extraction_root / origin_file)
+        rows = list(table.get("rows", []))
+        fields = list(mapping_entry.get("campos", []))
+        selectors = self._table_row_selectors(mapping_entry, len(rows))
+        result: list[dict[str, Any]] = []
+        for selector in selectors:
+            start = selector["linha_inicial"]
+            end = selector["linha_final"]
+            indices_colunas = selector["indices_colunas"]
+            selector_fields = selector["campos"] or fields
+            for row_index, row in enumerate(rows[start : end + 1], start=start):
+                if selector_fields:
+                    item = self._table_row_with_named_fields(row, row_index, start, selector_fields)
+                else:
+                    item = {
+                        "indice_linha": row_index,
+                        "valores": [
+                            {
+                                "indice_coluna": column_index,
+                                "valor": row[column_index] if column_index < len(row) else None,
+                            }
+                            for column_index in indices_colunas
+                        ],
+                    }
+                fixed_values = mapping_entry.get("valores_fixos", {})
+                if selector_fields and isinstance(fixed_values, dict):
+                    item.update(fixed_values)
+                segment_values = selector.get("valores_por_segmento", {})
+                if selector_fields and isinstance(segment_values, dict):
+                    item.update(segment_values)
+                result.append(item)
+        return result, {
+            "arquivo_origem": origin_file,
+            "seletores": selectors,
+            "linhas_resolvidas": len(result),
+        }
+
+    def _resolve_json_records_join_mapping(
+        self,
+        extraction_root: Path,
+        mapping_entry: dict[str, Any],
+    ) -> tuple[list[dict[str, Any]], dict[str, Any]]:
+        """Une registros de listas JSON pela chave e campos declarados no layout.
+
+        O resolvedor nao conhece o significado dos campos nem interpreta datas. Cada
+        fonte informa onde esta sua chave e quais valores expor no registro final.
+        """
+        sources = mapping_entry.get("fontes")
+        if not isinstance(sources, list) or len(sources) < 2:
+            raise ValueError("juncao_de_registros_json requer ao menos duas fontes")
+
+        records_by_source: list[dict[str, dict[str, Any]]] = []
+        evidence_sources: list[dict[str, Any]] = []
+        for source in sources:
+            if not isinstance(source, dict):
+                raise ValueError("Fonte de juncao JSON invalida")
+            origin_file = str(source.get("arquivo_origem", "")).strip()
+            key_path = str(source.get("caminho_chave", "")).strip()
+            fields = source.get("campos")
+            if not origin_file or not key_path or not isinstance(fields, list):
+                raise ValueError("Fonte de juncao JSON exige arquivo_origem, caminho_chave e campos")
+
+            payload = self._read_json_array(extraction_root / origin_file)
+            records: dict[str, dict[str, Any]] = {}
+            for row_index, source_record in enumerate(payload):
+                key_value = self._json_value_at_path(source_record, key_path)
+                if key_value is None:
+                    continue
+                key = str(key_value)
+                if key in records:
+                    raise ValueError(f"Chave duplicada na juncao JSON: {key} ({origin_file})")
+
+                item: dict[str, Any] = {}
+                for field in fields:
+                    if not isinstance(field, dict):
+                        continue
+                    output_path = str(field.get("campo_saida", "")).strip()
+                    value_path = str(field.get("caminho_json", "")).strip()
+                    if not output_path or not value_path:
+                        continue
+                    value = self._json_value_at_path(source_record, value_path)
+                    if str(field.get("tipo", "texto")) == "numero" and value is not None:
+                        value = parse_flexible_number(value)
+                    self._set_nested_value(item, output_path, value)
+                records[key] = {"item": item, "indice_linha": row_index}
+
+            records_by_source.append(records)
+            evidence_sources.append({
+                "arquivo_origem": origin_file,
+                "caminho_chave": key_path,
+                "registros_lidos": len(payload),
+                "chaves_validas": len(records),
+            })
+
+        common_keys = set(records_by_source[0])
+        for records in records_by_source[1:]:
+            common_keys.intersection_update(records)
+
+        result: list[dict[str, Any]] = []
+        for key in sorted(common_keys):
+            item: dict[str, Any] = {}
+            for records in records_by_source:
+                self._merge_nested_values(item, records[key]["item"])
+            for output_path, value in dict(mapping_entry.get("valores_fixos", {})).items():
+                self._set_nested_value(item, str(output_path), value)
+            for rule in mapping_entry.get("valores_por_chave", []):
+                if not isinstance(rule, dict):
+                    continue
+                pattern = str(rule.get("padrao_chave", ""))
+                if pattern and re.search(pattern, key):
+                    for output_path, value in dict(rule.get("valores_fixos", {})).items():
+                        self._set_nested_value(item, str(output_path), value)
+            result.append(item)
+
+        return result, {
+            "tipo_juncao": "interna",
+            "fontes": evidence_sources,
+            "chaves_juntas": sorted(common_keys),
+            "registros_resolvidos": len(result),
+        }
+
+    @staticmethod
+    def _json_value_at_path(value: Any, path: str) -> Any:
+        current = value
+        for key in path.split("."):
+            if not key or not isinstance(current, dict) or key not in current:
+                return None
+            current = current[key]
+        return current
+
+    @staticmethod
+    def _set_nested_value(target: dict[str, Any], path: str, value: Any) -> None:
+        current = target
+        parts = [part for part in path.split(".") if part]
+        if not parts:
+            return
+        for part in parts[:-1]:
+            if not isinstance(current.get(part), dict):
+                current[part] = {}
+            current = current[part]
+        current[parts[-1]] = value
+
+    @classmethod
+    def _merge_nested_values(cls, target: dict[str, Any], source: dict[str, Any]) -> None:
+        for key, value in source.items():
+            if isinstance(value, dict):
+                if not isinstance(target.get(key), dict):
+                    target[key] = {}
+                cls._merge_nested_values(target[key], value)
+            else:
+                target[key] = value
+
+    @staticmethod
+    def _table_row_selectors(mapping_entry: dict[str, Any], row_count: int) -> list[dict[str, Any]]:
+        """Normaliza seletores de linhas/colunas sem associá-los a campos de domínio."""
+        raw_selectors = mapping_entry.get("segmentos") or mapping_entry.get("faixas_linhas")
+        if not isinstance(raw_selectors, list):
+            raw_selectors = [mapping_entry]
+
+        selectors: list[dict[str, Any]] = []
+        for raw_selector in raw_selectors:
+            if isinstance(raw_selector, (list, tuple)) and len(raw_selector) == 2:
+                raw_selector = {
+                    "linha_inicial": raw_selector[0],
+                    "linha_final": raw_selector[1],
+                }
+            if not isinstance(raw_selector, dict):
+                continue
+            try:
+                start = int(raw_selector.get("linha_inicial", 0))
+                end = int(raw_selector.get("linha_final", row_count - 1))
+            except (TypeError, ValueError):
+                continue
+            if row_count == 0 or start < 0 or end < start or end >= row_count:
+                continue
+            raw_columns = raw_selector.get(
+                "indices_colunas",
+                mapping_entry.get("indices_colunas", []),
+            )
+            indices_colunas = [
+                int(column)
+                for column in raw_columns
+                if isinstance(column, int) and column >= 0
+            ] if isinstance(raw_columns, list) else []
+            selectors.append(
+                {
+                    "linha_inicial": start,
+                    "linha_final": end,
+                    "indices_colunas": indices_colunas,
+                    "valores_por_segmento": raw_selector.get("valores_por_segmento", {}),
+                    "campos": list(raw_selector.get("campos", [])),
+                }
+            )
+        return selectors
+
+    @staticmethod
+    def _table_row_with_named_fields(
+        row: list[Any],
+        row_index: int,
+        start: int,
+        fields: list[dict[str, Any]],
+    ) -> dict[str, Any]:
+        item: dict[str, Any] = {}
+        for field in fields:
+            name = str(field.get("nome", "")).strip()
+            if not name:
+                continue
+            field_type = str(field.get("tipo", "texto"))
+            if field_type == "posicao":
+                item[name] = row_index - start + 1
+                continue
+            column_index = int(field.get("indice_coluna", -1))
+            value = row[column_index] if 0 <= column_index < len(row) else None
+            item[name] = parse_flexible_number(value) if field_type == "numero" else str(value or "").strip() or None
+        return item
 
     def _load_table_metadata(
         self,
@@ -1110,6 +1506,15 @@ class SchemaResolutionService:
         return loaded
 
     @staticmethod
+    def _read_json_array(path: Path) -> list[dict[str, Any]]:
+        if not path.exists():
+            raise RuntimeError(f"Arquivo JSON nao encontrado: {path}")
+        loaded = json.loads(path.read_text(encoding="utf-8"))
+        if not isinstance(loaded, list) or any(not isinstance(item, dict) for item in loaded):
+            raise RuntimeError(f"Esperado JSON lista de objetos em {path}")
+        return loaded
+
+    @staticmethod
     def _read_jsonl(path: Path) -> list[dict[str, Any]]:
         if not path.exists():
             return []
@@ -1130,8 +1535,22 @@ class SchemaResolutionService:
         ascii_value = normalized.encode("ascii", "ignore").decode("ascii")
         return re.sub(r"\s+", " ", ascii_value).strip().lower()
 
-    def _find_row_index(self, table: dict[str, Any], accepted: set[str], label_col: int) -> int | None:
+    def _find_row_index(
+        self,
+        table: dict[str, Any],
+        accepted: set[str],
+        label_col: int,
+        *,
+        preferred_row_index: int | None = None,
+    ) -> int | None:
         rows = list(table.get("rows", []))
+        if preferred_row_index is not None and 0 <= preferred_row_index < len(rows):
+            row = rows[preferred_row_index]
+            if label_col < len(row):
+                normalized = self._normalize_text(str(row[label_col]))
+                if normalized in accepted:
+                    return preferred_row_index
+
         for idx, row in enumerate(rows):
             if label_col >= len(row):
                 continue
@@ -1139,6 +1558,13 @@ class SchemaResolutionService:
             if normalized in accepted:
                 return idx
         return None
+
+    @staticmethod
+    def _optional_int(value: Any) -> int | None:
+        try:
+            return int(value)
+        except (TypeError, ValueError):
+            return None
 
 
 SCHEMA_RESOLUTION_SERVICE = SchemaResolutionService()

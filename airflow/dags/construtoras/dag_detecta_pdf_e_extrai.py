@@ -45,6 +45,14 @@ def baixar_e_persistir_pdfs(candidates: list[dict[str, object]]) -> list[dict[st
     return documents
 
 
+@task
+def varrer_documentos_origem(_: list[dict[str, object]]) -> list[dict[str, object]]:
+    """Monta a fila de extracao a partir de todos os PDFs persistidos no MinIO."""
+    documents = DETECTA_PDF_EXTRAI_SERVICE.discover_pending_origin_documents()
+    logging.info("PDFs pendentes encontrados em documentos-origem: %s", documents)
+    return documents
+
+
 @task(pool="docling_extraction_pool", pool_slots=1)
 def extrair_e_persistir_resultado(document: dict[str, object]) -> dict[str, object]:
     result = DETECTA_PDF_EXTRAI_SERVICE.extract_and_persist_output(document)
@@ -56,10 +64,17 @@ def extrair_e_persistir_resultado(document: dict[str, object]) -> dict[str, obje
 def registrar_resumo(
     context: dict[str, object],
     candidates: list[dict[str, object]],
-    documents: list[dict[str, object]],
+    persisted_documents: list[dict[str, object]],
+    documents_for_extraction: list[dict[str, object]],
     extractions: list[dict[str, object]],
 ) -> dict[str, object]:
-    summary = DETECTA_PDF_EXTRAI_SERVICE.summarize_detection_run(context, candidates, documents, extractions)
+    summary = DETECTA_PDF_EXTRAI_SERVICE.summarize_detection_run(
+        context,
+        candidates,
+        persisted_documents,
+        documents_for_extraction,
+        extractions,
+    )
     logging.info("Resumo DAG 1: %s", summary)
     return summary
 
@@ -71,6 +86,7 @@ def preparar_disparo_dag2(extractions: list[dict[str, object]]) -> list[dict[str
             str(item.get("extraction_manifest_key", "")).strip()
             for item in extractions or []
             if item.get("extraction_status") == "concluida"
+            and item.get("should_trigger_dag2")
             and str(item.get("extraction_manifest_key", "")).strip()
         )
     )
@@ -102,9 +118,10 @@ def dag_detecta_pdf_e_extrai() -> None:
 
     context = montar_contexto_janela_divulgacao()
     candidates = detectar_pdfs(context)
-    documents = baixar_e_persistir_pdfs(candidates)
-    extractions = extrair_e_persistir_resultado.expand(document=documents)
-    summary = registrar_resumo(context, candidates, documents, extractions)
+    persisted_documents = baixar_e_persistir_pdfs(candidates)
+    documents_for_extraction = varrer_documentos_origem(persisted_documents)
+    extractions = extrair_e_persistir_resultado.expand(document=documents_for_extraction)
+    summary = registrar_resumo(context, candidates, persisted_documents, documents_for_extraction, extractions)
     dag2_confs = preparar_disparo_dag2(extractions)
     disparar_resolucao_schema = TriggerDagRunOperator.partial(
         task_id="disparar_resolucao_schema",
@@ -113,7 +130,7 @@ def dag_detecta_pdf_e_extrai() -> None:
         reset_dag_run=False,
     ).expand(conf=dag2_confs)
 
-    inicio >> context >> candidates >> documents >> extractions >> summary
+    inicio >> context >> candidates >> persisted_documents >> documents_for_extraction >> extractions >> summary
     summary >> dag2_confs >> disparar_resolucao_schema >> fim
     summary >> fim
 

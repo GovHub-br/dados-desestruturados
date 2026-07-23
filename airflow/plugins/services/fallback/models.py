@@ -90,7 +90,7 @@ class ArtifactSelectionItem(BaseModel):
 
     path: str
     motivo: str
-    campos_saida: list[str] = Field(default_factory=list)
+    coberturas: list["ArtifactSelectionCoverage"] = Field(min_length=1)
 
     @field_validator("path", "motivo")
     @classmethod
@@ -98,6 +98,31 @@ class ArtifactSelectionItem(BaseModel):
         cleaned = value.strip()
         if not cleaned:
             raise ValueError("campo textual obrigatorio vazio")
+        return cleaned
+
+
+class ArtifactSelectionCoverage(BaseModel):
+    """Evidencia literal de que um artefato cobre um campo do contrato."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    campo_saida: str
+    ancoras: list[str] = Field(min_length=1)
+
+    @field_validator("campo_saida")
+    @classmethod
+    def _field_not_empty(cls, value: str) -> str:
+        cleaned = value.strip()
+        if not cleaned:
+            raise ValueError("campo_saida da cobertura nao pode ser vazio")
+        return cleaned
+
+    @field_validator("ancoras")
+    @classmethod
+    def _anchors_not_empty(cls, value: list[str]) -> list[str]:
+        cleaned = [anchor.strip() for anchor in value if anchor.strip()]
+        if not cleaned:
+            raise ValueError("ancoras da cobertura nao podem ser vazias")
         return cleaned
 
 

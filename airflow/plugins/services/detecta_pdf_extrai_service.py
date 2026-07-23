@@ -107,6 +107,7 @@ class DetectaPdfExtraiService:
             )
             manifest_key = object_key.rsplit("/", maxsplit=1)[0] + "/documento_detectado.json"
             already_exists = self.minio_client.object_exists(object_key)
+            extraction_already_exists = self._extraction_manifest_exists(candidate, document_id)
 
             local_pdf = self._write_temp_pdf(candidate, digest, content, filename)
             pdf_uri = f"minio://{self.config.minio_bucket}/{object_key}"
@@ -130,12 +131,13 @@ class DetectaPdfExtraiService:
                     pdf_uri,
                 )
 
-            should_extract = force_extract or not already_exists
+            should_extract = force_extract or not extraction_already_exists
             manifest = {
                 "document_id": document_id,
                 "sha256": digest,
                 "status": "duplicado" if already_exists else "novo",
                 "force_extract": force_extract,
+                "extraction_already_exists": extraction_already_exists,
                 "pdf_uri": pdf_uri,
                 "source_final_url": response.url,
                 "candidate": candidate,
@@ -152,6 +154,39 @@ class DetectaPdfExtraiService:
             )
 
         return persisted
+
+    def discover_pending_origin_documents(self) -> list[dict[str, Any]]:
+        """Varre documentos de origem e monta a fila de PDFs ainda sem extracao.
+
+        A descoberta nao depende das fontes de RI: todo PDF persistido em
+        ``documentos-origem`` pode ser extraido, inclusive uploads manuais.
+        Manifestos de origem preservam o contexto do documento e determinam se
+        uma extracao pode seguir para a DAG 2.
+        """
+        origin_prefix = self.config.minio_document_prefix.rsplit("/construtoras", maxsplit=1)[0].rstrip("/")
+        documents: list[dict[str, Any]] = []
+        for object_key in self.minio_client.list_object_keys(prefix=f"{origin_prefix}/"):
+            if not object_key.lower().endswith(".pdf"):
+                continue
+
+            document = self._build_origin_document(object_key=object_key, origin_prefix=origin_prefix)
+            if self.config.force_extract or not self._extraction_manifest_exists(
+                document["candidate"],
+                str(document["document_id"]),
+            ):
+                documents.append(document)
+                continue
+
+            candidate = document["candidate"]
+            logging.info(
+                "Ignorando PDF ja extraido: %s %s (%s).",
+                candidate["company_slug"],
+                candidate["period_label"],
+                document["pdf_uri"],
+            )
+
+        logging.info("Varredura de documentos de origem encontrou %s PDF(s) pendente(s).", len(documents))
+        return documents
 
     def extract_and_persist_outputs(self, documents: list[dict[str, Any]]) -> list[dict[str, Any]]:
         """Roda o pipeline Docling para PDFs novos e persiste a pasta de saida no MinIO."""
@@ -172,7 +207,8 @@ class DetectaPdfExtraiService:
             if not document.get("should_extract"):
                 candidate = document["candidate"]
                 logging.info(
-                    "Pulando extracao para %s %s (documento duplicado e FORCE_EXTRACT=false).",
+                    "Pulando extracao para %s %s "
+                    "(manifesto de extracao ja existe e FORCE_EXTRACT=false).",
                     candidate["company_slug"],
                     candidate["period_label"],
                 )
@@ -180,9 +216,9 @@ class DetectaPdfExtraiService:
                     {
                         **document,
                         "company_slug": candidate["company_slug"],
-                        "execution_id": None,
-                        "extraction_status": "pulada_pdf_duplicado",
-                        "extraction_manifest_key": None,
+                        "execution_id": "",
+                        "extraction_status": "pulada_extracao_existente",
+                        "extraction_manifest_key": "",
                     }
                 )
                 continue
@@ -233,9 +269,10 @@ class DetectaPdfExtraiService:
                     runner_log_tail,
                 )
 
-            object_prefix = (
-                f"{self.config.minio_extract_prefix}/{candidate['company_slug']}/"
-                f"document_id={document['document_id']}/execution_id={execution_id}/extraction"
+            object_prefix = self._extraction_prefix(
+                candidate=candidate,
+                document_id=str(document["document_id"]),
+                execution_id=execution_id,
             )
             logging.info(
                 "Iniciando upload dos artefatos no MinIO para execution_id=%s em %s.",
@@ -277,6 +314,7 @@ class DetectaPdfExtraiService:
                     "extraction_manifest_key": extraction_manifest_key,
                     "extraction_manifest_uri": manifest_uri,
                     "artifact_uris": artifact_uris,
+                    "should_trigger_dag2": bool(document.get("should_trigger_dag2", False)),
                 }
             )
 
@@ -294,7 +332,8 @@ class DetectaPdfExtraiService:
         self,
         context: dict[str, Any],
         candidates: list[dict[str, Any]],
-        documents: list[dict[str, Any]],
+        persisted_documents: list[dict[str, Any]],
+        documents_for_extraction: list[dict[str, Any]],
         extractions: list[dict[str, Any]],
     ) -> dict[str, Any]:
         """Gera um resumo compacto para log, auditoria e acompanhamento da DAG."""
@@ -303,8 +342,9 @@ class DetectaPdfExtraiService:
             "window": context.get("window"),
             "should_check": context.get("should_check"),
             "candidates_count": len(candidates),
-            "downloaded_count": len([item for item in documents if item.get("status") == "novo"]),
-            "duplicate_count": len([item for item in documents if item.get("status") == "duplicado"]),
+            "downloaded_count": len([item for item in persisted_documents if item.get("status") == "novo"]),
+            "duplicate_count": len([item for item in persisted_documents if item.get("status") == "duplicado"]),
+            "queued_for_extraction_count": len(documents_for_extraction),
             "extracted_count": len([item for item in extractions if item.get("extraction_status") == "concluida"]),
             "documents": [
                 {
@@ -316,6 +356,71 @@ class DetectaPdfExtraiService:
                 }
                 for item in extractions
             ],
+        }
+
+    def _build_origin_document(self, *, object_key: str, origin_prefix: str) -> dict[str, Any]:
+        """Baixa um PDF do MinIO e recompõe o contexto minimo de extracao."""
+        parent_prefix = object_key.rsplit("/", maxsplit=1)[0]
+        origin_manifest_key, origin_manifest = self._load_origin_manifest(parent_prefix)
+        content = self.minio_client.get_bytes(object_key=object_key)
+        digest = hashlib.sha256(content).hexdigest()
+        candidate = self._origin_candidate(
+            object_key=object_key,
+            origin_prefix=origin_prefix,
+            origin_manifest=origin_manifest,
+        )
+        filename = self._safe_filename(object_key.rsplit("/", maxsplit=1)[-1])
+        local_pdf = self._write_temp_pdf(candidate, digest, content, filename)
+        return {
+            "document_id": digest[:32],
+            "sha256": digest,
+            "status": "pendente_extracao",
+            "pdf_uri": f"minio://{self.config.minio_bucket}/{object_key}",
+            "origin_manifest_key": origin_manifest_key,
+            "candidate": candidate,
+            "local_pdf_path": str(local_pdf),
+            "should_extract": True,
+            "should_trigger_dag2": bool(candidate.get("should_trigger_dag2", False)),
+        }
+
+    def _load_origin_manifest(self, parent_prefix: str) -> tuple[str | None, dict[str, Any]]:
+        """Carrega manifestos criados pela DAG ou por upload manual, se existirem."""
+        for name in ("documento_detectado.json", "documento_origem.json"):
+            object_key = f"{parent_prefix}/{name}"
+            if self.minio_client.object_exists(object_key):
+                return object_key, self.minio_client.get_json(object_key=object_key)
+        return None, {}
+
+    @staticmethod
+    def _origin_candidate(
+        *,
+        object_key: str,
+        origin_prefix: str,
+        origin_manifest: dict[str, Any],
+    ) -> dict[str, Any]:
+        """Normaliza o contexto de RI e de uploads manuais para o Docling."""
+        detected_candidate = origin_manifest.get("candidate")
+        if isinstance(detected_candidate, dict):
+            candidate = dict(detected_candidate)
+            candidate.setdefault("should_trigger_dag2", True)
+            return candidate
+
+        relative_parts = object_key.removeprefix(f"{origin_prefix}/").split("/")
+        company_slug = str(origin_manifest.get("organizacao") or relative_parts[0]).strip().lower()
+        period_label = str(origin_manifest.get("periodo_referencia") or "sem_periodo").strip()
+        year_match = re.search(r"(20\d{2})", period_label)
+        reference_year = int(year_match.group(1)) if year_match else 0
+        return {
+            "company_slug": company_slug,
+            "company_name": str(origin_manifest.get("organizacao") or company_slug),
+            "title": object_key.rsplit("/", maxsplit=1)[-1],
+            "url": "",
+            "provider": str(origin_manifest.get("origem") or "minio_upload_manual"),
+            "source_url": "",
+            "period_label": period_label,
+            "reference_year": reference_year,
+            "reference_quarter": 0,
+            "should_trigger_dag2": bool(origin_manifest.get("should_trigger_dag2", False)),
         }
 
     def _write_temp_pdf(
@@ -337,6 +442,40 @@ class DetectaPdfExtraiService:
         """Cria um identificador legivel para agrupar os artefatos de uma extracao."""
         timestamp = datetime.now(UTC).strftime("%Y%m%dT%H%M%SZ")
         return f"{DAG_NAME}__{company_slug}__{period_label}__{timestamp}"
+
+    def _extraction_manifest_exists(self, candidate: dict[str, Any], document_id: str) -> bool:
+        """Verifica se o PDF ja possui extracao persistida para a janela atual."""
+        current_prefix = self._extraction_prefix(
+            candidate=candidate,
+            document_id=document_id,
+            execution_id="",
+        ).removesuffix("/execution_id=/extraction")
+        legacy_prefix = (
+            f"{self.config.minio_extract_prefix.rstrip('/')}/{candidate['company_slug']}/"
+            f"document_id={document_id}/"
+        )
+        for prefix in (current_prefix, legacy_prefix):
+            manifests = self.minio_client.list_object_keys(
+                prefix=prefix,
+                suffix="/extraction/manifesto_execucao.json",
+            )
+            if manifests:
+                return True
+        return False
+
+    def _extraction_prefix(
+        self,
+        *,
+        candidate: dict[str, Any],
+        document_id: str,
+        execution_id: str,
+    ) -> str:
+        """Monta o prefixo versionado por empresa, ano, periodo, documento e execucao."""
+        return (
+            f"{self.config.minio_extract_prefix.rstrip('/')}/{candidate['company_slug']}/"
+            f"ano={candidate['reference_year']}/periodo={candidate['period_label']}/"
+            f"document_id={document_id}/execution_id={execution_id}/extraction"
+        )
 
     @staticmethod
     def _safe_filename(filename: str) -> str:

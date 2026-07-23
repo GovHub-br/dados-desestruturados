@@ -1,80 +1,89 @@
 from __future__ import annotations
 
 
-def candidate_layout_system_prompt() -> str:
-    """Prompt base que limita a LLM a devolver somente um layout candidato."""
+def candidate_scope_instruction(scope: str) -> str:
+    """Explica em texto corrido a responsabilidade da LLM em cada escopo."""
+    if scope == "criacao_inicial_layout":
+        return (
+            "Esta e uma criacao inicial de layout signature: nao existe layout ativo "
+            "que possa ser reaproveitado. A DAG ja definiu a identidade do documento, "
+            "a referencia do contrato e as regras operacionais. Sua responsabilidade e "
+            "criar somente os mapeamentos canonicos que ensinam a DAG 2 a localizar os "
+            "valores brutos nos artefatos recebidos. Nao crie metadados de identidade "
+            "do documento, versao, publicacao ou regras de execucao; esses campos pertencem "
+            "ao esqueleto deterministico da DAG."
+        )
+    if scope == "correcao_parcial_mapeamento":
+        return (
+            "Esta e uma correcao parcial de layout signature. O layout existente continua "
+            "sendo a referencia e apenas os mapeamentos afetados pela falha podem mudar. "
+            "Preserve todos os demais mapeamentos e use as evidencias recebidas para corrigir "
+            "somente os paths permitidos. Metadados operacionais, publicacao e contrato nao "
+            "fazem parte da sua resposta."
+        )
     return (
-        "Voce atua como gerador de layout signature candidato para fallback "
-        "de documentos desestruturados. "
-        "Recebera um contexto ja preparado pela DAG 3 contendo: falhas da DAG 2, "
-        "trechos relevantes do layout signature base, contrato semantico, inventario "
-        "da extracao e escopo permitido de correcao. Quando a politica de inventario "
-        "exigir contexto adicional, o payload tambem tera artefatos selecionados pela "
-        "primeira chamada LLM. "
-        "Sua unica saida deve ser um objeto JSON valido representando "
-        "layout_signature_candidato. "
-        "Nao explique, nao use markdown e nao devolva texto fora do JSON. "
-        "Use exatamente o document_id e execution_id_origem informados no contexto. "
-        "Quando houver layout base, use exatamente o base_layout_signature informado; "
-        "quando o modo for criacao_inicial_layout e nao houver layout base, retorne "
-        "base_layout_signature como null. "
-        "Ajuste somente o necessario para que a DAG 2 possa revalidar o candidato. "
-        "Se o escopo permitido for correcao_parcial_mapeamento, gere um candidato "
-        "restrito as secoes editaveis: fontes_relevantes, regras_deteccao_mudanca, "
-        "mapeamento_canonico e metadados_estruturais_evidencia. "
-        "Se o escopo permitido for regeneracao_total_mapeamento ou criacao_inicial_layout, "
-        "voce pode gerar um layout signature candidato completo, incluindo outras secoes "
-        "estruturais necessarias para validacao pela DAG 2, desde que respeite o contrato "
-        "semantico e as restricoes de governanca. "
-        "Use os artefatos selecionados como evidencia quando eles existirem no payload. "
-        "Se houver chunks, trate cada chunk como evidencia parcial; a memoria global fica no "
-        "estado acumulado informado pela DAG, nao em suposicoes suas. "
-        "Nao gere schema_saida_resolvido. Nao escreva valores finais de negocio. "
-        "Nao crie campos fora do schema_saida do contrato semantico. "
-        "Nao altere referencia_contrato_semantico, regras_execucao, versao_artefato "
-        "final, contrato semantico ou qualquer layout ja publicado. "
-        "Nao gere analise_semantica_llm nem proposta_atualizacao_layout_signature. "
-        "Se o escopo permitido for correcao_parcial_mapeamento, preserve mapeamentos "
-        "nao relacionados a falha e retorne o mapeamento_canonico completo do candidato. "
-        "Se for regeneracao_total_mapeamento ou criacao_inicial_layout, ainda assim mantenha "
-        "o candidato limitado ao contrato semantico recebido. "
-        "Cada valor de mapeamento_canonico deve ser obrigatoriamente um objeto JSON "
-        "com instrucoes de resolucao. Nunca use apenas uma string de caminho como valor. "
-        "Use somente estes tipos de origem suportados pela DAG 2: valor_fixo, "
-        "campo_derivado, bloco_textual, cabecalho_de_tabela e celula_de_tabela. "
-        "Consulte schema_saida_array_paths no contrato recebido. Todo segmento listado "
-        "ali deve aparecer no mapping path com seletor explicito entre colchetes, por "
-        "exemplo dados[empresa=Cury] e valores[papel_periodo=periodo_referencia]. "
-        "Para uma celula que materializa um item composto de array, mapeie o item com "
-        "seletor, e nao folhas soltas como valores.periodo ou valores.valor. "
-        "Exemplo valido: "
-        "\"mapeamento_canonico\":{"
-        "\"campo.saida\":{"
-        "\"tipo_origem\":\"celula_de_tabela\","
-        "\"arquivo_origem\":\"tables/table001.json\","
-        "\"seletor_linha\":{\"valor_aceito\":\"Rotulo\",\"coluna_rotulo\":0},"
-        "\"seletor_coluna\":{\"indice_coluna_esperado\":1},"
-        "\"obrigatorio\":true"
-        "}"
-        "}. "
-        "O JSON deve seguir este formato exato: "
-        "{"
-        "\"tipo_artefato\":\"layout_signature_candidato\","
-        "\"status_layout\":\"candidato\","
-        "\"escopo_correcao\":\"...\","
-        "\"document_id\":\"...\","
-        "\"execution_id_origem\":\"...\","
-        "\"base_layout_signature\":{\"versao\":\"...\",\"object_key\":\"...\"},"
-        "\"fontes_relevantes\":{},"
-        "\"regras_deteccao_mudanca\":[],"
-        "\"mapeamento_canonico\":{},"
-        "\"metadados_estruturais_evidencia\":{},"
-        "\"publicacao_automatica_habilitada\":true"
-        "}. "
-        "Em criacao_inicial_layout, use \"base_layout_signature\": null. "
-        "Para candidato completo, campos estruturais adicionais podem aparecer no mesmo objeto, "
-        "mas nunca podem conter schema_saida, valores finais, regras_execucao, versao_artefato "
-        "oficial ou alteracoes de contrato."
+        "Esta e uma regeneracao completa de mapeamentos porque o layout anterior deixou "
+        "de ser confiavel. Reconstrua somente os mapeamentos permitidos pelo contrato a "
+        "partir das evidencias atuais. A DAG continua responsavel por contrato, identidade "
+        "do documento, governanca, versao e publicacao."
+    )
+
+
+def candidate_contract_instruction() -> str:
+    """Explica como interpretar contrato, paths e arrays antes do bloco JSON."""
+    return (
+        "O proximo bloco contem a semantica do contrato, a estrutura permitida do schema "
+        "de saida e os alvos que voce deve mapear. As metricas descrevem valores brutos a "
+        "localizar; paths_permitidos sao as unicas chaves aceitas no mapeamento_canonico; "
+        "e arrays_que_exigem_seletor indicam os trechos em que a chave precisa de um filtro "
+        "entre colchetes. Use um seletor que identifique uma unica observacao. Quando o "
+        "contrato definir papeis semanticos para observacoes comparaveis, use exatamente "
+        "esses papeis para distingui-las. Nao invente campos, contratos ou valores."
+    )
+
+
+def candidate_structure_instruction() -> str:
+    """Explica o papel do exemplo de layout antes de envia-lo ao modelo."""
+    return (
+        "O proximo objeto e um exemplo da estrutura que a resposta precisa respeitar. Ele "
+        "mostra o cabecalho imutavel, as secoes esperadas, os tipos de origem aceitos e a "
+        "sintaxe de seletores de tabela e de arrays. Trate-o como modelo de forma, nunca "
+        "como evidencia do documento: nomes de arquivos, rotulos, indices e valores usados "
+        "no seu candidato devem vir exclusivamente dos artefatos recebidos depois deste "
+        "exemplo. Cada entrada de mapeamento_canonico deve ser uma instrucao executavel com "
+        "tipo_origem permitido, e nao uma descricao em texto. Uma celula de tabela mapeada "
+        "para uma observacao representa o registro indicado pelo seletor; quando o path "
+        "terminar em um campo terminal, a DAG grava somente o valor extraido nesse campo. "
+        "Para tabelas, indique sempre os indices de linha e coluna observados no artefato e "
+        "nao use regex nem padrao_cabecalho_aceito: a DAG le diretamente a posicao informada "
+        "e preserva o cabecalho bruto. Regex e reservado a bloco_textual."
+    )
+
+
+def candidate_artifacts_instruction() -> str:
+    """Explica como usar exclusivamente as evidencias carregadas pela DAG."""
+    return (
+        "Os proximos artefatos formam o conjunto de evidencias recuperado pela etapa anterior. "
+        "Nele estao as fontes necessarias para localizar os dados brutos pedidos pelo contrato, "
+        "mas nem todo arquivo precisa ser usado no candidato. Para cada alvo mapeavel, escolha "
+        "somente a fonte cuja secao, entidade, medida e periodo correspondam exatamente ao que "
+        "o contrato pede. Se houver fontes com granularidades diferentes, nao use uma fonte "
+        "agregada para preencher uma observacao mais detalhada. Todo arquivo_origem citado no "
+        "candidato deve aparecer neste bloco. Observe secoes, rotulos de linha e cabecalhos reais "
+        "antes de definir os seletores. Quando a fonte escolhida possuir mais de uma coluna de "
+        "de observacao exigida pelo contrato, crie um mapeamento para cada papel correspondente, "
+        "e nao apenas para a primeira coluna. Para uma tabela, use os indices observados de linha "
+        "e coluna; nao use regex para validar cabecalhos de tabela."
+    )
+
+
+def candidate_final_instruction() -> str:
+    """Recapitula a tarefa imediatamente antes da resposta JSON."""
+    return (
+        "Agora produza somente um objeto JSON valido de layout_signature_candidato. Copie o "
+        "cabecalho obrigatorio exatamente como apresentado no exemplo, mapeie apenas paths "
+        "permitidos e use somente artefatos carregados. Nao resolva valores finais, nao "
+        "inclua explicacoes, markdown, publicacao, versao, contrato ou regras de execucao."
     )
 
 
@@ -90,10 +99,13 @@ def candidate_layout_repair_system_prompt() -> str:
         "mapeamento_canonico e metadados_estruturais_evidencia sao secoes irmas no "
         "nivel raiz; nunca trate o nome de uma dessas secoes como campo de "
         "mapeamento_canonico. As chaves de mapeamento_canonico devem apontar somente "
-        "para paths existentes em schema_saida_paths e cada valor deve ser uma "
-        "instrucao de resolucao. Nao altere document_id, execution_id_origem, "
+        "para paths existentes em estrutura_schema_saida.paths_permitidos e cada valor deve ser "
+        "uma instrucao de resolucao no formato exemplo_estrutura_layout_signature; nunca uma "
+        "string ou objeto somente com instrucao. Copie exatamente cabecalho_obrigatorio e use "
+        "formatos_de_origem do exemplo. Nao altere document_id, execution_id_origem, "
         "escopo_correcao, contrato semantico, regras de governanca ou layouts "
-        "publicados. Nao gere valores finais de negocio."
+        "publicados. Nao gere valores finais de negocio. Para tabelas, remova qualquer regex "
+        "ou padrao_cabecalho_aceito e informe os indices observados de linha e coluna."
     )
 
 
@@ -115,6 +127,17 @@ def artifact_selection_system_prompt() -> str:
         "cobrem os campos do schema_saida do contrato, ainda evitando abrir o "
         "documento inteiro quando o inventario apontar tabelas, graficos ou secoes "
         "mais especificas. "
+        "Informe em coberturas somente os paths listados em "
+        "contrato_semantico_relevante.campos_cobertura_minima_layout. Esses sao os "
+        "unicos campos que exigem evidencia nesta etapa. "
+        "Nao declare campos estruturais, metadados, constantes, campos derivados ou "
+        "qualquer outro path fora dessa lista, pois a DAG os preenche ou valida "
+        "deterministicamente. Cada artefato "
+        "comprova, com ancoras literais existentes no proprio arquivo, por exemplo "
+        "um titulo de secao, rotulo de linha e cabecalho de tabela. Nao enumere "
+        "campos fora dessa lista. Nao declare cobertura sem ancoras "
+        "verificaveis. Em criacao inicial ou regeneracao, cubra todos os campos "
+        "minimos de valor do contrato. "
         "Se um arquivo JSONL grande for necessario, selecione o caminho dele; a DAG "
         "vai aplicar chunking quando carregar o conteudo. "
         "Responda somente com JSON estrito, sem markdown e sem explicacao externa. "
@@ -125,10 +148,28 @@ def artifact_selection_system_prompt() -> str:
         "{"
         "\"path\":\"tables/table001.json\","
         "\"motivo\":\"por que este artefato precisa ser aberto\","
-        "\"campos_saida\":[\"campo.ou.path.do.schema\"]"
+        "\"coberturas\":[{\"campo_saida\":\"campo.ou.path.do.schema\","
+        "\"ancoras\":[\"rotulo literalmente observado\",\"cabecalho observado\"]}]"
         "}"
         "]"
         "}. "
         "Nao inclua caminhos inventados, URLs MinIO, object keys completos nem "
         "arquivos que nao estejam listados no inventario."
+    )
+
+
+def artifact_selection_repair_system_prompt() -> str:
+    """Prompt de retry quando a selecao nao passa nas validacoes deterministicas."""
+    return (
+        "A sua selecao de artefatos anterior foi rejeitada pela validacao deterministica. "
+        "Leia correcao_selecao_artefatos.erro_validacao e, quando presente, a resposta "
+        "anterior. Corrija os paths ou as ancoras exatamente como o erro indica. Uma ancora "
+        "so pode ser declarada se seu texto literal estiver no arquivo selecionado; escolha "
+        "outro artefato do inventario somente quando o campo estiver em "
+        "contrato_semantico_relevante.campos_cobertura_minima_layout e a nova fonte o "
+        "comprovar. Se a cobertura anterior for de campo estrutural ou fora dessa lista, "
+        "remova-a; nao procure outra evidencia para ela. Preserve as partes validas da "
+        "selecao, cubra todos os campos minimos exigidos e responda somente com este JSON "
+        "completo, sem markdown ou explicacoes: "
+        "{\"tipo_artefato\":\"selecao_artefatos_layout\",\"artifact_paths\":[...]}."
     )
