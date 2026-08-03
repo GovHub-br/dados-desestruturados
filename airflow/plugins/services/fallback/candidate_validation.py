@@ -4,6 +4,8 @@ from typing import Any
 
 from pydantic import ValidationError
 
+from plugins.services.contract_schema import normalize_schema_path
+
 from .mapping_requirements import (
     MappingRequirementsError,
     mapping_requirements_from_context,
@@ -43,7 +45,17 @@ class FallbackCandidateValidationService:
         array_paths = self._contract_schema_array_paths_from_context(
             fallback_problem_context
         )
+        fixed_paths = {
+            str(path).strip()
+            for path in fallback_problem_context.get("_paths_fixos_do_contrato", [])
+            if str(path).strip()
+        }
         for mapping_path in candidate_model.mapeamento_canonico:
+            if normalize_schema_path(mapping_path) in fixed_paths:
+                raise RuntimeError(
+                    "Resposta da LLM tentou mapear valor fixo do contrato semantico: "
+                    f"{mapping_path}. Esse valor e preenchido deterministicamente pela DAG 2."
+                )
             if not self._mapping_path_is_in_contract(
                 mapping_path,
                 schema_roots,

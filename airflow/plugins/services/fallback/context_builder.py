@@ -2,6 +2,12 @@ from __future__ import annotations
 
 from typing import Any
 
+from plugins.services.contract_schema import (
+    contract_literal_paths,
+    schema_array_paths,
+    schema_paths,
+)
+
 from .classification import (
     FALLBACK_CLASSIFICATION_SERVICE,
     FallbackClassificationService,
@@ -73,6 +79,9 @@ class FallbackProblemContextBuilder:
         )
         use_full_inventory = classification.get("fallback_scope") == self.CREATION_SCOPE
         context = {
+            "_paths_fixos_do_contrato": sorted(
+                contract_literal_paths(contract.get("schema_saida", {}))
+            ),
             "escopo_permitido": classification.get("fallback_scope"),
             "llm_constraints": {
                 "chamar_llm": bool(classification.get("llm_permitida", False)),
@@ -601,14 +610,15 @@ class FallbackProblemContextBuilder:
         if not isinstance(semantic, dict):
             semantic = {}
         schema_saida = contract.get("schema_saida", {})
+        fixed_paths = contract_literal_paths(schema_saida)
         structure = {
             "campos_raiz": sorted(
                 schema_saida.keys()
                 if isinstance(schema_saida, dict)
                 else []
             ),
-            "paths_permitidos": self._schema_saida_paths(schema_saida),
-            "arrays_que_exigem_seletor": self._schema_saida_array_paths(schema_saida),
+            "paths_permitidos": sorted(schema_paths(schema_saida) - set(fixed_paths)),
+            "arrays_que_exigem_seletor": sorted(schema_array_paths(schema_saida)),
         }
         return {
             "identificacao": {
@@ -658,48 +668,6 @@ class FallbackProblemContextBuilder:
                 fragments[root] = self._truncate_json(schema_saida[root], max_depth=4)
         return fragments
 
-    def _schema_saida_paths(self, schema_saida: Any) -> list[str]:
-        """Lista paths navegaveis declarados no schema_saida do contrato."""
-        paths: set[str] = set()
-        self._collect_schema_paths(schema_saida, prefix="", paths=paths)
-        return sorted(paths)
-
-    def _schema_saida_array_paths(self, schema_saida: Any) -> list[str]:
-        """Lista paths que representam arrays e exigem seletor no mapeamento."""
-        paths: set[str] = set()
-        self._collect_schema_array_paths(schema_saida, prefix="", paths=paths)
-        return sorted(paths)
-
-    def _collect_schema_array_paths(
-        self,
-        value: Any,
-        *,
-        prefix: str,
-        paths: set[str],
-    ) -> None:
-        """Percorre o schema_saida registrando os caminhos declarados como listas."""
-        if isinstance(value, list):
-            if prefix:
-                paths.add(prefix)
-            if value:
-                self._collect_schema_array_paths(value[0], prefix=prefix, paths=paths)
-            return
-        if isinstance(value, dict):
-            for key, item in value.items():
-                child = f"{prefix}.{key}" if prefix else str(key)
-                self._collect_schema_array_paths(item, prefix=child, paths=paths)
-
-    def _collect_schema_paths(self, value: Any, *, prefix: str, paths: set[str]) -> None:
-        """Percorre schema_saida declarando caminhos de objetos e folhas."""
-        if prefix:
-            paths.add(prefix)
-        if isinstance(value, dict):
-            for key, item in value.items():
-                child = f"{prefix}.{key}" if prefix else str(key)
-                self._collect_schema_paths(item, prefix=child, paths=paths)
-            return
-        if isinstance(value, list) and value:
-            self._collect_schema_paths(value[0], prefix=prefix, paths=paths)
 
     def _truncate_json(self, value: Any, *, max_depth: int = 5) -> Any:
         """Reduz estruturas grandes para caberem no contexto de problema."""

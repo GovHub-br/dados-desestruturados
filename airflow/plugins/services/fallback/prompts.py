@@ -41,7 +41,9 @@ def candidate_contract_instruction() -> str:
         "e arrays_que_exigem_seletor indicam os trechos em que a chave precisa de um filtro "
         "entre colchetes. Use um seletor que identifique uma unica observacao. Quando o "
         "contrato definir papeis semanticos para observacoes comparaveis, use exatamente "
-        "esses papeis para distingui-las. Nao invente campos, contratos ou valores."
+        "esses papeis para distingui-las. paths_permitidos ja exclui valores fixos "
+        "do contrato: nao os inclua no mapeamento_canonico, pois a DAG 2 os preenche "
+        "deterministicamente. Nao invente campos, contratos ou valores."
     )
 
 
@@ -107,7 +109,8 @@ def candidate_layout_repair_system_prompt() -> str:
         "string ou objeto somente com instrucao. Copie exatamente cabecalho_obrigatorio e use "
         "formatos_de_origem do exemplo. Nao altere document_id, execution_id_origem, "
         "escopo_correcao, contrato semantico, regras de governanca ou layouts "
-        "publicados. Nao gere valores finais de negocio. Para tabelas, remova qualquer regex "
+        "publicados. Nao mapeie valores fixos do contrato: eles nao aparecem em "
+        "paths_permitidos e sao preenchidos deterministicamente pela DAG 2. Nao gere valores finais de negocio. Para tabelas, remova qualquer regex "
         "ou padrao_cabecalho_aceito e informe os indices observados de linha e coluna."
     )
 

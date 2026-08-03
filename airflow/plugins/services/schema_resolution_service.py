@@ -11,6 +11,12 @@ from typing import Any
 from docling_pipeline.helpers.number_utils import parse_flexible_number
 from helpers import PROJECT_PATHS, RUNTIME_CONFIG_LOADER, ProjectPaths, RuntimeConfigLoader
 from plugins.clients.minio_storage_client import MinioStorageClient
+from plugins.services.contract_schema import (
+    apply_contract_literals,
+    contract_literal_paths,
+    is_type_descriptor,
+    normalize_schema_path,
+)
 
 
 class SchemaResolutionService:
@@ -227,10 +233,29 @@ class SchemaResolutionService:
         mapping = layout.get("mapeamento_canonico", {})
 
         schema_saida = self._build_schema_template(contrato.get("schema_saida", {}))
+        literal_paths = contract_literal_paths(contrato.get("schema_saida", {}))
         resolved_by_path: dict[str, Any] = {}
         audit: list[dict[str, Any]] = []
         for mapping_path, mapping_entry in mapping.items():
             if not isinstance(mapping_entry, dict):
+                continue
+            fixed_value = literal_paths.get(normalize_schema_path(str(mapping_path)))
+            if normalize_schema_path(str(mapping_path)) in literal_paths:
+                resolved_by_path[str(mapping_path)] = fixed_value
+                audit.append(
+                    {
+                        "campo_saida": str(mapping_path),
+                        "tipo_origem": str(mapping_entry.get("tipo_origem", "")).strip(),
+                        "arquivo_origem": mapping_entry.get("arquivo_origem"),
+                        "obrigatorio": bool(mapping_entry.get("obrigatorio", False)),
+                        "status_resolucao": "resolvido",
+                        "valor_resolvido": fixed_value,
+                        "evidencia": {
+                            "origem": "literal_do_contrato_semantico",
+                            "mapeamento_ignorado": True,
+                        },
+                    }
+                )
                 continue
             result = self._resolve_mapping_entry(
                 contrato=contrato,
@@ -249,6 +274,10 @@ class SchemaResolutionService:
                     value=result["valor_resolvido"],
                 )
 
+        schema_saida = apply_contract_literals(
+            schema_saida,
+            contrato.get("schema_saida", {}),
+        )
         self._derive_construtoras_global_periods(
             contrato=contrato,
             schema_saida=schema_saida,
@@ -482,7 +511,7 @@ class SchemaResolutionService:
         )
         config = self.config_loader.load_local_platform_config()
         contrato_uri = str(runtime.get("inputs", {}).get("contrato_semantico") or (
-            f"minio://{config.minio_bucket}/{config.minio_contract_prefix}/v1.6.0/contrato_semantico_construtora.json"
+            f"minio://{config.minio_bucket}/{config.minio_contract_prefix}/v1.7.0/contrato_semantico_construtora.json"
         ))
         contrato = self._load_json_from_minio_required(
             contrato_uri,
@@ -1286,19 +1315,9 @@ class SchemaResolutionService:
         # que precisam ser resolvidos. Literais, por outro lado, sao valores
         # semanticos estaveis do proprio contrato (por exemplo, unidade e tipo
         # de operacao) e devem existir no schema sem depender do layout.
-        if isinstance(contract_node, str) and SchemaResolutionService._is_type_descriptor(contract_node):
+        if is_type_descriptor(contract_node):
             return None
         return contract_node
-
-    @staticmethod
-    def _is_type_descriptor(value: str) -> bool:
-        """Retorna se um valor escalar do contrato descreve um tipo de saida."""
-        normalized = " ".join(value.lower().split())
-        allowed_types = {"string", "number", "integer", "boolean", "object", "array", "null"}
-        return bool(normalized) and all(
-            part.strip() in allowed_types
-            for part in normalized.split("|")
-        )
 
     @staticmethod
     def _parse_mapping_path(mapping_path: str) -> list[dict[str, str | tuple[str, str]]]:

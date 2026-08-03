@@ -1,7 +1,7 @@
 {
   "fonte": "Balanços trimestrais das empresas",
   "tipo_documento": "contrato_semantico",
-  "versao": "1.6.0",
+  "versao": "1.7.0",
   "descricao": "Contrato semântico para padronizar a extração de indicadores brutos de lançamentos e vendas de empresas do setor imobiliário. O objetivo é preservar os valores originais dos PDFs, deixando cálculos de variação percentual para etapas posteriores de engenharia de dados.",
   "contrato_semantico": {
     "principios": {
@@ -257,10 +257,6 @@
           }
         ]
       }
-    },
-    "metricas_calculadas": {
-      "observacao": "string",
-      "status": "nao_calculadas_na_extracao"
     }
   }
 }
