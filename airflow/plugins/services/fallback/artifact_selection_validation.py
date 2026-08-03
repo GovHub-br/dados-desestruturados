@@ -5,6 +5,10 @@ import unicodedata
 from typing import Any
 
 from .models import LayoutArtifactSelection
+from .mapping_requirements import (
+    MappingRequirementsError,
+    mapping_requirements_from_context,
+)
 
 
 class ArtifactSelectionValidationError(RuntimeError):
@@ -54,10 +58,8 @@ class ArtifactSelectionValidationService:
         """Confirma nos artefatos reais a cobertura alegada pela LLM.
 
         Cada cobertura declarada precisa apontar para ancoras literais presentes
-        no proprio artefato. Para contratos com valores repetidos em
-        arrays, a cobertura minima e derivada dos paths ``.dados.valores.valor``;
-        outros dominios podem declarar ``campos_cobertura_minima_layout`` no
-        contrato para substituir essa convencao.
+        no proprio artefato. A cobertura minima e declarada pelo contrato em
+        ``contrato_semantico.requisitos_mapeamento.campos_obrigatorios``.
         """
         contract = selection_payload.get("contrato_semantico_relevante", {})
         contract_paths = self._contract_output_paths(contract)
@@ -133,15 +135,16 @@ class ArtifactSelectionValidationService:
 
     @staticmethod
     def _required_coverage_fields(contract: Any, contract_paths: set[str]) -> list[str]:
-        if isinstance(contract, dict):
-            projected = contract.get("campos_cobertura_minima_layout", [])
-            if isinstance(projected, list):
-                projected_paths = [
-                    str(path).strip() for path in projected if str(path).strip()
-                ]
-                if projected_paths:
-                    return projected_paths
-        return sorted(path for path in contract_paths if path.endswith(".dados.valores.valor"))
+        try:
+            return [
+                requirement.path
+                for requirement in mapping_requirements_from_context(
+                    contract,
+                    validate_schema_paths=False,
+                )
+            ]
+        except MappingRequirementsError as exc:
+            raise ArtifactSelectionValidationError(str(exc)) from exc
 
     @staticmethod
     def _normalized_text(value: Any) -> str:

@@ -7,6 +7,11 @@ from .classification import (
     FallbackClassificationService,
 )
 from .inventory import FALLBACK_INVENTORY_SERVICE, FallbackInventoryService
+from .mapping_requirements import (
+    mappable_targets_payload,
+    mapping_requirements_from_context,
+    mapping_requirements_payload,
+)
 
 
 class FallbackProblemContextBuilder:
@@ -301,13 +306,9 @@ class FallbackProblemContextBuilder:
             return {}
 
         semantic = contract_context.get("contrato_semantico", {})
-        structure = contract_context.get("estrutura_schema_saida", {})
-        paths = structure.get("paths_permitidos", []) if isinstance(structure, dict) else []
-        coverage_fields = [
-            str(path)
-            for path in paths
-            if str(path).endswith(".dados.valores.valor")
-        ]
+        requirements = mapping_requirements_from_context(
+            contract_context
+        )
         identification = contract_context.get("identificacao", {})
         return {
             "identificacao": identification if isinstance(identification, dict) else {},
@@ -315,8 +316,8 @@ class FallbackProblemContextBuilder:
                 "entidades": (
                     semantic.get("entidades", {}) if isinstance(semantic, dict) else {}
                 ),
+                "requisitos_mapeamento": mapping_requirements_payload(requirements),
             },
-            "campos_cobertura_minima_layout": sorted(set(coverage_fields)),
         }
 
     @staticmethod
@@ -618,41 +619,26 @@ class FallbackProblemContextBuilder:
             "contrato_semantico": {
                 "entidades": semantic.get("entidades", {}),
                 "metricas": semantic.get("metricas", {}),
+                "requisitos_mapeamento": semantic.get("requisitos_mapeamento", {}),
             },
             "estrutura_schema_saida": structure,
         }
 
     @staticmethod
     def _mappable_targets(contract_context: Any) -> list[dict[str, Any]]:
-        """Deriva alvos de valores brutos para orientar a segunda chamada LLM."""
-        if not isinstance(contract_context, dict):
-            return []
+        """Deriva alvos explicitamente declarados pelo contrato para a LLM."""
+        requirements = mapping_requirements_from_context(
+            contract_context
+        )
         structure = contract_context.get("estrutura_schema_saida", {})
-        paths = structure.get("paths_permitidos", []) if isinstance(structure, dict) else []
-        if not isinstance(paths, list):
-            return []
-        period_roles = [
-            path.rsplit(".", maxsplit=1)[-1]
-            for path in paths
-            if str(path).startswith("periodos_disponiveis.")
-        ]
-        targets: list[dict[str, Any]] = []
-        for path in paths:
-            path_text = str(path)
-            if not path_text.endswith(".dados.valores.valor"):
-                continue
-            group = path_text.split(".dados", maxsplit=1)[0].rsplit(".", maxsplit=1)[-1]
-            targets.append(
-                {
-                    "grupo": group,
-                    "valor_path": path_text,
-                    "papeis_periodo_disponiveis": period_roles,
-                    "arrays": [
-                        f"{path_text.split('.valor', maxsplit=1)[0]}",
-                    ],
-                }
-            )
-        return targets
+        array_paths = (
+            structure.get("arrays_que_exigem_seletor", [])
+            if isinstance(structure, dict)
+            else []
+        )
+        if not isinstance(array_paths, list):
+            array_paths = []
+        return mappable_targets_payload(requirements, array_paths=array_paths)
 
     def _schema_fragments_for_fields(
         self,

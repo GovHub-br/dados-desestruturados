@@ -4,6 +4,11 @@ from typing import Any
 
 from pydantic import ValidationError
 
+from .mapping_requirements import (
+    MappingRequirementsError,
+    mapping_requirements_from_context,
+    parsed_mapping_path,
+)
 from .models import LayoutSignatureCandidate
 
 
@@ -66,6 +71,10 @@ class FallbackCandidateValidationService:
 
         self._validate_candidate_lineage(candidate_model, fallback_problem_context)
         self._validate_candidate_allowed_scope(candidate_model, fallback_problem_context)
+        self._validate_candidate_covers_mapping_requirements(
+            candidate_model,
+            fallback_problem_context,
+        )
         self._validate_table_mappings_use_indices_only(candidate_model)
         self._validate_candidate_does_not_override_deterministic_headers(candidate_model)
         self._validate_candidate_extra_sections(candidate_model)
@@ -75,6 +84,68 @@ class FallbackCandidateValidationService:
             fallback_problem_context,
         )
         return candidate_model
+
+    @staticmethod
+    def _validate_candidate_covers_mapping_requirements(
+        candidate: LayoutSignatureCandidate,
+        fallback_problem_context: dict[str, Any],
+    ) -> None:
+        """Exige todos os campos e observacoes declarados pelo contrato."""
+        contract = fallback_problem_context.get("contrato_semantico_relevante", {})
+        try:
+            requirements = mapping_requirements_from_context(contract)
+        except MappingRequirementsError as exc:
+            raise RuntimeError(str(exc)) from exc
+
+        parsed_mappings = [
+            (mapping_path, *parsed_mapping_path(mapping_path))
+            for mapping_path in candidate.mapeamento_canonico
+        ]
+        missing: list[str] = []
+        for requirement in requirements:
+            value_mappings = [
+                item for item in parsed_mappings if item[1] == requirement.path
+            ]
+            if not value_mappings:
+                missing.append(requirement.path)
+                continue
+
+            for observation in requirement.observations:
+                matching_values = [
+                    item
+                    for item in value_mappings
+                    if all(
+                        item[2].get(key) == value
+                        for key, value in observation.selectors.items()
+                    )
+                ]
+                if not matching_values:
+                    missing.append(
+                        f"{requirement.path} com seletores {observation.selectors}"
+                    )
+                    continue
+
+                parent_path = requirement.path.rsplit(".", maxsplit=1)[0]
+                for context_field in observation.context_fields:
+                    context_path = f"{parent_path}.{context_field}"
+                    if not any(
+                        normalized_path == context_path
+                        and all(
+                            selectors.get(key) == value
+                            for key, value in value_selectors.items()
+                        )
+                        for _mapping_path, normalized_path, selectors in parsed_mappings
+                        for _value_mapping_path, _value_path, value_selectors in matching_values
+                    ):
+                        missing.append(
+                            f"{context_path} para seletores {observation.selectors}"
+                        )
+
+        if missing:
+            raise RuntimeError(
+                "Layout candidato nao cobre requisitos obrigatorios de mapeamento: "
+                f"{missing}."
+            )
 
     @staticmethod
     def _validate_table_mappings_use_indices_only(

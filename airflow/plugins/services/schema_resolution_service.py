@@ -482,7 +482,7 @@ class SchemaResolutionService:
         )
         config = self.config_loader.load_local_platform_config()
         contrato_uri = str(runtime.get("inputs", {}).get("contrato_semantico") or (
-            f"minio://{config.minio_bucket}/{config.minio_contract_prefix}/v1.3.0/contrato_semantico_construtora.json"
+            f"minio://{config.minio_bucket}/{config.minio_contract_prefix}/v1.6.0/contrato_semantico_construtora.json"
         ))
         contrato = self._load_json_from_minio_required(
             contrato_uri,
@@ -1282,7 +1282,23 @@ class SchemaResolutionService:
             return {key: SchemaResolutionService._build_schema_template(value) for key, value in contract_node.items()}
         if isinstance(contract_node, list):
             return []
-        return None
+        # O contrato usa descritores como ``string`` e ``number`` para campos
+        # que precisam ser resolvidos. Literais, por outro lado, sao valores
+        # semanticos estaveis do proprio contrato (por exemplo, unidade e tipo
+        # de operacao) e devem existir no schema sem depender do layout.
+        if isinstance(contract_node, str) and SchemaResolutionService._is_type_descriptor(contract_node):
+            return None
+        return contract_node
+
+    @staticmethod
+    def _is_type_descriptor(value: str) -> bool:
+        """Retorna se um valor escalar do contrato descreve um tipo de saida."""
+        normalized = " ".join(value.lower().split())
+        allowed_types = {"string", "number", "integer", "boolean", "object", "array", "null"}
+        return bool(normalized) and all(
+            part.strip() in allowed_types
+            for part in normalized.split("|")
+        )
 
     @staticmethod
     def _parse_mapping_path(mapping_path: str) -> list[dict[str, str | tuple[str, str]]]:

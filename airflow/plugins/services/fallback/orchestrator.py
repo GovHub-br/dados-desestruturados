@@ -1380,7 +1380,7 @@ class FallbackLlmService:
     def load_semantic_contract(self, fallback_context: dict[str, str]) -> tuple[str, dict[str, Any]]:
         """Le o contrato semantico que limita os campos alteraveis pelo fallback."""
         config = self.config_loader.load_local_platform_config()
-        key = f"{config.minio_contract_prefix.rstrip('/')}/v1.3.0/contrato_semantico_construtora.json"
+        key = f"{config.minio_contract_prefix.rstrip('/')}/v1.6.0/contrato_semantico_construtora.json"
         return key, self._load_json_object(key, "contrato_semantico")
 
     def load_extraction_manifest(self, fallback_context: dict[str, str]) -> tuple[str, dict[str, Any]]:

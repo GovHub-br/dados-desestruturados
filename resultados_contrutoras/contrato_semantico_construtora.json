@@ -1,7 +1,7 @@
 {
   "fonte": "Balanços trimestrais das empresas",
   "tipo_documento": "contrato_semantico",
-  "versao": "1.2.0",
+  "versao": "1.6.0",
   "descricao": "Contrato semântico para padronizar a extração de indicadores brutos de lançamentos e vendas de empresas do setor imobiliário. O objetivo é preservar os valores originais dos PDFs, deixando cálculos de variação percentual para etapas posteriores de engenharia de dados.",
   "contrato_semantico": {
     "principios": {
@@ -36,9 +36,7 @@
           "competência",
           "referência",
           "período de apuração",
-          "período referência",
-          "UDM",
-          "últimos doze meses"
+          "período referência"
         ]
       },
       "tipo_operacao": {
@@ -96,16 +94,9 @@
         "descricao": "Classificação do período extraído.",
         "tipo": "string",
         "obrigatorio": true,
-        "dominio": [
-          "trimestre",
-          "ultimos_12_meses"
-        ],
+        "dominio": ["trimestre"],
         "sinonimos": [
-          "trimestre",
-          "UDM",
-          "últimos doze meses",
-          "12 meses",
-          "LTM"
+          "trimestre"
         ]
       }
     },
@@ -150,23 +141,75 @@
             ]
           }
         }
-      },
-      "derivacoes_previstas": {
-        "descricao": "Métricas que devem ser calculadas depois da extração, a partir dos valores brutos.",
-        "tipo": "metrica_calculada",
-        "calcular_fora_da_extracao": true,
-        "campos": {
-          "variacao_vs_periodo_comparativo_anterior": {
-            "formula": "(valor_periodo_referencia / valor_periodo_comparativo_anterior - 1) * 100"
-          },
-          "variacao_vs_mesmo_periodo_ano_anterior": {
-            "formula": "(valor_periodo_referencia / valor_mesmo_periodo_ano_anterior - 1) * 100"
-          },
-          "variacao_12m_periodo_atual_vs_12m_periodo_anterior": {
-            "formula": "(valor_12m_atual / valor_12m_anterior - 1) * 100"
-          }
-        }
       }
+    },
+    "requisitos_mapeamento": {
+      "campos_obrigatorios": [
+        {
+          "path": "balancos_das_empresas.lancamentos.dados.valores.valor",
+          "observacoes_obrigatorias": [
+            {
+              "seletores": {
+                "papel_periodo": "periodo_referencia"
+              },
+              "campos_contexto_obrigatorios": [
+                "periodo",
+                "escopo_periodo"
+              ]
+            },
+            {
+              "seletores": {
+                "papel_periodo": "periodo_comparativo_anterior"
+              },
+              "campos_contexto_obrigatorios": [
+                "periodo",
+                "escopo_periodo"
+              ]
+            },
+            {
+              "seletores": {
+                "papel_periodo": "mesmo_periodo_ano_anterior"
+              },
+              "campos_contexto_obrigatorios": [
+                "periodo",
+                "escopo_periodo"
+              ]
+            }
+          ]
+        },
+        {
+          "path": "balancos_das_empresas.vendas.dados.valores.valor",
+          "observacoes_obrigatorias": [
+            {
+              "seletores": {
+                "papel_periodo": "periodo_referencia"
+              },
+              "campos_contexto_obrigatorios": [
+                "periodo",
+                "escopo_periodo"
+              ]
+            },
+            {
+              "seletores": {
+                "papel_periodo": "periodo_comparativo_anterior"
+              },
+              "campos_contexto_obrigatorios": [
+                "periodo",
+                "escopo_periodo"
+              ]
+            },
+            {
+              "seletores": {
+                "papel_periodo": "mesmo_periodo_ano_anterior"
+              },
+              "campos_contexto_obrigatorios": [
+                "periodo",
+                "escopo_periodo"
+              ]
+            }
+          ]
+        }
+      ]
     }
   },
   "schema_saida": {
@@ -175,14 +218,10 @@
     "periodos_disponiveis": {
       "periodo_referencia": "string",
       "periodo_comparativo_anterior": "string | null",
-      "mesmo_periodo_ano_anterior": "string | null",
-      "periodo_12m_atual": "string | null",
-      "periodo_12m_anterior": "string | null"
+      "mesmo_periodo_ano_anterior": "string | null"
     },
     "balancos_das_empresas": {
-      "titulo": "string",
       "lancamentos": {
-        "titulo": "string",
         "tipo": "valor_bruto",
         "tipo_operacao": "lancamento",
         "indicador": "numero_de_unidades",
@@ -193,7 +232,7 @@
             "valores": [
               {
                 "periodo": "string",
-                "escopo_periodo": "trimestre | ultimos_12_meses",
+                "escopo_periodo": "trimestre",
                 "valor": "number | null"
               }
             ]
@@ -201,7 +240,6 @@
         ]
       },
       "vendas": {
-        "titulo": "string",
         "tipo": "valor_bruto",
         "tipo_operacao": "venda",
         "indicador": "numero_de_unidades",
@@ -212,7 +250,7 @@
             "valores": [
               {
                 "periodo": "string",
-                "escopo_periodo": "trimestre | ultimos_12_meses",
+                "escopo_periodo": "trimestre",
                 "valor": "number | null"
               }
             ]

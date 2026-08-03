@@ -84,7 +84,7 @@ class ConstrutorasPayloadBuilder:
             "inputs": {
                 "contrato_semantico": (
                     f"minio://{config.minio_bucket}/"
-                    f"{config.minio_contract_prefix}/v1.3.0/contrato_semantico_construtora.json"
+                    f"{config.minio_contract_prefix}/v1.6.0/contrato_semantico_construtora.json"
                 ),
                 "layout_signature": (
                     f"minio://{config.minio_bucket}/"
