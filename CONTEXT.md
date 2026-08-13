@@ -17,8 +17,20 @@ Artefato JSON que funciona como indice/recibo de uma execucao, ligando documento
 _Avoid_: artefato extraido, conteudo da extracao, banco operacional
 
 **Contrato Semantico**:       
-Artefato versionado que define os conceitos canonicos, sinonimos, campos esperados e regras semanticas de uma familia documental.
+Artefato versionado que define os conceitos canonicos, sinonimos, schema de saida, campos obrigatorios de mapeamento e valores semanticos estaveis de uma familia documental. Serve para qualquer familia de PDFs; nao e restrito a construtoras.
 _Avoid_: contrato de dados, layout signature
+
+**Campo Dinamico do Contrato**:
+Folha do `schema_saida` descrita por um tipo, como `string`, `number` ou `string | null`. Seu valor depende do documento e deve receber uma origem no layout signature quando for necessario resolve-lo.
+_Avoid_: valor fixo, metadado operacional
+
+**Valor Fixo do Contrato**:
+Folha literal do `schema_saida`, como `unidades`, `lancamento` ou uma classificacao declarada pela familia documental. E preenchida deterministicamente pela DAG 2 e nao deve ser procurada nos artefatos nem mapeada pela LLM.
+_Avoid_: valor observado no PDF, `valor_fixo` do layout
+
+**Campo de Contexto Obrigatorio**:
+Campo complementar de uma observacao obrigatoria, declarado em `requisitos_mapeamento.campos_obrigatorios[].observacoes_obrigatorias[].campos_contexto_obrigatorios`. Se for dinamico, a LLM deve mapea-lo junto ao valor principal; se for literal do contrato, a DAG 2 o preenche deterministicamente.
+_Avoid_: regra fixa de periodo, seletor de tabela
 
 **Layout Signature**:
 Artefato versionado que define onde e como encontrar os campos esperados em uma familia documental.
@@ -115,6 +127,10 @@ _Avoid_: manifesto de execucao, log textual, artefato bruto
 **Ponteiro de Artefato**:
 Referencia operacional a um artefato persistido, normalmente composta por bucket, object_key, tipo de artefato, execution_id e metadados de integridade.
 _Avoid_: conteudo do arquivo, blob, JSON completo
+
+**Selecao de Contrato por Dominio**:
+Regra que associa `documentos-origem/<dominio>/<entidade>/...` ao contrato de maior versao semantica em `contratos/<dominio>/vX.Y.Z/`. A URI exata escolhida fica registrada no manifesto para que DAG 2, DAG 3 e revalidacao usem o mesmo contrato.
+_Avoid_: contrato fixo de construtoras, escolha manual repetida por execucao
 
 **Curadoria**:
 Revisao, evidencia ou homologacao humana associada a contratos, layouts, fallback ou qualidade dos dados resolvidos.

@@ -91,18 +91,29 @@ class FallbackLlmService:
 
     def load_fallback_context(self, conf: dict[str, object]) -> dict[str, Any]:
         """Carrega e valida o pacote minimo de artefatos da execucao com falha."""
+        entity_slug = str(conf.get("entity_slug") or conf.get("company_slug") or "").strip()
+        if not entity_slug:
+            raise RuntimeError("Contexto de fallback sem entity_slug.")
         fallback_context = {
-            "company_slug": self._required_text(conf, "company_slug"),
+            "domain": str(conf.get("domain") or self.config_loader.load_local_platform_config().dominio).strip(),
+            "entity_slug": entity_slug,
             "document_id": self._required_text(conf, "document_id"),
             "execution_id": self._required_text(conf, "execution_id"),
             "manifest_key": self._required_text(conf, "manifest_key"),
             "trigger_origin_dag": self._required_text(conf, "trigger_origin_dag"),
         }
+        entity_name = str(conf.get("entity_name") or conf.get("company_name") or "").strip()
+        if entity_name:
+            fallback_context["entity_name"] = entity_name
+        legacy_company_slug = str(conf.get("company_slug", "")).strip()
+        if legacy_company_slug:
+            fallback_context["company_slug"] = legacy_company_slug
         for optional_field in (
             "fallback_mode",
             "motivo",
             "source_execution_id",
             "fallback_execution_id",
+            "contrato_semantico_uri",
         ):
             value = str(conf.get(optional_field, "")).strip()
             if value:
@@ -654,8 +665,12 @@ class FallbackLlmService:
             raise RuntimeError("Layout de revalidacao sem object_key.")
 
         revalidation_prefix = self._fallback_prefix(fallback_context, "revalidation")
-        return {
-            "company_slug": fallback_context["company_slug"],
+        revalidation_conf = {
+            "domain": fallback_context.get("domain"),
+            "entity_slug": fallback_context["entity_slug"],
+            "entity_name": fallback_context.get("entity_name"),
+            # Compatibilidade com a DAG 2 e manifestos de construtoras legados.
+            "company_slug": fallback_context.get("company_slug"),
             "document_id": fallback_context["document_id"],
             "execution_id": fallback_context["execution_id"],
             "source_execution_id": fallback_context.get(
@@ -678,6 +693,12 @@ class FallbackLlmService:
             "fallback_revalidation_prefix": revalidation_prefix,
             "fallback_mode": fallback_context.get("fallback_mode"),
         }
+        contrato_semantico_uri = str(
+            fallback_context.get("contrato_semantico_uri") or ""
+        ).strip()
+        if contrato_semantico_uri and contrato_semantico_uri.lower() != "none":
+            revalidation_conf["contrato_semantico_uri"] = contrato_semantico_uri
+        return revalidation_conf
 
     def evaluate_revalidation_result(
         self,
@@ -734,9 +755,11 @@ class FallbackLlmService:
         if candidate.get("publicacao_automatica_habilitada") is False:
             raise RuntimeError("Candidato desabilitou publicacao automatica.")
 
-        company_slug = str(revalidation_conf.get("company_slug", "")).strip()
-        if not company_slug:
-            raise RuntimeError("Publicacao sem company_slug.")
+        entity_slug = str(
+            revalidation_conf.get("entity_slug") or revalidation_conf.get("company_slug") or ""
+        ).strip()
+        if not entity_slug:
+            raise RuntimeError("Publicacao sem entity_slug.")
 
         base_key = str(
             candidate.get("base_layout_signature", {}).get("object_key", "")
@@ -757,10 +780,12 @@ class FallbackLlmService:
                 if revalidation_layout_key
                 else {}
             )
-        next_version = self._next_layout_version(company_slug)
+        config = self.config_loader.load_local_platform_config()
+        domain = str(revalidation_conf.get("domain") or config.dominio).strip()
+        next_version = self._next_layout_version(entity_slug, domain=domain)
         published_key = (
-            f"{self.config_loader.load_local_platform_config().minio_layout_prefix.rstrip('/')}/"
-            f"{company_slug}/{next_version}/layout_signature_deterministico.json"
+            f"{self._prefix_for_domain(config.minio_layout_prefix, domain)}/"
+            f"{entity_slug}/{next_version}/layout_signature_deterministico.json"
         )
         if self.minio_client.object_exists(published_key):
             raise RuntimeError(
@@ -779,10 +804,11 @@ class FallbackLlmService:
             object_key=published_key,
             payload=published_layout,
         )
-        pointer_key = self._current_layout_pointer_object_key(company_slug)
+        pointer_key = self._current_layout_pointer_object_key(entity_slug, domain=domain)
         pointer_payload = {
             "tipo_artefato": "layout_signature_current_pointer",
-            "company_slug": company_slug,
+            "entity_slug": entity_slug,
+            "domain": domain,
             "current_version": next_version,
             "object_key": published_key,
             "uri": published_uri,
@@ -1125,23 +1151,29 @@ class FallbackLlmService:
         fallback_context = fallback_problem_context.get("fallback_context")
         if not isinstance(fallback_context, dict):
             raise RuntimeError("fallback_problem_context sem fallback_context.")
-        required = ("company_slug", "document_id", "execution_id", "manifest_key")
+        entity_slug = str(
+            fallback_context.get("entity_slug") or fallback_context.get("company_slug") or ""
+        ).strip()
+        if not entity_slug:
+            raise RuntimeError("fallback_context sem campo obrigatorio: entity_slug")
+        required = ("document_id", "execution_id", "manifest_key")
         cleaned: dict[str, str] = {}
+        cleaned["entity_slug"] = entity_slug
         for field in required:
             value = str(fallback_context.get(field, "")).strip()
             if not value:
                 raise RuntimeError(f"fallback_context sem campo obrigatorio: {field}")
             cleaned[field] = value
-        for optional in ("fallback_execution_id", "source_execution_id", "fallback_mode", "motivo"):
+        for optional in ("domain", "fallback_execution_id", "source_execution_id", "fallback_mode", "motivo", "entity_name", "contrato_semantico_uri"):
             value = str(fallback_context.get(optional, "")).strip()
             if value:
                 cleaned[optional] = value
         return cleaned
 
-    def _next_layout_version(self, company_slug: str) -> str:
+    def _next_layout_version(self, entity_slug: str, *, domain: str) -> str:
         """Calcula a proxima versao minor do layout sem depender da LLM."""
         config = self.config_loader.load_local_platform_config()
-        prefix = f"{config.minio_layout_prefix.rstrip('/')}/{company_slug}/"
+        prefix = f"{self._prefix_for_domain(config.minio_layout_prefix, domain)}/{entity_slug}/"
         keys = self.minio_client.list_object_keys(
             prefix=prefix,
             suffix="/layout_signature_deterministico.json",
@@ -1186,10 +1218,21 @@ class FallbackLlmService:
 
         return {
             "tipo_artefato": "layout_signature_com_mapeamento_canonico_deterministico",
-            "empresa": str(
-                manifest_candidate.get("company_name")
-                or fallback_context["company_slug"]
-            ).strip(),
+            "entidade": {
+                "slug": str(
+                    fallback_context.get("entity_slug")
+                    or fallback_context.get("company_slug")
+                    or "entidade_desconhecida"
+                ),
+                "nome": str(
+                    fallback_context.get("entity_name")
+                    or manifest_candidate.get("entity_name")
+                    or manifest_candidate.get("company_name")
+                    or fallback_context.get("entity_slug")
+                    or fallback_context.get("company_slug")
+                    or "entidade_desconhecida"
+                ).strip(),
+            },
             "referencia_contrato_semantico": {
                 "arquivo": contract_key.rstrip("/").rsplit("/", maxsplit=1)[-1],
                 "versao": contract.get("versao"),
@@ -1239,6 +1282,8 @@ class FallbackLlmService:
             "execution_id_origem",
             "base_layout_signature",
             "publicacao_automatica_habilitada",
+            "entidade",
+            "empresa",
             "persistido_em",
             "candidate_layout_object_key",
             "candidate_layout_uri",
@@ -1291,8 +1336,13 @@ class FallbackLlmService:
     ) -> str:
         """Prefixo isolado para artefatos de fallback da execucao original."""
         config = self.config_loader.load_local_platform_config()
+        entity_slug = str(
+            fallback_context.get("entity_slug") or fallback_context.get("company_slug") or ""
+        ).strip()
+        if not entity_slug:
+            raise RuntimeError("fallback_context sem entity_slug.")
         prefix = (
-            f"fallback/{config.dominio}/{fallback_context['company_slug']}/"
+            f"fallback/{fallback_context.get('domain') or config.dominio}/{entity_slug}/"
             f"document_id={fallback_context['document_id']}/"
             f"execution_id={fallback_context.get('fallback_execution_id') or fallback_context['execution_id']}"
         )
@@ -1305,20 +1355,37 @@ class FallbackLlmService:
         config = self.config_loader.load_local_platform_config()
         return f"minio://{config.minio_bucket}/{object_key}"
 
+    def _parse_minio_uri(self, uri_or_key: str) -> str:
+        """Aceita object key ou URI do bucket configurado para contratos externos."""
+        value = str(uri_or_key).strip()
+        if not value.startswith("minio://"):
+            return value
+        config = self.config_loader.load_local_platform_config()
+        prefix = f"minio://{config.minio_bucket}/"
+        if not value.startswith(prefix):
+            raise RuntimeError("contrato_semantico_uri aponta para bucket MinIO diferente do configurado.")
+        return value.removeprefix(prefix)
+
     @staticmethod
     def _loaded_fallback_context(loaded_context: dict[str, Any]) -> dict[str, str]:
         """Extrai o contexto validado retornado por load_fallback_context."""
         fallback_context = loaded_context.get("fallback_context", {})
         if not isinstance(fallback_context, dict):
             raise RuntimeError("Contexto carregado sem fallback_context.")
-        required = ("company_slug", "document_id", "execution_id", "manifest_key")
+        entity_slug = str(
+            fallback_context.get("entity_slug") or fallback_context.get("company_slug") or ""
+        ).strip()
+        if not entity_slug:
+            raise RuntimeError("fallback_context sem campo obrigatorio: entity_slug")
+        required = ("document_id", "execution_id", "manifest_key")
         cleaned: dict[str, str] = {}
+        cleaned["entity_slug"] = entity_slug
         for field in required:
             value = str(fallback_context.get(field, "")).strip()
             if not value:
                 raise RuntimeError(f"fallback_context sem campo obrigatorio: {field}")
             cleaned[field] = value
-        for optional in ("fallback_execution_id", "source_execution_id", "fallback_mode", "motivo"):
+        for optional in ("domain", "fallback_execution_id", "source_execution_id", "fallback_mode", "motivo", "entity_name", "contrato_semantico_uri"):
             value = str(fallback_context.get(optional, "")).strip()
             if value:
                 cleaned[optional] = value
@@ -1330,7 +1397,10 @@ class FallbackLlmService:
     ) -> dict[str, str]:
         """Normaliza o contexto a partir do conf usado para revalidar."""
         return {
-            "company_slug": str(revalidation_conf["company_slug"]),
+            "domain": str(revalidation_conf.get("domain", "")).strip(),
+            "entity_slug": str(
+                revalidation_conf.get("entity_slug") or revalidation_conf["company_slug"]
+            ),
             "document_id": str(revalidation_conf["document_id"]),
             "execution_id": str(revalidation_conf["execution_id"]),
             "manifest_key": str(revalidation_conf["manifest_key"]),
@@ -1377,13 +1447,21 @@ class FallbackLlmService:
 
     def load_base_layout_signature(self, fallback_context: dict[str, str]) -> tuple[str, dict[str, Any]]:
         """Le a versao vigente do layout usada como base para o candidato."""
-        key = self._current_layout_signature_object_key(fallback_context["company_slug"])
+        key = self._current_layout_signature_object_key(
+            fallback_context["entity_slug"],
+            domain=fallback_context.get("domain", "construtoras"),
+        )
         return key, self._load_json_object(key, "layout_signature_base")
 
     def load_semantic_contract(self, fallback_context: dict[str, str]) -> tuple[str, dict[str, Any]]:
         """Le o contrato semantico que limita os campos alteraveis pelo fallback."""
         config = self.config_loader.load_local_platform_config()
-        key = f"{config.minio_contract_prefix.rstrip('/')}/v1.7.0/contrato_semantico_construtora.json"
+        contract_uri = str(fallback_context.get("contrato_semantico_uri", "")).strip()
+        key = (
+            self._parse_minio_uri(contract_uri)
+            if contract_uri
+            else f"{config.minio_contract_prefix.rstrip('/')}/v1.7.0/contrato_semantico_construtora.json"
+        )
         return key, self._load_json_object(key, "contrato_semantico")
 
     def load_extraction_manifest(self, fallback_context: dict[str, str]) -> tuple[str, dict[str, Any]]:
@@ -1395,14 +1473,14 @@ class FallbackLlmService:
         """Monta o object key de um artefato de resolucao da DAG 2."""
         config = self.config_loader.load_local_platform_config()
         return (
-            f"{config.minio_resolution_prefix.rstrip('/')}/{fallback_context['company_slug']}/"
+            f"{self._prefix_for_domain(config.minio_resolution_prefix, fallback_context.get('domain', config.dominio))}/{fallback_context['entity_slug']}/"
             f"document_id={fallback_context['document_id']}/"
             f"execution_id={fallback_context['execution_id']}/resolution/{filename}"
         )
 
-    def _current_layout_signature_object_key(self, company_slug: str) -> str:
+    def _current_layout_signature_object_key(self, entity_slug: str, *, domain: str = "construtoras") -> str:
         """Resolve pelo ponteiro `current.json` qual layout vigente carregar."""
-        pointer_key = self._current_layout_pointer_object_key(company_slug)
+        pointer_key = self._current_layout_pointer_object_key(entity_slug, domain=domain)
         pointer = self._load_json_object(pointer_key, "layout_signature_current_pointer")
         object_key = str(pointer.get("object_key", "")).strip()
         if not object_key:
@@ -1411,10 +1489,17 @@ class FallbackLlmService:
             )
         return object_key
 
-    def _current_layout_pointer_object_key(self, company_slug: str) -> str:
+    def _current_layout_pointer_object_key(self, entity_slug: str, *, domain: str = "construtoras") -> str:
         """Object key do ponteiro de layout vigente."""
         config = self.config_loader.load_local_platform_config()
-        return f"{config.minio_layout_prefix.rstrip('/')}/{company_slug}/current.json"
+        return f"{self._prefix_for_domain(config.minio_layout_prefix, domain)}/{entity_slug}/current.json"
+
+    @staticmethod
+    def _prefix_for_domain(configured_prefix: str, domain: str) -> str:
+        parts = configured_prefix.strip("/").split("/")
+        if len(parts) >= 2:
+            parts[1] = str(domain).strip().lower()
+        return "/".join(parts)
 
     def _load_json_object(self, object_key: str, artifact_name: str) -> dict[str, Any]:
         """Le um JSON do MinIO e adiciona contexto ao erro de carregamento."""

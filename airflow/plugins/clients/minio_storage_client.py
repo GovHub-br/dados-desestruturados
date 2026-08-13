@@ -104,6 +104,24 @@ class MinioStorageClient:
             keys.append(name)
         return sorted(keys)
 
+    def copy_object(self, *, source_key: str, destination_key: str) -> str:
+        """Copia um objeto no bucket sem materializa-lo no disco local."""
+        try:
+            from minio.commonconfig import CopySource
+        except ImportError as exc:
+            raise RuntimeError("Pacote minio indisponivel para copiar objeto.") from exc
+        self.ensure_bucket()
+        self._client().copy_object(
+            self.config.minio_bucket,
+            destination_key,
+            CopySource(self.config.minio_bucket, source_key),
+        )
+        return f"minio://{self.config.minio_bucket}/{destination_key}"
+
+    def remove_object(self, *, object_key: str) -> None:
+        """Remove um objeto apos migracao validada."""
+        self._client().remove_object(self.config.minio_bucket, object_key)
+
     def upload_directory(
         self,
         *,

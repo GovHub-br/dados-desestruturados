@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from copy import deepcopy
 from typing import Any
 
 from plugins.services.contract_schema import (
@@ -375,7 +376,7 @@ class FallbackProblemContextBuilder:
         scope = context.get("escopo_permitido")
         base_ref = context.get("layout_signature_base_ref")
         return {
-            "cabecalho_obrigatorio": {
+            "modelo_resposta_no_nivel_raiz": {
                 "tipo_artefato": "layout_signature_candidato",
                 "status_layout": "candidato",
                 "escopo_correcao": scope,
@@ -384,6 +385,16 @@ class FallbackProblemContextBuilder:
                 "base_layout_signature": (
                     None if scope == FallbackProblemContextBuilder.CREATION_SCOPE else base_ref
                 ),
+                "fontes_relevantes": {},
+                "regras_deteccao_mudanca": [],
+                "mapeamento_canonico": {
+                    "campo.permitido": {
+                        "tipo_origem": "celula_de_tabela",
+                        "arquivo_origem": "tables/table001.json",
+                        "obrigatorio": True,
+                    }
+                },
+                "metadados_estruturais_evidencia": {},
             },
             "secoes_necessarias": {
                 "fontes_relevantes": "objeto JSON",
@@ -394,9 +405,12 @@ class FallbackProblemContextBuilder:
             "tipos_origem_permitidos": [
                 "valor_fixo",
                 "campo_derivado",
+                "campo_json",
                 "bloco_textual",
                 "cabecalho_de_tabela",
                 "celula_de_tabela",
+                "linhas_de_tabela",
+                "juncao_de_registros_json",
             ],
             "formatos_de_origem": {
                 "valor_fixo": {
@@ -407,6 +421,12 @@ class FallbackProblemContextBuilder:
                 "campo_derivado": {
                     "tipo_origem": "campo_derivado",
                     "campo_origem": "outro.path.ja.resolvido",
+                    "obrigatorio": True,
+                },
+                "campo_json": {
+                    "tipo_origem": "campo_json",
+                    "arquivo_origem": "manifesto_execucao.json",
+                    "caminho_json": "campo.publicado.no.artefato",
                     "obrigatorio": True,
                 },
                 "bloco_textual": {
@@ -436,6 +456,34 @@ class FallbackProblemContextBuilder:
                     },
                     "obrigatorio": True,
                 },
+                "linhas_de_tabela": {
+                    "tipo_origem": "linhas_de_tabela",
+                    "arquivo_origem": "tables/table001.json",
+                    "linha_inicial": 0,
+                    "linha_final": 10,
+                    "indices_colunas": [0, 1],
+                    "obrigatorio": True,
+                },
+                "juncao_de_registros_json": {
+                    "tipo_origem": "juncao_de_registros_json",
+                    "fontes": [
+                        {
+                            "arquivo_origem": "charts/chart001.json",
+                            "caminho_chave": "periodo",
+                            "campos": [
+                                {"campo_saida": "valor_a", "caminho_json": "valor"}
+                            ],
+                        },
+                        {
+                            "arquivo_origem": "charts/chart002.json",
+                            "caminho_chave": "periodo",
+                            "campos": [
+                                {"campo_saida": "valor_b", "caminho_json": "valor"}
+                            ],
+                        },
+                    ],
+                    "obrigatorio": True,
+                },
             },
             "exemplo_de_mapeamento": {
                 "valor_fixo": {
@@ -446,19 +494,19 @@ class FallbackProblemContextBuilder:
                     }
                 },
                 "celula_de_tabela_com_seletores": {
-                    "dados[empresa=Empresa].valores[papel_periodo=periodo_referencia]": {
+                    "colecao[dimensao=valor].medidas[papel=referencia]": {
                         "tipo_origem": "celula_de_tabela",
                         "arquivo_origem": "tables/table001.json",
-                        "papel_periodo": "periodo_referencia",
+                        "papel": "referencia",
                         "seletor_linha": {
                             "tipo_match": "exato",
                             "coluna_rotulo": 0,
-                            "valor_aceito": "Numero de unidades",
+                            "valor_aceito": "rotulo observado",
                             "indice_linha_esperado": 12,
                         },
                         "seletor_coluna": {
                             "indice_coluna_esperado": 1,
-                            "escopo_periodo": "trimestre",
+                            "contexto_observado": "valor publicado",
                         },
                         "obrigatorio": True,
                     }
@@ -502,7 +550,11 @@ class FallbackProblemContextBuilder:
             return {}
         identification = layout_context.get("identificacao", {})
         return {
-            "empresa": identification.get("empresa") if isinstance(identification, dict) else None,
+            "entidade": (
+                identification.get("entidade") or identification.get("empresa")
+                if isinstance(identification, dict)
+                else None
+            ),
             "tipo_documento": (
                 identification.get("tipo_documento")
                 if isinstance(identification, dict)
@@ -589,7 +641,7 @@ class FallbackProblemContextBuilder:
 
         return {
             "identificacao": {
-                "empresa": layout.get("empresa"),
+                "entidade": layout.get("entidade") or layout.get("empresa"),
                 "tipo_documento": layout.get("tipo_documento"),
                 "versao_artefato": layout.get("versao_artefato"),
                 "contrato_semantico_ref": layout.get("contrato_semantico_ref"),
@@ -611,6 +663,12 @@ class FallbackProblemContextBuilder:
             semantic = {}
         schema_saida = contract.get("schema_saida", {})
         fixed_paths = contract_literal_paths(schema_saida)
+        relevant_requirements = self._dynamic_mapping_requirements(
+            semantic.get("requisitos_mapeamento", {})
+            if isinstance(semantic, dict)
+            else {},
+            fixed_paths=set(fixed_paths),
+        )
         structure = {
             "campos_raiz": sorted(
                 schema_saida.keys()
@@ -629,10 +687,47 @@ class FallbackProblemContextBuilder:
             "contrato_semantico": {
                 "entidades": semantic.get("entidades", {}),
                 "metricas": semantic.get("metricas", {}),
-                "requisitos_mapeamento": semantic.get("requisitos_mapeamento", {}),
+                "requisitos_mapeamento": relevant_requirements,
             },
             "estrutura_schema_saida": structure,
         }
+
+    @staticmethod
+    def _dynamic_mapping_requirements(
+        requirements: Any,
+        *,
+        fixed_paths: set[str],
+    ) -> dict[str, Any]:
+        """Remove do payload os contextos ja resolvidos por literais do contrato."""
+        if not isinstance(requirements, dict):
+            return {}
+        projected = deepcopy(requirements)
+        fields = projected.get("campos_obrigatorios", [])
+        if not isinstance(fields, list):
+            return projected
+
+        for requirement in fields:
+            if not isinstance(requirement, dict):
+                continue
+            path = str(requirement.get("path", "")).strip()
+            parent_path, separator, _leaf = path.rpartition(".")
+            if not separator:
+                continue
+            observations = requirement.get("observacoes_obrigatorias", [])
+            if not isinstance(observations, list):
+                continue
+            for observation in observations:
+                if not isinstance(observation, dict):
+                    continue
+                context_fields = observation.get("campos_contexto_obrigatorios", [])
+                if not isinstance(context_fields, list):
+                    continue
+                observation["campos_contexto_obrigatorios"] = [
+                    field
+                    for field in context_fields
+                    if f"{parent_path}.{str(field).strip()}" not in fixed_paths
+                ]
+        return projected
 
     @staticmethod
     def _mappable_targets(contract_context: Any) -> list[dict[str, Any]]:

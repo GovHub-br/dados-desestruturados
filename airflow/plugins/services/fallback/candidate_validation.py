@@ -263,7 +263,7 @@ class FallbackCandidateValidationService:
     ) -> None:
         """Impede que a LLM escreva cabecalhos compostos pela DAG."""
         extra_sections = set((candidate.model_extra or {}).keys())
-        protected_headers = {"empresa", "documento_origem"}
+        protected_headers = {"empresa", "entidade", "documento_origem"}
         overridden = sorted(extra_sections & protected_headers)
         if overridden:
             raise RuntimeError(

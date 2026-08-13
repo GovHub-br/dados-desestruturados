@@ -14,9 +14,12 @@ FallbackCorrectionScope = Literal[
 SupportedMappingOrigin = Literal[
     "valor_fixo",
     "campo_derivado",
+    "campo_json",
     "bloco_textual",
     "cabecalho_de_tabela",
     "celula_de_tabela",
+    "linhas_de_tabela",
+    "juncao_de_registros_json",
 ]
 
 

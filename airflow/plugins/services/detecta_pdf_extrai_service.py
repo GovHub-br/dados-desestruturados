@@ -12,6 +12,7 @@ from plugins.clients.docling_pipeline_client import DOCLING_PIPELINE_CLIENT, Doc
 from plugins.clients.http_client import HTTP_CLIENT, HttpClient
 from plugins.clients.minio_storage_client import MinioStorageClient
 from plugins.clients.ri_results_client import DisclosureWindow, RI_RESULTS_CLIENT, RiResultsClient
+from plugins.services.semantic_contract_registry import SemanticContractRegistry
 
 
 DAG_NAME = "dag_detecta_pdf_e_extrai"
@@ -75,6 +76,7 @@ class DetectaPdfExtraiService:
         force_extract = self.config.force_extract
 
         for candidate in candidates:
+            candidate = self._normalize_candidate_identity(candidate, domain=self.config.dominio)
             logging.info(
                 "Baixando PDF detectado para %s %s a partir de %s "
                 "(timeout=%ss, tentativas=%s, espera=%ss)",
@@ -141,6 +143,9 @@ class DetectaPdfExtraiService:
                 "pdf_uri": pdf_uri,
                 "source_final_url": response.url,
                 "candidate": candidate,
+                "dominio": candidate["domain"],
+                "contrato_semantico_uri": candidate["contrato_semantico_uri"],
+                "versao_contrato_semantico": candidate["versao_contrato_semantico"],
             }
             manifest_uri = self.minio_client.put_json(object_key=manifest_key, payload=manifest)
 
@@ -163,7 +168,7 @@ class DetectaPdfExtraiService:
         Manifestos de origem preservam o contexto do documento e determinam se
         uma extracao pode seguir para a DAG 2.
         """
-        origin_prefix = self.config.minio_document_prefix.rsplit("/construtoras", maxsplit=1)[0].rstrip("/")
+        origin_prefix = "documentos-origem"
         documents: list[dict[str, Any]] = []
         for object_key in self.minio_client.list_object_keys(prefix=f"{origin_prefix}/"):
             if not object_key.lower().endswith(".pdf"):
@@ -294,6 +299,9 @@ class DetectaPdfExtraiService:
                 "artifact_prefix": f"minio://{self.config.minio_bucket}/{object_prefix}",
                 "artifact_uris": artifact_uris,
                 "candidate": candidate,
+                "dominio": candidate["domain"],
+                "contrato_semantico_uri": candidate["contrato_semantico_uri"],
+                "versao_contrato_semantico": candidate["versao_contrato_semantico"],
             }
             extraction_manifest_key = f"{object_prefix}/manifesto_execucao.json"
             manifest_uri = self.minio_client.put_json(
@@ -369,6 +377,10 @@ class DetectaPdfExtraiService:
             origin_prefix=origin_prefix,
             origin_manifest=origin_manifest,
         )
+        candidate = self._normalize_candidate_identity(
+            candidate,
+            domain=str(candidate.get("domain", "")),
+        )
         filename = self._safe_filename(object_key.rsplit("/", maxsplit=1)[-1])
         local_pdf = self._write_temp_pdf(candidate, digest, content, filename)
         return {
@@ -399,20 +411,35 @@ class DetectaPdfExtraiService:
         origin_manifest: dict[str, Any],
     ) -> dict[str, Any]:
         """Normaliza o contexto de RI e de uploads manuais para o Docling."""
+        relative_parts = object_key.removeprefix(f"{origin_prefix}/").split("/")
+        if len(relative_parts) < 2:
+            raise RuntimeError(f"PDF de origem sem dominio e entidade no caminho: {object_key}")
         detected_candidate = origin_manifest.get("candidate")
         if isinstance(detected_candidate, dict):
             candidate = dict(detected_candidate)
+            candidate.setdefault("domain", origin_manifest.get("dominio") or relative_parts[0])
+            candidate.setdefault("entity_slug", candidate.get("company_slug") or relative_parts[1])
+            candidate.setdefault("entity_name", candidate.get("company_name") or relative_parts[1])
             candidate.setdefault("should_trigger_dag2", True)
             return candidate
 
-        relative_parts = object_key.removeprefix(f"{origin_prefix}/").split("/")
-        company_slug = str(origin_manifest.get("organizacao") or relative_parts[0]).strip().lower()
+        domain = str(origin_manifest.get("dominio") or relative_parts[0]).strip().lower()
+        entity_slug = str(
+            origin_manifest.get("entity_slug")
+            or origin_manifest.get("organizacao")
+            or relative_parts[1]
+        ).strip().lower()
         period_label = str(origin_manifest.get("periodo_referencia") or "sem_periodo").strip()
         year_match = re.search(r"(20\d{2})", period_label)
         reference_year = int(year_match.group(1)) if year_match else 0
         return {
-            "company_slug": company_slug,
-            "company_name": str(origin_manifest.get("organizacao") or company_slug),
+            "domain": domain,
+            "entity_slug": entity_slug,
+            "entity_name": str(
+                origin_manifest.get("entity_name")
+                or origin_manifest.get("organizacao")
+                or entity_slug
+            ),
             "title": object_key.rsplit("/", maxsplit=1)[-1],
             "url": "",
             "provider": str(origin_manifest.get("origem") or "minio_upload_manual"),
@@ -472,10 +499,47 @@ class DetectaPdfExtraiService:
     ) -> str:
         """Monta o prefixo versionado por empresa, ano, periodo, documento e execucao."""
         return (
-            f"{self.config.minio_extract_prefix.rstrip('/')}/{candidate['company_slug']}/"
+            f"{self._extract_prefix_for_domain(candidate['domain'])}/{candidate['entity_slug']}/"
             f"ano={candidate['reference_year']}/periodo={candidate['period_label']}/"
             f"document_id={document_id}/execution_id={execution_id}/extraction"
         )
+
+    def _normalize_candidate_identity(self, candidate: dict[str, Any], *, domain: str) -> dict[str, Any]:
+        """Normaliza deteccoes legadas e associa o contrato ativo do dominio."""
+        normalized = dict(candidate)
+        normalized_domain = str(normalized.get("domain") or domain).strip().lower()
+        entity_slug = str(
+            normalized.get("entity_slug") or normalized.get("company_slug") or ""
+        ).strip().lower()
+        if not normalized_domain or not entity_slug:
+            raise RuntimeError("Deteccao sem dominio ou identificador de entidade.")
+        entity_name = str(
+            normalized.get("entity_name") or normalized.get("company_name") or entity_slug
+        ).strip()
+        contract_uri, contract_version = SemanticContractRegistry(
+            config=self.config,
+            minio_client=self.minio_client,
+        ).latest_contract_uri(normalized_domain)
+        normalized.update(
+            {
+                "domain": normalized_domain,
+                "entity_slug": entity_slug,
+                "entity_name": entity_name,
+                "contrato_semantico_uri": contract_uri,
+                "versao_contrato_semantico": contract_version,
+            }
+        )
+        normalized.setdefault("company_slug", entity_slug)
+        normalized.setdefault("company_name", entity_name)
+        return normalized
+
+    def _extract_prefix_for_domain(self, domain: str) -> str:
+        """Troca somente o segmento de dominio do prefixo legado de extracao."""
+        parts = self.config.minio_extract_prefix.strip("/").split("/")
+        if len(parts) >= 3 and parts[0] == "execucoes":
+            parts[1] = str(domain).strip().lower()
+            return "/".join(parts)
+        return f"execucoes/{str(domain).strip().lower()}/extracao"
 
     @staticmethod
     def _safe_filename(filename: str) -> str:

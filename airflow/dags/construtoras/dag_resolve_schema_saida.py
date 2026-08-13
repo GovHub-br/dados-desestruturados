@@ -24,7 +24,14 @@ def montar_runtime() -> dict[str, object]:
     modo_execucao = str(conf.get("modo_execucao", "")).strip()
     layout_signature_uri = str(conf.get("layout_signature_uri", "")).strip()
     layout_signature_object_key = str(conf.get("layout_signature_object_key", "")).strip()
-    contrato_semantico_uri = str(conf.get("contrato_semantico_uri", "")).strip()
+    contrato_semantico_uri_raw = conf.get("contrato_semantico_uri")
+    contrato_semantico_uri = (
+        str(contrato_semantico_uri_raw).strip()
+        if contrato_semantico_uri_raw is not None
+        else ""
+    )
+    if contrato_semantico_uri.lower() == "none":
+        contrato_semantico_uri = ""
     if modo_execucao:
         runtime["modo_execucao"] = modo_execucao
     if layout_signature_uri or layout_signature_object_key:
@@ -83,8 +90,8 @@ def descobrir_execucoes_para_resolucao() -> list[str]:
 def processar_execucao_resolucao(runtime: dict[str, object], manifest_key: str) -> dict[str, object]:
     result = SCHEMA_RESOLUTION_SERVICE.process_extraction_manifest(runtime, manifest_key=manifest_key)
     logging.info(
-        "Manifesto processado: company=%s execution_id=%s layout_alterado=%s",
-        result.get("company_slug"),
+        "Manifesto processado: entity=%s execution_id=%s layout_alterado=%s",
+        result.get("entity_slug"),
         result.get("execution_id"),
         result.get("layout_alterado"),
     )
@@ -125,10 +132,12 @@ def filtrar_execucoes_para_remapeamento(resultados: list[dict[str, object]]) -> 
             continue
         confs.append(
             {
-                "company_slug": item.get("company_slug"),
+                "domain": item.get("domain"),
+                "entity_slug": item.get("entity_slug"),
                 "execution_id": item.get("execution_id"),
                 "document_id": item.get("document_id"),
                 "manifest_key": item.get("manifest_key"),
+                "contrato_semantico_uri": item.get("contrato_semantico_uri"),
                 "trigger_origin_dag": "dag_resolve_schema_saida",
                 "fallback_mode": item.get("fallback_mode"),
                 "motivo": item.get("motivo"),

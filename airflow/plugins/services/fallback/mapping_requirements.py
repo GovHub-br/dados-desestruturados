@@ -205,18 +205,13 @@ def _parse_observation(
         )
 
     raw_context_fields = raw_observation.get("campos_contexto_obrigatorios", [])
-    if not isinstance(raw_context_fields, list) or not raw_context_fields:
+    if not isinstance(raw_context_fields, list):
         raise MappingRequirementsError(
-            f"Observacao obrigatoria sem campos de contexto: {path}."
+            f"campos_contexto_obrigatorios deve ser lista: {path}."
         )
     context_fields = tuple(
         str(field).strip() for field in raw_context_fields if str(field).strip()
     )
-    if not context_fields:
-        raise MappingRequirementsError(
-            f"Observacao obrigatoria sem campos de contexto validos: {path}."
-        )
-
     parent_path, separator, _leaf = path.rpartition(".")
     if not separator:
         raise MappingRequirementsError(

@@ -15,7 +15,6 @@ from plugins.services.fallback import FALLBACK_LLM_SERVICE
 
 
 REQUIRED_FALLBACK_CONF_FIELDS = (
-    "company_slug",
     "document_id",
     "execution_id",
     "manifest_key",
@@ -41,6 +40,9 @@ def validar_conf_fallback() -> dict[str, object]:
         for field in REQUIRED_FALLBACK_CONF_FIELDS
         if not str(conf.get(field, "")).strip()
     ]
+    entity_slug = str(conf.get("entity_slug") or conf.get("company_slug") or "").strip()
+    if not entity_slug:
+        missing.append("entity_slug (ou company_slug legado)")
     if missing:
         raise AirflowFailException(
             "dag_run.conf da DAG 3 incompleto. "
@@ -51,6 +53,16 @@ def validar_conf_fallback() -> dict[str, object]:
         field: str(conf[field]).strip()
         for field in REQUIRED_FALLBACK_CONF_FIELDS
     }
+    fallback_context["entity_slug"] = entity_slug
+    domain = str(conf.get("domain", "")).strip()
+    if domain:
+        fallback_context["domain"] = domain
+    entity_name = str(conf.get("entity_name") or conf.get("company_name") or "").strip()
+    if entity_name:
+        fallback_context["entity_name"] = entity_name
+    legacy_company_slug = str(conf.get("company_slug", "")).strip()
+    if legacy_company_slug:
+        fallback_context["company_slug"] = legacy_company_slug
     run_id = str(getattr(dag_run, "run_id", "") or "").strip()
     normalized_run_id = re.sub(r"[^A-Za-z0-9_.=-]+", "_", run_id).strip("_")
     if not normalized_run_id:
@@ -61,7 +73,7 @@ def validar_conf_fallback() -> dict[str, object]:
         fallback_execution_id = f"dag_valida_e_fallback_llm__{normalized_run_id}"
     fallback_context["source_execution_id"] = fallback_context["execution_id"]
     fallback_context["fallback_execution_id"] = fallback_execution_id
-    for optional_field in ("fallback_mode", "motivo"):
+    for optional_field in ("fallback_mode", "motivo", "contrato_semantico_uri"):
         value = str(conf.get(optional_field, "")).strip()
         if value:
             fallback_context[optional_field] = value
