@@ -376,6 +376,32 @@ services:
     networks:
       - ocr_net
 
+  portal:
+    build:
+      context: .
+      dockerfile: portal/Dockerfile
+    container_name: ocr_portal
+    depends_on:
+      minio:
+        condition: service_healthy
+      airflow-webserver:
+        condition: service_healthy
+    environment:
+      MINIO_ENDPOINT: minio:9000
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minioadmin123}
+      MINIO_BUCKET_DATA_LAKE: ${MINIO_BUCKET_DATA_LAKE:-ocr-cidades}
+      MINIO_SECURE: "false"
+      AIRFLOW_API_URL: http://airflow-webserver:8080/api/v2
+      PORTAL_AIRFLOW_USER: ${AIRFLOW_ADMIN_USER:-admin}
+      PORTAL_AIRFLOW_PASSWORD: ${AIRFLOW_ADMIN_PASSWORD:-admin}
+      PORTAL_API_TOKEN: ${PORTAL_API_TOKEN:-}
+      PORTAL_MAX_UPLOAD_BYTES: ${PORTAL_MAX_UPLOAD_BYTES:-52428800}
+    ports:
+      - "${PORTAL_PORT:-8000}:8000"
+    networks:
+      - ocr_net
+
   openmetadata-ingestion:
     image: openmetadata/ingestion:${OPENMETADATA_VERSION:-1.12.6}
     container_name: ocr_openmetadata_ingestion

@@ -14,6 +14,7 @@ from plugins.clients.llm_client import (
     FallbackLlmClientError,
 )
 from plugins.clients.minio_storage_client import MinioStorageClient
+from plugins.services.semantic_contract_registry import SemanticContractRegistry
 from pydantic import ValidationError
 
 from .candidate_validation import (
@@ -903,6 +904,7 @@ class FallbackLlmService:
                 parsed_response=parsed,
                 raw_response=raw_content,
             )
+            loaded_artifacts: dict[str, Any] = {}
             try:
                 artifact_selection = LayoutArtifactSelection.model_validate(parsed)
                 self.artifact_selection_validator.validate_paths(
@@ -916,6 +918,12 @@ class FallbackLlmService:
                 loaded_artifacts = self.inventory_service.load_selected_extraction_artifacts(
                     manifest=manifest,
                     artifact_paths=selected_artifact_paths,
+                    get_bytes=lambda object_key: self.minio_client.get_bytes(object_key=object_key),
+                )
+                loaded_artifacts = self.inventory_service.enrich_selected_jsonl_anchor_evidence(
+                    manifest=manifest,
+                    artifact_selection=artifact_selection,
+                    loaded_artifacts=loaded_artifacts,
                     get_bytes=lambda object_key: self.minio_client.get_bytes(object_key=object_key),
                 )
                 self.artifact_selection_validator.validate_coverage(
@@ -942,6 +950,7 @@ class FallbackLlmService:
                     attempt=attempt + 1,
                     validation_error=str(exc),
                     invalid_selection=parsed,
+                    loaded_artifacts=loaded_artifacts,
                 )
                 continue
 
@@ -956,9 +965,10 @@ class FallbackLlmService:
         attempt: int,
         validation_error: str,
         invalid_selection: Any,
+        loaded_artifacts: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
-        """Mantem o contexto original e adiciona somente o feedback do retry."""
-        return {
+        """Mantem o contexto e entrega a evidencia ja carregada no retry."""
+        payload = {
             **selection_payload,
             "correcao_selecao_artefatos": {
                 "tentativa": attempt,
@@ -967,6 +977,9 @@ class FallbackLlmService:
                 "selecao_anterior_invalida": invalid_selection,
             },
         }
+        if loaded_artifacts:
+            payload["artefatos_carregados_para_correcao"] = loaded_artifacts
+        return payload
 
     def _persist_llm_input(
         self,
@@ -1454,14 +1467,23 @@ class FallbackLlmService:
         return key, self._load_json_object(key, "layout_signature_base")
 
     def load_semantic_contract(self, fallback_context: dict[str, str]) -> tuple[str, dict[str, Any]]:
-        """Le o contrato semantico que limita os campos alteraveis pelo fallback."""
+        """Le o contrato ativo do dominio, sem prender o fallback ao manifesto historico."""
         config = self.config_loader.load_local_platform_config()
-        contract_uri = str(fallback_context.get("contrato_semantico_uri", "")).strip()
-        key = (
-            self._parse_minio_uri(contract_uri)
-            if contract_uri
-            else f"{config.minio_contract_prefix.rstrip('/')}/v1.7.0/contrato_semantico_construtora.json"
-        )
+        domain = str(fallback_context.get("domain") or config.dominio).strip()
+        historical_uri = str(fallback_context.get("contrato_semantico_uri", "")).strip()
+        contract_uri, _version = SemanticContractRegistry(
+            config=config,
+            minio_client=self.minio_client,
+        ).latest_contract_uri(domain)
+        if historical_uri and historical_uri != contract_uri:
+            logging.info(
+                "Contrato historico do manifesto substituido pelo contrato ativo do dominio "
+                "na DAG 3: historico=%s ativo=%s",
+                historical_uri,
+                contract_uri,
+            )
+        fallback_context["contrato_semantico_uri"] = contract_uri
+        key = self._parse_minio_uri(contract_uri)
         return key, self._load_json_object(key, "contrato_semantico")
 
     def load_extraction_manifest(self, fallback_context: dict[str, str]) -> tuple[str, dict[str, Any]]:

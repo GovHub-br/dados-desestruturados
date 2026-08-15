@@ -17,6 +17,7 @@ from plugins.services.contract_schema import (
     is_type_descriptor,
     normalize_schema_path,
 )
+from plugins.services.semantic_contract_registry import SemanticContractRegistry
 
 
 class SchemaResolutionService:
@@ -533,9 +534,22 @@ class SchemaResolutionService:
             encoding="utf-8",
         )
         config = self.config_loader.load_local_platform_config()
-        contrato_uri = str(runtime.get("inputs", {}).get("contrato_semantico") or manifest.get("contrato_semantico_uri") or (
-            f"minio://{config.minio_bucket}/{config.minio_contract_prefix}/v1.7.0/contrato_semantico_construtora.json"
-        ))
+        contrato_uri_historico = str(
+            runtime.get("inputs", {}).get("contrato_semantico")
+            or manifest.get("contrato_semantico_uri")
+            or ""
+        ).strip()
+        contrato_uri, _versao_contrato = SemanticContractRegistry(
+            config=config,
+            minio_client=self.minio_client,
+        ).latest_contract_uri(domain)
+        if contrato_uri_historico and contrato_uri_historico != contrato_uri:
+            logging.info(
+                "Contrato historico do manifesto substituido pelo contrato ativo do dominio "
+                "na DAG 2: historico=%s ativo=%s",
+                contrato_uri_historico,
+                contrato_uri,
+            )
         contrato = self._load_json_from_minio_required(
             contrato_uri,
             artifact_name="contrato_semantico",
@@ -575,6 +589,7 @@ class SchemaResolutionService:
                 "execution_id": execution_id,
                 "document_id": document_id,
                 "contrato_semantico_uri": contrato_uri,
+                "contrato_semantico_uri_historico": contrato_uri_historico or None,
             },
             "contrato_semantico": contrato,
             "layout_signature": layout,

@@ -1,5 +1,24 @@
 # Arquitetura das DAGs para PDFs de construtoras
 
+## Separacao entre coleta e extracao
+
+```text
+dag_detecta_e_baixa_pdfs_construtoras
+  -> busca RI e grava documentos-origem
+  -> dispara dag_extrai_documentos_origem com os manifestos novos
+
+Portal ou operador manual
+  -> grava PDF e documento_origem.json em documentos-origem
+  -> dispara dag_extrai_documentos_origem
+
+dag_extrai_documentos_origem
+  -> recebe manifestos ou varre documentos-origem
+  -> chama Docling, persiste extracao e dispara DAG 2
+```
+
+A extracao nao depende mais da fonte de RI das construtoras. Isso permite que
+qualquer familia documental entre pelo mesmo caminho deterministico.
+
 ## Objetivo
 
 Este documento descreve o fluxo completo para:
@@ -25,12 +44,13 @@ O layout signature com mapeamento canônico define **onde buscar e como resolver
 
 ## Visão geral do fluxo
 
-O fluxo recomendado é dividido em quatro DAGs principais.
+O fluxo recomendado e dividido em cinco DAGs principais.
 
-1. `dag_detecta_pdf_e_extrai`
-2. `dag_resolve_schema_saida`
-3. `dag_valida_e_fallback_llm`
-4. `dag_ingere_bronze`
+1. `dag_detecta_e_baixa_pdfs_construtoras`
+2. `dag_extrai_documentos_origem`
+3. `dag_resolve_schema_saida`
+4. `dag_valida_e_fallback_llm`
+5. `dag_ingere_bronze`
 
 Em alto nível:
 
@@ -85,11 +105,11 @@ Esse arquivo é a referência operacional da DAG de resolução.
 Ele não deve conter texto aberto, resumo narrativo ou status de compatibilidade preenchido manualmente.
 
 
-## DAG 1: detectar PDF e extrair
+## DAG 1A: detectar e baixar PDFs de construtoras
 
 ### Nome sugerido
 
-- `dag_detecta_pdf_e_extrai`
+- `dag_detecta_e_baixa_pdfs_construtoras`
 
 ### Entrada
 
@@ -99,14 +119,32 @@ Ele não deve conter texto aberto, resumo narrativo ou status de compatibilidade
 
 ### Responsabilidades
 
-- detectar entrada de um novo PDF;
-- copiar ou registrar o PDF em área de processamento;
-- executar o script de extração do `docling_pipeline`;
-- persistir os artefatos brutos da extração.
+- consultar as fontes RI configuradas para construtoras;
+- baixar e persistir PDFs em `documentos-origem/`;
+- registrar `documento_detectado.json`;
+- disparar a DAG de extracao somente para manifestos novos.
 
 ### Saídas esperadas
 
-Pasta de extração por documento, com arquivos como:
+PDF de origem e manifesto de deteccao. Esta DAG nao executa Docling.
+
+## DAG 1B: extrair documentos de origem
+
+### Nome
+
+- `dag_extrai_documentos_origem`
+
+### Responsabilidades
+
+- receber manifestos de origem especificos ou varrer `documentos-origem/`;
+- selecionar PDFs ainda sem extracao, salvo reprocessamento explicito;
+- executar o pipeline Docling;
+- persistir artefatos e `manifesto_execucao.json`;
+- disparar a DAG 2 para extracoes concluidas.
+
+### Saidas esperadas
+
+Pasta de extracao por documento, com arquivos como:
 
 - `metadata.json`
 - `tables/`
@@ -119,8 +157,7 @@ Pasta de extração por documento, com arquivos como:
 
 ### Observação
 
-Essa DAG não gera `schema_saida`.
-Ela só prepara o terreno para as DAGs seguintes.
+Esta DAG nao gera `schema_saida`; ela so prepara os artefatos para a DAG 2.
 
 O processamento pesado do `docling_pipeline` pode ocorrer em um runner remoto.
 Nesse caso, a DAG envia o PDF ao runner, recebe `extraction.tar.gz`, extrai a
@@ -138,7 +175,7 @@ seguintes não precisam saber se o Docling rodou localmente ou no Mac Studio.
 ### Entrada
 
 - artefatos da extração gerados pela DAG 1;
-- `contrato_semantico_construtora.json`;
+- contrato semântico padrão ou `contrato_semantico_uri` informado na execução;
 - `layout_signature_<empresa>_deterministico.json`.
 
 ### O que esta DAG faz
@@ -203,6 +240,9 @@ Exemplos:
 - `tipo_origem = cabecalho_de_tabela`
 - `tipo_origem = celula_de_tabela`
 - `tipo_origem = bloco_textual`
+- `tipo_origem = campo_json`
+- `tipo_origem = linhas_de_tabela`
+- `tipo_origem = juncao_de_registros_json`
 - `tipo_origem = nao_mapeado_neste_documento`
 - `tipo_origem = nao_aplicavel_neste_pdf_individual`
 
@@ -213,6 +253,20 @@ A DAG gera o `schema_saida` preenchido com:
 - valores resolvidos;
 - `null` quando o contrato permitir;
 - ausência controlada quando o campo não se aplica ao documento.
+
+#### 2.4 Leitura estrutural de tabelas e metadados
+
+`linhas_de_tabela` possui dois formatos. O formato semântico usa `campos`
+nomeados no layout para preencher diretamente objetos do schema. O formato
+estrutural usa apenas
+`linha_inicial`, `linha_final`, `segmentos`, `faixas_linhas` e
+`indices_colunas`; ele preserva a leitura bruta com índices na auditoria. Os
+dois formatos são declarativos: a DAG 2 não conhece nomes de negócio fixos.
+
+`campo_json` lê um valor já materializado em qualquer JSON da extração por
+`arquivo_origem` e `caminho_json`. Ele não converte datas nem aplica regras de
+empresa. Quando o contrato precisar de limites de período, a origem deve
+publicar esses limites no manifesto/metadado normalizado.
 
 ### Saídas esperadas
 
@@ -278,9 +332,29 @@ Exemplos:
 - layout signature usado na tentativa anterior;
 - opcionalmente o `auditoria_resolucao.json`.
 
+### Escolha do contrato por domínio
+
+A DAG 1 deriva o domínio pelo caminho do PDF em
+`documentos-origem/<dominio>/<entidade>/...`. Para cada nova extração, ela
+seleciona o contrato da maior versão semântica em `contratos/<dominio>/` e
+persiste `contrato_semantico_uri` no `manifesto_execucao.json`. A DAG 2 usa a
+URI do manifesto; ao acionar a DAG 3, repassa a mesma URI; a revalidação a
+mantém. O contrato só pode ser sobrescrito por `dag_run.conf` explícito em uma
+execução manual.
+
 ### O que a LLM deve fazer
 
 A LLM não deve regenerar tudo por padrão.
+
+Ela pode propor somente tipos de origem que a DAG 2 executa: `valor_fixo`,
+`campo_derivado`, `campo_json`, `bloco_textual`, `cabecalho_de_tabela`,
+`celula_de_tabela`, `linhas_de_tabela` e `juncao_de_registros_json`. A escolha
+continua limitada aos artefatos recuperados e aos paths declarados pelo contrato
+semântico.
+
+Para não assumir o domínio de construtoras, a identidade operacional é
+`entity_slug` (com `entity_name` opcional). `company_slug` permanece apenas como
+compatibilidade para execuções e manifestos antigos.
 
 A estratégia recomendada é:
 

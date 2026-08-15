@@ -108,6 +108,28 @@ Boa pratica:
 - registrar `document_id` no Postgres;
 - manter nome legivel, mas nao depender dele como chave primaria.
 
+### Associação automática entre documento e contrato
+
+O primeiro segmento depois de `documentos-origem/` é o **domínio documental**.
+Ele define onde a DAG 1 procura o contrato ativo:
+
+```text
+documentos-origem/<dominio>/<entidade>/...
+contratos/<dominio>/vX.Y.Z/contrato_semantico_*.json
+```
+
+Para uma nova extração, a DAG escolhe determinísticamente a maior versão
+semântica disponível em `contratos/<dominio>/` e grava a URI exata no
+`manifesto_execucao.json`. DAG 2, DAG 3 e a revalidação reutilizam essa URI;
+por isso uma execução não muda de contrato no meio do seu ciclo de vida.
+
+Exemplo:
+
+```text
+documentos-origem/abecip/abecip/ano=2026/periodo=maio/boletim.pdf
+contratos/abecip/v2.0.1/contrato_semantico_abecip.json
+```
+
 ### `execucoes/`
 
 Armazena os artefatos gerados em cada execucao.
@@ -291,5 +313,4 @@ Le:
 Escreve:
 
 - `fallback/.../`
-
 

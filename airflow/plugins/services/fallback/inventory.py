@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import unicodedata
 from collections.abc import Callable
 from typing import Any
 
@@ -21,6 +22,7 @@ class FallbackInventoryService:
     MAX_FULL_ARTIFACT_CHARS = 60_000
     JSONL_CHUNK_RECORDS = 40
     MAX_CHUNKS_PER_ARTIFACT = 8
+    MAX_ANCHOR_EVIDENCES_PER_ARTIFACT = 12
 
     def load_extraction_inventory(
         self,
@@ -144,6 +146,61 @@ class FallbackInventoryService:
                 continue
             loaded[artifact_path] = self.load_artifact_for_llm(object_key, get_bytes=get_bytes)
         return loaded
+
+    def enrich_selected_jsonl_anchor_evidence(
+        self,
+        *,
+        manifest: dict[str, Any],
+        artifact_selection: Any,
+        loaded_artifacts: dict[str, Any],
+        get_bytes: Callable[[str], bytes],
+    ) -> dict[str, Any]:
+        """Inclui somente registros JSONL que comprovem ancoras ja declaradas.
+
+        A selecao LLM continua baseada em amostras pequenas. Depois dela, esta
+        etapa percorre deterministicamente o JSONL completo para evitar falsos
+        negativos quando a evidencia esta fora dos primeiros registros.
+        """
+        artifact_uris = manifest.get("artifact_uris", [])
+        if not isinstance(artifact_uris, list):
+            return loaded_artifacts
+
+        items = getattr(artifact_selection, "artifact_paths", [])
+        if not isinstance(items, list):
+            return loaded_artifacts
+
+        for item in items:
+            path = str(getattr(item, "path", "")).strip("/")
+            artifact = loaded_artifacts.get(path)
+            if not path or not isinstance(artifact, dict) or artifact.get("status"):
+                continue
+
+            anchors = [
+                str(anchor).strip()
+                for coverage in getattr(item, "coberturas", [])
+                for anchor in getattr(coverage, "ancoras", [])
+                if str(anchor).strip()
+            ]
+            if not anchors:
+                continue
+
+            object_key = str(artifact.get("object_key", "")).strip()
+            if not object_key:
+                object_key = self.find_artifact_object_key(
+                    artifact_uris=[str(uri) for uri in artifact_uris],
+                    origin_file=path,
+                ) or ""
+            if not object_key.endswith(".jsonl"):
+                continue
+
+            evidences = self._find_jsonl_anchor_evidence(
+                object_key=object_key,
+                anchors=anchors,
+                get_bytes=get_bytes,
+            )
+            if evidences:
+                artifact["evidencias_ancoras"] = evidences
+        return loaded_artifacts
 
     def load_artifact_for_llm(
         self,
@@ -307,6 +364,61 @@ class FallbackInventoryService:
                 }
             )
         return chunks
+
+    def _find_jsonl_anchor_evidence(
+        self,
+        *,
+        object_key: str,
+        anchors: list[str],
+        get_bytes: Callable[[str], bytes],
+    ) -> list[dict[str, Any]]:
+        """Busca uma ocorrencia literal normalizada por ancora no JSONL inteiro."""
+        try:
+            text = get_bytes(object_key).decode("utf-8", errors="replace")
+        except Exception:
+            return []
+
+        pending = {
+            self._normalized_text(anchor): anchor
+            for anchor in anchors
+            if self._normalized_text(anchor)
+        }
+        evidences: list[dict[str, Any]] = []
+        for line_number, line in enumerate(text.splitlines(), start=1):
+            if not pending or len(evidences) >= self.MAX_ANCHOR_EVIDENCES_PER_ARTIFACT:
+                break
+            stripped = line.strip()
+            if not stripped:
+                continue
+            try:
+                record: Any = json.loads(stripped)
+            except json.JSONDecodeError:
+                record = stripped[:800]
+            record_text = self._normalized_text(record)
+            matched = [
+                (normalized_anchor, original_anchor)
+                for normalized_anchor, original_anchor in pending.items()
+                if normalized_anchor in record_text
+            ]
+            for normalized_anchor, original_anchor in matched:
+                evidences.append(
+                    {
+                        "ancora": original_anchor,
+                        "linha": line_number,
+                        "registro": self.truncate_json(record),
+                    }
+                )
+                pending.pop(normalized_anchor, None)
+        return evidences
+
+    @staticmethod
+    def _normalized_text(value: Any) -> str:
+        text = value if isinstance(value, str) else json.dumps(value, ensure_ascii=False)
+        return "".join(
+            character
+            for character in unicodedata.normalize("NFKD", text).casefold()
+            if not unicodedata.combining(character)
+        )
 
     def truncate_json(self, value: Any, *, max_depth: int = 5) -> Any:
         """Reduz estruturas grandes para caberem no contexto da LLM."""

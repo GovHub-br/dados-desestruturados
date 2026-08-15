@@ -152,6 +152,7 @@ class DetectaPdfExtraiService:
             persisted.append(
                 {
                     **manifest,
+                    "origin_manifest_key": manifest_key,
                     "manifest_uri": manifest_uri,
                     "local_pdf_path": str(local_pdf),
                     "should_extract": should_extract,
@@ -160,7 +161,11 @@ class DetectaPdfExtraiService:
 
         return persisted
 
-    def discover_pending_origin_documents(self) -> list[dict[str, Any]]:
+    def discover_pending_origin_documents(
+        self,
+        *,
+        origin_manifest_keys: list[str] | None = None,
+    ) -> list[dict[str, Any]]:
         """Varre documentos de origem e monta a fila de PDFs ainda sem extracao.
 
         A descoberta nao depende das fontes de RI: todo PDF persistido em
@@ -169,8 +174,22 @@ class DetectaPdfExtraiService:
         uma extracao pode seguir para a DAG 2.
         """
         origin_prefix = "documentos-origem"
+        requested_manifests = {
+            str(key).strip() for key in (origin_manifest_keys or []) if str(key).strip()
+        }
         documents: list[dict[str, Any]] = []
-        for object_key in self.minio_client.list_object_keys(prefix=f"{origin_prefix}/"):
+        object_keys = self.minio_client.list_object_keys(prefix=f"{origin_prefix}/")
+        if requested_manifests:
+            expected_parents = {key.rsplit("/", maxsplit=1)[0] for key in requested_manifests}
+            object_keys = [
+                key for key in object_keys
+                if key.rsplit("/", maxsplit=1)[0] in expected_parents
+            ]
+            missing = [key for key in requested_manifests if not self.minio_client.object_exists(key)]
+            if missing:
+                raise RuntimeError(f"Manifesto(s) de origem inexistente(s): {missing}")
+
+        for object_key in object_keys:
             if not object_key.lower().endswith(".pdf"):
                 continue
 
@@ -516,10 +535,18 @@ class DetectaPdfExtraiService:
         entity_name = str(
             normalized.get("entity_name") or normalized.get("company_name") or entity_slug
         ).strip()
-        contract_uri, contract_version = SemanticContractRegistry(
-            config=self.config,
-            minio_client=self.minio_client,
-        ).latest_contract_uri(normalized_domain)
+        contract_uri = str(normalized.get("contrato_semantico_uri") or "").strip()
+        contract_version = str(normalized.get("versao_contrato_semantico") or "").strip()
+        if contract_uri:
+            if not self.minio_client.object_exists(
+                contract_uri.removeprefix(f"minio://{self.config.minio_bucket}/")
+            ):
+                raise RuntimeError(f"Contrato semantico informado nao existe: {contract_uri}")
+        else:
+            contract_uri, contract_version = SemanticContractRegistry(
+                config=self.config,
+                minio_client=self.minio_client,
+            ).latest_contract_uri(normalized_domain)
         normalized.update(
             {
                 "domain": normalized_domain,

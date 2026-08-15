@@ -5,6 +5,7 @@ import socket
 import time
 from collections.abc import Iterator
 from dataclasses import dataclass
+from http.client import IncompleteRead, RemoteDisconnected
 from urllib.error import HTTPError, URLError
 from urllib.parse import urlparse
 from urllib.request import Request, urlopen
@@ -99,7 +100,14 @@ class HttpClient:
             raise RuntimeError(
                 f"Falha ao chamar API {url}: HTTP {exc.code} {exc.reason}. Corpo: {response_body}"
             ) from exc
-        except (URLError, json.JSONDecodeError) as exc:
+        except (
+            URLError,
+            json.JSONDecodeError,
+            IncompleteRead,
+            RemoteDisconnected,
+            ConnectionResetError,
+            socket.timeout,
+        ) as exc:
             raise RuntimeError(f"Falha ao chamar API {url}: {exc}") from exc
 
     def iter_post_json_lines(
@@ -137,7 +145,14 @@ class HttpClient:
             raise RuntimeError(
                 f"Falha ao chamar API {url}: HTTP {exc.code} {exc.reason}. Corpo: {response_body}"
             ) from exc
-        except (URLError, json.JSONDecodeError) as exc:
+        except (
+            URLError,
+            json.JSONDecodeError,
+            IncompleteRead,
+            RemoteDisconnected,
+            ConnectionResetError,
+            socket.timeout,
+        ) as exc:
             raise RuntimeError(f"Falha ao consumir stream da API {url}: {exc}") from exc
 
     def post_bytes(
