@@ -1,6 +1,6 @@
 # Plano de Reorganização do Repositório e Arquitetura Escalável
 
-Status: proposto  
+Status: em execução
 Owner: plataforma de inteligência documental  
 Última revisão: 2026-08-23
 
@@ -486,5 +486,28 @@ Princípio: **primeiro tornar o comportamento observável e testado; depois move
   A porta `JsonArtifactStore` e fakes de teste estabelecem a fronteira inicial
   entre aplicação e infraestrutura.
 
-As fases 3 a 7 continuam pendentes. Esta implementação não altera IDs de DAG,
+As fases 3 a 7 originalmente permaneciam pendentes nesta etapa. A implementação
+abaixo registra a conclusão das fases 3 e 4. Nenhuma delas altera IDs de DAG,
 contratos, layouts, caminhos MinIO nem comportamento funcional das execuções.
+
+### 2026-08-23 — Fases 3 e 4 concluídas
+
+- Fase 3: os adaptadores de MinIO, Docling, LLM/HTTP, RI, governança e registro
+  de contratos migraram para `src/document_intelligence/infrastructure/`. As
+  DAGs de descoberta/download, extração e resolução passaram a montar suas
+  dependências explicitamente por `airflow/dags/_shared/dependencies.py`.
+  Os módulos antigos em `plugins/clients`, `plugins/services` e `helpers`
+  permanecem apenas como shims de compatibilidade.
+- Fase 3: a lógica da DAG 1 está no caso de uso
+  `application/use_cases/documents/source_document_processing.py`; as DAGs
+  preservam IDs, pool `docling_extraction_pool`, XCom e regras de execução.
+- Fase 4: a fachada `ResolveSchemaUseCase` passou a coordenar componentes
+  menores: carregamento de manifestos, leitura de artefatos, resolvedores de
+  origem, despacho por `tipo_origem`, validação de regras, projeção do schema,
+  auditoria e publicação. Nomes e conteúdo dos três artefatos finais do MinIO
+  continuam compatíveis.
+- Validação: 54 testes de caracterização/unitários passaram dentro do container
+  do Airflow; o DagBag carregou as 5 DAGs públicas sem erros de importação.
+
+As fases 5 a 7 continuam pendentes. A limpeza definitiva dos shims só ocorrerá
+após a migração do fallback da DAG 3 e uma busca completa por imports legados.

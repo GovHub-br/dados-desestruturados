@@ -10,7 +10,11 @@ from airflow.providers.standard.operators.empty import EmptyOperator
 from airflow.utils.trigger_rule import TriggerRule
 
 from helpers import AirflowDefaults, REFERENCE_DATE_RESOLVER
-from plugins.services import DETECTA_PDF_EXTRAI_SERVICE
+from dags._shared.dependencies import build_source_document_processing_use_case
+
+
+def _documents_use_case():
+    return build_source_document_processing_use_case()
 
 
 @task
@@ -20,7 +24,7 @@ def montar_contexto_janela_divulgacao() -> dict[str, object]:
         logical_date = get_current_context().get("logical_date")
         if logical_date is not None:
             resolved_reference_date = logical_date.in_timezone("America/Sao_Paulo").date()
-    context = DETECTA_PDF_EXTRAI_SERVICE.build_detection_context(today=resolved_reference_date)
+    context = _documents_use_case().build_detection_context(today=resolved_reference_date)
     if not context["should_check"]:
         raise AirflowSkipException("Fora da janela de divulgacao trimestral.")
     return context
@@ -28,12 +32,12 @@ def montar_contexto_janela_divulgacao() -> dict[str, object]:
 
 @task
 def detectar_pdfs(context: dict[str, object]) -> list[dict[str, object]]:
-    return DETECTA_PDF_EXTRAI_SERVICE.detect_available_pdfs(context)
+    return _documents_use_case().detect_available_pdfs(context)
 
 
 @task
 def baixar_e_persistir_pdfs(candidates: list[dict[str, object]]) -> list[dict[str, object]]:
-    documents = DETECTA_PDF_EXTRAI_SERVICE.download_and_persist_pdfs(candidates)
+    documents = _documents_use_case().download_and_persist_pdfs(candidates)
     logging.info("PDFs persistidos em documentos-origem: %s", documents)
     return documents
 

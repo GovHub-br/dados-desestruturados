@@ -8,13 +8,13 @@ import re
 from typing import Any
 
 from helpers import RUNTIME_CONFIG_LOADER, RuntimeConfigLoader
-from plugins.clients.llm_client import (
+from document_intelligence.infrastructure.llm.client import (
     FALLBACK_LLM_CLIENT,
     FallbackLlmClient,
     FallbackLlmClientError,
 )
-from plugins.clients.minio_storage_client import MinioStorageClient
-from plugins.services.semantic_contract_registry import SemanticContractRegistry
+from document_intelligence.infrastructure.storage.minio_artifact_repository import MinioStorageClient
+from document_intelligence.infrastructure.storage.semantic_contract_registry import SemanticContractRegistry
 from pydantic import ValidationError
 
 from .candidate_validation import (

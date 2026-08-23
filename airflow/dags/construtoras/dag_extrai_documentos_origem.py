@@ -9,7 +9,11 @@ from airflow.providers.standard.operators.empty import EmptyOperator
 from airflow.utils.trigger_rule import TriggerRule
 
 from helpers import AirflowDefaults
-from plugins.services import DETECTA_PDF_EXTRAI_SERVICE
+from dags._shared.dependencies import build_source_document_processing_use_case
+
+
+def _documents_use_case():
+    return build_source_document_processing_use_case()
 
 
 @task
@@ -19,7 +23,7 @@ def descobrir_documentos_pendentes() -> list[dict[str, object]]:
     keys = conf.get("origin_manifest_keys") if isinstance(conf, dict) else None
     if keys is not None and not isinstance(keys, list):
         raise ValueError("origin_manifest_keys deve ser uma lista.")
-    documents = DETECTA_PDF_EXTRAI_SERVICE.discover_pending_origin_documents(
+    documents = _documents_use_case().discover_pending_origin_documents(
         origin_manifest_keys=keys,
     )
     logging.info("Documentos pendentes de extracao: %s", documents)
@@ -28,7 +32,7 @@ def descobrir_documentos_pendentes() -> list[dict[str, object]]:
 
 @task(pool="docling_extraction_pool", pool_slots=1)
 def extrair_documento(document: dict[str, object]) -> dict[str, object]:
-    return DETECTA_PDF_EXTRAI_SERVICE.extract_and_persist_output(document)
+    return _documents_use_case().extract_and_persist_output(document)
 
 
 @task(trigger_rule=TriggerRule.NONE_FAILED)

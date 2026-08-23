@@ -9,12 +9,15 @@ from airflow.providers.standard.operators.empty import EmptyOperator
 from airflow.utils.trigger_rule import TriggerRule
 
 from helpers import AirflowDefaults
-from plugins.services import CONSTRUTORAS_PAYLOAD_BUILDER, SCHEMA_RESOLUTION_SERVICE
+from dags._shared.dependencies import (
+    build_construtoras_payload_builder,
+    build_resolution_use_case,
+)
 
 
 @task
 def montar_runtime() -> dict[str, object]:
-    runtime = CONSTRUTORAS_PAYLOAD_BUILDER.build_resolution_runtime()
+    runtime = build_construtoras_payload_builder().build_resolution_runtime()
     context = get_current_context()
     dag_run = context.get("dag_run")
     conf = getattr(dag_run, "conf", None) or {}
@@ -78,7 +81,7 @@ def descobrir_execucoes_para_resolucao() -> list[str]:
         )
         return manifest_keys
 
-    manifests = SCHEMA_RESOLUTION_SERVICE.discover_latest_unresolved_extraction_manifests()
+    manifests = build_resolution_use_case().discover_latest_unresolved_extraction_manifests()
     logging.info(
         "DAG 2 encontrou %s ultima(s) extracao(oes) pendente(s) para processar.",
         len(manifests),
@@ -88,7 +91,7 @@ def descobrir_execucoes_para_resolucao() -> list[str]:
 
 @task
 def processar_execucao_resolucao(runtime: dict[str, object], manifest_key: str) -> dict[str, object]:
-    result = SCHEMA_RESOLUTION_SERVICE.process_extraction_manifest(runtime, manifest_key=manifest_key)
+    result = build_resolution_use_case().process_extraction_manifest(runtime, manifest_key=manifest_key)
     logging.info(
         "Manifesto processado: entity=%s execution_id=%s layout_alterado=%s",
         result.get("entity_slug"),
