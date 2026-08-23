@@ -101,6 +101,15 @@ documentos-origem/
         2026-05-29_cury_previa_operacional_1t26.pdf
 ```
 
+Upload manual pelo portal usa a mesma hierarquia, com identidade imutavel por
+conteudo:
+
+```text
+documentos-origem/<dominio>/<entidade>/document_id=<sha256_32>/
+  <sha256_16>_arquivo.pdf
+  documento_origem.json
+```
+
 Boa pratica:
 
 - nao sobrescrever o arquivo original;
@@ -313,4 +322,3 @@ Le:
 Escreve:
 
 - `fallback/.../`
-

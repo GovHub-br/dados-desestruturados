@@ -70,7 +70,7 @@ dados-desestruturados/
 ├── README.md
 ├── pyproject.toml
 ├── src/
-│   └── document_intelligence/
+│   └── document_processing/
 │       ├── application/
 │       │   ├── dto/
 │       │   ├── ports/
@@ -111,7 +111,7 @@ dados-desestruturados/
 └── skills/
 ```
 
-`src/document_intelligence` é a biblioteca da plataforma: pode ser usada por Airflow, portal, scripts e futuros serviços. `airflow/` vira diretório de deploy/orquestração; não é a raiz de regras de negócio.
+`src/document_processing` é a biblioteca da plataforma: pode ser usada por Airflow, portal, scripts e futuros serviços. `airflow/` vira diretório de deploy/orquestração; não é a raiz de regras de negócio.
 
 ## Organização interna da biblioteca
 
@@ -393,7 +393,7 @@ Prioridade: parser de paths, tipos de origem, auditoria, requisitos de mapeament
 
 ### Fase 2 — Pacote e fronteiras
 
-1. Criar `pyproject.toml` e `src/document_intelligence`.
+1. Criar `pyproject.toml` e `src/document_processing`.
 2. Configurar Docker/Airflow para importar o pacote.
 3. Mover modelos, paths e validações puras para `domain`.
 4. Criar portas e fakes de teste.
@@ -480,7 +480,7 @@ Princípio: **primeiro tornar o comportamento observável e testado; depois move
 - Fase 1: a árvore `docs/` foi consolidada, o `CONTEXT`/`SPEC` passaram para
   `specs/platform/`, ADRs 0001–0008 foram registrados e a matriz de migração
   está em `docs/operations/DOCUMENTATION_MIGRATION.md`.
-- Fase 2: foi criado `src/document_intelligence`, com as regras puras já
+- Fase 2: foi criado `src/document_processing`, com as regras puras já
   extraídas para o domínio. O Compose expõe `src/` no `PYTHONPATH`; shims em
   `airflow/plugins/services/` preservam os imports atuais até as fases 4 e 5.
   A porta `JsonArtifactStore` e fakes de teste estabelecem a fronteira inicial
@@ -493,7 +493,7 @@ contratos, layouts, caminhos MinIO nem comportamento funcional das execuções.
 ### 2026-08-23 — Fases 3 e 4 concluídas
 
 - Fase 3: os adaptadores de MinIO, Docling, LLM/HTTP, RI, governança e registro
-  de contratos migraram para `src/document_intelligence/infrastructure/`. As
+  de contratos migraram para `src/document_processing/infrastructure/`. As
   DAGs de descoberta/download, extração e resolução passaram a montar suas
   dependências explicitamente por `airflow/dags/_shared/dependencies.py`.
   Os módulos antigos em `plugins/clients`, `plugins/services` e `helpers`

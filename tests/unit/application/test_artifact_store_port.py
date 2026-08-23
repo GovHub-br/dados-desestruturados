@@ -3,7 +3,7 @@ from __future__ import annotations
 import unittest
 from typing import Any
 
-from document_intelligence.application.ports import JsonArtifactStore
+from document_processing.application.ports import JsonArtifactStore
 
 
 class InMemoryJsonArtifactStore:

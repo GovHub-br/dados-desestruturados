@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import unittest
 
-from document_intelligence.domain.resolution import parse_flexible_number
+from document_processing.domain.resolution import parse_flexible_number
 
 
 class ResolutionNumbersTest(unittest.TestCase):

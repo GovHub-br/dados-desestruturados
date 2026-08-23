@@ -17,7 +17,7 @@ Leia antes:
 - `specs/platform/SPEC.md`;
 - `docs/architecture/arquitetura-orquestracao-airflow.md`;
 - um contrato e um layout existentes da família mais próxima;
-- `src/document_intelligence/application/use_cases/resolution/resolve_schema.py` se houver mudança
+- `src/document_processing/application/use_cases/resolution/resolve_schema.py` se houver mudança
   que exija nova capacidade da DAG 2.
 
 Para modelo e checklist detalhados, leia

@@ -1,3 +1,3 @@
-"""Compatibilidade temporária; use o caso de uso em ``document_intelligence``."""
+"""Compatibilidade temporária; use o caso de uso em ``document_processing``."""
 
-from document_intelligence.application.use_cases.fallback.context_builder import *  # noqa: F401,F403
+from document_processing.application.use_cases.fallback.context_builder import *  # noqa: F401,F403

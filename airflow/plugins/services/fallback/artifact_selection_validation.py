@@ -1,3 +1,3 @@
-"""Compatibilidade temporária; use ``document_intelligence.domain.fallback``."""
+"""Compatibilidade temporária; use ``document_processing.domain.fallback``."""
 
-from document_intelligence.domain.fallback.artifact_selection_validation import *  # noqa: F401,F403
+from document_processing.domain.fallback.artifact_selection_validation import *  # noqa: F401,F403

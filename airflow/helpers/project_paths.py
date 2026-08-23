@@ -1,3 +1,3 @@
-"""Compatibilidade temporária; paths vivem em ``document_intelligence.shared``."""
+"""Compatibilidade temporária; paths vivem em ``document_processing.shared``."""
 
-from document_intelligence.shared.config.project_paths import *  # noqa: F403
+from document_processing.shared.config.project_paths import *  # noqa: F403

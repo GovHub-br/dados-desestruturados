@@ -1,3 +1,3 @@
-"""Compatibilidade temporária; use ``document_intelligence.infrastructure.docling``."""
+"""Compatibilidade temporária; use ``document_processing.infrastructure.docling``."""
 
-from document_intelligence.infrastructure.docling.docling_gateway import *  # noqa: F403
+from document_processing.infrastructure.docling.docling_gateway import *  # noqa: F403

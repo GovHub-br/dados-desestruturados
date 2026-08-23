@@ -2,11 +2,11 @@ from __future__ import annotations
 
 import unittest
 
-from document_intelligence.domain.contracts.mapping_requirements import (
+from document_processing.domain.contracts.mapping_requirements import (
     mapping_requirements_from_context,
 )
-from document_intelligence.domain.contracts.schema import apply_contract_literals
-from document_intelligence.domain.layouts.paths import parse_mapping_path
+from document_processing.domain.contracts.schema import apply_contract_literals
+from document_processing.domain.layouts.paths import parse_mapping_path
 
 
 class FoundationModulesTest(unittest.TestCase):

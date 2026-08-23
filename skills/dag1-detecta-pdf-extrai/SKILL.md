@@ -20,10 +20,10 @@ Read these files before changing behavior:
 - `specs/platform/SPEC.md`
 - `docs/archive/experiments/dag1-e2e-report.md`
 - `airflow/dags/construtoras/dag_detecta_pdf_e_extrai.py`
-- `src/document_intelligence/application/use_cases/documents/source_document_processing.py`
-- `src/document_intelligence/infrastructure/ri/ri_results_gateway.py`
-- `src/document_intelligence/infrastructure/docling/docling_gateway.py`
-- `src/document_intelligence/infrastructure/storage/minio_artifact_repository.py`
+- `src/document_processing/application/use_cases/documents/source_document_processing.py`
+- `src/document_processing/infrastructure/ri/ri_results_gateway.py`
+- `src/document_processing/infrastructure/docling/docling_gateway.py`
+- `src/document_processing/infrastructure/storage/minio_artifact_repository.py`
 
 ## Boundaries
 

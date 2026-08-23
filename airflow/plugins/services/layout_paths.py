@@ -1,4 +1,4 @@
-"""Compatibilidade temporária; use ``document_intelligence.domain.layouts``."""
+"""Compatibilidade temporária; use ``document_processing.domain.layouts``."""
 
-from document_intelligence.domain.layouts.paths import *  # noqa: F401,F403
+from document_processing.domain.layouts.paths import *  # noqa: F401,F403
 

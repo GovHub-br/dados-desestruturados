@@ -1,3 +1,3 @@
-"""Compatibilidade temporária; configurações vivem em ``document_intelligence.shared``."""
+"""Compatibilidade temporária; configurações vivem em ``document_processing.shared``."""
 
-from document_intelligence.shared.config.runtime import *  # noqa: F403
+from document_processing.shared.config.runtime import *  # noqa: F403

@@ -3,7 +3,7 @@ requires = ["setuptools>=68"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "document-intelligence"
+name = "document-processing"
 version = "0.1.0"
 description = "Plataforma para extracao auditavel de dados de documentos PDF"
 requires-python = ">=3.11"
@@ -34,5 +34,4 @@ src = ["src", "airflow", "tests"]
 select = ["E", "F", "I"]
 
 [tool.coverage.run]
-source = ["document_intelligence"]
-
+source = ["document_processing"]

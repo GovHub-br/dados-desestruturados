@@ -6,16 +6,16 @@ Os casos de uso continuam importáveis e testáveis sem Airflow.
 
 from functools import lru_cache
 
-from document_intelligence.application.use_cases.documents import SourceDocumentProcessingUseCase
-from document_intelligence.application.use_cases.fallback import FallbackLlmService
-from document_intelligence.application.use_cases.resolution import ResolveSchemaUseCase
-from document_intelligence.application.use_cases.runtime_payloads import ConstrutorasPayloadBuilder
-from document_intelligence.infrastructure.docling import DoclingPipelineClient
-from document_intelligence.infrastructure.governance import OperationalMetadataClient
-from document_intelligence.infrastructure.llm import FallbackLlmClient, HttpClient
-from document_intelligence.infrastructure.ri.ri_results_gateway import RiResultsClient
-from document_intelligence.infrastructure.storage import MinioStorageClient
-from document_intelligence.shared.config import (
+from document_processing.application.use_cases.documents import SourceDocumentProcessingUseCase
+from document_processing.application.use_cases.fallback import FallbackLlmService
+from document_processing.application.use_cases.resolution import ResolveSchemaUseCase
+from document_processing.application.use_cases.runtime_payloads import ConstrutorasPayloadBuilder
+from document_processing.infrastructure.docling import DoclingPipelineClient
+from document_processing.infrastructure.governance import OperationalMetadataClient
+from document_processing.infrastructure.llm import FallbackLlmClient, HttpClient
+from document_processing.infrastructure.ri.ri_results_gateway import RiResultsClient
+from document_processing.infrastructure.storage import MinioStorageClient
+from document_processing.shared.config import (
     PROJECT_PATHS,
     LocalPlatformConfig,
     RuntimeConfigLoader,

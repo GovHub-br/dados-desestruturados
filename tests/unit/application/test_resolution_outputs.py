@@ -3,7 +3,7 @@ from __future__ import annotations
 import unittest
 from typing import Any
 
-from document_intelligence.application.use_cases.resolution import (
+from document_processing.application.use_cases.resolution import (
     ResolutionAuditBuilder,
     ResolutionOutputPublisher,
 )

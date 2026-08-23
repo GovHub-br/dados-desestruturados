@@ -57,7 +57,7 @@ evolução de módulos grandes.
 
 ## Decisão
 
-O código reutilizável migra gradualmente para `src/document_intelligence`.
+O código reutilizável migra gradualmente para `src/document_processing`.
 DAGs e serviços de infraestrutura passam a ser adaptadores de borda. Durante a
 migração, shims preservam os imports públicos existentes.
 
@@ -75,7 +75,7 @@ migração, shims preservam os imports públicos existentes.
 
 ## Implementação
 
-- Código reutilizável vive em `src/document_intelligence`;
+- Código reutilizável vive em `src/document_processing`;
 - DAGs e infraestrutura são adaptadores de borda;
 - fábricas Airflow compõem dependências concretas;
 - shims permanecem por uma release estável e não aceitam novos consumidores.

@@ -6,7 +6,7 @@ Owner: plataforma de inteligência documental
 
 ## Objetivo
 
-Registrar o estado verificável antes de mover código para `src/document_intelligence`.
+Registrar o estado verificável antes de mover código para `src/document_processing`.
 
 ## Contratos públicos preservados
 

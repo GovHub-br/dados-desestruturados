@@ -3,7 +3,7 @@
 - Status: Proposto
 - Owner: Engenharia da plataforma
 - Última revisão: 2026-08-23
-- Fonte de verdade: código em `src/document_intelligence/`, DAGs em `airflow/dags/`, [plano de reorganização](plano-reorganizacao-repositorio-arquitetura.md) e ADRs em `docs/adr/`.
+- Fonte de verdade: código em `src/document_processing/`, DAGs em `airflow/dags/`, [plano de reorganização](plano-reorganizacao-repositorio-arquitetura.md) e ADRs em `docs/adr/`.
 
 ## Objetivo
 
@@ -21,7 +21,7 @@ devem nascer em uma SPEC separada.
 
 ### O que está bem encaminhado
 
-- `src/document_intelligence/` já concentra domínio, aplicação e adaptadores.
+- `src/document_processing/` já concentra domínio, aplicação e adaptadores.
 - A DAG 3 foi decomposta em componentes menores e preserva uma fachada
   compatível.
 - As DAGs já usam fábricas em `airflow/dags/_shared/dependencies.py`.

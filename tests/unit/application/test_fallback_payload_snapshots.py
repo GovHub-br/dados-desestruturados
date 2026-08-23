@@ -4,10 +4,10 @@ import json
 import unittest
 from pathlib import Path
 
-from document_intelligence.application.use_cases.fallback.context_builder import (
+from document_processing.application.use_cases.fallback.context_builder import (
     FallbackProblemContextBuilder,
 )
-from document_intelligence.domain.fallback.models import LayoutArtifactSelection
+from document_processing.domain.fallback.models import LayoutArtifactSelection
 
 
 FIXTURES = Path(__file__).parents[2] / "fixtures" / "fallback"

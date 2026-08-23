@@ -1,3 +1,3 @@
-"""Compatibilidade temporária; use ``document_intelligence.infrastructure.governance``."""
+"""Compatibilidade temporária; use ``document_processing.infrastructure.governance``."""
 
-from document_intelligence.infrastructure.governance.operational_metadata import *  # noqa: F403
+from document_processing.infrastructure.governance.operational_metadata import *  # noqa: F403

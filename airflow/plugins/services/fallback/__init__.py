@@ -1,6 +1,6 @@
 """Compatibilidade temporária para imports legados do fallback LLM."""
 
-from document_intelligence.application.use_cases.fallback import (
+from document_processing.application.use_cases.fallback import (
     FALLBACK_INVENTORY_SERVICE,
     FALLBACK_LLM_SERVICE,
     FALLBACK_PROBLEM_CONTEXT_BUILDER,
@@ -8,25 +8,25 @@ from document_intelligence.application.use_cases.fallback import (
     FallbackLlmService,
     FallbackProblemContextBuilder,
 )
-from document_intelligence.domain.fallback.artifact_selection_validation import (
+from document_processing.domain.fallback.artifact_selection_validation import (
     FALLBACK_ARTIFACT_SELECTION_VALIDATION_SERVICE,
     ArtifactSelectionValidationError,
     ArtifactSelectionValidationService,
 )
-from document_intelligence.domain.fallback.candidate_validation import (
+from document_processing.domain.fallback.candidate_validation import (
     FALLBACK_CANDIDATE_VALIDATION_SERVICE,
     FallbackCandidateValidationService,
 )
-from document_intelligence.domain.fallback.classification import (
+from document_processing.domain.fallback.classification import (
     FALLBACK_CLASSIFICATION_SERVICE,
     FallbackClassificationService,
 )
-from document_intelligence.domain.fallback.mapping_plan import (
+from document_processing.domain.fallback.mapping_plan import (
     MAPPING_PLAN_SERVICE,
     MappingPlanService,
     MappingUnit,
 )
-from document_intelligence.domain.fallback.models import (
+from document_processing.domain.fallback.models import (
     ArtifactSelectionCoverage,
     ArtifactSelectionItem,
     BaseLayoutSignatureRef,
