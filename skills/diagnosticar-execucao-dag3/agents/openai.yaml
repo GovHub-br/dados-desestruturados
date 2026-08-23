@@ -1,0 +1,4 @@
+interface:
+  display_name: "Diagnosticar execução DAG 3"
+  short_description: "Investigue resultados e falhas da DAG 3"
+  default_prompt: "Use $diagnosticar-execucao-dag3 para analisar esta execução da DAG 3 e recomendar a menor correção eficaz."

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Limpar Artefatos da DAG 2"
+  short_description: "Remove somente resultados da DAG 2 no MinIO"
+  default_prompt: "Use $apagar-artefatos-dag2 para listar e apagar com segurança apenas os artefatos de resolução da DAG 2 no MinIO."

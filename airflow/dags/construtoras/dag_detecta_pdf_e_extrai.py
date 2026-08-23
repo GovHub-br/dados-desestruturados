@@ -9,7 +9,8 @@ from airflow.operators.trigger_dagrun import TriggerDagRunOperator
 from airflow.providers.standard.operators.empty import EmptyOperator
 from airflow.utils.trigger_rule import TriggerRule
 
-from helpers import AirflowDefaults, REFERENCE_DATE_RESOLVER
+from dags._shared.airflow_defaults import AirflowDefaults
+from dags._shared.runtime import REFERENCE_DATE_RESOLVER
 from dags._shared.dependencies import build_source_document_processing_use_case
 
 

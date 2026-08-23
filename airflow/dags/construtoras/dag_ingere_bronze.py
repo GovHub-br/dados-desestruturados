@@ -5,13 +5,13 @@ import logging
 from airflow.decorators import dag, task
 from airflow.providers.standard.operators.empty import EmptyOperator
 
-from helpers import AirflowDefaults
-from plugins.services import CONSTRUTORAS_PAYLOAD_BUILDER
+from dags._shared.airflow_defaults import AirflowDefaults
+from dags._shared.dependencies import build_construtoras_payload_builder
 
 
 @task
 def montar_runtime() -> dict[str, object]:
-    return CONSTRUTORAS_PAYLOAD_BUILDER.build_bronze_runtime()
+    return build_construtoras_payload_builder().build_bronze_runtime()
 
 
 @task

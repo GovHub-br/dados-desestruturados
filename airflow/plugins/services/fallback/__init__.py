@@ -1,53 +1,38 @@
-from .candidate_validation import (
-    FALLBACK_CANDIDATE_VALIDATION_SERVICE,
-    FallbackCandidateValidationService,
+"""Compatibilidade temporária para imports legados do fallback LLM."""
+
+from document_intelligence.application.use_cases.fallback import (
+    FALLBACK_INVENTORY_SERVICE,
+    FALLBACK_LLM_SERVICE,
+    FALLBACK_PROBLEM_CONTEXT_BUILDER,
+    FallbackInventoryService,
+    FallbackLlmService,
+    FallbackProblemContextBuilder,
 )
-from .artifact_selection_validation import (
+from document_intelligence.domain.fallback.artifact_selection_validation import (
     FALLBACK_ARTIFACT_SELECTION_VALIDATION_SERVICE,
     ArtifactSelectionValidationError,
     ArtifactSelectionValidationService,
 )
-from .classification import (
+from document_intelligence.domain.fallback.candidate_validation import (
+    FALLBACK_CANDIDATE_VALIDATION_SERVICE,
+    FallbackCandidateValidationService,
+)
+from document_intelligence.domain.fallback.classification import (
     FALLBACK_CLASSIFICATION_SERVICE,
     FallbackClassificationService,
 )
-from .context_builder import (
-    FALLBACK_PROBLEM_CONTEXT_BUILDER,
-    FallbackProblemContextBuilder,
+from document_intelligence.domain.fallback.mapping_plan import (
+    MAPPING_PLAN_SERVICE,
+    MappingPlanService,
+    MappingUnit,
 )
-from .inventory import FALLBACK_INVENTORY_SERVICE, FallbackInventoryService
-from .mapping_plan import MAPPING_PLAN_SERVICE, MappingPlanService, MappingUnit
-from .models import (
-    ArtifactSelectionItem,
+from document_intelligence.domain.fallback.models import (
     ArtifactSelectionCoverage,
+    ArtifactSelectionItem,
     BaseLayoutSignatureRef,
     LayoutArtifactSelection,
     LayoutSignatureCandidate,
     LayoutSignatureFragment,
 )
-from .orchestrator import FALLBACK_LLM_SERVICE, FallbackLlmService
 
-__all__ = [
-    "ArtifactSelectionItem",
-    "ArtifactSelectionCoverage",
-    "ArtifactSelectionValidationError",
-    "ArtifactSelectionValidationService",
-    "FALLBACK_ARTIFACT_SELECTION_VALIDATION_SERVICE",
-    "BaseLayoutSignatureRef",
-    "FALLBACK_CANDIDATE_VALIDATION_SERVICE",
-    "FALLBACK_CLASSIFICATION_SERVICE",
-    "FALLBACK_INVENTORY_SERVICE",
-    "FALLBACK_LLM_SERVICE",
-    "FALLBACK_PROBLEM_CONTEXT_BUILDER",
-    "FallbackCandidateValidationService",
-    "FallbackClassificationService",
-    "FallbackInventoryService",
-    "FallbackLlmService",
-    "MAPPING_PLAN_SERVICE",
-    "MappingPlanService",
-    "MappingUnit",
-    "FallbackProblemContextBuilder",
-    "LayoutArtifactSelection",
-    "LayoutSignatureCandidate",
-    "LayoutSignatureFragment",
-]
+__all__ = [name for name in globals() if name.startswith("FALLBACK_") or name.endswith(("Service", "Unit", "Candidate", "Fragment", "Selection", "Item", "Coverage", "Ref", "Error"))]

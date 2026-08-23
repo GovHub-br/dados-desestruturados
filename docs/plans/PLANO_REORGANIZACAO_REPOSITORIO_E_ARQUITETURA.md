@@ -1,6 +1,6 @@
 # Plano de Reorganização do Repositório e Arquitetura Escalável
 
-Status: em execução
+Status: concluído
 Owner: plataforma de inteligência documental  
 Última revisão: 2026-08-23
 
@@ -509,5 +509,23 @@ contratos, layouts, caminhos MinIO nem comportamento funcional das execuções.
 - Validação: 54 testes de caracterização/unitários passaram dentro do container
   do Airflow; o DagBag carregou as 5 DAGs públicas sem erros de importação.
 
-As fases 5 a 7 continuam pendentes. A limpeza definitiva dos shims só ocorrerá
-após a migração do fallback da DAG 3 e uma busca completa por imports legados.
+### 2026-08-23 — Fases 5, 6 e 7 concluídas
+
+- Fase 5: a DAG 3 passou a compor o fallback por componentes especializados:
+  carregamento de contexto, projeção de payload, seleção de artefatos, geração
+  de candidato, geração por unidade, fragmentos, rastreabilidade, revalidação,
+  composição e publicação. `FallbackLlmService` é somente a fachada de
+  compatibilidade e composição; prompts e payloads não conhecem transporte ou
+  publicação.
+- Fase 6: todas as DAGs públicas agora usam fábricas explícitas em
+  `airflow/dags/_shared/dependencies.py`. Defaults e referência de data que
+  pertencem ao Airflow foram deslocados para `dags/_shared`; as DAGs não
+  importam mais `plugins.services`, `plugins.clients` ou `helpers`.
+- Fase 6: os caminhos legados continuam como shims documentados para proteger
+  integrações externas. Eles não recebem regra de negócio e serão removidos
+  apenas numa mudança incompatível planejada.
+- Fase 7: as skills autorais passaram a ser versionadas em `skills/`, com
+  instalador idempotente e validação de referências locais. O workflow de CI
+  valida documentação/skills, executa Ruff e os testes unitários puros.
+- Validação: a suíte de caracterização da DAG 2/DAG 3 e o DagBag continuam a
+  ser a barreira obrigatória antes de qualquer mudança funcional posterior.

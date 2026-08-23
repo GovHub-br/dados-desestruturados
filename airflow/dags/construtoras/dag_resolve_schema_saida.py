@@ -8,7 +8,7 @@ from airflow.operators.trigger_dagrun import TriggerDagRunOperator
 from airflow.providers.standard.operators.empty import EmptyOperator
 from airflow.utils.trigger_rule import TriggerRule
 
-from helpers import AirflowDefaults
+from dags._shared.airflow_defaults import AirflowDefaults
 from dags._shared.dependencies import (
     build_construtoras_payload_builder,
     build_resolution_use_case,

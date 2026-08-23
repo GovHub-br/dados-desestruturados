@@ -9,9 +9,11 @@ from airflow.operators.python import get_current_context
 from airflow.operators.trigger_dagrun import TriggerDagRunOperator
 from airflow.providers.standard.operators.empty import EmptyOperator
 
-from helpers import AirflowDefaults
-from plugins.services import CONSTRUTORAS_PAYLOAD_BUILDER
-from plugins.services.fallback import FALLBACK_LLM_SERVICE
+from dags._shared.airflow_defaults import AirflowDefaults
+from dags._shared.dependencies import (
+    build_construtoras_payload_builder,
+    build_fallback_llm_service,
+)
 
 
 REQUIRED_FALLBACK_CONF_FIELDS = (
@@ -24,7 +26,7 @@ REQUIRED_FALLBACK_CONF_FIELDS = (
 
 @task(multiple_outputs=False)
 def montar_runtime() -> dict[str, object]:
-    return CONSTRUTORAS_PAYLOAD_BUILDER.build_fallback_runtime()
+    return build_construtoras_payload_builder().build_fallback_runtime()
 
 
 @task(multiple_outputs=False)
@@ -84,7 +86,7 @@ def validar_conf_fallback() -> dict[str, object]:
 @task(multiple_outputs=False)
 def carregar_artefatos_fallback(fallback_context: dict[str, object]) -> dict[str, object]:
     try:
-        loaded_context = FALLBACK_LLM_SERVICE.load_fallback_context(fallback_context)
+        loaded_context = build_fallback_llm_service().load_fallback_context(fallback_context)
     except RuntimeError as exc:
         raise AirflowFailException(str(exc)) from exc
     logging.info("Artefatos de fallback carregados: %s", loaded_context)
@@ -100,7 +102,7 @@ def classificar_falha_fallback(loaded_context: dict[str, object]) -> dict[str, o
         )
 
     scope = str(classification.get("fallback_scope", "")).strip()
-    if scope == FALLBACK_LLM_SERVICE.UNSUPPORTED_SCOPE:
+    if scope == build_fallback_llm_service().UNSUPPORTED_SCOPE:
         reasons = classification.get("motivos", [])
         raise AirflowFailException(
             "Fallback automatico recusado para esta falha. "
@@ -127,7 +129,7 @@ def gerar_layout_candidato_llm(
     fallback_problem_context: dict[str, object],
 ) -> dict[str, object]:
     try:
-        llm_response = FALLBACK_LLM_SERVICE.generate_candidate_layout(
+        llm_response = build_fallback_llm_service().generate_candidate_layout(
             fallback_problem_context
         )
     except RuntimeError as exc:
@@ -144,7 +146,7 @@ def persistir_layout_candidato(
     loaded_context: dict[str, object],
 ) -> dict[str, object]:
     try:
-        persisted = FALLBACK_LLM_SERVICE.persist_candidate_layout(
+        persisted = build_fallback_llm_service().persist_candidate_layout(
             candidate_layout_response,
             loaded_context,
         )
@@ -160,7 +162,7 @@ def montar_conf_revalidacao_dag2(
     loaded_context: dict[str, object],
 ) -> dict[str, object]:
     try:
-        revalidation_conf = FALLBACK_LLM_SERVICE.build_revalidation_conf(
+        revalidation_conf = build_fallback_llm_service().build_revalidation_conf(
             persisted_candidate,
             loaded_context,
         )
@@ -175,7 +177,7 @@ def avaliar_revalidacao_candidato(
     revalidation_conf: dict[str, object],
 ) -> dict[str, object]:
     try:
-        result = FALLBACK_LLM_SERVICE.evaluate_revalidation_result(revalidation_conf)
+        result = build_fallback_llm_service().evaluate_revalidation_result(revalidation_conf)
     except RuntimeError as exc:
         raise AirflowFailException(str(exc)) from exc
     logging.info("Resultado da revalidacao do layout candidato: %s", result)
@@ -188,7 +190,7 @@ def publicar_nova_versao_layout(
     revalidation_conf: dict[str, object],
 ) -> dict[str, object]:
     try:
-        publication = FALLBACK_LLM_SERVICE.publish_validated_layout_version(
+        publication = build_fallback_llm_service().publish_validated_layout_version(
             revalidation_result,
             revalidation_conf,
         )

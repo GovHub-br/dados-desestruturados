@@ -1,0 +1,4 @@
+interface:
+  display_name: "DAG 2 Resolve Schema Saida"
+  short_description: "Validate deterministic schema resolution."
+  default_prompt: "Use $dag2-resolve-schema-saida to inspect, improve, or validate dag_resolve_schema_saida for construtoras."
