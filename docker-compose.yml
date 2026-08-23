@@ -57,14 +57,9 @@ services:
     depends_on:
       minio:
         condition: service_healthy
-    entrypoint: >
-      /bin/sh -c "
-      mc alias set local http://minio:9000 ${MINIO_ROOT_USER:-minioadmin} ${MINIO_ROOT_PASSWORD:-minioadmin123} &&
-      mc mb -p local/${MINIO_BUCKET_DATA_LAKE:-ocr-cidades} ||
-      true &&
-      mc anonymous set private local/${MINIO_BUCKET_DATA_LAKE:-ocr-cidades} &&
-      exit 0
-      "
+    entrypoint: ["/bin/sh", "/bootstrap/bootstrap.sh"]
+    volumes:
+      - ./infra/minio-bootstrap:/bootstrap:ro
     restart: "no"
     networks:
       - ocr_net
@@ -259,7 +254,7 @@ services:
       AIRFLOW_ADMIN_USER: ${AIRFLOW_ADMIN_USER:-admin}
       AIRFLOW_ADMIN_PASSWORD: ${AIRFLOW_ADMIN_PASSWORD:-admin}
       PROJECT_ROOT: /opt/project/dados-desestruturados
-      PYTHONPATH: /opt/project/dados-desestruturados:/opt/project/dados-desestruturados/airflow
+      PYTHONPATH: /opt/project/dados-desestruturados/src:/opt/project/dados-desestruturados:/opt/project/dados-desestruturados/airflow
       MINIO_ENDPOINT: ${MINIO_ENDPOINT:-minio:9000}
       MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minioadmin}
       MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minioadmin123}
@@ -279,6 +274,11 @@ services:
       FALLBACK_LLM_MODEL: ${FALLBACK_LLM_MODEL:-}
       FALLBACK_LLM_TIMEOUT_SECONDS: ${FALLBACK_LLM_TIMEOUT_SECONDS:-180}
       FALLBACK_LLM_MAX_TOKENS: ${FALLBACK_LLM_MAX_TOKENS:-4096}
+      FALLBACK_LLM_THINKING_MODE: ${FALLBACK_LLM_THINKING_MODE:-}
+      FALLBACK_LLM_SELECTION_MAX_TOKENS: ${FALLBACK_LLM_SELECTION_MAX_TOKENS:-2048}
+      FALLBACK_LLM_SELECTION_THINKING_MODE: ${FALLBACK_LLM_SELECTION_THINKING_MODE:-disabled}
+      FALLBACK_LLM_FRAGMENT_MAX_TOKENS: ${FALLBACK_LLM_FRAGMENT_MAX_TOKENS:-8192}
+      FALLBACK_LLM_FRAGMENT_THINKING_MODE: ${FALLBACK_LLM_FRAGMENT_THINKING_MODE:-enabled}
     user: "50000:0"
     command: >
       bash -c "
@@ -376,6 +376,32 @@ services:
     networks:
       - ocr_net
 
+  portal:
+    build:
+      context: .
+      dockerfile: portal/Dockerfile
+    container_name: ocr_portal
+    depends_on:
+      minio:
+        condition: service_healthy
+      airflow-webserver:
+        condition: service_healthy
+    environment:
+      MINIO_ENDPOINT: minio:9000
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minioadmin123}
+      MINIO_BUCKET_DATA_LAKE: ${MINIO_BUCKET_DATA_LAKE:-ocr-cidades}
+      MINIO_SECURE: "false"
+      AIRFLOW_API_URL: http://airflow-webserver:8080/api/v2
+      PORTAL_AIRFLOW_USER: ${AIRFLOW_ADMIN_USER:-admin}
+      PORTAL_AIRFLOW_PASSWORD: ${AIRFLOW_ADMIN_PASSWORD:-admin}
+      PORTAL_API_TOKEN: ${PORTAL_API_TOKEN:-}
+      PORTAL_MAX_UPLOAD_BYTES: ${PORTAL_MAX_UPLOAD_BYTES:-52428800}
+    ports:
+      - "${PORTAL_PORT:-8000}:8000"
+    networks:
+      - ocr_net
+
   openmetadata-ingestion:
     image: openmetadata/ingestion:${OPENMETADATA_VERSION:-1.12.6}
     container_name: ocr_openmetadata_ingestion
@@ -384,12 +410,57 @@ services:
       openmetadata-server:
         condition: service_healthy
     entrypoint: ["/bin/bash", "-lc", "sleep infinity"]
-    environment:
+    environment: &openmetadata-catalog-env
       OPENMETADATA_SERVER_URL: http://openmetadata-server:8585/api
+      PROJECT_ROOT: /opt/project/dados-desestruturados
       AIRFLOW_HOST: airflow-webserver
       AIRFLOW_PORT: "8080"
+      AIRFLOW_ADMIN_USER: ${AIRFLOW_ADMIN_USER:-admin}
+      AIRFLOW_ADMIN_PASSWORD: ${AIRFLOW_ADMIN_PASSWORD:-admin}
+      OPENMETADATA_ADMIN_EMAIL: ${OPENMETADATA_ADMIN_EMAIL:-admin@open-metadata.org}
+      OPENMETADATA_ADMIN_PASSWORD: ${OPENMETADATA_ADMIN_PASSWORD:-admin}
+      # Localmente o owner e o admin; em producao, prefira uma equipe dedicada.
+      OPENMETADATA_DEFAULT_OWNER_TYPE: ${OPENMETADATA_DEFAULT_OWNER_TYPE:-user}
+      OPENMETADATA_DEFAULT_OWNER_FQN: ${OPENMETADATA_DEFAULT_OWNER_FQN:-admin}
+      MINIO_ENDPOINT: minio:9000
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minioadmin123}
+      MINIO_BUCKET_DATA_LAKE: ${MINIO_BUCKET_DATA_LAKE:-ocr-cidades}
+      MINIO_SECURE: "false"
     volumes:
       - ./:/opt/project/dados-desestruturados
+    networks:
+      - ocr_net
+
+  openmetadata-bootstrap:
+    image: openmetadata/ingestion:${OPENMETADATA_VERSION:-1.12.6}
+    container_name: ocr_openmetadata_bootstrap
+    depends_on:
+      minio-bootstrap:
+        condition: service_completed_successfully
+      airflow-webserver:
+        condition: service_healthy
+      openmetadata-server:
+        condition: service_healthy
+    entrypoint: ["/bin/bash", "/opt/project/dados-desestruturados/infra/openmetadata/scripts/sincronizar_governanca_bootstrap.sh"]
+    environment: *openmetadata-catalog-env
+    volumes:
+      - ./:/opt/project/dados-desestruturados
+    restart: "no"
+    networks:
+      - ocr_net
+
+  openmetadata-catalog-sync:
+    image: openmetadata/ingestion:${OPENMETADATA_VERSION:-1.12.6}
+    container_name: ocr_openmetadata_catalog_sync
+    depends_on:
+      openmetadata-bootstrap:
+        condition: service_completed_successfully
+    entrypoint: ["/bin/bash", "/opt/project/dados-desestruturados/infra/openmetadata/scripts/sincronizar_governanca_continuamente.sh"]
+    environment: *openmetadata-catalog-env
+    volumes:
+      - ./:/opt/project/dados-desestruturados
+    restart: unless-stopped
     networks:
       - ocr_net
 

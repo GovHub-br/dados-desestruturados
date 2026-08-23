@@ -1,0 +1,46 @@
+# Workflow de ingestao de metadados do MinIO para o OpenMetadata.
+#
+# Este arquivo deve ser executado dentro do container openmetadata-ingestion:
+#
+# docker exec ocr_openmetadata_ingestion metadata ingest \
+#   -c /opt/project/dados-desestruturados/infra/openmetadata/ingestion/minio_ocr_cidades_storage_metadata.yaml
+#
+# O token e injetado em tempo de execucao pelo script
+# infra/openmetadata/scripts/ingestar_governanca.sh.
+
+source:
+  type: s3
+  serviceName: minio_ocr_cidades
+  serviceConnection:
+    config:
+      type: S3
+      awsConfig:
+        enabled: false
+        awsAccessKeyId: minioadmin
+        awsSecretAccessKey: minioadmin123
+        awsRegion: us-east-1
+        endPointURL: http://minio:9000
+      bucketNames:
+        - ocr-cidades
+      containerFilterPattern:
+        excludes:
+          - _SUCCESS
+      consoleEndpointURL: http://localhost:9001
+  sourceConfig:
+    config:
+      type: StorageMetadata
+      markDeletedContainers: false
+      overrideMetadata: false
+      includeTags: false
+
+sink:
+  type: metadata-rest
+  config: {}
+
+workflowConfig:
+  loggerLevel: INFO
+  openMetadataServerConfig:
+    hostPort: http://openmetadata-server:8585/api
+    authProvider: openmetadata
+    securityConfig:
+      jwtToken: ${OPENMETADATA_JWT_TOKEN}

@@ -1,0 +1,133 @@
+{
+  "default_owner": "user:admin",
+  "domains": [
+    {
+      "name": "construtoras",
+      "display_name": "Construtoras",
+      "description": "Documentos e dados estruturados do domínio de construtoras. O contrato semântico define os campos brutos obrigatórios e as assinaturas de layout localizam esses campos nas extrações."
+    }
+  ],
+  "assets": [
+    {
+      "key": "documentos_origem",
+      "name": "documentos_origem",
+      "display_name": "PDFs de origem",
+      "prefix": "documentos-origem/",
+      "description": "Conjunto de PDFs originais recebidos pelo portal ou pelas rotinas de descoberta. Preserva arquivo, checksum e manifesto de origem; não representa cada PDF individual como asset de governança."
+    },
+    {
+      "key": "contratos_semanticos",
+      "name": "contratos_semanticos",
+      "display_name": "Contratos semânticos",
+      "prefix": "contratos/",
+      "description": "Contratos versionados que definem dados brutos, schema de saída, campos obrigatórios, granularidade e regras semânticas de cada domínio documental."
+    },
+    {
+      "key": "layout_signatures",
+      "name": "layout_signatures",
+      "display_name": "Assinaturas de layout",
+      "prefix": "layouts/",
+      "description": "Assinaturas de layout versionadas que associam o contrato semântico às evidências extraídas de um tipo documental."
+    },
+    {
+      "key": "extracoes_docling",
+      "name": "extracoes_docling",
+      "display_name": "Extrações Docling",
+      "prefix": "execucoes/",
+      "description": "Conjunto de evidências produzidas pelo Docling: texto, seções, tabelas, blocos, gráficos, inventário e manifestos."
+    },
+    {
+      "key": "dados_resolvidos",
+      "name": "dados_resolvidos",
+      "display_name": "Dados resolvidos",
+      "prefix": "execucoes/",
+      "description": "Schemas de saída aprovados pela resolução determinística, com auditoria e validação. É a fonte elegível para ingestão analítica."
+    },
+    {
+      "key": "dados_rejeitados",
+      "name": "dados_rejeitados",
+      "display_name": "Dados rejeitados e quarentena",
+      "prefix": "fallback/",
+      "description": "Falhas de resolução, evidências de fallback, candidatos não publicados e futuras ocorrências de quarentena. Não é fonte para consumo analítico."
+    },
+    {
+      "key": "bronze",
+      "name": "bronze",
+      "display_name": "Camada bronze",
+      "prefix": "bronze/",
+      "description": "Destino analítico dos dados brutos validados. As tabelas físicas serão catalogadas pelo conector do Data Warehouse quando estiverem disponíveis."
+    }
+  ],
+  "pipelines": {
+    "dag_detecta_e_baixa_pdfs_construtoras": {
+      "description": "Descobre divulgações de construtoras, baixa PDFs elegíveis e os preserva no MinIO. Dispara a extração apenas para documentos novos.",
+      "processing_type": "document_discovery",
+      "criticality": "medium",
+      "sla_minutes": 30
+    },
+    "dag_extrai_documentos_origem": {
+      "description": "Varre documentos de origem pendentes, executa a extração Docling, persiste evidências e dispara a resolução determinística.",
+      "processing_type": "document_extraction",
+      "criticality": "high",
+      "sla_minutes": 30
+    },
+    "dag_resolve_schema_saida": {
+      "description": "Aplica contrato semântico e assinatura de layout aos artefatos de extração, gera schema resolvido, auditoria e validação. Aciona fallback somente diante de falha.",
+      "processing_type": "deterministic_resolution",
+      "criticality": "high",
+      "sla_minutes": 15
+    },
+    "dag_valida_e_fallback_llm": {
+      "description": "Seleciona evidências e cria ou corrige assinaturas de layout com LLM, revalida deterministicamente e publica nova versão apenas quando aprovada.",
+      "processing_type": "layout_fallback",
+      "criticality": "high",
+      "sla_minutes": 30
+    },
+    "dag_ingere_bronze": {
+      "description": "Ingere dados brutos já validados na camada bronze. A publicação depende de schema resolvido aprovado.",
+      "processing_type": "bronze_ingestion",
+      "criticality": "high",
+      "sla_minutes": 15
+    }
+  },
+  "structural_lineage": [
+    {
+      "from": "documentos_origem",
+      "to": "extracoes_docling",
+      "description": "PDFs de origem são convertidos em evidências estruturadas pelo Docling."
+    },
+    {
+      "from": "contratos_semanticos",
+      "to": "dados_resolvidos",
+      "description": "Contratos definem o schema, os campos obrigatórios e a semântica da resolução."
+    },
+    {
+      "from": "layout_signatures",
+      "to": "dados_resolvidos",
+      "description": "Assinaturas de layout determinam como localizar os campos do contrato nas evidências."
+    },
+    {
+      "from": "extracoes_docling",
+      "to": "dados_resolvidos",
+      "description": "Evidências extraídas são consumidas pela resolução determinística."
+    },
+    {
+      "from": "dados_resolvidos",
+      "to": "dados_rejeitados",
+      "description": "Casos que não atendem às regras seguem para investigação e fallback, sem publicação analítica."
+    },
+    {
+      "from": "dados_resolvidos",
+      "to": "bronze",
+      "description": "Somente dados resolvidos e aprovados podem alimentar a camada bronze."
+    }
+  ],
+  "seed_contracts": {
+    "construtoras": {
+      "current_version": "v1.7.0",
+      "artifact_uri": "minio://ocr-cidades/contratos/construtoras/v1.7.0/contrato_semantico_construtora.json",
+      "approval_status": "approved",
+      "document_types": ["balanco_trimestral_construtora"]
+    }
+  }
+}

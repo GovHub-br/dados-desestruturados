@@ -1,0 +1,4 @@
+interface:
+  display_name: "DAG 3 Fallback LLM"
+  short_description: "Build LLM fallback and layout candidates."
+  default_prompt: "Use $dag3-fallback-llm to design or implement dag_valida_e_fallback_llm for construtoras."

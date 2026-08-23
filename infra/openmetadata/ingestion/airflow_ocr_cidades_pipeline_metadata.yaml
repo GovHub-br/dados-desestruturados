@@ -1,0 +1,41 @@
+# Ingestao de metadados operacionais do Airflow no OpenMetadata.
+#
+# O token e as credenciais sao injetados em tempo de execucao pelo script
+# infra/openmetadata/scripts/ingestar_governanca.sh; nao versionar segredos.
+source:
+  type: airflow
+  serviceName: airflow_ocr_cidades
+  serviceConnection:
+    config:
+      type: Airflow
+      hostPort: http://airflow-webserver:8080
+      numberOfStatus: 50
+      connection:
+        type: RestAPI
+        apiVersion: v2
+        verifySSL: false
+        authConfig:
+          username: ${AIRFLOW_ADMIN_USER}
+          password: ${AIRFLOW_ADMIN_PASSWORD}
+  sourceConfig:
+    config:
+      type: PipelineMetadata
+      includeLineage: true
+      includeOwners: true
+      includeTags: true
+      includeUnDeployedPipelines: true
+      markDeletedPipelines: false
+      overrideMetadata: false
+      statusLookbackDays: 30
+
+sink:
+  type: metadata-rest
+  config: {}
+
+workflowConfig:
+  loggerLevel: INFO
+  openMetadataServerConfig:
+    hostPort: http://openmetadata-server:8585/api
+    authProvider: openmetadata
+    securityConfig:
+      jwtToken: ${OPENMETADATA_JWT_TOKEN}
