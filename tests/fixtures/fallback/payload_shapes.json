@@ -1,0 +1,19 @@
+{
+  "criacao_inicial_layout": {
+    "artifact_selection": [
+      "contrato_semantico_relevante",
+      "escopo_permitido",
+      "inventario_extracao",
+      "objetivo",
+      "tipo_payload"
+    ],
+    "candidate_generation": [
+      "alvos_mapeaveis",
+      "contexto_execucao",
+      "contrato_semantico_relevante",
+      "escopo_permitido",
+      "exemplo_estrutura_layout_signature",
+      "tipo_payload"
+    ]
+  }
+}

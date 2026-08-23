@@ -1,0 +1,137 @@
+# Documentos Desestruturados
+
+Contexto de extracao, resolucao semantica e governanca de documentos nao estruturados. O projeto separa documentos de origem, artefatos de extracao, resolucao deterministica, fallback assistido e publicacao estruturada.
+
+## Language
+
+**Documento de Origem**:
+PDF bruto recebido antes da extracao, tratado como a entrada logica do fluxo documental.
+_Avoid_: arquivo bruto, PDF processado
+
+**Artefato de Extracao**:
+Resultado intermediario produzido a partir do documento de origem para preservar estrutura, texto, tabelas, graficos, metricas e candidatos textuais.
+_Avoid_: dado final, schema de saida
+
+**Manifesto de Execucao**:
+Artefato JSON que funciona como indice/recibo de uma execucao, ligando documento, execution_id, artefatos gerados, URIs no MinIO e metadados operacionais.
+_Avoid_: artefato extraido, conteudo da extracao, banco operacional
+
+**Contrato Semantico**:       
+Artefato versionado que define os conceitos canonicos, sinonimos, schema de saida, campos obrigatorios de mapeamento e valores semanticos estaveis de uma familia documental. Serve para qualquer familia de PDFs; nao e restrito a construtoras.
+_Avoid_: contrato de dados, layout signature
+
+**Campo Dinamico do Contrato**:
+Folha do `schema_saida` descrita por um tipo, como `string`, `number` ou `string | null`. Seu valor depende do documento e deve receber uma origem no layout signature quando for necessario resolve-lo.
+_Avoid_: valor fixo, metadado operacional
+
+**Valor Fixo do Contrato**:
+Folha literal do `schema_saida`, como `unidades`, `lancamento` ou uma classificacao declarada pela familia documental. E preenchida deterministicamente pela DAG 2 e nao deve ser procurada nos artefatos nem mapeada pela LLM.
+_Avoid_: valor observado no PDF, `valor_fixo` do layout
+
+**Campo de Contexto Obrigatorio**:
+Campo complementar de uma observacao obrigatoria, declarado em `requisitos_mapeamento.campos_obrigatorios[].observacoes_obrigatorias[].campos_contexto_obrigatorios`. Se for dinamico, a LLM deve mapea-lo junto ao valor principal; se for literal do contrato, a DAG 2 o preenche deterministicamente.
+_Avoid_: regra fixa de periodo, seletor de tabela
+
+**Layout Signature**:
+Artefato versionado que define onde e como encontrar os campos esperados em uma familia documental.
+_Avoid_: contrato semantico, relatorio de validacao
+
+**Layout Signature Candidato**:
+Layout signature gerado ou ajustado para uma execucao de validacao, ainda sem aprovacao para uso recorrente.
+_Avoid_: layout signature ativo, layout homologado
+
+**Layout Signature Ativo**:
+Layout signature homologado para uso recorrente na resolucao deterministica de uma familia documental.
+_Avoid_: proposta de novo mapeamento, layout temporario
+
+**Mapeamento Canonico**:
+Parte do layout signature que liga os campos esperados pelo contrato semantico as fontes observaveis no documento.
+_Avoid_: schema de saida, parsing livre
+
+**Campo JSON**:
+Tipo de origem deterministica que le um valor ja existente em um artefato JSON da extracao, por exemplo um campo do `manifesto_execucao.json`. Ele nao transforma, interpreta nem infere o valor lido.
+_Avoid_: campo derivado, parser de periodo, dado fixo
+
+**Seletor Estrutural de Tabela**:
+Descricao de quais linhas e colunas devem ser lidas de uma tabela, por meio de `linha_inicial`, `linha_final`, `segmentos`, `faixas_linhas` e `indices_colunas`. Pode ser usado sozinho para leitura bruta ou junto de um mapeamento semantico nomeado.
+_Avoid_: campo semantico, calculo de metrica, regra de transformacao
+
+**Metadado Normalizado de Periodo**:
+Metadado fornecido antes da resolucao, com rotulo e, quando conhecidos, limites de inicio e fim do periodo. A DAG 2 o consome como dado de origem; nao deve deduzir datas a partir de convencoes de uma empresa ou tipo de PDF.
+_Avoid_: data de execucao, regra especifica de documento
+
+**Schema de Saida**:
+Estrutura final esperada pelo contrato semantico depois da resolucao dos campos do documento.
+_Avoid_: tabela bronze, artefato de extracao
+
+**Schema de Saida Resolvido**:
+Instancia preenchida do schema de saida para uma execucao, pronta para consumo pela ingestao estruturada.
+_Avoid_: auditoria de resolucao, validacao de layout
+
+**Valor Bruto Observado**:
+Valor reportado diretamente pelo documento e preservado sem calculo analitico pelo processo de resolucao.
+_Avoid_: metrica derivada, percentual calculado
+
+**Metrica Derivada**:
+Valor calculado posteriormente a partir de valores brutos observados.
+_Avoid_: valor bruto observado, dado extraido
+
+**Periodo de Referencia**:
+Periodo principal reportado pelo documento trimestral, usado como base para os valores atuais e suas comparacoes.
+_Avoid_: data de ingestao, data de execucao
+
+**Papeis de Periodo**:
+Conjunto de funcoes temporais fixas no documento trimestral, incluindo periodo de referencia e periodos comparativos.
+_Avoid_: cabecalhos isolados, periodos por tabela
+
+**Validacao de Layout Signature**:
+Resultado deterministico que indica se o layout signature conhecido continua compativel com o documento processado.
+_Avoid_: auditoria de resolucao, analise semantica
+
+**Auditoria de Resolucao**:
+Trilha que explica a origem e a interpretacao dos valores resolvidos.
+_Avoid_: schema de saida resolvido, relatorio final
+
+**Fallback com LLM**:
+Processo assistido por LLM acionado quando a resolucao deterministica nao resolve um campo ou detecta ruptura relevante.
+_Avoid_: resolucao padrao, extracao principal
+
+**Proposta de Novo Mapeamento**:
+Sugestao de ajuste no mapeamento canonico produzida quando a resolucao deterministica nao e suficiente.
+_Avoid_: schema de saida resolvido, layout homologado
+
+**Correcao Parcial de Mapeamento**:
+Ajuste focado nos campos ou seletores quebrados, preservando o restante do layout signature conhecido.
+_Avoid_: regeneracao total, novo layout completo
+
+**Regeneracao Total de Mapeamento**:
+Criacao de um novo mapeamento amplo quando a estrutura documental deixa de corresponder ao layout signature conhecido.
+_Avoid_: correcao pontual, ajuste de alias
+
+**Ruptura Estrutural Ampla**:
+Mudanca documental que impede confiar no layout signature conhecido, como ausencia de secao ou tabela critica, falha simultanea de varios campos obrigatorios, troca da representacao de um conceito, perda dos papeis de periodo ou divergencia de periodos entre fontes criticas.
+_Avoid_: linha renomeada, cabecalho levemente alterado
+
+**Camada Bronze**:
+Primeira camada estruturada derivada do schema de saida resolvido.
+_Avoid_: schema de saida resolvido, artefato bruto
+
+**Postgres Operacional**:
+Banco de catalogo operacional, estado e linhagem das execucoes, contendo registros resumidos e ponteiros para artefatos no MinIO.
+_Avoid_: data lake, repositorio de JSON bruto, armazenamento principal de artefatos
+
+**Registro Operacional de Execucao**:
+Linha ou conjunto de linhas que descreve uma execucao de DAG, seu status, documento, contrato, layout, validacao, fallback e artefatos associados.
+_Avoid_: manifesto de execucao, log textual, artefato bruto
+
+**Ponteiro de Artefato**:
+Referencia operacional a um artefato persistido, normalmente composta por bucket, object_key, tipo de artefato, execution_id e metadados de integridade.
+_Avoid_: conteudo do arquivo, blob, JSON completo
+
+**Selecao de Contrato por Dominio**:
+Regra que associa `documentos-origem/<dominio>/<entidade>/...` ao contrato de maior versao semantica em `contratos/<dominio>/vX.Y.Z/`. A URI exata escolhida fica registrada no manifesto para que DAG 2, DAG 3 e revalidacao usem o mesmo contrato.
+_Avoid_: contrato fixo de construtoras, escolha manual repetida por execucao
+
+**Curadoria**:
+Revisao, evidencia ou homologacao humana associada a contratos, layouts, fallback ou qualidade dos dados resolvidos.
+_Avoid_: fallback automatico, validacao deterministica

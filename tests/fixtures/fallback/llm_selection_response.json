@@ -1,0 +1,15 @@
+{
+  "tipo_artefato": "selecao_artefatos_layout",
+  "artifact_paths": [
+    {
+      "path": "tables/table001.json",
+      "motivo": "A tabela contem as observacoes requeridas.",
+      "coberturas": [
+        {
+          "campo_saida": "observacoes.valor",
+          "ancoras": ["Valor observado"]
+        }
+      ]
+    }
+  ]
+}

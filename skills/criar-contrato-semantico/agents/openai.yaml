@@ -1,0 +1,4 @@
+interface:
+  display_name: "Contrato Semântico"
+  short_description: "Definir contratos para PDFs estruturados"
+  default_prompt: "Use $criar-contrato-semantico para criar ou revisar um contrato semântico para esta família de PDFs."

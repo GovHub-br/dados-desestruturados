@@ -21,3 +21,6 @@ output-*/
 .DS_Store
 airflow/logs/*
 !airflow/logs/.gitkeep
+airflow/state/*
+!airflow/state/.gitkeep
+*.egg-info/

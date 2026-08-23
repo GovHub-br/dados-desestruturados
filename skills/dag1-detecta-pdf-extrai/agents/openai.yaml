@@ -1,0 +1,4 @@
+interface:
+  display_name: "DAG 1 Detecta PDF e Extrai"
+  short_description: "Validate RI PDF detection and extraction."
+  default_prompt: "Use $dag1-detecta-pdf-extrai to inspect, change, or validate dag_detecta_pdf_e_extrai for construtoras."

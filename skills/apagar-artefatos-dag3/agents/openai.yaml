@@ -1,0 +1,4 @@
+interface:
+  display_name: "Apagar artefatos DAG 3"
+  short_description: "Limpa com segurança resultados da DAG 3"
+  default_prompt: "Use $apagar-artefatos-dag3 para listar e remover com segurança os artefatos de fallback da DAG 3."

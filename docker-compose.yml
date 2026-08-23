@@ -6,9 +6,32 @@ x-airflow-image: &airflow-image
     args:
       AIRFLOW_VERSION: ${AIRFLOW_VERSION:-3.0.2-python3.11}
 
+x-docling-image: &docling-image
+  image: dados-desestruturados-docling:${DOCLING_RUNNER_IMAGE_TAG:-python3.11}
+  build:
+    context: .
+    dockerfile: infra/docling-runner/Dockerfile
+
+x-docling-runtime-env: &docling-runtime-env
+  PIPELINE_TMP_DIR: ${PIPELINE_TMP_DIR:-/opt/pipeline-tmp}
+  HF_HOME: ${HF_HOME:-/opt/huggingface-cache}
+  HF_TOKEN: ${HF_TOKEN:-}
+  DOCLING_RUNNER_EXECUTION_TIMEOUT_SECONDS: ${DOCLING_RUNNER_EXECUTION_TIMEOUT_SECONDS:-1500}
+  DOCLING_DO_CHART_EXTRACTION: ${DOCLING_DO_CHART_EXTRACTION:-true}
+  DOCLING_ENABLE_LLM_TEXT_EXTRACTION: ${DOCLING_ENABLE_LLM_TEXT_EXTRACTION:-false}
+  DOCLING_LLM_API_URL: ${DOCLING_LLM_API_URL:-}
+  DOCLING_LLM_API_MODEL: ${DOCLING_LLM_API_MODEL:-}
+  DOCLING_LLM_TIMEOUT: ${DOCLING_LLM_TIMEOUT:-180}
+  DOCLING_LLM_MAX_TOKENS: ${DOCLING_LLM_MAX_TOKENS:-4096}
+  DOCLING_TEXT_CANDIDATE_WINDOW_BEFORE: ${DOCLING_TEXT_CANDIDATE_WINDOW_BEFORE:-1}
+  DOCLING_TEXT_CANDIDATE_WINDOW_AFTER: ${DOCLING_TEXT_CANDIDATE_WINDOW_AFTER:-1}
+  DOCLING_TEXT_CANDIDATE_MAX_CHARS: ${DOCLING_TEXT_CANDIDATE_MAX_CHARS:-2500}
+  DOCLING_TEXT_CANDIDATE_MIN_CHARS: ${DOCLING_TEXT_CANDIDATE_MIN_CHARS:-40}
+  DOCLING_TEXT_CANDIDATE_MAX_PER_SECTION: ${DOCLING_TEXT_CANDIDATE_MAX_PER_SECTION:-50}
+
 services:
   minio:
-    image: minio/minio:latest
+    image: minio/minio:${MINIO_IMAGE_TAG:-RELEASE.2025-09-07T16-13-09Z}
     container_name: ocr_minio
     command: server /data --console-address ":9001"
     environment:
@@ -29,20 +52,43 @@ services:
       - ocr_net
 
   minio-bootstrap:
-    image: minio/mc:latest
+    image: minio/mc:${MINIO_MC_IMAGE_TAG:-RELEASE.2025-08-13T08-35-41Z}
     container_name: ocr_minio_bootstrap
     depends_on:
       minio:
         condition: service_healthy
-    entrypoint: >
-      /bin/sh -c "
-      mc alias set local http://minio:9000 ${MINIO_ROOT_USER:-minioadmin} ${MINIO_ROOT_PASSWORD:-minioadmin123} &&
-      mc mb -p local/${MINIO_BUCKET_DATA_LAKE:-ocr-cidades} ||
-      true &&
-      mc anonymous set private local/${MINIO_BUCKET_DATA_LAKE:-ocr-cidades} &&
-      exit 0
-      "
+    entrypoint: ["/bin/sh", "/bootstrap/bootstrap.sh"]
+    volumes:
+      - ./infra/minio-bootstrap:/bootstrap:ro
     restart: "no"
+    networks:
+      - ocr_net
+
+  docling-runner:
+    profiles:
+      - local-docling
+    <<: *docling-image
+    container_name: ocr_docling_runner
+    environment:
+      <<: *docling-runtime-env
+      PROJECT_ROOT: /opt/project/dados-desestruturados
+      PYTHONPATH: /opt/project/dados-desestruturados
+      DOCLING_RUNNER_HOST: 0.0.0.0
+      DOCLING_RUNNER_PORT: "8081"
+    volumes:
+      - ./:/opt/project/dados-desestruturados
+      - pipeline_tmp_data:${PIPELINE_TMP_DIR:-/opt/pipeline-tmp}
+      - huggingface_cache:${HF_HOME:-/opt/huggingface-cache}
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:8081/healthz')\" >/dev/null 2>&1",
+        ]
+      interval: 20s
+      timeout: 10s
+      retries: 10
+      start_period: 30s
     networks:
       - ocr_net
 
@@ -189,42 +235,63 @@ services:
       postgres-airflow:
         condition: service_healthy
     environment: &airflow-common-env
+      <<: *docling-runtime-env
       AIRFLOW__CORE__EXECUTOR: LocalExecutor
       AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://${AIRFLOW_DB_USER:-airflow}:${AIRFLOW_DB_PASSWORD:-airflow}@postgres-airflow:5432/${AIRFLOW_DB_NAME:-airflow_core}
+      AIRFLOW__API__BASE_URL: ${AIRFLOW_API_BASE_URL:-http://airflow-webserver:8080}
       AIRFLOW__API__SECRET_KEY: ${AIRFLOW_WEBSERVER_SECRET_KEY:-airflow_secret_key_local}
+      AIRFLOW__API_AUTH__JWT_SECRET: ${AIRFLOW_API_AUTH_JWT_SECRET:-airflow_execution_jwt_secret_local}
+      AIRFLOW__CORE__EXECUTION_API_SERVER_URL: ${AIRFLOW_EXECUTION_API_SERVER_URL:-http://airflow-webserver:8080/execution/}
       AIRFLOW__CORE__FERNET_KEY: ${AIRFLOW_FERNET_KEY:-4p9xDg0m2Y8vQv0B7o4t7x4mQKc6S9E1sP2R5T8U0W0=}
       AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION: "true"
       AIRFLOW__CORE__LOAD_EXAMPLES: "false"
       AIRFLOW__CORE__SIMPLE_AUTH_MANAGER_ALL_ADMINS: "false"
       AIRFLOW__CORE__SIMPLE_AUTH_MANAGER_USERS: ${AIRFLOW_ADMIN_USER:-admin}:admin
-      AIRFLOW__CORE__SIMPLE_AUTH_MANAGER_PASSWORDS_FILE: /opt/airflow/logs/simple_auth_manager_passwords.json
-      AIRFLOW__API__AUTH_BACKENDS: airflow.api.auth.backend.basic_auth,airflow.api.auth.backend.session
+      AIRFLOW__CORE__SIMPLE_AUTH_MANAGER_PASSWORDS_FILE: /opt/airflow/state/auth/simple_auth_manager_passwords.json
       AIRFLOW__SCHEDULER__ENABLE_HEALTH_CHECK: "true"
       AIRFLOW__LOGGING__LOGGING_LEVEL: INFO
       AIRFLOW_HOME: /opt/airflow
       AIRFLOW_ADMIN_USER: ${AIRFLOW_ADMIN_USER:-admin}
       AIRFLOW_ADMIN_PASSWORD: ${AIRFLOW_ADMIN_PASSWORD:-admin}
-      AIRFLOW_ADMIN_FIRSTNAME: ${AIRFLOW_ADMIN_FIRSTNAME:-Admin}
-      AIRFLOW_ADMIN_LASTNAME: ${AIRFLOW_ADMIN_LASTNAME:-User}
-      AIRFLOW_ADMIN_EMAIL: ${AIRFLOW_ADMIN_EMAIL:-admin@example.com}
       PROJECT_ROOT: /opt/project/dados-desestruturados
-      PYTHONPATH: /opt/project/dados-desestruturados:/opt/project/dados-desestruturados/airflow
+      PYTHONPATH: /opt/project/dados-desestruturados/src:/opt/project/dados-desestruturados:/opt/project/dados-desestruturados/airflow
       MINIO_ENDPOINT: ${MINIO_ENDPOINT:-minio:9000}
       MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minioadmin}
       MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minioadmin123}
       MINIO_BUCKET_DATA_LAKE: ${MINIO_BUCKET_DATA_LAKE:-ocr-cidades}
       MINIO_SECURE: ${MINIO_SECURE:-false}
-      PIPELINE_TMP_DIR: ${PIPELINE_TMP_DIR:-/tmp/dados-desestruturados}
+      REFERENCE_DATE: ${REFERENCE_DATE:-}
+      FORCE_EXTRACT: ${FORCE_EXTRACT:-false}
+      DOCLING_RUNNER_BASE_URL: ${DOCLING_RUNNER_BASE_URL:-http://docling-runner:8081}
+      DOCLING_RUNNER_TIMEOUT_SECONDS: ${DOCLING_RUNNER_TIMEOUT_SECONDS:-1800}
+      DOCLING_RUNNER_EXECUTION_TIMEOUT_SECONDS: ${DOCLING_RUNNER_EXECUTION_TIMEOUT_SECONDS:-1500}
+      RI_DOWNLOAD_TIMEOUT_SECONDS: ${RI_DOWNLOAD_TIMEOUT_SECONDS:-120}
+      RI_DOWNLOAD_MAX_ATTEMPTS: ${RI_DOWNLOAD_MAX_ATTEMPTS:-3}
+      RI_DOWNLOAD_RETRY_DELAY_SECONDS: ${RI_DOWNLOAD_RETRY_DELAY_SECONDS:-5}
+      FALLBACK_LLM_PROVIDER: ${FALLBACK_LLM_PROVIDER:-openai}
+      FALLBACK_LLM_API_URL: ${FALLBACK_LLM_API_URL:-}
+      FALLBACK_LLM_API_KEY: ${FALLBACK_LLM_API_KEY:-}
+      FALLBACK_LLM_MODEL: ${FALLBACK_LLM_MODEL:-}
+      FALLBACK_LLM_TIMEOUT_SECONDS: ${FALLBACK_LLM_TIMEOUT_SECONDS:-180}
+      FALLBACK_LLM_MAX_TOKENS: ${FALLBACK_LLM_MAX_TOKENS:-4096}
+      FALLBACK_LLM_THINKING_MODE: ${FALLBACK_LLM_THINKING_MODE:-}
+      FALLBACK_LLM_SELECTION_MAX_TOKENS: ${FALLBACK_LLM_SELECTION_MAX_TOKENS:-2048}
+      FALLBACK_LLM_SELECTION_THINKING_MODE: ${FALLBACK_LLM_SELECTION_THINKING_MODE:-disabled}
+      FALLBACK_LLM_FRAGMENT_MAX_TOKENS: ${FALLBACK_LLM_FRAGMENT_MAX_TOKENS:-8192}
+      FALLBACK_LLM_FRAGMENT_THINKING_MODE: ${FALLBACK_LLM_FRAGMENT_THINKING_MODE:-enabled}
     user: "50000:0"
     command: >
       bash -c "
       airflow db migrate &&
+      airflow pools set docling_extraction_pool 1 'Extracoes Docling serializadas' &&
       python -c 'import json, os, pathlib; path = pathlib.Path(os.environ[\"AIRFLOW__CORE__SIMPLE_AUTH_MANAGER_PASSWORDS_FILE\"]); path.parent.mkdir(parents=True, exist_ok=True); path.write_text(json.dumps({os.environ[\"AIRFLOW_ADMIN_USER\"]: os.environ[\"AIRFLOW_ADMIN_PASSWORD\"]}) + chr(10))'
       "
     volumes: &airflow-common-volumes
       - ./airflow/dags:/opt/airflow/dags
       - ./airflow/logs:/opt/airflow/logs
+      - ./airflow/state:/opt/airflow/state
       - ./:/opt/project/dados-desestruturados
+      - pipeline_tmp_data:${PIPELINE_TMP_DIR:-/opt/pipeline-tmp}
     restart: "no"
     networks:
       - ocr_net
@@ -309,6 +376,32 @@ services:
     networks:
       - ocr_net
 
+  portal:
+    build:
+      context: .
+      dockerfile: portal/Dockerfile
+    container_name: ocr_portal
+    depends_on:
+      minio:
+        condition: service_healthy
+      airflow-webserver:
+        condition: service_healthy
+    environment:
+      MINIO_ENDPOINT: minio:9000
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minioadmin123}
+      MINIO_BUCKET_DATA_LAKE: ${MINIO_BUCKET_DATA_LAKE:-ocr-cidades}
+      MINIO_SECURE: "false"
+      AIRFLOW_API_URL: http://airflow-webserver:8080/api/v2
+      PORTAL_AIRFLOW_USER: ${AIRFLOW_ADMIN_USER:-admin}
+      PORTAL_AIRFLOW_PASSWORD: ${AIRFLOW_ADMIN_PASSWORD:-admin}
+      PORTAL_API_TOKEN: ${PORTAL_API_TOKEN:-}
+      PORTAL_MAX_UPLOAD_BYTES: ${PORTAL_MAX_UPLOAD_BYTES:-52428800}
+    ports:
+      - "${PORTAL_PORT:-8000}:8000"
+    networks:
+      - ocr_net
+
   openmetadata-ingestion:
     image: openmetadata/ingestion:${OPENMETADATA_VERSION:-1.12.6}
     container_name: ocr_openmetadata_ingestion
@@ -316,12 +409,58 @@ services:
     depends_on:
       openmetadata-server:
         condition: service_healthy
-    entrypoint: ["/bin/bash", "-lc"]
-    command: "sleep infinity"
-    environment:
+    entrypoint: ["/bin/bash", "-lc", "sleep infinity"]
+    environment: &openmetadata-catalog-env
       OPENMETADATA_SERVER_URL: http://openmetadata-server:8585/api
+      PROJECT_ROOT: /opt/project/dados-desestruturados
       AIRFLOW_HOST: airflow-webserver
       AIRFLOW_PORT: "8080"
+      AIRFLOW_ADMIN_USER: ${AIRFLOW_ADMIN_USER:-admin}
+      AIRFLOW_ADMIN_PASSWORD: ${AIRFLOW_ADMIN_PASSWORD:-admin}
+      OPENMETADATA_ADMIN_EMAIL: ${OPENMETADATA_ADMIN_EMAIL:-admin@open-metadata.org}
+      OPENMETADATA_ADMIN_PASSWORD: ${OPENMETADATA_ADMIN_PASSWORD:-admin}
+      # Localmente o owner e o admin; em producao, prefira uma equipe dedicada.
+      OPENMETADATA_DEFAULT_OWNER_TYPE: ${OPENMETADATA_DEFAULT_OWNER_TYPE:-user}
+      OPENMETADATA_DEFAULT_OWNER_FQN: ${OPENMETADATA_DEFAULT_OWNER_FQN:-admin}
+      MINIO_ENDPOINT: minio:9000
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minioadmin123}
+      MINIO_BUCKET_DATA_LAKE: ${MINIO_BUCKET_DATA_LAKE:-ocr-cidades}
+      MINIO_SECURE: "false"
+    volumes:
+      - ./:/opt/project/dados-desestruturados
+    networks:
+      - ocr_net
+
+  openmetadata-bootstrap:
+    image: openmetadata/ingestion:${OPENMETADATA_VERSION:-1.12.6}
+    container_name: ocr_openmetadata_bootstrap
+    depends_on:
+      minio-bootstrap:
+        condition: service_completed_successfully
+      airflow-webserver:
+        condition: service_healthy
+      openmetadata-server:
+        condition: service_healthy
+    entrypoint: ["/bin/bash", "/opt/project/dados-desestruturados/infra/openmetadata/scripts/sincronizar_governanca_bootstrap.sh"]
+    environment: *openmetadata-catalog-env
+    volumes:
+      - ./:/opt/project/dados-desestruturados
+    restart: "no"
+    networks:
+      - ocr_net
+
+  openmetadata-catalog-sync:
+    image: openmetadata/ingestion:${OPENMETADATA_VERSION:-1.12.6}
+    container_name: ocr_openmetadata_catalog_sync
+    depends_on:
+      openmetadata-bootstrap:
+        condition: service_completed_successfully
+    entrypoint: ["/bin/bash", "/opt/project/dados-desestruturados/infra/openmetadata/scripts/sincronizar_governanca_continuamente.sh"]
+    environment: *openmetadata-catalog-env
+    volumes:
+      - ./:/opt/project/dados-desestruturados
+    restart: unless-stopped
     networks:
       - ocr_net
 
@@ -414,3 +553,5 @@ volumes:
   postgres_airflow_data:
   postgres_openmetadata_data:
   elasticsearch_data:
+  pipeline_tmp_data:
+  huggingface_cache:

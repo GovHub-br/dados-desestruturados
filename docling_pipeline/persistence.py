@@ -7,6 +7,9 @@ from typing import Any, Iterable
 
 from .models import ChartPointRecord, NormalizedRowRecord, PipelineBundle, TableCellRecord, TableRecord
 
+MAX_INVENTORY_SAMPLES = 5
+MAX_INVENTORY_TEXT_CHARS = 240
+
 
 def write_json(path: Path, payload: Any) -> None:
     path.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
@@ -99,6 +102,251 @@ def model_fields(records: list[dict[str, Any]]) -> list[str]:
     if not records:
         return []
     return list(records[0].keys())
+
+
+def compact_text(value: str | None, max_chars: int = MAX_INVENTORY_TEXT_CHARS) -> str | None:
+    if not value:
+        return None
+    compacted = " ".join(value.split())
+    if len(compacted) <= max_chars:
+        return compacted
+    return f"{compacted[: max_chars - 3]}..."
+
+
+def compact_values(values: Iterable[Any], limit: int = MAX_INVENTORY_SAMPLES) -> list[Any]:
+    compacted: list[Any] = []
+    seen: set[str] = set()
+    for value in values:
+        if value in (None, ""):
+            continue
+        marker = json.dumps(value, ensure_ascii=False, sort_keys=True, default=str)
+        if marker in seen:
+            continue
+        seen.add(marker)
+        compacted.append(value)
+        if len(compacted) >= limit:
+            break
+    return compacted
+
+
+def compact_texts(values: Iterable[str | None], limit: int = MAX_INVENTORY_SAMPLES) -> list[str]:
+    return [
+        text
+        for text in compact_values(
+            (compact_text(value) for value in values),
+            limit=limit,
+        )
+        if text
+    ]
+
+
+def compact_pages(values: Iterable[int | None]) -> list[int]:
+    pages = sorted({value for value in values if value is not None})
+    return pages[:MAX_INVENTORY_SAMPLES]
+
+
+def compact_sections(values: Iterable[str | None]) -> list[str]:
+    return [str(value) for value in compact_values(values)]
+
+
+def table_row_label_sample(rows: list[list[str]]) -> list[str]:
+    return compact_texts((row[0] if row else None for row in rows))
+
+
+def build_extraction_inventory(bundle: PipelineBundle) -> dict[str, Any]:
+    """Monta um catalogo rico para orientar remapeamento amplo e criacao inicial."""
+    inventory_items: list[dict[str, Any]] = []
+
+    for index, table in enumerate(bundle.tables, start=1):
+        stem = build_file_stem("table", index, len(bundle.tables))
+        schema = list(table.columns_raw)
+        rows = table_rows(schema, table.cells, table.row_count)
+        inventory_items.append(
+            {
+                "kind": "table",
+                "name": build_table_name(table, index),
+                "path": f"tables/{stem}.json",
+                "metadata_path": f"tables/{stem}/metadata.json",
+                "files": {
+                    "cells": f"tables/{stem}/cells.json",
+                    "normalized_rows": f"tables/{stem}/normalized_rows.json",
+                },
+                "table_id": table.table_id,
+                "page_number": table.page_number,
+                "section_id": table.section_id,
+                "section_title": table.section_title,
+                "title_raw": table.title_raw,
+                "title_canonical": table.title_canonical,
+                "schema": schema,
+                "row_count": table.row_count,
+                "column_count": table.column_count,
+                "row_labels_sample": table_row_label_sample(rows),
+                "bbox": table.bbox.model_dump(mode="json") if table.bbox else None,
+            }
+        )
+
+    charts_by_id = group_chart_points(bundle.charts)
+    chart_groups = list(charts_by_id.values())
+    for index, points in enumerate(chart_groups, start=1):
+        if not points:
+            continue
+        stem = build_file_stem("chart", index, len(chart_groups))
+        schema = chart_schema(points)
+        head = points[0]
+        inventory_items.append(
+            {
+                "kind": "chart",
+                "name": build_chart_name(points, index),
+                "path": f"charts/{stem}.json",
+                "metadata_path": f"charts/{stem}/metadata.json",
+                "files": {
+                    "points": f"charts/{stem}/points.json",
+                    "normalized_rows": f"charts/{stem}/normalized_rows.json",
+                },
+                "chart_id": head.chart_id,
+                "page_number": head.page_number,
+                "section_id": head.section_id,
+                "section_title": head.section_title,
+                "chart_type": head.chart_type,
+                "chart_title_raw": head.chart_title_raw,
+                "chart_title_canonical": head.chart_title_canonical,
+                "schema": schema,
+                "point_count": len(points),
+                "series_sample": compact_values(point.series_name for point in points),
+                "categories_sample": compact_values(point.category_name for point in points),
+            }
+        )
+
+    if bundle.sections:
+        inventory_items.append(
+            {
+                "kind": "sections",
+                "name": "Seções do documento",
+                "path": "sections/sections.jsonl",
+                "metadata_path": "sections/metadata.json",
+                "record_count": len(bundle.sections),
+                "pages_sample": compact_pages(section.page_number for section in bundle.sections),
+                "section_titles_sample": compact_sections(section.title_raw for section in bundle.sections),
+                "schema": ["title_raw", "level_hint", "parent_section_id", "page_number"],
+            }
+        )
+
+    if bundle.blocks:
+        inventory_items.append(
+            {
+                "kind": "blocks",
+                "name": "Blocos textuais",
+                "path": "blocks/blocks.jsonl",
+                "metadata_path": "blocks/metadata.json",
+                "record_count": len(bundle.blocks),
+                "pages_sample": compact_pages(block.page_number for block in bundle.blocks),
+                "section_titles_sample": compact_sections(block.section_title for block in bundle.blocks),
+                "role_hints_sample": compact_values(block.role_hint for block in bundle.blocks),
+                "text_sample": compact_texts(block.text for block in bundle.blocks),
+                "schema": ["text", "role_hint", "section_title", "item_type"],
+            }
+        )
+
+    if bundle.metrics:
+        inventory_items.append(
+            {
+                "kind": "metrics",
+                "name": "Métricas extraídas",
+                "path": "metrics/metrics.jsonl",
+                "metadata_path": "metrics/metadata.json",
+                "record_count": len(bundle.metrics),
+                "pages_sample": compact_pages(metric.page_number for metric in bundle.metrics),
+                "section_titles_sample": compact_sections(metric.section_title for metric in bundle.metrics),
+                "labels_sample": compact_texts(metric.label_raw for metric in bundle.metrics),
+                "units_sample": compact_values(metric.unit_hint for metric in bundle.metrics),
+                "schema": ["label_raw", "value_numeric", "value_text", "unit_hint", "section_title"],
+            }
+        )
+
+    if bundle.cases:
+        inventory_items.append(
+            {
+                "kind": "cases",
+                "name": "Casos estruturais derivados",
+                "path": "cases/cases.jsonl",
+                "metadata_path": "cases/metadata.json",
+                "record_count": len(bundle.cases),
+                "pages_sample": compact_pages(case.page_number for case in bundle.cases),
+                "section_titles_sample": compact_sections(case.title_raw for case in bundle.cases),
+                "schema": ["title_raw", "field_map", "narrative_blocks", "block_ids"],
+            }
+        )
+
+    if bundle.text_candidates:
+        inventory_items.append(
+            {
+                "kind": "text_candidates",
+                "name": "Candidatos textuais com valores",
+                "path": "text_candidates/text_candidates.jsonl",
+                "metadata_path": "text_candidates/metadata.json",
+                "record_count": len(bundle.text_candidates),
+                "pages_sample": compact_pages(candidate.page_number for candidate in bundle.text_candidates),
+                "section_titles_sample": compact_sections(candidate.section_title for candidate in bundle.text_candidates),
+                "context_sample": compact_texts(candidate.context_text for candidate in bundle.text_candidates),
+                "schema": ["section_title", "matched_values", "context_text", "source_blocks"],
+                "derived_from": ["sections", "blocks"],
+            }
+        )
+
+    if bundle.text_structures:
+        inventory_items.append(
+            {
+                "kind": "text_structures",
+                "name": "Extrações textuais estruturadas por LLM",
+                "path": "text_structures/text_structures.jsonl",
+                "metadata_path": "text_structures/metadata.json",
+                "record_count": len(bundle.text_structures),
+                "pages_sample": compact_pages(record.page_number for record in bundle.text_structures),
+                "section_titles_sample": compact_sections(record.section_title for record in bundle.text_structures),
+                "context_types_sample": compact_values(record.context_type for record in bundle.text_structures),
+                "entities_keys_sample": compact_values(
+                    key
+                    for record in bundle.text_structures
+                    for key in record.entities.keys()
+                ),
+                "facts_sample": [
+                    fact.model_dump(mode="json")
+                    for record in bundle.text_structures
+                    for fact in record.facts[:1]
+                ][:MAX_INVENTORY_SAMPLES],
+                "schema": ["section_title", "context_type", "entities", "facts", "narrative_summary", "confidence"],
+                "derived_from": ["text_candidates"],
+            }
+        )
+
+    return {
+        "kind": "extraction_inventory",
+        "version": "1.0",
+        "source_file": bundle.document.source_file,
+        "document": bundle.document.model_dump(mode="json"),
+        "summary": {
+            "sections": len(bundle.sections),
+            "blocks": len(bundle.blocks),
+            "tables": len(bundle.tables),
+            "charts": len(charts_by_id),
+            "metrics": len(bundle.metrics),
+            "cases": len(bundle.cases),
+            "text_candidates": len(bundle.text_candidates),
+            "text_structures": len(bundle.text_structures),
+            "semantic_markdown_available": bool(bundle.semantic_markdown),
+        },
+        "collections": {
+            "sections": "sections/metadata.json",
+            "blocks": "blocks/metadata.json",
+            "tables": "tables/metadata.json",
+            "charts": "charts/metadata.json",
+            "metrics": "metrics/metadata.json",
+            "cases": "cases/metadata.json",
+            "text_candidates": "text_candidates/metadata.json",
+            "text_structures": "text_structures/metadata.json",
+        },
+        "items": inventory_items,
+    }
 
 
 def group_normalized_rows(
@@ -444,10 +692,14 @@ def persist_bundle(bundle: PipelineBundle, output_dir: Path) -> None:
             }
         )
 
+    inventory_path = output_dir / "inventory.json"
+    write_json(inventory_path, build_extraction_inventory(bundle))
+
     write_json(
         output_dir / "metadata.json",
         {
             "source_file": bundle.document.source_file,
+            "inventory_path": relpath(inventory_path, output_dir),
             "items": root_items,
         },
     )
