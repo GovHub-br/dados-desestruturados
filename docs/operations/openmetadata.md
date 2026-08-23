@@ -266,9 +266,9 @@ Alinhamento com a arquitetura:
 
 - os termos `contrato_semantico`, `layout_signature`, `schema_saida`,
   `validacao_layout_signature`, `auditoria_resolucao` e `fallback_llm` seguem a
-  divisao das DAGs descrita em `ARQUITETURA_DAGS_CONSTRUTORAS.md`;
+  divisao das DAGs descrita em `../architecture/airflow-orchestration.md`;
 - os termos `documento_origem`, `document_id` e `execution_id` seguem as
-  convencoes de identificacao descritas em `MODELO_PASTAS_MINIO.md`;
+  convencoes de identificacao descritas em `../reference/minio-data-model.md`;
 - os termos de negocio, como `unidades_lancadas`, `unidades_vendidas` e `vso`,
   antecipam os campos que serao ligados depois as tabelas bronze/silver.
 
@@ -1175,8 +1175,8 @@ Considere a configuracao inicial concluida quando voce tiver:
 
 ## Referencias internas do projeto
 
-- `ESTUDO_OPENMETADATA_GOVERNANCA.md`
-- `MODELO_PASTAS_MINIO.md`
-- `ARQUITETURA_DAGS_CONSTRUTORAS.md`
-- `SCHEMA_INICIAL_POSTGRES.md`
+- `../architecture/openmetadata-governance.md`
+- `../reference/minio-data-model.md`
+- `../architecture/airflow-orchestration.md`
+- `../reference/postgres-schema.md`
 - `docker-compose.yml`

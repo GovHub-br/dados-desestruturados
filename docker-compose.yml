@@ -254,7 +254,7 @@ services:
       AIRFLOW_ADMIN_USER: ${AIRFLOW_ADMIN_USER:-admin}
       AIRFLOW_ADMIN_PASSWORD: ${AIRFLOW_ADMIN_PASSWORD:-admin}
       PROJECT_ROOT: /opt/project/dados-desestruturados
-      PYTHONPATH: /opt/project/dados-desestruturados:/opt/project/dados-desestruturados/airflow
+      PYTHONPATH: /opt/project/dados-desestruturados/src:/opt/project/dados-desestruturados:/opt/project/dados-desestruturados/airflow
       MINIO_ENDPOINT: ${MINIO_ENDPOINT:-minio:9000}
       MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minioadmin}
       MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minioadmin123}

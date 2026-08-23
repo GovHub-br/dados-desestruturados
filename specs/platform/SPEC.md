@@ -676,11 +676,11 @@ Pendencias naturais:
 ## Referencias
 
 - `CONTEXT.md`
-- `docs/adr/0001-fallback-produz-layout-candidato.md`
+- `docs/adr/0004-resolucao-deterministica-com-fallback-llm.md`
 - `resultados_contrutoras/contrato_semantico_construtora.json`
 - `resultados_contrutoras/layout_signature_cury_deterministico.json`
-- `resultados_contrutoras/documentacao/ARQUITETURA_DAGS_CONSTRUTORAS.md`
-- `resultados_contrutoras/documentacao/MODELO_PASTAS_MINIO.md`
-- `resultados_contrutoras/documentacao/SCHEMA_INICIAL_POSTGRES.md`
-- `resultados_contrutoras/documentacao/ESTUDO_OPENMETADATA_GOVERNANCA.md`
-- `resultados_contrutoras/documentacao/EXPLICACAO_LAYOUT_SIGNATURE_CURY_DETERMINISTICO.md`
+- `docs/architecture/airflow-orchestration.md`
+- `docs/reference/minio-data-model.md`
+- `docs/reference/postgres-schema.md`
+- `docs/architecture/openmetadata-governance.md`
+- `docs/reference/examples/cury-deterministic-layout.md`

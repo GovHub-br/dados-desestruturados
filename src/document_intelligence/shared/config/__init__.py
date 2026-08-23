@@ -1,0 +1,2 @@
+"""Configuração compartilhada da plataforma."""
+
