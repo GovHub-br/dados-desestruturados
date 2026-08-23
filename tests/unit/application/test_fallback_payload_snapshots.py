@@ -9,7 +9,6 @@ from document_processing.application.use_cases.fallback.context_builder import (
 )
 from document_processing.domain.fallback.models import LayoutArtifactSelection
 
-
 FIXTURES = Path(__file__).parents[2] / "fixtures" / "fallback"
 
 

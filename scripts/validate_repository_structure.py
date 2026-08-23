@@ -6,7 +6,6 @@ import re
 import sys
 from pathlib import Path
 
-
 ROOT = Path(__file__).resolve().parents[1]
 MARKDOWN_LINK = re.compile(r"\[[^\]]+\]\(([^)]+)\)")
 BACKTICK_PATH = re.compile(r"`((?:docs|specs|src|airflow|skills)/[^`\s]+)`")

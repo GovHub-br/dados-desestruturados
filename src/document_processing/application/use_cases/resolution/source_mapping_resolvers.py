@@ -8,6 +8,7 @@ from typing import Any
 from document_processing.domain.layouts.paths import parse_mapping_path, set_nested_value
 from document_processing.domain.resolution.numbers import parse_flexible_number
 
+
 class SourceMappingResolversMixin:
     def _resolve_text_block_mapping(
         self,

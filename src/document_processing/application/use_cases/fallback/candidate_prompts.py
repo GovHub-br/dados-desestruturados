@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-from typing import Any
-
 
 def candidate_scope_instruction(scope: str) -> str:
     """Explica em texto corrido a responsabilidade da LLM em cada escopo."""

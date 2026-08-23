@@ -1,10 +1,6 @@
 from __future__ import annotations
 
-import hashlib
-import logging
-import re
 from datetime import UTC, date, datetime
-from pathlib import Path
 from typing import Any
 
 from document_processing.infrastructure.docling.docling_gateway import (
@@ -13,17 +9,17 @@ from document_processing.infrastructure.docling.docling_gateway import (
 )
 from document_processing.infrastructure.llm.http_client import HTTP_CLIENT, HttpClient
 from document_processing.infrastructure.ri.ri_results_gateway import (
-    DisclosureWindow,
     RI_RESULTS_CLIENT,
+    DisclosureWindow,
     RiResultsClient,
 )
 from document_processing.infrastructure.storage.minio_artifact_repository import MinioStorageClient
-from document_processing.infrastructure.storage.semantic_contract_registry import SemanticContractRegistry
 from document_processing.shared.config.runtime import (
-    LocalPlatformConfig,
     RUNTIME_CONFIG_LOADER,
+    LocalPlatformConfig,
     RuntimeConfigLoader,
 )
+
 from .constants import DAG_NAME
 from .origin_document_extraction import OriginDocumentExtractionMixin
 from .origin_document_storage import OriginDocumentStorageMixin

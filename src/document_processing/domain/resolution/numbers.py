@@ -6,7 +6,6 @@ import re
 import unicodedata
 from typing import Any
 
-
 THOUSANDS_INTEGER_RE = re.compile(r"[-+]?\d{1,3}(?:\.\d{3})+")
 
 

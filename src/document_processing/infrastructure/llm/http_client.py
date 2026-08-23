@@ -10,7 +10,6 @@ from urllib.error import HTTPError, URLError
 from urllib.parse import urlparse
 from urllib.request import Request, urlopen
 
-
 DEFAULT_HEADERS = {
     "Accept": "application/json,text/html,application/pdf,*/*",
     "User-Agent": (

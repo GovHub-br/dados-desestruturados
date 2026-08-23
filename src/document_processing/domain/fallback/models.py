@@ -4,7 +4,6 @@ from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
-
 FallbackCorrectionScope = Literal[
     "correcao_parcial_mapeamento",
     "regeneracao_total_mapeamento",

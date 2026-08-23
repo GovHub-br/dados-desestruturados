@@ -6,13 +6,14 @@ import tarfile
 import tempfile
 from pathlib import Path
 
+from docling_runtime.command_builder import DOCLING_COMMAND_BUILDER, DoclingCommandBuilder
+
 from document_processing.infrastructure.llm.http_client import HTTP_CLIENT, HttpClient
 from document_processing.shared.config.runtime import (
     RUNTIME_CONFIG_LOADER,
     LocalPlatformConfig,
     RuntimeConfigLoader,
 )
-from docling_runtime.command_builder import DOCLING_COMMAND_BUILDER, DoclingCommandBuilder
 
 
 class DoclingPipelineClient:
