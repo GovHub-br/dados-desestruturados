@@ -95,9 +95,8 @@ Airflow / Portal / Scripts
 5. Evite referências a construtoras, ABECIP ou outro domínio dentro de regras
    genéricas. A diferença entre domínios deve vir do contrato semântico.
 
-As fachadas em `airflow/helpers/` e `airflow/plugins/` existem apenas para
-compatibilidade temporária. Código novo deve importar diretamente de
-`document_processing`.
+Não há fachadas de compatibilidade em `airflow/`. Código de DAG, scripts e
+testes deve importar diretamente de `document_processing`.
 
 ## Testes
 

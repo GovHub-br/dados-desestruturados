@@ -1,31 +1,28 @@
-# Política de Compatibilidade e Deprecações Arquiteturais
+# Compatibilidade e Deprecações Arquiteturais
 
-- Status: Ativo durante a reorganização
+- Status: Migração concluída em 2026-08-23
 - Owner: Engenharia da plataforma
-- Última revisão: 2026-08-23
-- Fonte de verdade: código em `src/document_processing/` e esta lista
+- Fonte de verdade: código em `src/document_processing/`
 
-## Imports legados preservados temporariamente
+## Política atual
 
-Os módulos abaixo são *shims* de compatibilidade. Eles apenas reexportam o
-código que já migrou para `src/document_processing/`; não devem receber nova
-regra de negócio.
+`airflow/plugins/` e `airflow/helpers/` foram removidos porque não continham
+extensões reais do Airflow: eram apenas fachadas que reexportavam módulos do
+núcleo. DAGs, scripts e testes importam agora diretamente de
+`document_processing` ou de `airflow/dags/_shared` quando a responsabilidade é
+exclusivamente de orquestração.
 
-| Import legado | Fonte atual | Remoção prevista |
-| --- | --- | --- |
-| `plugins.services.contract_schema` | `document_processing.domain.contracts.schema` | próxima remoção incompatível |
-| `plugins.services.layout_paths` | `document_processing.domain.layouts.paths` | próxima remoção incompatível |
-| `plugins.services.fallback.*` | `document_processing.domain.fallback` e `application.use_cases.fallback` | próxima remoção incompatível |
-| `plugins.clients.*` | `document_processing.infrastructure.*` | próxima remoção incompatível |
-| `plugins.services.semantic_contract_registry` | `document_processing.infrastructure.storage.semantic_contract_registry` | próxima remoção incompatível |
-| `plugins.services.detecta_pdf_extrai_service` | `document_processing.application.use_cases.documents.source_document_processing` | próxima remoção incompatível |
-| `plugins.services.schema_resolution_service` | `document_processing.application.use_cases.resolution.resolve_schema` | próxima remoção incompatível |
-| `plugins.services.construtoras_payloads` | `document_processing.application.use_cases.runtime_payloads` | próxima remoção incompatível |
-| `helpers.runtime_config` e `helpers.project_paths` | `document_processing.shared.config` | próxima remoção incompatível |
-| `helpers.airflow_defaults` e `helpers.reference_date_resolver` | `dags._shared` | próxima remoção incompatível |
+Novos módulos não devem recriar caminhos de compatibilidade para código interno.
+Uma eventual depreciação futura deve ter consumidor externo identificado,
+prazo explícito e plano de migração documentado antes de uma fachada ser criada.
 
-As DAGs, scripts mantidos e a biblioteca da plataforma já usam as fontes atuais.
-Os shims permanecem exclusivamente para não quebrar automações e extensões locais
-que ainda importem os caminhos antigos. O critério de remoção é uma busca sem
-consumidores externos conhecidos, uma janela de depreciação anunciada, testes
-unitários e smoke test do DagBag aprovados.
+## Caminhos de referência
+
+| Responsabilidade | Módulo de referência |
+| --- | --- |
+| Contrato semântico | `document_processing.domain.contracts` |
+| Paths de layout | `document_processing.domain.layouts` |
+| Fallback LLM | `document_processing.domain.fallback` e `document_processing.application.use_cases.fallback` |
+| Clientes externos | `document_processing.infrastructure` |
+| Configuração compartilhada | `document_processing.shared.config` |
+| Defaults e runtime exclusivos de DAG | `airflow.dags._shared` |

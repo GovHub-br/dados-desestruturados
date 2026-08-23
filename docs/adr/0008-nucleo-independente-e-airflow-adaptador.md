@@ -19,7 +19,7 @@ evolução de módulos grandes.
 - Testabilidade sem Airflow;
 - reuso pelo portal e por outros adaptadores;
 - redução de acoplamento;
-- migração incremental compatível.
+- remoção de camadas que apenas simulavam plugins.
 
 ## Alternativas consideradas
 
@@ -57,20 +57,18 @@ evolução de módulos grandes.
 
 ## Decisão
 
-O código reutilizável migra gradualmente para `src/document_processing`.
-DAGs e serviços de infraestrutura passam a ser adaptadores de borda. Durante a
-migração, shims preservam os imports públicos existentes.
+O código reutilizável vive em `src/document_processing`. DAGs passam a ser
+adaptadores de borda e compõem dependências explícitas. As fachadas temporárias
+foram removidas após a migração dos consumidores internos.
 
 ## Consequências
 
 - A lógica pode ser testada sem importar Airflow.
-- A migração é incremental, com menor risco operacional.
-- `airflow/plugins` será removido apenas quando não restarem extensões falsas
-  ou imports legados.
+- O núcleo pode ser consumido sem caminhos de importação duplicados.
+- `airflow/` contém apenas orquestração e código específico desse runtime.
 
 ## Riscos
 
-- Shims podem se tornar permanentes;
 - módulos movidos sem testes de fronteira podem manter dependências invertidas.
 
 ## Implementação
@@ -78,7 +76,8 @@ migração, shims preservam os imports públicos existentes.
 - Código reutilizável vive em `src/document_processing`;
 - DAGs e infraestrutura são adaptadores de borda;
 - fábricas Airflow compõem dependências concretas;
-- shims permanecem por uma release estável e não aceitam novos consumidores.
+- imports legados internos foram eliminados antes da remoção de `airflow/plugins`
+  e `airflow/helpers`.
 
 ## Critérios para reconsideração
 
