@@ -50,6 +50,43 @@ class CanonicalMappingEntry(BaseModel):
     obrigatorio: bool = False
 
 
+class UnmappedRequiredField(BaseModel):
+    """Declara uma ausencia de evidencia sem fingir que o campo foi resolvido."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    path: str
+    seletores: dict[str, str] = Field(default_factory=dict)
+    motivo: str
+    artefatos_verificados: list[str] = Field(min_length=1)
+    obrigatorio: bool = True
+
+    @field_validator("path", "motivo")
+    @classmethod
+    def _text_not_empty(cls, value: str) -> str:
+        cleaned = value.strip()
+        if not cleaned:
+            raise ValueError("campo textual obrigatorio vazio")
+        return cleaned
+
+    @field_validator("seletores")
+    @classmethod
+    def _selectors_are_textual(cls, value: dict[str, str]) -> dict[str, str]:
+        return {
+            str(key).strip(): str(item).strip()
+            for key, item in value.items()
+            if str(key).strip() and str(item).strip()
+        }
+
+    @field_validator("artefatos_verificados")
+    @classmethod
+    def _artifact_paths_not_empty(cls, value: list[str]) -> list[str]:
+        cleaned = [str(path).strip() for path in value if str(path).strip()]
+        if not cleaned:
+            raise ValueError("artefatos_verificados nao pode ser vazio")
+        return cleaned
+
+
 class LayoutSignatureCandidate(BaseModel):
     """Contrato aceito para o layout signature candidato gerado pela LLM."""
 
@@ -63,6 +100,7 @@ class LayoutSignatureCandidate(BaseModel):
     base_layout_signature: BaseLayoutSignatureRef | None = None
     fontes_relevantes: dict[str, Any] = Field(default_factory=dict)
     regras_deteccao_mudanca: list[dict[str, Any]] = Field(default_factory=list)
+    campos_nao_mapeados: list[UnmappedRequiredField] = Field(default_factory=list)
     mapeamento_canonico: dict[str, CanonicalMappingEntry] = Field(default_factory=dict)
     metadados_estruturais_evidencia: dict[str, Any] = Field(default_factory=dict)
     publicacao_automatica_habilitada: bool = True
@@ -80,9 +118,42 @@ class LayoutSignatureCandidate(BaseModel):
     def _must_have_mapping(
         cls,
         value: dict[str, CanonicalMappingEntry],
+        info: Any,
     ) -> dict[str, CanonicalMappingEntry]:
-        if not value:
+        if not value and not info.data.get("campos_nao_mapeados"):
             raise ValueError("mapeamento_canonico deve conter pelo menos um campo")
+        return value
+
+
+class LayoutSignatureFragment(BaseModel):
+    """Parte validavel de um layout candidato, limitada a uma unidade semantica."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    tipo_artefato: Literal["fragmento_layout_signature"]
+    unidade_mapeamento: str
+    campos_nao_mapeados: list[UnmappedRequiredField] = Field(default_factory=list)
+    mapeamento_canonico: dict[str, CanonicalMappingEntry] = Field(default_factory=dict)
+    fontes_relevantes: dict[str, Any] = Field(default_factory=dict)
+    metadados_estruturais_evidencia: dict[str, Any] = Field(default_factory=dict)
+
+    @field_validator("unidade_mapeamento")
+    @classmethod
+    def _unit_not_empty(cls, value: str) -> str:
+        cleaned = value.strip()
+        if not cleaned:
+            raise ValueError("unidade_mapeamento nao pode ser vazia")
+        return cleaned
+
+    @field_validator("mapeamento_canonico")
+    @classmethod
+    def _must_have_mapping(
+        cls,
+        value: dict[str, CanonicalMappingEntry],
+        info: Any,
+    ) -> dict[str, CanonicalMappingEntry]:
+        if not value and not info.data.get("campos_nao_mapeados"):
+            raise ValueError("fragmento deve conter pelo menos um mapeamento")
         return value
 
 

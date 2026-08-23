@@ -5,6 +5,7 @@ import json
 import os
 import re
 import urllib.error
+import urllib.parse
 import urllib.request
 from datetime import UTC, datetime
 from io import BytesIO
@@ -18,6 +19,8 @@ from minio import Minio
 SLUG_PATTERN = re.compile(r"^[a-z0-9][a-z0-9-]{0,62}$")
 SEMVER_PATTERN = re.compile(r"^v?(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$")
 MAX_UPLOAD_BYTES = int(os.getenv("PORTAL_MAX_UPLOAD_BYTES", str(50 * 1024 * 1024)))
+TRACE_DISCOVERY_TTL_SECONDS = 12
+_trace_discovery_cache: dict[str, tuple[datetime, Any]] = {}
 
 app = FastAPI(title="Portal de Documentos", version="0.1.0")
 
@@ -128,27 +131,173 @@ def _validate_contract_payload(payload: Any, *, domain: str, version: str) -> di
     return payload
 
 
-def _trigger_extraction(origin_manifest_key: str) -> str:
-    base = os.getenv("AIRFLOW_API_URL", "http://airflow-webserver:8080/api/v2").rstrip("/")
+def _airflow_api_base() -> str:
+    return os.getenv("AIRFLOW_API_URL", "http://airflow-webserver:8080/api/v2").rstrip("/")
+
+
+def _airflow_access_token() -> str:
+    """Obtém um token de curta duração para chamadas do backend do portal."""
+    base = _airflow_api_base()
     user = os.getenv("PORTAL_AIRFLOW_USER", "admin")
     password = os.getenv("PORTAL_AIRFLOW_PASSWORD", "admin")
-    payload = json.dumps({"conf": {"origin_manifest_keys": [origin_manifest_key], "trigger_origin_dag": "portal"}}).encode()
-    request = urllib.request.Request(
-        f"{base}/dags/dag_extrai_documentos_origem/dagRuns",
-        data=payload,
+    auth_base = base.rsplit("/api/", 1)[0]
+    token_request = urllib.request.Request(
+        f"{auth_base}/auth/token",
+        data=json.dumps({"username": user, "password": password}).encode(),
         headers={"Content-Type": "application/json"},
         method="POST",
     )
-    import base64
-    request.add_header("Authorization", "Basic " + base64.b64encode(f"{user}:{password}".encode()).decode())
     try:
-        with urllib.request.urlopen(request, timeout=20) as response:
-            result = json.loads(response.read().decode())
+        with urllib.request.urlopen(token_request, timeout=20) as response:
+            access_token = str(json.loads(response.read().decode()).get("access_token") or "")
     except urllib.error.HTTPError as exc:
-        raise HTTPException(status_code=502, detail=f"Airflow recusou o disparo: {exc.read().decode(errors='replace')}") from exc
+        raise HTTPException(
+            status_code=502,
+            detail=f"Airflow recusou a autenticacao do portal: {exc.read().decode(errors='replace')}",
+        ) from exc
     except urllib.error.URLError as exc:
         raise HTTPException(status_code=502, detail=f"Airflow indisponivel: {exc.reason}") from exc
+    if not access_token:
+        raise HTTPException(status_code=502, detail="Airflow nao retornou token de acesso ao portal.")
+    return access_token
+
+
+def _airflow_json(
+    path: str,
+    *,
+    method: str = "GET",
+    payload: dict[str, Any] | None = None,
+    access_token: str | None = None,
+) -> dict[str, Any]:
+    """Chama a API do Airflow sem expor as credenciais do portal ao navegador."""
+    request = urllib.request.Request(
+        f"{_airflow_api_base()}/{path.lstrip('/')}",
+        data=json.dumps(payload).encode() if payload is not None else None,
+        headers={
+            "Content-Type": "application/json",
+            "Authorization": f"Bearer {access_token or _airflow_access_token()}",
+        },
+        method=method,
+    )
+    try:
+        with urllib.request.urlopen(request, timeout=20) as response:
+            loaded = json.loads(response.read().decode())
+    except urllib.error.HTTPError as exc:
+        raise HTTPException(status_code=502, detail=f"Airflow recusou a consulta do portal: {exc.read().decode(errors='replace')}") from exc
+    except urllib.error.URLError as exc:
+        raise HTTPException(status_code=502, detail=f"Airflow indisponivel: {exc.reason}") from exc
+    if not isinstance(loaded, dict):
+        raise HTTPException(status_code=502, detail="Airflow retornou uma resposta invalida ao portal.")
+    return loaded
+
+
+def _trigger_extraction(origin_manifest_key: str) -> str:
+    result = _airflow_json(
+        "dags/dag_extrai_documentos_origem/dagRuns",
+        method="POST",
+        payload={
+            "logical_date": datetime.now(UTC).isoformat(),
+            "conf": {
+                "origin_manifest_keys": [origin_manifest_key],
+                "trigger_origin_dag": "portal",
+            },
+        },
+    )
     return str(result.get("dag_run_id") or result.get("run_id") or "disparada")
+
+
+def _latest_extraction_manifest(client: Minio, *, domain: str, entity_slug: str, document_id: str) -> tuple[str | None, dict[str, Any] | None]:
+    """Localiza a extração mais recente sem depender do estado transitório do navegador."""
+    cache_key = f"extraction:{domain}:{entity_slug}:{document_id}"
+    cached = _trace_discovery_cache.get(cache_key)
+    now = datetime.now(UTC)
+    if cached and (now - cached[0]).total_seconds() < TRACE_DISCOVERY_TTL_SECONDS:
+        return cached[1]
+    prefix = f"execucoes/{domain}/extracao/{entity_slug}/"
+    candidates = [
+        item for item in client.list_objects(_bucket(), prefix=prefix, recursive=True)
+        if item.object_name.endswith("/extraction/manifesto_execucao.json")
+        and f"/document_id={document_id}/" in item.object_name
+    ]
+    if not candidates:
+        result = (None, None)
+        _trace_discovery_cache[cache_key] = (now, result)
+        return result
+    latest = max(candidates, key=lambda item: item.last_modified or datetime.min.replace(tzinfo=UTC))
+    result = (latest.object_name, _read_json(client, latest.object_name))
+    _trace_discovery_cache[cache_key] = (now, result)
+    return result
+
+
+def _latest_resolution_exists(client: Minio, *, domain: str, entity_slug: str, document_id: str, execution_id: str | None) -> bool:
+    """Verifica o schema resolvido produzido pelo fluxo direto da DAG 2."""
+    cache_key = f"resolution:{domain}:{entity_slug}:{document_id}:{execution_id or ''}"
+    cached = _trace_discovery_cache.get(cache_key)
+    now = datetime.now(UTC)
+    if cached and (now - cached[0]).total_seconds() < TRACE_DISCOVERY_TTL_SECONDS:
+        return bool(cached[1])
+    prefix = f"execucoes/{domain}/resolucao/{entity_slug}/document_id={document_id}/"
+    execution_filter = f"execution_id={execution_id}/" if execution_id else ""
+    resolved = any(
+        item.object_name.endswith("/resolution/schema_saida_resolvido.json")
+        and (not execution_filter or execution_filter in item.object_name)
+        for item in client.list_objects(_bucket(), prefix=prefix, recursive=True)
+    )
+    _trace_discovery_cache[cache_key] = (now, resolved)
+    return resolved
+
+
+def _fallback_revalidation_exists(client: Minio, *, revalidation_prefix: str | None) -> bool:
+    """Verifica a saída da DAG 2 quando ela é acionada pela revalidação da DAG 3."""
+    prefix = str(revalidation_prefix or "").strip("/")
+    return bool(prefix) and _object_exists(client, f"{prefix}/schema_saida_resolvido.json")
+
+
+def _list_airflow_runs(dag_id: str, *, access_token: str) -> list[dict[str, Any]]:
+    result = _airflow_json(
+        f"dags/{dag_id}/dagRuns?limit=100&order_by=-start_date",
+        access_token=access_token,
+    )
+    runs = result.get("dag_runs") or result.get("dagRuns") or []
+    return [run for run in runs if isinstance(run, dict)]
+
+
+def _run_matches_document(run: dict[str, Any], *, manifest_key: str | None, document_id: str) -> bool:
+    conf = run.get("conf") if isinstance(run.get("conf"), dict) else {}
+    manifest_keys = conf.get("manifest_keys")
+    return bool(
+        conf.get("document_id") == document_id
+        or manifest_key and conf.get("manifest_key") == manifest_key
+        or manifest_key and isinstance(manifest_keys, list) and manifest_key in manifest_keys
+    )
+
+
+def _latest_run(runs: list[dict[str, Any]]) -> dict[str, Any] | None:
+    if not runs:
+        return None
+    return max(runs, key=lambda run: str(run.get("start_date") or run.get("logical_date") or ""))
+
+
+def _trace_response(
+    *,
+    stage: str,
+    state: str,
+    label: str,
+    terminal: bool,
+    dag_id: str | None = None,
+    dag_run_id: str | None = None,
+    manifest_key: str | None = None,
+    warning: str | None = None,
+) -> dict[str, Any]:
+    return {
+        "stage": stage,
+        "state": state,
+        "label": label,
+        "terminal": terminal,
+        "run": {"dag_id": dag_id, "dag_run_id": dag_run_id} if dag_id else None,
+        "manifest_key": manifest_key,
+        "warning": warning,
+    }
 
 
 @app.get("/healthz")
@@ -279,6 +428,185 @@ async def upload_document(
     return {"document_id": document_id, "pdf_uri": pdf_uri, "origin_manifest_key": manifest_key, "dag_run_id": dag_run_id}
 
 
+@app.get("/api/execution-trace", dependencies=[Depends(_require_token)])
+def execution_trace(
+    domain: str,
+    entity_slug: str,
+    document_id: str,
+    dag_run_id: str,
+) -> dict[str, Any]:
+    """Consolida o percurso de um documento pelas DAGs sem criar estado novo no portal.
+
+    O MinIO confirma os artefatos persistidos; o Airflow informa a etapa que ainda está
+    em andamento. Assim a tela não precisa conhecer os IDs internos gerados entre DAGs.
+    """
+    domain = _slug(domain, "domain")
+    entity_slug = _slug(entity_slug, "entity_slug")
+    document_id = _slug(document_id, "document_id")
+    client = _minio()
+    manifest_key, extraction_manifest = _latest_extraction_manifest(
+        client,
+        domain=domain,
+        entity_slug=entity_slug,
+        document_id=document_id,
+    )
+    execution_id = str(extraction_manifest.get("execution_id") or "") if extraction_manifest else ""
+    resolved = _latest_resolution_exists(
+        client,
+        domain=domain,
+        entity_slug=entity_slug,
+        document_id=document_id,
+        execution_id=execution_id or None,
+    )
+
+    try:
+        token = _airflow_access_token()
+        dag1_run = _airflow_json(
+            f"dags/dag_extrai_documentos_origem/dagRuns/{urllib.parse.quote(dag_run_id, safe='')}",
+            access_token=token,
+        )
+        dag2_runs = [
+            run for run in _list_airflow_runs("dag_resolve_schema_saida", access_token=token)
+            if _run_matches_document(run, manifest_key=manifest_key, document_id=document_id)
+        ]
+        dag3_runs = [
+            run for run in _list_airflow_runs("dag_valida_e_fallback_llm", access_token=token)
+            if _run_matches_document(run, manifest_key=manifest_key, document_id=document_id)
+        ]
+    except HTTPException as exc:
+        warning = str(exc.detail)
+        if resolved:
+            return _trace_response(
+                stage="result",
+                state="success",
+                label="Resultado resolvido e persistido no MinIO",
+                terminal=True,
+                manifest_key=manifest_key,
+                warning=warning,
+            )
+        if manifest_key:
+            return _trace_response(
+                stage="evidence",
+                state="running",
+                label="Artefatos persistidos; aguardando atualização do orquestrador",
+                terminal=False,
+                manifest_key=manifest_key,
+                warning=warning,
+            )
+        return _trace_response(
+            stage="extraction",
+            state="running",
+            label="Extração em andamento; atualização do orquestrador indisponível",
+            terminal=False,
+            dag_id="dag_extrai_documentos_origem",
+            dag_run_id=dag_run_id,
+            warning=warning,
+        )
+
+    active_states = {"queued", "running", "up_for_retry", "deferred"}
+    dag1_state = str(dag1_run.get("state") or "queued").lower()
+    latest_dag2 = _latest_run(dag2_runs)
+    latest_dag3 = _latest_run(dag3_runs)
+    dag2_state = str(latest_dag2.get("state") or "").lower() if latest_dag2 else ""
+    dag3_state = str(latest_dag3.get("state") or "").lower() if latest_dag3 else ""
+    dag2_conf = latest_dag2.get("conf") if latest_dag2 and isinstance(latest_dag2.get("conf"), dict) else {}
+    revalidating = bool(dag2_conf.get("fallback_revalidation_prefix")) or dag2_conf.get("modo_execucao") == "revalidacao_layout_candidato"
+    fallback_resolved = _fallback_revalidation_exists(
+        client,
+        revalidation_prefix=dag2_conf.get("fallback_revalidation_prefix"),
+    )
+
+    if dag3_state in active_states:
+        return _trace_response(
+            stage="fallback",
+            state="running",
+            label="Fallback LLM em andamento: criando ou corrigindo o layout",
+            terminal=False,
+            dag_id="dag_valida_e_fallback_llm",
+            dag_run_id=str(latest_dag3.get("dag_run_id") or latest_dag3.get("run_id") or ""),
+            manifest_key=manifest_key,
+        )
+    if dag2_state in active_states:
+        return _trace_response(
+            stage="resolution",
+            state="running",
+            label="Revalidando o layout gerado" if revalidating else "Resolução determinística em andamento",
+            terminal=False,
+            dag_id="dag_resolve_schema_saida",
+            dag_run_id=str(latest_dag2.get("dag_run_id") or latest_dag2.get("run_id") or ""),
+            manifest_key=manifest_key,
+        )
+    if dag1_state in active_states:
+        return _trace_response(
+            stage="extraction",
+            state="running",
+            label="Extração Docling em andamento",
+            terminal=False,
+            dag_id="dag_extrai_documentos_origem",
+            dag_run_id=dag_run_id,
+            manifest_key=manifest_key,
+        )
+    if resolved or fallback_resolved:
+        return _trace_response(
+            stage="result",
+            state="success",
+            label=(
+                "Schema de saída revalidado e disponível"
+                if fallback_resolved
+                else "Schema de saída resolvido e disponível"
+            ),
+            terminal=True,
+            dag_id="dag_resolve_schema_saida",
+            dag_run_id=str(latest_dag2.get("dag_run_id") or latest_dag2.get("run_id") or "") if latest_dag2 else None,
+            manifest_key=manifest_key,
+        )
+    if dag3_state == "failed":
+        return _trace_response(
+            stage="fallback",
+            state="failed",
+            label="Fallback LLM não concluiu; consulte os detalhes no Airflow",
+            terminal=True,
+            dag_id="dag_valida_e_fallback_llm",
+            dag_run_id=str(latest_dag3.get("dag_run_id") or latest_dag3.get("run_id") or ""),
+            manifest_key=manifest_key,
+        )
+    if dag2_state == "failed":
+        return _trace_response(
+            stage="fallback",
+            state="queued",
+            label="Falha de layout identificada; aguardando início do fallback LLM",
+            terminal=False,
+            dag_id="dag_resolve_schema_saida",
+            dag_run_id=str(latest_dag2.get("dag_run_id") or latest_dag2.get("run_id") or ""),
+            manifest_key=manifest_key,
+        )
+    if dag1_state == "failed":
+        return _trace_response(
+            stage="extraction",
+            state="failed",
+            label="A extração não concluiu; consulte os detalhes no Airflow",
+            terminal=True,
+            dag_id="dag_extrai_documentos_origem",
+            dag_run_id=dag_run_id,
+        )
+    if manifest_key:
+        return _trace_response(
+            stage="evidence",
+            state="running",
+            label="Artefatos de evidência persistidos; preparando a resolução",
+            terminal=False,
+            manifest_key=manifest_key,
+        )
+    return _trace_response(
+        stage="extraction",
+        state="queued",
+        label="Execução aguardando o início da extração",
+        terminal=False,
+        dag_id="dag_extrai_documentos_origem",
+        dag_run_id=dag_run_id,
+    )
+
+
 @app.get("/api/executions", dependencies=[Depends(_require_token)])
 def list_executions(domain: str, entity_slug: str | None = None) -> list[dict[str, Any]]:
     domain = _slug(domain, "domain")
@@ -394,5 +722,80 @@ def home() -> str:
     form.addEventListener('submit',showLineageDetails);
     const contractForm=document.querySelector('#contract-upload'),contractOut=document.querySelector('#contract-out'),contractButton=document.querySelector('#contract-submit');
     contractForm.onsubmit=async event=>{event.preventDefault();contractButton.disabled=true;contractButton.textContent='Validando contrato…';contractOut.className='message';try{const response=await fetch('/api/contracts',{method:'POST',body:new FormData(contractForm)});const payload=await response.json();if(!response.ok)throw new Error(payload.detail||'Não foi possível publicar o contrato.');showMessage(contractOut,'success',`Contrato publicado\n\nDomínio: ${payload.domain}\nVersão: ${payload.version}`);if(!knownDomains.includes(payload.domain)){knownDomains.push(payload.domain).sort();domainsList.innerHTML=knownDomains.map(domain=>`<option value="${domain}"></option>`).join('')}domainInput.value=payload.domain;contractInput.value=payload.version;versionsList.innerHTML+=`<option value="${payload.version}"></option>`;showDomainGuidance()}catch(error){showMessage(contractOut,'error',`Contrato não publicado\n\n${error.message}`)}finally{contractButton.disabled=false;contractButton.textContent='Validar e publicar contrato'}};
+  </script>
+  <script>
+    // O Airflow cria novos run IDs quando uma DAG dispara a próxima. O portal mantém
+    // o documento como a identidade da jornada e consulta o backend periodicamente.
+    const traceStorageKey='portal.execution-trace';
+    let activeTrace=null,traceTimer=null;
+    const setTraceVisualState=trace=>{
+      setLineage(trace.stage,trace.label);
+      lineageStatus.classList.toggle('failed',trace.state==='failed');
+      lineageSteps.forEach(step=>step.classList.toggle('failed',trace.state==='failed'&&step.dataset.stage===trace.stage));
+      if(activeTrace?.fallbackSeen&&trace.stage==='resolution'){
+        document.querySelector('[data-stage="fallback"]')?.classList.add('queued');
+      }
+      if(trace.stage==='fallback')activeTrace.fallbackSeen=true;
+      if(trace.run?.dag_run_id)panelRun.textContent=String(trace.run.dag_run_id).slice(-8);
+      panelStage.textContent=trace.stage==='fallback'?'Fallback LLM':trace.stage==='resolution'?'Resolução':trace.stage==='evidence'?'Evidências':trace.stage==='result'?'Resultado':trace.stage==='extraction'?'Extração':'PDF';
+    };
+    const stopTracePolling=()=>{if(traceTimer){window.clearTimeout(traceTimer);traceTimer=null}};
+    const pollExecutionTrace=async()=>{
+      if(!activeTrace)return;
+      const query=new URLSearchParams({domain:activeTrace.domain,entity_slug:activeTrace.entity_slug,document_id:activeTrace.document_id,dag_run_id:activeTrace.dag_run_id});
+      try{
+        const response=await fetch(`/api/execution-trace?${query}`);
+        const trace=await response.json();
+        if(!response.ok)throw new Error(trace.detail||'Não foi possível atualizar a rastreabilidade.');
+        setTraceVisualState(trace);
+        activeTrace={...activeTrace,fallbackSeen:activeTrace.fallbackSeen||trace.stage==='fallback'};
+        sessionStorage.setItem(traceStorageKey,JSON.stringify(activeTrace));
+        if(trace.terminal){stopTracePolling();return}
+      }catch(error){
+        // Mantém o último estágio válido e tenta novamente: uma indisponibilidade
+        // temporária do Airflow não deve fazer a pessoa perder a rastreabilidade.
+        lineageStatus.textContent='Atualizando rastreabilidade…';
+        const dot=document.createElement('i');dot.setAttribute('aria-hidden','true');lineageStatus.prepend(dot);
+      }
+      traceTimer=window.setTimeout(pollExecutionTrace,4000);
+    };
+    const startExecutionTrace=payload=>{
+      stopTracePolling();
+      activeTrace={
+        domain:normalizeDomain(domainInput.value),
+        entity_slug:document.querySelector('#slug').value.trim().toLowerCase(),
+        document_id:payload.document_id,
+        dag_run_id:payload.dag_run_id,
+        fallbackSeen:false,
+      };
+      sessionStorage.setItem(traceStorageKey,JSON.stringify(activeTrace));
+      showLineageDetails();
+      pollExecutionTrace();
+    };
+    const previousTrace=sessionStorage.getItem(traceStorageKey);
+    if(previousTrace){
+      try{activeTrace=JSON.parse(previousTrace);if(activeTrace?.domain&&activeTrace?.entity_slug&&activeTrace?.document_id&&activeTrace?.dag_run_id){pollExecutionTrace()}}catch(error){sessionStorage.removeItem(traceStorageKey)}
+    }
+    form.onsubmit=async event=>{
+      event.preventDefault();
+      if(!showDomainGuidance()){
+        showMessage(out,'error','Envio interrompido\n\nEscolha um domínio com contrato publicado ou publique primeiro um contrato semântico.');
+        return;
+      }
+      button.disabled=true;button.textContent='Preparando execução…';out.className='message';setLineage('origin','Recebendo documento');
+      try{
+        const response=await fetch('/api/documents',{method:'POST',body:new FormData(form)});
+        const payload=await response.json();
+        if(!response.ok)throw new Error(payload.detail||'Não foi possível iniciar a execução.');
+        panelRun.textContent=String(payload.dag_run_id||'—').slice(-8);
+        panelStart.textContent=new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+        setLineage('extraction','Extração agendada no Airflow');
+        showMessage(out,'success',`Execução iniciada\n\nDocumento: ${payload.document_id}\nDAG run: ${payload.dag_run_id}`);
+        startExecutionTrace(payload);
+      }catch(error){
+        setLineage('origin','Envio não iniciado');
+        showMessage(out,'error',`Não foi possível iniciar a execução\n\n${error.message}`);
+      }finally{button.disabled=false;button.textContent='Enviar e iniciar extração'}
+    };
   </script>
 </body></html>"""

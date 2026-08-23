@@ -308,9 +308,9 @@ class FallbackProblemContextBuilder:
     def _artifact_selection_contract_context(contract_context: Any) -> dict[str, Any]:
         """Projeta o contrato para a selecao sem expor estrutura de mapeamento.
 
-        A primeira chamada precisa conhecer a semantica das entidades e os poucos
-        campos que requerem evidencia. Paths, arrays e metricas completas sao
-        necessarios ao validador e a geracao do candidato, nao a selecao.
+        A primeira chamada precisa conhecer entidades, metricas e os poucos campos
+        que requerem evidencia. Paths e arrays continuam restritos ao validador e
+        a geracao do candidato.
         """
         if not isinstance(contract_context, dict):
             return {}
@@ -325,6 +325,9 @@ class FallbackProblemContextBuilder:
             "contrato_semantico": {
                 "entidades": (
                     semantic.get("entidades", {}) if isinstance(semantic, dict) else {}
+                ),
+                "metricas": (
+                    semantic.get("metricas", {}) if isinstance(semantic, dict) else {}
                 ),
                 "requisitos_mapeamento": mapping_requirements_payload(requirements),
             },
@@ -387,6 +390,7 @@ class FallbackProblemContextBuilder:
                 ),
                 "fontes_relevantes": {},
                 "regras_deteccao_mudanca": [],
+                "campos_nao_mapeados": [],
                 "mapeamento_canonico": {
                     "campo.permitido": {
                         "tipo_origem": "celula_de_tabela",
@@ -399,8 +403,15 @@ class FallbackProblemContextBuilder:
             "secoes_necessarias": {
                 "fontes_relevantes": "objeto JSON",
                 "regras_deteccao_mudanca": "lista JSON",
+                "campos_nao_mapeados": "lista JSON de ausencias comprovadas",
                 "mapeamento_canonico": "objeto JSON nao vazio",
                 "metadados_estruturais_evidencia": "objeto JSON",
+            },
+            "formato_campos_nao_mapeados": {
+                "path": "campo.permitido",
+                "seletores": {"papel_observacao": "referencia"},
+                "motivo": "A evidencia carregada nao contem a observacao exigida.",
+                "artefatos_verificados": ["tables/table001.json"],
             },
             "tipos_origem_permitidos": [
                 "valor_fixo",

@@ -33,6 +33,9 @@ class FallbackLlmClient:
     ) -> None:
         self.config_loader = config_loader or RUNTIME_CONFIG_LOADER
         self.http_client = http_client or HTTP_CLIENT
+        # A orquestracao persiste este resumo junto da resposta aceita. Em erros,
+        # os metadados continuam no proprio FallbackLlmClientError.
+        self.last_response_metadata: dict[str, Any] | None = None
 
     def generate_json(
         self,
@@ -41,14 +44,23 @@ class FallbackLlmClient:
         user_payload: dict[str, Any] | None = None,
         messages: list[dict[str, str]] | None = None,
         response_schema: dict[str, Any] | None = None,
+        max_tokens: int | None = None,
+        thinking_mode: str | None = None,
     ) -> tuple[dict[str, Any], str]:
         """Chama a LLM configurada e exige que o conteudo retornado seja JSON object."""
+        self.last_response_metadata = None
         chat_messages = self._build_chat_messages(
             system_prompt=system_prompt,
             user_payload=user_payload,
             messages=messages,
         )
         config = self.config_loader.load_local_platform_config()
+        effective_max_tokens = max_tokens or config.fallback_llm_max_tokens
+        effective_thinking_mode = (
+            thinking_mode
+            if thinking_mode is not None
+            else getattr(config, "fallback_llm_thinking_mode", "")
+        )
         provider = config.fallback_llm_provider
         if provider == "openai":
             raw = self._call_openai_compatible(
@@ -57,10 +69,12 @@ class FallbackLlmClient:
                 model=config.fallback_llm_model,
                 messages=chat_messages,
                 timeout=config.fallback_llm_timeout_seconds,
-                max_tokens=config.fallback_llm_max_tokens,
+                max_tokens=effective_max_tokens,
+                thinking_mode=effective_thinking_mode,
                 response_schema=response_schema,
             )
             response_metadata = self._openai_response_metadata(raw)
+            self.last_response_metadata = response_metadata
             content = self._extract_openai_content(raw, response_metadata=response_metadata)
             return self._parse_json_with_metadata(content, response_metadata), content
 
@@ -70,10 +84,11 @@ class FallbackLlmClient:
                 model=config.fallback_llm_model,
                 messages=chat_messages,
                 timeout=config.fallback_llm_timeout_seconds,
-                max_tokens=config.fallback_llm_max_tokens,
+                max_tokens=effective_max_tokens,
                 response_schema=response_schema,
             )
             response_metadata = self._ollama_response_metadata(raw)
+            self.last_response_metadata = response_metadata
             content = self._extract_ollama_content(raw, response_metadata=response_metadata)
             return self._parse_json_with_metadata(content, response_metadata), content
 
@@ -90,6 +105,7 @@ class FallbackLlmClient:
         messages: list[dict[str, str]],
         timeout: int,
         max_tokens: int,
+        thinking_mode: str,
         response_schema: dict[str, Any] | None,
     ) -> dict[str, Any]:
         """Chama endpoint compativel com OpenAI Chat Completions."""
@@ -117,6 +133,12 @@ class FallbackLlmClient:
             "max_tokens": max_tokens,
             "response_format": {"type": "json_object"},
         }
+        if thinking_mode:
+            if thinking_mode not in {"enabled", "disabled"}:
+                raise FallbackLlmClientError(
+                    "Modo thinking invalido. Use 'enabled', 'disabled' ou deixe vazio."
+                )
+            payload["thinking"] = {"type": thinking_mode}
         try:
             return self.http_client.post_json(
                 url,

@@ -5,13 +5,39 @@ from typing import Any
 from pydantic import ValidationError
 
 from plugins.services.contract_schema import normalize_schema_path
+from plugins.services.layout_paths import normalize_mapping_path, split_mapping_path
 
 from .mapping_requirements import (
     MappingRequirementsError,
     mapping_requirements_from_context,
     parsed_mapping_path,
 )
-from .models import LayoutSignatureCandidate
+from .mapping_plan import MappingPlanService, MappingUnit
+from .models import (
+    LayoutSignatureCandidate,
+    LayoutSignatureFragment,
+    UnmappedRequiredField,
+)
+
+
+class UnmappedRequiredFieldsError(RuntimeError):
+    """A LLM declarou corretamente que a evidencia nao cobre campo obrigatorio."""
+
+    def __init__(self, fields: list[UnmappedRequiredField]) -> None:
+        self.fields = fields
+        details = [
+            {
+                "path": field.path,
+                "seletores": field.seletores,
+                "motivo": field.motivo,
+                "artefatos_verificados": field.artefatos_verificados,
+            }
+            for field in fields
+        ]
+        super().__init__(
+            "Evidencia insuficiente para requisitos obrigatorios do contrato: "
+            f"{details}."
+        )
 
 
 class FallbackCandidateValidationService:
@@ -68,6 +94,9 @@ class FallbackCandidateValidationService:
             if not self._mapping_path_has_required_array_selectors(
                 mapping_path,
                 array_paths,
+                mapping_entry=candidate_model.mapeamento_canonico[mapping_path].model_dump(
+                    mode="json", exclude_none=True
+                ),
             ):
                 raise RuntimeError(
                     "Resposta da LLM criou mapeamento que atravessa array sem "
@@ -87,7 +116,10 @@ class FallbackCandidateValidationService:
             candidate_model,
             fallback_problem_context,
         )
-        self._validate_table_mappings_use_indices_only(candidate_model)
+        self._validate_table_mappings_use_indices_only(
+            candidate_model,
+            schema_paths=schema_paths,
+        )
         self._validate_candidate_does_not_override_deterministic_headers(candidate_model)
         self._validate_candidate_extra_sections(candidate_model)
         self._validate_candidate_does_not_write_final_values(candidate_model)
@@ -96,6 +128,77 @@ class FallbackCandidateValidationService:
             fallback_problem_context,
         )
         return candidate_model
+
+    def validate_layout_fragment(
+        self,
+        fragment: dict[str, Any],
+        *,
+        unit: MappingUnit,
+        fallback_problem_context: dict[str, Any],
+    ) -> LayoutSignatureFragment:
+        """Valida um fragmento usando as mesmas regras da DAG 2 em escopo reduzido."""
+        try:
+            fragment_model = LayoutSignatureFragment.model_validate(fragment)
+        except ValidationError as exc:
+            raise RuntimeError(
+                "Resposta da LLM nao respeita o contrato Pydantic do fragmento de layout: "
+                f"{exc}"
+            ) from exc
+        if fragment_model.unidade_mapeamento != unit.id:
+            raise RuntimeError(
+                "Fragmento retornou unidade_mapeamento diferente da unidade solicitada: "
+                f"{fragment_model.unidade_mapeamento}."
+            )
+
+        allowed_prefixes = unit.mapping_paths
+        invalid_paths = [
+            mapping_path
+            for mapping_path in fragment_model.mapeamento_canonico
+            if not any(
+                normalize_schema_path(mapping_path) == required_path
+                or normalize_schema_path(mapping_path).startswith(f"{required_path}.")
+                for required_path in allowed_prefixes
+            )
+        ]
+        if invalid_paths:
+            raise RuntimeError(
+                "Fragmento tentou mapear campo fora da unidade semantica "
+                f"{unit.id}: {invalid_paths}."
+            )
+
+        contract_context = fallback_problem_context.get("contrato_semantico_relevante", {})
+        if not isinstance(contract_context, dict):
+            raise RuntimeError("Contexto do contrato ausente para validar fragmento.")
+        scoped_contract = MappingPlanService.scoped_contract_context(contract_context, unit)
+        scoped_context = {
+            **fallback_problem_context,
+            "contrato_semantico_relevante": scoped_contract,
+        }
+        fallback_context = scoped_context.get("fallback_context", {})
+        if not isinstance(fallback_context, dict):
+            raise RuntimeError("fallback_context ausente para validar fragmento.")
+        scope = str(scoped_context.get("escopo_permitido", "")).strip()
+        candidate_projection = {
+            "tipo_artefato": "layout_signature_candidato",
+            "status_layout": "candidato",
+            "escopo_correcao": scope,
+            "document_id": fallback_context.get("document_id"),
+            "execution_id_origem": fallback_context.get("execution_id"),
+            "base_layout_signature": (
+                None
+                if scope == self.CREATION_SCOPE
+                else scoped_context.get("layout_signature_base_ref")
+            ),
+            "fontes_relevantes": fragment_model.fontes_relevantes,
+            "regras_deteccao_mudanca": [],
+            "campos_nao_mapeados": fragment_model.campos_nao_mapeados,
+            "mapeamento_canonico": fragment_model.mapeamento_canonico,
+            "metadados_estruturais_evidencia": (
+                fragment_model.metadados_estruturais_evidencia
+            ),
+        }
+        self.validate_candidate_layout(candidate_projection, scoped_context)
+        return fragment_model
 
     @staticmethod
     def _validate_candidate_covers_mapping_requirements(
@@ -113,16 +216,25 @@ class FallbackCandidateValidationService:
             (mapping_path, *parsed_mapping_path(mapping_path))
             for mapping_path in candidate.mapeamento_canonico
         ]
-        missing: list[str] = []
+        missing: list[tuple[str, dict[str, str]]] = []
         for requirement in requirements:
             value_mappings = [
                 item for item in parsed_mappings if item[1] == requirement.path
             ]
             if not value_mappings:
-                missing.append(requirement.path)
+                if requirement.observations:
+                    missing.extend(
+                        (requirement.path, observation.selectors)
+                        for observation in requirement.observations
+                        if observation.required
+                    )
+                else:
+                    missing.append((requirement.path, {}))
                 continue
 
             for observation in requirement.observations:
+                if not observation.required:
+                    continue
                 matching_values = [
                     item
                     for item in value_mappings
@@ -132,9 +244,7 @@ class FallbackCandidateValidationService:
                     )
                 ]
                 if not matching_values:
-                    missing.append(
-                        f"{requirement.path} com seletores {observation.selectors}"
-                    )
+                    missing.append((requirement.path, observation.selectors))
                     continue
 
                 parent_path = requirement.path.rsplit(".", maxsplit=1)[0]
@@ -149,26 +259,183 @@ class FallbackCandidateValidationService:
                         for _mapping_path, normalized_path, selectors in parsed_mappings
                         for _value_mapping_path, _value_path, value_selectors in matching_values
                     ):
-                        missing.append(
-                            f"{context_path} para seletores {observation.selectors}"
-                        )
+                        missing.append((context_path, observation.selectors))
 
         if missing:
+            FallbackCandidateValidationService._raise_if_missing_fields_were_declared(
+                missing=missing,
+                declared=candidate.campos_nao_mapeados,
+            )
+            missing_descriptions = [
+                (
+                    path
+                    if not selectors
+                    else f"{path} com seletores {selectors}"
+                )
+                for path, selectors in missing
+            ]
             raise RuntimeError(
                 "Layout candidato nao cobre requisitos obrigatorios de mapeamento: "
-                f"{missing}."
+                f"{missing_descriptions}."
             )
+
+        if candidate.campos_nao_mapeados:
+            raise RuntimeError(
+                "Layout candidato declarou campos_nao_mapeados que ja possuem "
+                "mapeamento obrigatorio completo."
+            )
+
+    @staticmethod
+    def optional_mapping_observations_not_mapped(
+        candidate: LayoutSignatureCandidate,
+        fallback_problem_context: dict[str, Any],
+    ) -> list[tuple[str, dict[str, str]]]:
+        """Lista ausencias opcionais para auditoria, sem bloquear o candidato."""
+        contract = fallback_problem_context.get("contrato_semantico_relevante", {})
+        try:
+            requirements = mapping_requirements_from_context(contract)
+        except MappingRequirementsError as exc:
+            raise RuntimeError(str(exc)) from exc
+
+        parsed_mappings = [
+            (mapping_path, *parsed_mapping_path(mapping_path))
+            for mapping_path in candidate.mapeamento_canonico
+        ]
+        missing: list[tuple[str, dict[str, str]]] = []
+        for requirement in requirements:
+            value_mappings = [
+                item for item in parsed_mappings if item[1] == requirement.path
+            ]
+            for observation in requirement.observations:
+                if observation.required:
+                    continue
+                matching_values = [
+                    item for item in value_mappings
+                    if all(
+                        item[2].get(key) == value
+                        for key, value in observation.selectors.items()
+                    )
+                ]
+                if not matching_values:
+                    missing.append((requirement.path, observation.selectors))
+                    continue
+
+                parent_path = requirement.path.rsplit(".", maxsplit=1)[0]
+                for context_field in observation.context_fields:
+                    context_path = f"{parent_path}.{context_field}"
+                    if not any(
+                        normalized_path == context_path
+                        and all(
+                            selectors.get(key) == value
+                            for key, value in value_selectors.items()
+                        )
+                        for _mapping_path, normalized_path, selectors in parsed_mappings
+                        for _value_mapping_path, _value_path, value_selectors in matching_values
+                    ):
+                        missing.append((context_path, observation.selectors))
+        return missing
+
+    @staticmethod
+    def _raise_if_missing_fields_were_declared(
+        *,
+        missing: list[tuple[str, dict[str, str]]],
+        declared: list[UnmappedRequiredField],
+    ) -> None:
+        """Aceita abstencao somente quando ela corresponde exatamente ao requisito ausente."""
+        expected = {
+            (normalize_schema_path(path), tuple(sorted(selectors.items())))
+            for path, selectors in missing
+        }
+        declared_keys = {
+            (
+                normalize_schema_path(field.path),
+                tuple(sorted(field.seletores.items())),
+            )
+            for field in declared
+        }
+        invalid = declared_keys - expected
+        undeclared = expected - declared_keys
+        if invalid:
+            raise RuntimeError(
+                "campos_nao_mapeados declarou path ou seletores que nao correspondem "
+                f"a requisito pendente: {sorted(invalid)}."
+            )
+        if undeclared:
+            return
+        raise UnmappedRequiredFieldsError(declared)
 
     @staticmethod
     def _validate_table_mappings_use_indices_only(
         candidate: LayoutSignatureCandidate,
+        *,
+        schema_paths: set[str],
     ) -> None:
         """Exige selecao posicional e bloqueia regex em novos layouts de tabela."""
         table_origins = {"cabecalho_de_tabela", "celula_de_tabela"}
         for mapping_path, entry in candidate.mapeamento_canonico.items():
+            payload = entry.model_dump(mode="json", exclude_none=True)
+            if entry.tipo_origem == "valor_fixo" and "valor_fixo" not in payload:
+                raise RuntimeError(
+                    "Mapeamento valor_fixo deve declarar a chave valor_fixo: "
+                    f"{mapping_path}."
+                )
+            if entry.tipo_origem == "linhas_de_tabela":
+                fields = payload.get("campos", [])
+                segments = payload.get("segmentos", payload.get("faixas_linhas", []))
+                if not isinstance(segments, list):
+                    segments = []
+                has_positional_columns = isinstance(
+                    payload.get("indices_colunas"), list
+                ) or any(
+                    isinstance(segment, dict)
+                    and isinstance(segment.get("indices_colunas"), list)
+                    for segment in segments
+                )
+                if not isinstance(fields, list) or (not fields and not has_positional_columns):
+                    raise RuntimeError(
+                        "Mapeamento linhas_de_tabela deve declarar campos nomeados "
+                        "ou indices_colunas posicionais: "
+                        f"{mapping_path}."
+                    )
+                fields_to_validate = list(fields) if isinstance(fields, list) else []
+                for segment in segments:
+                    if isinstance(segment, dict) and isinstance(segment.get("campos"), list):
+                        fields_to_validate.extend(segment["campos"])
+                for field in fields_to_validate:
+                    if not isinstance(field, dict):
+                        raise RuntimeError(
+                            "Cada campo de linhas_de_tabela deve ser objeto: "
+                            f"{mapping_path}."
+                        )
+                    allowed_field_keys = {"caminho_saida", "indice_coluna", "tipo"}
+                    invalid_field_keys = set(field) - allowed_field_keys
+                    if invalid_field_keys:
+                        raise RuntimeError(
+                            "Campo de linhas_de_tabela usa chaves nao suportadas "
+                            f"{sorted(invalid_field_keys)} em {mapping_path}; use somente "
+                            "caminho_saida, indice_coluna e tipo."
+                        )
+                    if not str(field.get("caminho_saida", "")).strip() or not isinstance(
+                        field.get("indice_coluna"), int
+                    ):
+                        raise RuntimeError(
+                            "Cada campo de linhas_de_tabela exige caminho_saida e "
+                            f"indice_coluna inteiro: {mapping_path}."
+                        )
+                    if field.get("tipo") not in {None, "texto", "numero"}:
+                        raise RuntimeError(
+                            "tipo de campo em linhas_de_tabela deve ser texto ou numero; "
+                            f"nao use derivacoes: {mapping_path}."
+                        )
+                    output_path = str(field.get("caminho_saida", "")).strip()
+                    if output_path and f"{normalize_schema_path(mapping_path)}.{output_path}" not in schema_paths:
+                        raise RuntimeError(
+                            "caminho_saida de linhas_de_tabela nao pertence ao item "
+                            f"de destino no schema_saida: {mapping_path}.{output_path}."
+                        )
+                continue
             if entry.tipo_origem not in table_origins:
                 continue
-            payload = entry.model_dump(mode="json", exclude_none=True)
             selector = payload.get("seletor_coluna")
             if not isinstance(selector, dict) or not isinstance(
                 selector.get("indice_coluna_esperado"), int
@@ -377,17 +644,26 @@ class FallbackCandidateValidationService:
     def _mapping_path_has_required_array_selectors(
         path: str,
         array_paths: set[str],
+        *,
+        mapping_entry: dict[str, Any] | None = None,
     ) -> bool:
-        """Exige um filtro `[chave=valor]` em cada segmento de array percorrido."""
+        """Exige filtro por item, exceto ao mapear a colecao inteira por linhas."""
         if not array_paths:
             return True
         cumulative: list[str] = []
-        for raw_part in path.split("."):
+        for raw_part in split_mapping_path(path):
             clean_part = raw_part.split("[", maxsplit=1)[0].strip()
             if not clean_part:
                 continue
             cumulative.append(clean_part)
-            if ".".join(cumulative) in array_paths and "[" not in raw_part:
+            current_path = ".".join(cumulative)
+            if (
+                current_path in array_paths
+                and current_path == normalize_mapping_path(path)
+                and (mapping_entry or {}).get("tipo_origem") == "linhas_de_tabela"
+            ):
+                continue
+            if current_path in array_paths and "[" not in raw_part:
                 return False
         return True
 
@@ -400,10 +676,17 @@ class FallbackCandidateValidationService:
         """Confirma que o path de mapeamento aponta para path do contrato."""
         if not schema_roots:
             return False
-        normalized = path.strip()
-        if normalized.startswith("mapeamento_canonico."):
-            normalized = normalized.removeprefix("mapeamento_canonico.")
-        normalized = FallbackCandidateValidationService._normalize_mapping_path(normalized)
+        try:
+            normalized = path.strip()
+            if normalized.startswith("mapeamento_canonico."):
+                normalized = normalized.removeprefix("mapeamento_canonico.")
+            normalized = FallbackCandidateValidationService._normalize_mapping_path(normalized)
+        except ValueError as exc:
+            raise RuntimeError(
+                "Caminho de mapeamento canonico invalido. Em arrays use somente "
+                "filtros semanticos no formato campo[chave=valor]; indices "
+                f"posicionais como [0] nao sao aceitos: {path}."
+            ) from exc
         if schema_paths and normalized not in schema_paths:
             return False
         root = normalized.split(".", maxsplit=1)[0]
@@ -412,12 +695,7 @@ class FallbackCandidateValidationService:
     @staticmethod
     def _normalize_mapping_path(path: str) -> str:
         """Remove filtros de array para comparar mapeamento com schema_saida."""
-        parts = []
-        for part in path.split("."):
-            clean = part.split("[", maxsplit=1)[0].strip()
-            if clean:
-                parts.append(clean)
-        return ".".join(parts)
+        return normalize_mapping_path(path)
 
     def _contains_forbidden_llm_key(self, value: Any) -> bool:
         """Bloqueia chaves que indicam tentativa de alterar fronteiras proibidas."""

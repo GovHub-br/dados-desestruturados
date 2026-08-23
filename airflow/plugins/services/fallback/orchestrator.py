@@ -20,6 +20,7 @@ from pydantic import ValidationError
 from .candidate_validation import (
     FALLBACK_CANDIDATE_VALIDATION_SERVICE,
     FallbackCandidateValidationService,
+    UnmappedRequiredFieldsError,
 )
 from .artifact_selection_validation import (
     FALLBACK_ARTIFACT_SELECTION_VALIDATION_SERVICE,
@@ -32,7 +33,12 @@ from .classification import (
 )
 from .context_builder import FallbackProblemContextBuilder
 from .inventory import FALLBACK_INVENTORY_SERVICE, FallbackInventoryService
-from .models import LayoutArtifactSelection, LayoutSignatureCandidate
+from .mapping_plan import MAPPING_PLAN_SERVICE, MappingPlanService, MappingUnit
+from .models import (
+    LayoutArtifactSelection,
+    LayoutSignatureCandidate,
+    LayoutSignatureFragment,
+)
 from .prompts import (
     artifact_selection_system_prompt,
     candidate_artifacts_instruction,
@@ -42,6 +48,12 @@ from .prompts import (
     candidate_layout_repair_system_prompt,
     candidate_scope_instruction,
     candidate_structure_instruction,
+    unit_mapping_artifacts_instruction,
+    unit_mapping_final_instruction,
+    unit_mapping_repair_instruction,
+    unit_mapping_scope_instruction,
+    unit_mapping_structure_example,
+    unit_mapping_structure_instruction,
 )
 
 
@@ -55,6 +67,32 @@ class FallbackLlmService:
     MAX_CANDIDATE_CORRECTION_ATTEMPTS = 3
     MAX_ARTIFACT_SELECTION_CORRECTION_ATTEMPTS = 3
 
+    def _llm_options_for_stage(self, stage: str) -> dict[str, Any]:
+        """Centraliza o orçamento por responsabilidade, sem regra de domínio."""
+        config = self.config_loader.load_local_platform_config()
+        if stage == "selecao_artefatos":
+            return {
+                "max_tokens": getattr(
+                    config, "fallback_llm_selection_max_tokens", 2048
+                ),
+                "thinking_mode": getattr(
+                    config, "fallback_llm_selection_thinking_mode", "disabled"
+                ),
+            }
+        if stage in {"fragmento_layout_signature", "layout_signature_candidato"}:
+            return {
+                "max_tokens": getattr(
+                    config, "fallback_llm_fragment_max_tokens", 8192
+                ),
+                "thinking_mode": getattr(
+                    config, "fallback_llm_fragment_thinking_mode", "enabled"
+                ),
+            }
+        return {
+            "max_tokens": config.fallback_llm_max_tokens,
+            "thinking_mode": config.fallback_llm_thinking_mode,
+        }
+
     def __init__(
         self,
         *,
@@ -66,6 +104,7 @@ class FallbackLlmService:
         inventory_service: FallbackInventoryService | None = None,
         classification_service: FallbackClassificationService | None = None,
         context_builder: FallbackProblemContextBuilder | None = None,
+        mapping_plan_service: MappingPlanService | None = None,
     ) -> None:
         """Inicializa dependencias com injecao opcional para testes."""
         self.config_loader = config_loader or RUNTIME_CONFIG_LOADER
@@ -81,6 +120,7 @@ class FallbackLlmService:
             classification_service=self.classification_service,
             inventory_service=self.inventory_service,
         )
+        self.mapping_plan_service = mapping_plan_service or MAPPING_PLAN_SERVICE
 
     @property
     def minio_client(self) -> MinioStorageClient:
@@ -366,11 +406,39 @@ class FallbackLlmService:
         if not isinstance(constraints, dict) or not constraints.get("chamar_llm"):
             raise RuntimeError("Contexto de fallback nao permite chamada LLM.")
 
-        artifact_selection: LayoutArtifactSelection | None = None
-        artifact_selection_raw: str | None = None
         fallback_context = self._fallback_context_from_problem_context(
             fallback_problem_context
         )
+        scope = str(fallback_problem_context.get("escopo_permitido", "")).strip()
+        if scope in {self.CREATION_SCOPE, self.FULL_REMAP_SCOPE}:
+            contract_context = fallback_problem_context.get("contrato_semantico_relevante", {})
+            if not isinstance(contract_context, dict):
+                raise RuntimeError("Contexto sem contrato semantico para gerar layout.")
+            units = self.mapping_plan_service.build(contract_context)
+            if self._should_generate_by_mapping_units(
+                fallback_problem_context=fallback_problem_context,
+                units=units,
+            ):
+                return self._generate_candidate_layout_by_units(
+                    fallback_problem_context=fallback_problem_context,
+                    fallback_context=fallback_context,
+                    units=units,
+                )
+
+        return self._generate_candidate_layout_single(
+            fallback_problem_context=fallback_problem_context,
+            fallback_context=fallback_context,
+        )
+
+    def _generate_candidate_layout_single(
+        self,
+        *,
+        fallback_problem_context: dict[str, Any],
+        fallback_context: dict[str, str],
+    ) -> dict[str, Any]:
+        """Mantem o caminho unico para contratos pequenos ou correcoes parciais."""
+        artifact_selection: LayoutArtifactSelection | None = None
+        artifact_selection_raw: str | None = None
         llm_payloads = self._llm_payloads_from_context(fallback_problem_context)
         enriched_context = deepcopy(llm_payloads["candidate_generation"])
 
@@ -460,6 +528,26 @@ class FallbackLlmService:
                     candidate_validation_context,
                 )
                 break
+            except UnmappedRequiredFieldsError as exc:
+                self._persist_unmapped_required_fields(
+                    fallback_context=fallback_context,
+                    stage="layout_signature_candidato",
+                    attempt=attempt,
+                    error=exc,
+                )
+                self._persist_llm_error(
+                    fallback_context=fallback_context,
+                    stage="layout_signature_candidato",
+                    attempt=attempt,
+                    error=exc,
+                    parsed_response=parsed,
+                    raw_response=raw_content,
+                )
+                raise RuntimeError(
+                    "Layout candidato interrompido por evidencia insuficiente para "
+                    "campo obrigatorio do contrato. Consulte campos_nao_mapeados "
+                    "persistido no fallback."
+                ) from exc
             except RuntimeError as exc:
                 validation_error = str(exc)
                 validation_errors.append(validation_error)
@@ -495,6 +583,15 @@ class FallbackLlmService:
                 )
                 attempt = corrections_used
 
+        self._persist_unmapped_optional_observations(
+            fallback_context=fallback_context,
+            candidate=candidate_model,
+            candidate_validation_context=candidate_validation_context,
+            artifact_paths=self._artifact_paths_for_unmapped_observations(
+                artifact_selection=artifact_selection,
+                loaded_artifacts=enriched_context.get("artefatos_contexto_llm"),
+            ),
+        )
         return {
             "tipo_artefato": "resposta_llm_layout_signature_candidato",
             "artifact_selection": (
@@ -508,6 +605,545 @@ class FallbackLlmService:
             "correction_attempts_used": corrections_used,
             "validation_errors_repaired": validation_errors,
         }
+
+    def _should_generate_by_mapping_units(
+        self,
+        *,
+        fallback_problem_context: dict[str, Any],
+        units: list[MappingUnit],
+    ) -> bool:
+        """Ativa a geracao por blocos apenas quando ela reduz um layout amplo."""
+        scope = str(fallback_problem_context.get("escopo_permitido", "")).strip()
+        return (
+            len(units) > 1
+            and scope in {self.CREATION_SCOPE, self.FULL_REMAP_SCOPE}
+            and self._should_select_artifacts_with_llm(fallback_problem_context)
+        )
+
+    def _generate_candidate_layout_by_units(
+        self,
+        *,
+        fallback_problem_context: dict[str, Any],
+        fallback_context: dict[str, str],
+        units: list[MappingUnit],
+    ) -> dict[str, Any]:
+        """Gera, valida e consolida fragmentos independentes do layout.
+
+        A divisao e totalmente deterministica: o contrato define os campos
+        obrigatorios e este servico os agrupa pela raiz semantica. A LLM nunca
+        escolhe a quantidade de blocos nem quais campos pertencem a eles.
+        """
+        llm_payloads = self._llm_payloads_from_context(fallback_problem_context)
+        manifest = fallback_problem_context.get("_manifesto_extracao_completo", {})
+        if not isinstance(manifest, dict):
+            raise RuntimeError("Contexto sem manifesto de extracao para gerar layout por blocos.")
+
+        plan_payload = {
+            "tipo_artefato": "plano_mapeamento_layout",
+            "versao": "1.0",
+            "estrategia": "agrupamento_deterministico_por_raiz_semantica",
+            "unidades": [unit.payload() for unit in units],
+            "status": "em_execucao",
+            "gerado_em": datetime.now(UTC).isoformat(),
+        }
+        self.minio_client.put_json(
+            object_key=self._fallback_object_key(fallback_context, "plano_mapeamento.json"),
+            payload=plan_payload,
+        )
+        logging.info(
+            "Plano deterministico de layout criado com %s unidade(s): %s",
+            len(units),
+            [
+                {
+                    "id": unit.id,
+                    "campos_saida": list(unit.paths),
+                }
+                for unit in units
+            ],
+        )
+
+        generated_units: list[dict[str, Any]] = []
+        validation_errors: list[str] = []
+        corrections_used = 0
+        for position, unit in enumerate(units, start=1):
+            unit_stage_prefix = f"unidades/{unit.id}"
+            logging.info(
+                "Unidade %s/%s (%s): iniciando selecao de artefatos para %s",
+                position,
+                len(units),
+                unit.id,
+                list(unit.paths),
+            )
+            selection_payload = self._selection_payload_for_unit(
+                llm_payloads["artifact_selection"],
+                unit,
+            )
+            artifact_selection, selection_raw, loaded_artifacts = self.select_relevant_artifacts(
+                selection_payload,
+                fallback_context=fallback_context,
+                manifest=manifest,
+                stage=f"{unit_stage_prefix}/selecao_artefatos",
+            )
+            logging.info(
+                "Unidade %s/%s (%s): selecao aprovada com %s artefato(s): %s",
+                position,
+                len(units),
+                unit.id,
+                len(artifact_selection.artifact_paths),
+                [item.path for item in artifact_selection.artifact_paths],
+            )
+            self._persist_llm_validated(
+                fallback_context=fallback_context,
+                stage=f"{unit_stage_prefix}/selecao_artefatos",
+                filename=f"{unit_stage_prefix}/selecao_artefatos_layout.json",
+                payload=artifact_selection.model_dump(mode="json"),
+            )
+
+            fragment_payload = self._fragment_payload_for_unit(
+                candidate_payload=llm_payloads["candidate_generation"],
+                unit=unit,
+                loaded_artifacts=loaded_artifacts,
+            )
+            logging.info(
+                "Unidade %s/%s (%s): iniciando geracao do fragmento de layout",
+                position,
+                len(units),
+                unit.id,
+            )
+            fragment, raw_response, unit_corrections, unit_errors = self._generate_layout_fragment(
+                fallback_problem_context=fallback_problem_context,
+                fallback_context=fallback_context,
+                unit=unit,
+                fragment_payload=fragment_payload,
+                stage=f"{unit_stage_prefix}/fragmento_layout_signature",
+            )
+            logging.info(
+                "Unidade %s/%s (%s): fragmento validado com %s mapeamento(s) e %s correcao(oes)",
+                position,
+                len(units),
+                unit.id,
+                len(fragment.mapeamento_canonico),
+                unit_corrections,
+            )
+            self._persist_llm_validated(
+                fallback_context=fallback_context,
+                stage=f"{unit_stage_prefix}/fragmento_layout_signature",
+                filename=f"{unit_stage_prefix}/fragmento_layout_signature.json",
+                payload=fragment.model_dump(mode="json", exclude_none=True),
+            )
+            generated_units.append(
+                {
+                    "unit": unit,
+                    "artifact_selection": artifact_selection,
+                    "artifact_selection_raw_response": selection_raw,
+                    "loaded_artifacts": loaded_artifacts,
+                    "fragment": fragment,
+                    "raw_response": raw_response,
+                    "correction_attempts_used": unit_corrections,
+                    "validation_errors_repaired": unit_errors,
+                }
+            )
+            corrections_used += unit_corrections
+            validation_errors.extend(unit_errors)
+
+        candidate = self._merge_layout_fragments(
+            fallback_problem_context=fallback_problem_context,
+            fallback_context=fallback_context,
+            generated_units=generated_units,
+        )
+        logging.info(
+            "Fragmentos consolidados: %s unidade(s), %s mapeamento(s) no layout candidato.",
+            len(generated_units),
+            len(candidate.get("mapeamento_canonico", {})),
+        )
+        self._persist_unmapped_optional_observations(
+            fallback_context=fallback_context,
+            candidate=LayoutSignatureCandidate.model_validate(candidate),
+            candidate_validation_context=fallback_problem_context,
+            artifact_paths=[
+                artifact.path
+                for item in generated_units
+                for artifact in item["artifact_selection"].artifact_paths
+            ],
+        )
+        self._persist_llm_validated(
+            fallback_context=fallback_context,
+            stage="layout_signature_candidato_consolidado",
+            filename="layout_signature_candidato_consolidado.json",
+            payload=candidate,
+        )
+        plan_payload["status"] = "concluido"
+        plan_payload["concluido_em"] = datetime.now(UTC).isoformat()
+        self.minio_client.put_json(
+            object_key=self._fallback_object_key(fallback_context, "plano_mapeamento.json"),
+            payload=plan_payload,
+        )
+        return {
+            "tipo_artefato": "resposta_llm_layout_signature_candidato",
+            "modo_geracao": "por_blocos_deterministicos",
+            "mapping_plan": plan_payload,
+            "artifact_selection": None,
+            "artifact_selection_raw_response": None,
+            "unidades_mapeamento": [
+                {
+                    "id": item["unit"].id,
+                    "raiz_semantica": item["unit"].root_path,
+                    "artifact_selection": item["artifact_selection"].model_dump(mode="json"),
+                    "fragmento": item["fragment"].model_dump(mode="json", exclude_none=True),
+                    "correction_attempts_used": item["correction_attempts_used"],
+                }
+                for item in generated_units
+            ],
+            "candidate_layout": candidate,
+            "raw_response": None,
+            "correction_attempts_used": corrections_used,
+            "validation_errors_repaired": validation_errors,
+        }
+
+    def _selection_payload_for_unit(
+        self,
+        selection_payload: dict[str, Any],
+        unit: MappingUnit,
+    ) -> dict[str, Any]:
+        """Projeta somente o contrato necessario para selecionar um bloco."""
+        payload = deepcopy(selection_payload)
+        contract_context = payload.get("contrato_semantico_relevante", {})
+        if not isinstance(contract_context, dict):
+            raise RuntimeError("Payload de selecao sem contrato semantico relevante.")
+        payload["contrato_semantico_relevante"] = (
+            self.mapping_plan_service.scoped_contract_context(contract_context, unit)
+        )
+        payload["unidade_mapeamento"] = unit.payload()
+        return payload
+
+    def _fragment_payload_for_unit(
+        self,
+        *,
+        candidate_payload: dict[str, Any],
+        unit: MappingUnit,
+        loaded_artifacts: dict[str, Any],
+    ) -> dict[str, Any]:
+        """Entrega ao modelo apenas contrato, alvos e evidencia de uma unidade."""
+        contract_context = candidate_payload.get("contrato_semantico_relevante", {})
+        if not isinstance(contract_context, dict):
+            raise RuntimeError("Payload de candidato sem contrato semantico relevante.")
+        targets = candidate_payload.get("alvos_mapeaveis", [])
+        if not isinstance(targets, list):
+            targets = []
+        unit_paths = set(unit.paths)
+        return {
+            "tipo_payload": "geracao_fragmento_layout_signature",
+            "contexto_execucao": candidate_payload.get("contexto_execucao", {}),
+            "unidade_mapeamento": unit.payload(),
+            "contrato_semantico_relevante": self.mapping_plan_service.scoped_contract_context(
+                contract_context,
+                unit,
+            ),
+            "alvos_mapeaveis": [
+                target
+                for target in targets
+                if isinstance(target, dict)
+                and str(target.get("campo_saida", "")).strip() in unit_paths
+            ],
+            "exemplo_estrutura_mapeamento_unidade": unit_mapping_structure_example(
+                unit_id=unit.id
+            ),
+            "artefatos_contexto_llm": loaded_artifacts,
+        }
+
+    def _generate_layout_fragment(
+        self,
+        *,
+        fallback_problem_context: dict[str, Any],
+        fallback_context: dict[str, str],
+        unit: MappingUnit,
+        fragment_payload: dict[str, Any],
+        stage: str,
+    ) -> tuple[LayoutSignatureFragment, str, int, list[str]]:
+        """Chama a LLM para um fragmento, com retry limitado e auditavel."""
+        response_schema = LayoutSignatureFragment.model_json_schema()
+        llm_options = self._llm_options_for_stage("fragmento_layout_signature")
+        messages = self._fragment_messages(fragment_payload=fragment_payload)
+        errors: list[str] = []
+        corrections_used = 0
+        attempt = 0
+        raw_content = ""
+        while True:
+            self._persist_llm_input(
+                fallback_context=fallback_context,
+                stage=stage,
+                attempt=attempt,
+                system_prompt=None,
+                user_payload={},
+                messages=messages,
+                response_schema=response_schema,
+                llm_options=llm_options,
+            )
+            try:
+                parsed, raw_content = self.llm_client.generate_json(
+                    messages=messages,
+                    response_schema=response_schema,
+                    **llm_options,
+                )
+                self._persist_llm_response(
+                    fallback_context=fallback_context,
+                    stage=stage,
+                    attempt=attempt,
+                    parsed_response=parsed,
+                    raw_response=raw_content,
+                )
+            except FallbackLlmClientError as exc:
+                errors.append(str(exc))
+                self._persist_llm_error(
+                    fallback_context=fallback_context,
+                    stage=stage,
+                    attempt=attempt,
+                    error=exc,
+                )
+                if self._is_length_exhausted_without_content(exc):
+                    raise RuntimeError(
+                        "LLM esgotou a janela de conclusao sem emitir JSON para a unidade "
+                        f"{unit.id}. Reduza o bloco ou aumente o limite de saida."
+                    ) from exc
+                if (
+                    not self._is_correctable_llm_response_error(exc)
+                    or corrections_used >= self.MAX_CANDIDATE_CORRECTION_ATTEMPTS
+                ):
+                    raise RuntimeError(
+                        f"Falha ao gerar fragmento da unidade {unit.id}: {exc}"
+                    ) from exc
+                corrections_used += 1
+                repair_payload = self._fragment_repair_payload(
+                    fragment_payload=fragment_payload,
+                    attempt=corrections_used,
+                    validation_error=str(exc),
+                    invalid_fragment=exc.raw_content,
+                )
+                messages = self._fragment_messages(
+                    fragment_payload=fragment_payload,
+                    repair_payload=repair_payload,
+                )
+                attempt = corrections_used
+                continue
+
+            try:
+                fragment = self.candidate_validator.validate_layout_fragment(
+                    parsed,
+                    unit=unit,
+                    fallback_problem_context=fallback_problem_context,
+                )
+                return fragment, raw_content, corrections_used, errors
+            except UnmappedRequiredFieldsError as exc:
+                self._persist_unmapped_required_fields(
+                    fallback_context=fallback_context,
+                    stage=stage,
+                    attempt=attempt,
+                    error=exc,
+                )
+                self._persist_llm_error(
+                    fallback_context=fallback_context,
+                    stage=stage,
+                    attempt=attempt,
+                    error=exc,
+                    parsed_response=parsed,
+                    raw_response=raw_content,
+                )
+                raise RuntimeError(
+                    "Geracao de layout interrompida por evidencia insuficiente para "
+                    f"campo obrigatorio da unidade {unit.id}. Consulte "
+                    "campos_nao_mapeados persistido no fallback."
+                ) from exc
+            except RuntimeError as exc:
+                errors.append(str(exc))
+                self._persist_llm_error(
+                    fallback_context=fallback_context,
+                    stage=stage,
+                    attempt=attempt,
+                    error=exc,
+                    parsed_response=parsed,
+                    raw_response=raw_content,
+                )
+                if corrections_used >= self.MAX_CANDIDATE_CORRECTION_ATTEMPTS:
+                    raise RuntimeError(
+                        f"Fragmento da unidade {unit.id} continuou invalido apos "
+                        f"{self.MAX_CANDIDATE_CORRECTION_ATTEMPTS} tentativa(s). "
+                        f"Ultimo erro: {exc}"
+                    ) from exc
+                corrections_used += 1
+                repair_payload = self._fragment_repair_payload(
+                    fragment_payload=fragment_payload,
+                    attempt=corrections_used,
+                    validation_error=str(exc),
+                    invalid_fragment=parsed,
+                )
+                messages = self._fragment_messages(
+                    fragment_payload=fragment_payload,
+                    repair_payload=repair_payload,
+                )
+                attempt = corrections_used
+
+    def _merge_layout_fragments(
+        self,
+        *,
+        fallback_problem_context: dict[str, Any],
+        fallback_context: dict[str, str],
+        generated_units: list[dict[str, Any]],
+    ) -> dict[str, Any]:
+        """Consolida fragmentos sem inferencia: colisao de path e sempre erro."""
+        mappings: dict[str, Any] = {}
+        sources: dict[str, Any] = {}
+        evidence: dict[str, Any] = {"unidades_mapeamento": {}}
+        for item in generated_units:
+            unit = item["unit"]
+            fragment: LayoutSignatureFragment = item["fragment"]
+            duplicate_paths = set(mappings).intersection(fragment.mapeamento_canonico)
+            if duplicate_paths:
+                raise RuntimeError(
+                    "Fragmentos de layout possuem mapeamentos conflitantes: "
+                    f"{sorted(duplicate_paths)}."
+                )
+            mappings.update(
+                {
+                    path: entry.model_dump(mode="json", exclude_none=True)
+                    for path, entry in fragment.mapeamento_canonico.items()
+                }
+            )
+            sources[unit.id] = fragment.fontes_relevantes
+            evidence["unidades_mapeamento"][unit.id] = (
+                fragment.metadados_estruturais_evidencia
+            )
+
+        scope = str(fallback_problem_context.get("escopo_permitido", "")).strip()
+        candidate = {
+            "tipo_artefato": "layout_signature_candidato",
+            "status_layout": "candidato",
+            "escopo_correcao": scope,
+            "document_id": fallback_context["document_id"],
+            "execution_id_origem": fallback_context["execution_id"],
+            "base_layout_signature": (
+                None
+                if scope == self.CREATION_SCOPE
+                else fallback_problem_context.get("layout_signature_base_ref")
+            ),
+            "fontes_relevantes": sources,
+            "regras_deteccao_mudanca": [],
+            "mapeamento_canonico": mappings,
+            "metadados_estruturais_evidencia": evidence,
+        }
+        candidate_model = self.candidate_validator.validate_candidate_layout(
+            candidate,
+            fallback_problem_context,
+        )
+        return candidate_model.model_dump(mode="json", exclude_none=True)
+
+    def _fragment_repair_payload(
+        self,
+        *,
+        fragment_payload: dict[str, Any],
+        attempt: int,
+        validation_error: str,
+        invalid_fragment: Any,
+    ) -> dict[str, Any]:
+        """Mantem o erro localizado, sem repetir candidato grande no retry."""
+        return {
+            "correcao_mapeamento": {
+                "tentativa": attempt,
+                "maximo_tentativas": self.MAX_CANDIDATE_CORRECTION_ATTEMPTS,
+                "erro_validacao": validation_error,
+                "trecho_resposta_invalida": self._compact_fragment_for_repair(
+                    invalid_fragment,
+                    validation_error,
+                ),
+            },
+        }
+
+    @staticmethod
+    def _compact_fragment_for_repair(
+        invalid_fragment: Any,
+        validation_error: str,
+    ) -> Any:
+        """Retem apenas entradas relacionadas ao erro para evitar inflar retries."""
+        if not isinstance(invalid_fragment, dict):
+            return invalid_fragment
+        mappings = invalid_fragment.get("mapeamento_canonico")
+        if not isinstance(mappings, dict):
+            return invalid_fragment
+        matching = {
+            path: value
+            for path, value in mappings.items()
+            if str(path) in validation_error
+        }
+        if not matching:
+            matching = dict(list(mappings.items())[:3])
+        return {
+            "tipo_artefato": invalid_fragment.get("tipo_artefato"),
+            "unidade_mapeamento": invalid_fragment.get("unidade_mapeamento"),
+            "mapeamento_canonico": matching,
+        }
+
+    @staticmethod
+    def _fragment_messages(
+        *,
+        fragment_payload: dict[str, Any],
+        repair_payload: dict[str, Any] | None = None,
+    ) -> list[dict[str, str]]:
+        """Alterna instrucoes completas e dados reduzidos de uma unidade de mapeamento."""
+        execution_context = fragment_payload.get("contexto_execucao", {})
+        if not isinstance(execution_context, dict):
+            execution_context = {}
+        scope = str(execution_context.get("escopo_correcao", "")).strip()
+
+        def json_block(name: str) -> str:
+            return json.dumps(
+                {name: fragment_payload.get(name, {})},
+                ensure_ascii=False,
+                indent=2,
+            )
+
+        messages = [
+            {"role": "system", "content": unit_mapping_scope_instruction(scope)},
+            {"role": "user", "content": json_block("contexto_execucao")},
+            {"role": "system", "content": candidate_contract_instruction()},
+            {
+                "role": "user",
+                "content": json.dumps(
+                    {
+                        "unidade_mapeamento": fragment_payload.get(
+                            "unidade_mapeamento", {}
+                        ),
+                        "contrato_semantico_relevante": fragment_payload.get(
+                            "contrato_semantico_relevante", {}
+                        ),
+                        "alvos_mapeaveis": fragment_payload.get(
+                            "alvos_mapeaveis", []
+                        ),
+                    },
+                    ensure_ascii=False,
+                    indent=2,
+                ),
+            },
+            {"role": "system", "content": unit_mapping_structure_instruction()},
+            {
+                "role": "user",
+                "content": json_block("exemplo_estrutura_mapeamento_unidade"),
+            },
+            {"role": "system", "content": unit_mapping_artifacts_instruction()},
+            {"role": "user", "content": json_block("artefatos_contexto_llm")},
+        ]
+        if repair_payload is not None:
+            messages.extend(
+                [
+                    {"role": "system", "content": unit_mapping_repair_instruction()},
+                    {
+                        "role": "user",
+                        "content": json.dumps(
+                            repair_payload, ensure_ascii=False, indent=2
+                        ),
+                    },
+                ]
+            )
+        messages.append({"role": "system", "content": unit_mapping_final_instruction()})
+        return messages
 
     def _generate_candidate_json(
         self,
@@ -853,34 +1489,38 @@ class FallbackLlmService:
         *,
         fallback_context: dict[str, str],
         manifest: dict[str, Any],
+        stage: str = "selecao_artefatos",
     ) -> tuple[LayoutArtifactSelection, str, dict[str, Any]]:
         """Seleciona e comprova artefatos, com retries guiados por validacao."""
         self.artifact_selection_validator.validate_inventory(
             selection_payload=selection_payload
         )
         response_schema = LayoutArtifactSelection.model_json_schema()
+        llm_options = self._llm_options_for_stage("selecao_artefatos")
         system_prompt = artifact_selection_system_prompt()
         user_payload = selection_payload
 
         for attempt in range(self.MAX_ARTIFACT_SELECTION_CORRECTION_ATTEMPTS + 1):
             self._persist_llm_input(
                 fallback_context=fallback_context,
-                stage="selecao_artefatos",
+                stage=stage,
                 attempt=attempt,
                 system_prompt=system_prompt,
                 user_payload=user_payload,
                 response_schema=response_schema,
+                llm_options=llm_options,
             )
             try:
                 parsed, raw_content = self.llm_client.generate_json(
                     system_prompt=system_prompt,
                     user_payload=user_payload,
                     response_schema=response_schema,
+                    **llm_options,
                 )
             except FallbackLlmClientError as exc:
                 self._persist_llm_error(
                     fallback_context=fallback_context,
-                    stage="selecao_artefatos",
+                    stage=stage,
                     attempt=attempt,
                     error=exc,
                 )
@@ -899,7 +1539,7 @@ class FallbackLlmService:
 
             self._persist_llm_response(
                 fallback_context=fallback_context,
-                stage="selecao_artefatos",
+                stage=stage,
                 attempt=attempt,
                 parsed_response=parsed,
                 raw_response=raw_content,
@@ -934,7 +1574,7 @@ class FallbackLlmService:
             except (ValidationError, ArtifactSelectionValidationError) as exc:
                 self._persist_llm_error(
                     fallback_context=fallback_context,
-                    stage="selecao_artefatos",
+                    stage=stage,
                     attempt=attempt,
                     error=exc,
                     parsed_response=parsed,
@@ -991,6 +1631,7 @@ class FallbackLlmService:
         user_payload: dict[str, Any],
         messages: list[dict[str, str]] | None = None,
         response_schema: dict[str, Any] | None,
+        llm_options: dict[str, Any] | None = None,
     ) -> None:
         """Persiste exatamente o payload enviado para a LLM."""
         config = self.config_loader.load_local_platform_config()
@@ -1001,6 +1642,7 @@ class FallbackLlmService:
             "provider": config.fallback_llm_provider,
             "model": config.fallback_llm_model,
             "response_schema": response_schema,
+            "opcoes_requisicao_llm": llm_options or {},
             "persistido_em": datetime.now(UTC).isoformat(),
         }
         if messages is not None:
@@ -1032,6 +1674,9 @@ class FallbackLlmService:
             "attempt": attempt,
             "raw_response": raw_response,
             "parsed_response": parsed_response,
+            "api_response_metadata": getattr(
+                self.llm_client, "last_response_metadata", None
+            ),
             "persistido_em": datetime.now(UTC).isoformat(),
         }
         self.minio_client.put_json(
@@ -1056,13 +1701,13 @@ class FallbackLlmService:
         raw_content = raw_response
         if raw_content is None and isinstance(error, FallbackLlmClientError):
             raw_content = error.raw_content
+        persisted_raw_response = self._raw_response_for_persistence(raw_content)
         payload = {
             "tipo_artefato": f"erro_llm_{stage}",
             "stage": stage,
             "attempt": attempt,
             "error_type": type(error).__name__,
             "error_message": str(error),
-            "raw_response": raw_content,
             "parsed_response": parsed_response,
             "api_response_metadata": (
                 error.response_metadata
@@ -1071,6 +1716,8 @@ class FallbackLlmService:
             ),
             "persistido_em": datetime.now(UTC).isoformat(),
         }
+        if persisted_raw_response != parsed_response:
+            payload["raw_response"] = persisted_raw_response
         self.minio_client.put_json(
             object_key=self._fallback_object_key(
                 fallback_context,
@@ -1078,6 +1725,114 @@ class FallbackLlmService:
             ),
             payload=payload,
         )
+
+    def _persist_unmapped_required_fields(
+        self,
+        *,
+        fallback_context: dict[str, str],
+        stage: str,
+        attempt: int,
+        error: UnmappedRequiredFieldsError,
+    ) -> None:
+        """Registra ausencia comprovada sem transformar o candidato em layout publicavel."""
+        payload = {
+            "tipo_artefato": "campos_nao_mapeados_layout",
+            "stage": stage,
+            "attempt": attempt,
+            "status": "evidencia_insuficiente_para_requisito_obrigatorio",
+            "campos_nao_mapeados": [
+                field.model_dump(mode="json") for field in error.fields
+            ],
+            "persistido_em": datetime.now(UTC).isoformat(),
+        }
+        self.minio_client.put_json(
+            object_key=self._fallback_object_key(
+                fallback_context,
+                self._llm_artifact_filename("campos_nao_mapeados", stage, attempt),
+            ),
+            payload=payload,
+        )
+
+    def _persist_unmapped_optional_observations(
+        self,
+        *,
+        fallback_context: dict[str, str],
+        candidate: LayoutSignatureCandidate,
+        candidate_validation_context: dict[str, Any],
+        artifact_paths: list[str],
+    ) -> None:
+        """Audita observacoes opcionais ausentes sem afetar a publicacao."""
+        collect_missing = getattr(
+            self.candidate_validator,
+            "optional_mapping_observations_not_mapped",
+            None,
+        )
+        if not callable(collect_missing):
+            return
+        missing = collect_missing(candidate, candidate_validation_context)
+        if not missing:
+            return
+        verified_artifacts = list(dict.fromkeys(path for path in artifact_paths if path))
+        if not verified_artifacts:
+            logging.warning(
+                "Observacoes opcionais ausentes nao foram persistidas: nenhum artefato "
+                "verificado foi informado."
+            )
+            return
+        payload = {
+            "tipo_artefato": "campos_nao_mapeados_layout",
+            "stage": "layout_signature_candidato",
+            "attempt": 0,
+            "status": "observacoes_opcionais_nao_comprovadas",
+            "bloqueia_publicacao": False,
+            "campos_nao_mapeados": [
+                {
+                    "path": path,
+                    "seletores": selectors,
+                    "motivo": (
+                        "Observacao declarada em campos_obrigatorios com "
+                        "obrigatorio=false nao foi comprovada pelos artefatos selecionados."
+                    ),
+                    "artefatos_verificados": verified_artifacts,
+                    "obrigatorio": False,
+                }
+                for path, selectors in missing
+            ],
+            "persistido_em": datetime.now(UTC).isoformat(),
+        }
+        self.minio_client.put_json(
+            object_key=self._fallback_object_key(
+                fallback_context,
+                self._llm_artifact_filename(
+                    "campos_nao_mapeados", "layout_signature_candidato", 0
+                ),
+            ),
+            payload=payload,
+        )
+
+    @staticmethod
+    def _artifact_paths_for_unmapped_observations(
+        *,
+        artifact_selection: LayoutArtifactSelection | None,
+        loaded_artifacts: Any,
+    ) -> list[str]:
+        """Preserva os artefatos efetivamente usados na auditoria de ausencia."""
+        if artifact_selection is not None:
+            return [item.path for item in artifact_selection.artifact_paths]
+        if isinstance(loaded_artifacts, dict):
+            return [str(path) for path in loaded_artifacts if str(path).strip()]
+        return []
+
+    @staticmethod
+    def _raw_response_for_persistence(raw_response: str | None) -> Any:
+        """Converte resposta JSON valida em objeto para facilitar a leitura no MinIO."""
+        if not isinstance(raw_response, str):
+            return raw_response
+        try:
+            return json.loads(raw_response)
+        except json.JSONDecodeError:
+            # Em respostas truncadas ou invalidas, preservar exatamente o texto recebido.
+            return raw_response
 
     def _persist_llm_validated(
         self,
@@ -1099,10 +1854,12 @@ class FallbackLlmService:
     @staticmethod
     def _llm_artifact_filename(prefix: str, stage: str, attempt: int) -> str:
         """Nomeia tentativas sem sobrescrever evidencias anteriores."""
-        base = f"{prefix}_{stage}"
+        directory, separator, stage_name = stage.rpartition("/")
+        base = f"{prefix}_{stage_name if separator else stage}"
         if attempt > 0:
             base = f"{base}_tentativa_{attempt}"
-        return f"{base}.json"
+        filename = f"{base}.json"
+        return f"{directory}/{filename}" if separator else filename
 
     def _candidate_repair_payload(
         self,
@@ -1135,6 +1892,17 @@ class FallbackLlmService:
             return True
         message = str(error).lower()
         return "json" in message or "conteudo" in message
+
+    @staticmethod
+    def _is_length_exhausted_without_content(error: FallbackLlmClientError) -> bool:
+        """Evita repetir uma chamada que esgotou a conclusao sem resposta util."""
+        metadata = error.response_metadata
+        if not isinstance(metadata, dict):
+            return False
+        return (
+            str(metadata.get("finish_reason", "")).strip().lower() == "length"
+            and not bool(metadata.get("content_presente"))
+        )
 
     @staticmethod
     def _llm_payloads_from_context(

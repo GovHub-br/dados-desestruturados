@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import Any
+
 
 def candidate_scope_instruction(scope: str) -> str:
     """Explica em texto corrido a responsabilidade da LLM em cada escopo."""
@@ -38,12 +40,15 @@ def candidate_contract_instruction() -> str:
         "observacoes_obrigatorias, crie uma entrada para cada conjunto de seletores e tambem "
         "mapeie todos os campos_contexto_obrigatorios na mesma observacao. paths_permitidos sao "
         "as unicas chaves aceitas no mapeamento_canonico. "
-        "Cada trecho listado em arrays_que_exigem_seletor exige filtro explicito entre "
-        "colchetes na chave final: se o path permitido for colecao.itens.valor e "
-        "colecao.itens for um array, use colecao.itens[chave=valor_observado].valor; "
-        "nunca use colecao.itens.valor sem esse seletor. Use um filtro que identifique "
-        "uma unica observacao. Quando o "
-        "contrato definir papeis semanticos para observacoes comparaveis, use exatamente "
+        "Um array admite somente dois modos. Para mapear um item individual, use filtro "
+        "explicito entre colchetes que identifique uma unica observacao, por exemplo "
+        "colecao.itens[chave=valor_observado].valor. Nunca use indices posicionais "
+        "como [0] ou [1]: eles nao identificam semanticamente uma observacao e sao "
+        "invalidos. Para preencher a colecao inteira "
+        "por linhas_de_tabela, use exatamente o path raiz da colecao, sem filtro, por "
+        "exemplo colecao.itens. Nunca misture os dois modos. "
+        "Uma observacao com obrigatorio=false deve ser mapeada quando houver evidencia, mas sua ausencia "
+        "nao invalida o candidato. Quando o contrato definir papeis semanticos para observacoes comparaveis, use exatamente "
         "esses papeis para distingui-las. paths_permitidos ja exclui valores fixos "
         "do contrato: nao os inclua no mapeamento_canonico, pois a DAG 2 os preenche "
         "deterministicamente. Nao invente campos, contratos ou valores."
@@ -86,7 +91,10 @@ def candidate_artifacts_instruction() -> str:
         "de observacao exigida pelo contrato, crie um mapeamento para cada papel correspondente, "
         "e nao apenas para a primeira coluna. Para celulas e cabecalhos de tabela, use os "
         "indices observados; para faixas de linhas, use linhas_de_tabela. Nao use regex para "
-        "validar cabecalhos de tabela."
+        "validar cabecalhos de tabela. Se uma evidencia obrigatoria nao estiver presente, "
+        "nao deduza, nao troque a medida nem use periodo aproximado. Declare a ausencia em "
+        "campos_nao_mapeados com o path, os seletores exigidos, o motivo e os artefatos "
+        "verificados. Essa declaracao encerra a busca para aquele requisito."
     )
 
 
@@ -96,7 +104,11 @@ def candidate_final_instruction() -> str:
         "Agora produza somente um objeto JSON valido de layout_signature_candidato. No nivel "
         "raiz inclua obrigatoriamente tipo_artefato, status_layout, escopo_correcao, "
         "document_id, execution_id_origem, base_layout_signature, fontes_relevantes, "
-        "regras_deteccao_mudanca, mapeamento_canonico e metadados_estruturais_evidencia. "
+        "regras_deteccao_mudanca, campos_nao_mapeados, mapeamento_canonico e "
+        "metadados_estruturais_evidencia. campos_nao_mapeados e uma lista: cada item usa "
+        "path, seletores, motivo e artefatos_verificados. Use-a somente quando um requisito "
+        "obrigatorio nao puder ser comprovado pelos artefatos recebidos; nesse caso, nao crie "
+        "um mapeamento alternativo para o mesmo requisito. "
         "Nao aninhe esses campos em cabecalho_obrigatorio ou outro envelope. Mapeie apenas paths "
         "permitidos e use somente artefatos carregados. Nao resolva valores finais, nao "
         "inclua explicacoes, markdown, publicacao, versao, contrato ou regras de execucao."
@@ -120,12 +132,16 @@ def candidate_layout_repair_system_prompt() -> str:
         "string ou objeto somente com instrucao. Os campos obrigatorios do cabecalho pertencem "
         "ao nivel raiz da resposta; cabecalho_obrigatorio e apenas uma descricao antiga, nunca "
         "um objeto a ser emitido. Para cada trecho listado em arrays_que_exigem_seletor, a chave "
-        "do mapeamento deve conter um filtro entre colchetes que identifique uma observacao; "
-        "nao atravesse arrays com paths sem filtro. Use formatos_de_origem do exemplo. Nao altere document_id, execution_id_origem, "
+        "do mapeamento deve conter um filtro entre colchetes no formato campo[chave=valor], "
+        "nunca um indice como [0] ou [1]; nao atravesse arrays com paths sem filtro. "
+        "Use formatos_de_origem do exemplo. Nao altere document_id, execution_id_origem, "
         "escopo_correcao, contrato semantico, regras de governanca ou layouts "
         "publicados. Nao mapeie valores fixos do contrato: eles nao aparecem em "
         "paths_permitidos e sao preenchidos deterministicamente pela DAG 2. Nao gere valores finais de negocio. Para tabelas, remova qualquer regex "
-        "ou padrao_cabecalho_aceito e informe os indices observados de linha e coluna."
+        "ou padrao_cabecalho_aceito e informe os indices observados de linha e coluna. Se a "
+        "evidencia de um requisito obrigatorio nao existir, nao tente corrigi-lo por inferencia: "
+        "registre-o em campos_nao_mapeados usando path, seletores, motivo e "
+        "artefatos_verificados."
     )
 
 
@@ -139,6 +155,9 @@ def artifact_selection_system_prompt() -> str:
         "inventory.json e escolher quais artefatos da extracao precisam ser "
         "abertos pela DAG 3 na proxima chamada. "
         "Use somente caminhos que existam em inventario_extracao.resumo.items[].path. "
+        "O inventario desta etapa contem somente tabelas e graficos: selecione apenas "
+        "esses artefatos. Nao procure texto corrido, blocos, secoes, metricas ou outros "
+        "tipos de extracao nesta chamada. "
         "Escolha o menor conjunto suficiente de arquivos para permitir a geracao "
         "do layout_signature_candidato. "
         "Para correcao parcial, priorize artefatos ligados aos campos quebrados "
@@ -150,6 +169,10 @@ def artifact_selection_system_prompt() -> str:
         "Informe em coberturas somente o atributo path de cada item listado em "
         "contrato_semantico_relevante.contrato_semantico.requisitos_mapeamento.campos_obrigatorios. Esses sao os "
         "unicos campos que exigem evidencia nesta etapa. "
+        "Quando um campo obrigatorio trouxer descricao ou orientacao_origem, trate esses "
+        "dados como criterio semantico de selecao: priorize fontes_preferenciais e evidencias_esperadas, "
+        "evite fontes_a_evitar e respeite a granularidade_esperada. Essas orientacoes pertencem ao "
+        "contrato e podem ser diferentes para qualquer dominio; nao substitua seu conteudo por suposicoes. "
         "Nao declare campos estruturais, metadados, constantes, campos derivados ou "
         "qualquer outro path fora dessa lista, pois a DAG os preenche ou valida "
         "deterministicamente. Cada artefato "
@@ -204,3 +227,182 @@ def artifact_selection_repair_system_prompt() -> str:
         "\"path\":\"tables/table001.json\",\"motivo\":\"...\",\"coberturas\":[{"
         "\"campo_saida\":\"path.do.contrato\",\"ancoras\":[\"texto literal\"]}]}]}."
     )
+
+
+def unit_mapping_scope_instruction(scope: str) -> str:
+    """Abre uma chamada por unidade como uma tarefa completa de mapeamento."""
+    if scope == "correcao_parcial_mapeamento":
+        scope_instruction = (
+            "Corrija exclusivamente os paths recebidos e preserve a semantica definida "
+            "pelo subcontrato."
+        )
+    elif scope == "regeneracao_total_mapeamento":
+        scope_instruction = (
+            "Reconstrua os mapeamentos recebidos exclusivamente a partir das evidencias "
+            "atuais."
+        )
+    else:
+        scope_instruction = (
+            "Crie os mapeamentos recebidos exclusivamente a partir das evidencias atuais."
+        )
+    return (
+        "Nesta chamada, os paths e o subesquema recebidos delimitam toda a tarefa de "
+        "mapeamento. Produza instrucoes deterministicas para todos e somente esses "
+        "paths. Quando um path representar uma colecao tabular, use uma unica "
+        "instrucao linhas_de_tabela no path da colecao, nunca uma entrada por linha "
+        "ou por campo interno. "
+        f"{scope_instruction} Nao crie valores finais, identidade do documento, versao, "
+        "publicacao, contrato ou regras operacionais; esses elementos sao preenchidos "
+        "deterministicamente fora desta chamada."
+    )
+
+
+def unit_mapping_structure_instruction() -> str:
+    """Explica a estrutura executavel de uma resposta de unidade."""
+    return (
+        "O proximo objeto e um exemplo da estrutura obrigatoria da resposta. Trate-o "
+        "como modelo de forma, nunca como evidencia do documento. Cada valor de "
+        "mapeamento_canonico deve ser uma instrucao executavel e conter tipo_origem; "
+        "nao use descricoes como tipo_estrutura, fonte, tabela, coluna ou celula no "
+        "lugar de tipo_origem. Os unicos tipos aceitos estao listados no exemplo. "
+        "Para celula_de_tabela, use seletor_linha.indice_linha_esperado e "
+        "seletor_coluna.indice_coluna_esperado. Para cabecalho_de_tabela, use "
+        "seletor_coluna.indice_coluna_esperado. Para linhas_de_tabela que preenche "
+        "uma colecao inteira, mapeie o path da colecao sem filtro e declare segmentos "
+        "ou faixas_linhas, mais campos que relacionem cada indice_coluna ao campo do "
+        "item. Cada campo deve ter somente caminho_saida, indice_coluna e, opcionalmente, "
+        "tipo texto ou numero. Nao use nome, derivacao, valor_constante ou tipo derivado "
+        "dentro de campos. Valores repetidos pertencem a valores_por_segmento ou valores_fixos "
+        "da instrucao. Para tabelas, "
+        "nao use regex nem padrao_cabecalho_aceito; o resolvedor le as posicoes "
+        "indicadas. Regex e reservado a bloco_textual."
+    )
+
+
+def unit_mapping_artifacts_instruction() -> str:
+    """Instrui o uso dos artefatos como evidencia completa da chamada."""
+    return (
+        "Os proximos artefatos sao toda a evidencia disponivel para esta chamada. "
+        "Use somente arquivos presentes nesse bloco e escolha indices, rotulos e "
+        "faixas que estejam realmente observados neles. Uma instrucao de tabela deve "
+        "referenciar arquivo_origem e os indices necessarios para o resolvedor. Nao "
+        "invente arquivos, campos ou valores. Se uma colecao inteira for preenchida "
+        "por linhas_de_tabela, use diretamente o path da colecao. Se o mapeamento "
+        "atingir somente um item de um array, use seletor explicito entre colchetes. Se um "
+        "requisito obrigatorio nao estiver comprovado, registre-o em campos_nao_mapeados com path, "
+        "seletores, motivo e artefatos_verificados; nao invente mapeamento para ele. A ausencia "
+        "de uma observacao com obrigatorio=false nao deve ser registrada como erro."
+    )
+
+
+def unit_mapping_final_instruction() -> str:
+    """Fecha a chamada com o envelope tecnico minimo exigido pelo consolidado."""
+    return (
+        "Agora responda somente com um objeto JSON valido. No nivel raiz inclua "
+        "exatamente tipo_artefato com o valor fragmento_layout_signature, "
+        "unidade_mapeamento com o identificador recebido, campos_nao_mapeados, mapeamento_canonico, "
+        "fontes_relevantes e metadados_estruturais_evidencia. Mapeie todos e somente "
+        "os paths permitidos desta chamada. campos_nao_mapeados deve ser uma lista; cada "
+        "item precisa de path, seletores, motivo e artefatos_verificados. Nao inclua markdown, explicacoes, valores "
+        "finais, versao, publicacao, contrato ou outros envelopes."
+    )
+
+
+def unit_mapping_repair_instruction() -> str:
+    """Instrui uma correcao localizada sem perder o contrato completo de forma."""
+    return (
+        "A resposta anterior foi rejeitada pela validacao deterministica. Leia "
+        "correcao_mapeamento.erro_validacao e correcao_mapeamento.resposta_invalida. "
+        "Corrija somente o necessario, preserve instrucoes validas e responda de novo "
+        "com o objeto JSON completo exigido nesta chamada. O erro nao autoriza criar "
+        "paths fora do subesquema, inventar tipos de origem ou omitir tipo_origem."
+    )
+
+
+def unit_mapping_structure_example(*, unit_id: str) -> dict[str, Any]:
+    """Modelo neutro de resposta, sem dados nem terminologia de um dominio real."""
+    return {
+        "tipos_origem_permitidos": [
+            "valor_fixo",
+            "campo_derivado",
+            "campo_json",
+            "bloco_textual",
+            "cabecalho_de_tabela",
+            "celula_de_tabela",
+            "linhas_de_tabela",
+            "juncao_de_registros_json",
+        ],
+        "formatos_de_origem": {
+            "celula_de_tabela": {
+                "tipo_origem": "celula_de_tabela",
+                "arquivo_origem": "tables/table001.json",
+                "seletor_linha": {"indice_linha_esperado": 2},
+                "seletor_coluna": {"indice_coluna_esperado": 4},
+                "obrigatorio": True,
+            },
+            "linhas_de_tabela": {
+                "tipo_origem": "linhas_de_tabela",
+                "arquivo_origem": "tables/table001.json",
+                "segmentos": [
+                    {
+                        "linha_inicial": 1,
+                        "linha_final": 12,
+                        "valores_por_segmento": {"categoria": "observada"},
+                    }
+                ],
+                "campos": [
+                    {"caminho_saida": "identificador", "indice_coluna": 0},
+                    {"caminho_saida": "valor", "indice_coluna": 3, "tipo": "numero"},
+                ],
+                "obrigatorio": True,
+            },
+            "cabecalho_de_tabela": {
+                "tipo_origem": "cabecalho_de_tabela",
+                "arquivo_origem": "tables/table001.json",
+                "seletor_coluna": {"indice_coluna_esperado": 1},
+                "obrigatorio": True,
+            },
+            "valor_fixo": {
+                "tipo_origem": "valor_fixo",
+                "valor_fixo": "valor declarado pelo contrato ou pela evidencia",
+                "obrigatorio": True,
+            },
+            "bloco_textual": {
+                "tipo_origem": "bloco_textual",
+                "arquivo_origem": "blocks/blocks.jsonl",
+                "padrao": "expressao regular para extrair um valor textual",
+                "obrigatorio": True,
+            },
+            "campo_json": {
+                "tipo_origem": "campo_json",
+                "arquivo_origem": "arquivo.json",
+                "caminho_json": "campo.publicado",
+                "obrigatorio": True,
+            },
+        },
+        "formato_campos_nao_mapeados": {
+            "path": "colecao.itens.valor",
+            "seletores": {"papel_periodo": "referencia"},
+            "motivo": "A evidencia recebida nao contem a observacao exigida.",
+            "artefatos_verificados": ["tables/table001.json"],
+        },
+        "modelo_resposta": {
+            "tipo_artefato": "fragmento_layout_signature",
+            "unidade_mapeamento": unit_id,
+            "campos_nao_mapeados": [],
+            "mapeamento_canonico": {
+                "colecao.itens": {
+                    "tipo_origem": "linhas_de_tabela",
+                    "arquivo_origem": "tables/table001.json",
+                    "faixas_linhas": [{"linha_inicial": 1, "linha_final": 12}],
+                    "campos": [
+                        {"caminho_saida": "codigo", "indice_coluna": 0},
+                        {"caminho_saida": "valor", "indice_coluna": 4, "tipo": "numero"},
+                    ],
+                    "obrigatorio": True,
+                }
+            },
+            "fontes_relevantes": {},
+            "metadados_estruturais_evidencia": {},
+        },
+    }

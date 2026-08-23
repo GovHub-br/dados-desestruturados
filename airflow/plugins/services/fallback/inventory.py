@@ -20,9 +20,13 @@ class FallbackInventoryService:
     UNSUPPORTED_SCOPE = "falha_nao_suportada_para_fallback_automatico"
 
     MAX_FULL_ARTIFACT_CHARS = 60_000
+    MAX_FULL_TABLE_ROWS = 80
+    MAX_FULL_TABLE_CHARS = 40_000
+    TABLE_WINDOW_ROWS = 12
     JSONL_CHUNK_RECORDS = 40
     MAX_CHUNKS_PER_ARTIFACT = 8
     MAX_ANCHOR_EVIDENCES_PER_ARTIFACT = 12
+    LLM_SELECTION_KINDS = frozenset({"table", "chart"})
 
     def load_extraction_inventory(
         self,
@@ -91,21 +95,39 @@ class FallbackInventoryService:
         }
 
     def inventory_summary(self, inventory: dict[str, Any], *, full: bool = False) -> dict[str, Any]:
-        """Compacta o inventario para o prompt sem perder o mapa dos artefatos."""
+        """Compacta para a selecao LLM apenas tabelas e graficos extraidos."""
         if not isinstance(inventory, dict) or not inventory:
             return {"status": "inventario_ausente"}
         items = inventory.get("items", [])
         if not isinstance(items, list):
             items = []
-        selected_items = items if full else items[:40]
+        selectable_items = [
+            item
+            for item in items
+            if isinstance(item, dict)
+            and str(item.get("kind", "")).strip().lower()
+            in self.LLM_SELECTION_KINDS
+        ]
+        selected_items = selectable_items if full else selectable_items[:40]
+        collections = inventory.get("collections", {})
+        summary = inventory.get("summary", {})
         return {
             "kind": inventory.get("kind"),
             "version": inventory.get("version"),
             "source_file": inventory.get("source_file"),
-            "summary": inventory.get("summary", {}),
-            "collections": inventory.get("collections", {}),
+            "tipos_artefato_permitidos": sorted(self.LLM_SELECTION_KINDS),
+            "summary": {
+                f"{kind}s": summary.get(f"{kind}s")
+                for kind in self.LLM_SELECTION_KINDS
+                if isinstance(summary, dict) and f"{kind}s" in summary
+            },
+            "collections": {
+                f"{kind}s": collections.get(f"{kind}s")
+                for kind in self.LLM_SELECTION_KINDS
+                if isinstance(collections, dict) and collections.get(f"{kind}s")
+            },
             "modo": "completo" if full else "resumido",
-            "total_items": len(items),
+            "total_items_selecionaveis": len(selectable_items),
             "items_incluidos": len(selected_items),
             "items": [
                 {
@@ -256,10 +278,17 @@ class FallbackInventoryService:
         text = raw.decode("utf-8", errors="replace")
         if object_key.endswith(".json"):
             try:
+                parsed = json.loads(text)
+                if self._is_table_artifact(parsed):
+                    return {
+                        "object_key": object_key,
+                        "formato": "json",
+                        "sample": self._table_evidence(parsed),
+                    }
                 return {
                     "object_key": object_key,
                     "formato": "json",
-                    "sample": self.truncate_json(json.loads(text)),
+                    "sample": self.truncate_json(parsed),
                 }
             except Exception:
                 return {
@@ -283,6 +312,43 @@ class FallbackInventoryService:
             return {"object_key": object_key, "formato": "jsonl", "sample": rows}
 
         return {"object_key": object_key, "formato": "texto", "sample": text[:2000]}
+
+    def _table_evidence(self, table: dict[str, Any]) -> dict[str, Any]:
+        """Preserva tabelas pequenas e distribui janelas de tabelas grandes."""
+        rows = table.get("rows", [])
+        if not isinstance(rows, list):
+            return self.truncate_json(table)
+        base = {
+            key: value
+            for key, value in table.items()
+            if key != "rows"
+        }
+        base["quantidade_linhas"] = len(rows)
+        base["quantidade_colunas"] = max((len(row) for row in rows if isinstance(row, list)), default=0)
+        compact_rows = json.dumps(rows, ensure_ascii=False)
+        if len(rows) <= self.MAX_FULL_TABLE_ROWS and len(compact_rows) <= self.MAX_FULL_TABLE_CHARS:
+            base["modo_linhas"] = "completo"
+            base["rows"] = rows
+            return base
+
+        base["modo_linhas"] = "janelas_deterministicas"
+        base["janelas"] = self._table_windows(rows)
+        return base
+
+    def _table_windows(self, rows: list[Any]) -> list[dict[str, Any]]:
+        """Amostra inicio, meio e fim mantendo indices absolutos de linha."""
+        if not rows:
+            return []
+        starts = {0, max(0, (len(rows) - self.TABLE_WINDOW_ROWS) // 2), max(0, len(rows) - self.TABLE_WINDOW_ROWS)}
+        windows: list[dict[str, Any]] = []
+        for start in sorted(starts):
+            end = min(len(rows), start + self.TABLE_WINDOW_ROWS)
+            windows.append({"linha_inicial": start, "linha_final": end - 1, "rows": rows[start:end]})
+        return windows
+
+    @staticmethod
+    def _is_table_artifact(value: Any) -> bool:
+        return isinstance(value, dict) and isinstance(value.get("schema"), list) and isinstance(value.get("rows"), list)
 
     @staticmethod
     def initial_chunk_state(

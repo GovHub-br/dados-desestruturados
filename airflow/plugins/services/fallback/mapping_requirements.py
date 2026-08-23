@@ -4,6 +4,8 @@ import re
 from dataclasses import dataclass
 from typing import Any
 
+from plugins.services.layout_paths import parse_mapping_path
+
 
 class MappingRequirementsError(RuntimeError):
     """O contrato declarou requisitos de mapeamento inconsistentes."""
@@ -11,10 +13,11 @@ class MappingRequirementsError(RuntimeError):
 
 @dataclass(frozen=True)
 class RequiredObservation:
-    """Uma observacao obrigatoria de um campo repetivel do schema de saida."""
+    """Uma observacao declarada de um campo repetivel do schema de saida."""
 
     selectors: dict[str, str]
     context_fields: tuple[str, ...]
+    required: bool = True
 
 
 @dataclass(frozen=True)
@@ -23,6 +26,8 @@ class MappingRequirement:
 
     path: str
     observations: tuple[RequiredObservation, ...]
+    descricao: str | None = None
+    orientacao_origem: dict[str, Any] | None = None
 
 
 def mapping_requirements_from_context(
@@ -94,19 +99,38 @@ def mapping_requirements_from_context(
             )
             for raw_observation in raw_observations
         )
-        parsed.append(MappingRequirement(path=path, observations=observations))
+        descricao = str(raw_requirement.get("descricao", "")).strip() or None
+        orientacao_origem = raw_requirement.get("orientacao_origem")
+        if orientacao_origem is not None and not isinstance(orientacao_origem, dict):
+            raise MappingRequirementsError(
+                f"orientacao_origem deve ser objeto: {path}."
+            )
+        parsed.append(
+            MappingRequirement(
+                path=path,
+                observations=observations,
+                descricao=descricao,
+                orientacao_origem=orientacao_origem,
+            )
+        )
 
     return parsed
 
 
 def mapping_requirements_payload(
     requirements: list[MappingRequirement],
-) -> dict[str, list[dict[str, Any]]]:
+) -> dict[str, Any]:
     """Converte requisitos validados para o payload legivel pela LLM."""
     return {
         "campos_obrigatorios": [
             {
                 "path": requirement.path,
+                **({"descricao": requirement.descricao} if requirement.descricao else {}),
+                **(
+                    {"orientacao_origem": requirement.orientacao_origem}
+                    if requirement.orientacao_origem
+                    else {}
+                ),
                 **(
                     {
                         "observacoes_obrigatorias": [
@@ -114,6 +138,11 @@ def mapping_requirements_payload(
                                 "seletores": observation.selectors,
                                 "campos_contexto_obrigatorios": list(
                                     observation.context_fields
+                                ),
+                                **(
+                                    {"obrigatorio": False}
+                                    if not observation.required
+                                    else {}
                                 ),
                             }
                             for observation in requirement.observations
@@ -152,6 +181,11 @@ def mappable_targets_payload(
                             "campos_contexto_obrigatorios": list(
                                 observation.context_fields
                             ),
+                            **(
+                                {"obrigatorio": False}
+                                if not observation.required
+                                else {}
+                            ),
                         }
                         for observation in requirement.observations
                     ]
@@ -168,13 +202,12 @@ def parsed_mapping_path(path: str) -> tuple[str, dict[str, str]]:
     """Remove filtros de array de um path e devolve os seletores declarados."""
     selectors: dict[str, str] = {}
     normalized_parts: list[str] = []
-    for raw_part in path.split("."):
-        part = raw_part.strip()
-        base = part.split("[", maxsplit=1)[0].strip()
-        if base:
-            normalized_parts.append(base)
-        for selector_key, selector_value in re.findall(r"\[([^=\]]+)=([^\]]+)\]", part):
-            selectors[selector_key.strip()] = selector_value.strip()
+    for token in parse_mapping_path(path):
+        normalized_parts.append(str(token["field"]))
+        selector = token.get("selector")
+        if selector:
+            selector_key, selector_value = selector
+            selectors[str(selector_key)] = str(selector_value)
     return ".".join(normalized_parts), selectors
 
 
@@ -227,4 +260,13 @@ def _parse_observation(
             "Campos de contexto fora do schema_saida: "
             f"{invalid_context_paths}."
         )
-    return RequiredObservation(selectors=selectors, context_fields=context_fields)
+    required = raw_observation.get("obrigatorio", True)
+    if not isinstance(required, bool):
+        raise MappingRequirementsError(
+            f"obrigatorio deve ser booleano: {path}."
+        )
+    return RequiredObservation(
+        selectors=selectors,
+        context_fields=context_fields,
+        required=required,
+    )

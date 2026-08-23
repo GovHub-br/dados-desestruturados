@@ -17,6 +17,7 @@ from plugins.services.contract_schema import (
     is_type_descriptor,
     normalize_schema_path,
 )
+from plugins.services.layout_paths import get_nested_value, parse_mapping_path, set_nested_value
 from plugins.services.semantic_contract_registry import SemanticContractRegistry
 
 
@@ -1315,15 +1316,17 @@ class SchemaResolutionService:
         item: dict[str, Any] = {}
         for field in fields:
             name = str(field.get("nome", "")).strip()
-            if not name:
+            output_path = str(field.get("caminho_saida", "")).strip() or name
+            if not output_path:
                 continue
             field_type = str(field.get("tipo", "texto"))
             if field_type == "posicao":
-                item[name] = row_index - start + 1
+                set_nested_value(item, output_path, row_index - start + 1)
                 continue
             column_index = int(field.get("indice_coluna", -1))
             value = row[column_index] if 0 <= column_index < len(row) else None
-            item[name] = parse_flexible_number(value) if field_type == "numero" else str(value or "").strip() or None
+            resolved = parse_flexible_number(value) if field_type == "numero" else str(value or "").strip() or None
+            set_nested_value(item, output_path, resolved)
         return item
 
     def _load_table_metadata(
@@ -1382,16 +1385,10 @@ class SchemaResolutionService:
 
     @staticmethod
     def _parse_mapping_path(mapping_path: str) -> list[dict[str, str | tuple[str, str]]]:
-        tokens: list[dict[str, str | tuple[str, str]]] = []
-        for raw_part in mapping_path.split("."):
-            match = re.fullmatch(r"([^\[\]]+)(?:\[([^=\]]+)=([^\]]+)\])?", raw_part)
-            if not match:
-                raise RuntimeError(f"Caminho de mapeamento canonico invalido: {mapping_path}")
-            token: dict[str, str | tuple[str, str]] = {"field": match.group(1)}
-            if match.group(2) is not None:
-                token["selector"] = (match.group(2), match.group(3))
-            tokens.append(token)
-        return tokens
+        try:
+            return parse_mapping_path(mapping_path)
+        except ValueError as exc:
+            raise RuntimeError(str(exc)) from exc
 
     def _set_schema_value(
         self,
@@ -1470,12 +1467,16 @@ class SchemaResolutionService:
             selectors = item.get("__selectors__")
             if isinstance(selectors, dict) and selectors.get(selector_key) == selector_value:
                 return item
+            if get_nested_value(item, selector_key) == selector_value:
+                return item
 
         item = self._build_schema_template(item_contract)
         if not isinstance(item, dict):
             item = {}
         item["__selectors__"] = {selector_key: selector_value}
-        if selector_key in item and item[selector_key] is None:
+        if "." in selector_key:
+            set_nested_value(item, selector_key, selector_value)
+        elif selector_key in item and item[selector_key] is None:
             item[selector_key] = selector_value
         items.append(item)
         return item

@@ -36,6 +36,11 @@ class LocalPlatformConfig:
     fallback_llm_model: str
     fallback_llm_timeout_seconds: int
     fallback_llm_max_tokens: int
+    fallback_llm_thinking_mode: str
+    fallback_llm_selection_max_tokens: int
+    fallback_llm_selection_thinking_mode: str
+    fallback_llm_fragment_max_tokens: int
+    fallback_llm_fragment_thinking_mode: str
 
 
 class RuntimeConfigLoader:
@@ -133,6 +138,23 @@ class RuntimeConfigLoader:
                 os.getenv("FALLBACK_LLM_MAX_TOKENS", "4096"),
                 default=4096,
             ),
+            fallback_llm_thinking_mode=os.getenv(
+                "FALLBACK_LLM_THINKING_MODE", ""
+            ).strip().lower(),
+            fallback_llm_selection_max_tokens=self._as_int(
+                os.getenv("FALLBACK_LLM_SELECTION_MAX_TOKENS", "2048"),
+                default=2048,
+            ),
+            fallback_llm_selection_thinking_mode=os.getenv(
+                "FALLBACK_LLM_SELECTION_THINKING_MODE", "disabled"
+            ).strip().lower(),
+            fallback_llm_fragment_max_tokens=self._as_int(
+                os.getenv("FALLBACK_LLM_FRAGMENT_MAX_TOKENS", "8192"),
+                default=8192,
+            ),
+            fallback_llm_fragment_thinking_mode=os.getenv(
+                "FALLBACK_LLM_FRAGMENT_THINKING_MODE", "enabled"
+            ).strip().lower(),
         )
 
     def _resolve_llm_text_extraction_flag(self) -> bool:

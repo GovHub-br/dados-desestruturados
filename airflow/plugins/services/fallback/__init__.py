@@ -16,12 +16,14 @@ from .context_builder import (
     FallbackProblemContextBuilder,
 )
 from .inventory import FALLBACK_INVENTORY_SERVICE, FallbackInventoryService
+from .mapping_plan import MAPPING_PLAN_SERVICE, MappingPlanService, MappingUnit
 from .models import (
     ArtifactSelectionItem,
     ArtifactSelectionCoverage,
     BaseLayoutSignatureRef,
     LayoutArtifactSelection,
     LayoutSignatureCandidate,
+    LayoutSignatureFragment,
 )
 from .orchestrator import FALLBACK_LLM_SERVICE, FallbackLlmService
 
@@ -41,7 +43,11 @@ __all__ = [
     "FallbackClassificationService",
     "FallbackInventoryService",
     "FallbackLlmService",
+    "MAPPING_PLAN_SERVICE",
+    "MappingPlanService",
+    "MappingUnit",
     "FallbackProblemContextBuilder",
     "LayoutArtifactSelection",
     "LayoutSignatureCandidate",
+    "LayoutSignatureFragment",
 ]
