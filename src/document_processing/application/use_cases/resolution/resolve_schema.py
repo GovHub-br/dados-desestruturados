@@ -395,7 +395,7 @@ class ResolveSchemaUseCase(
             loaded=loaded,
             validation=validation,
             resolved=resolved,
-            execution_log=execution_log,
+            audit=execution_log,
         )
 
 
