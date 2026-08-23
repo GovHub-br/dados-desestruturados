@@ -1,30 +1,26 @@
 from __future__ import annotations
 
-import json
 import logging
 import re
-import unicodedata
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
-from document_processing.domain.resolution.numbers import parse_flexible_number
-from document_processing.infrastructure.storage.minio_artifact_repository import MinioStorageClient
-from document_processing.infrastructure.storage.semantic_contract_registry import SemanticContractRegistry
-from document_processing.shared.config.project_paths import PROJECT_PATHS, ProjectPaths
-from document_processing.shared.config.runtime import RUNTIME_CONFIG_LOADER, RuntimeConfigLoader
 from document_processing.domain.contracts.schema import (
     apply_contract_literals,
     contract_literal_paths,
-    is_type_descriptor,
     normalize_schema_path,
 )
+from document_processing.infrastructure.storage.minio_artifact_repository import MinioStorageClient
+from document_processing.shared.config.project_paths import PROJECT_PATHS, ProjectPaths
+from document_processing.shared.config.runtime import RUNTIME_CONFIG_LOADER, RuntimeConfigLoader
+
 from .artifact_readers import ArtifactReaderMixin
 from .audit_builder import ResolutionAuditBuilder
 from .contract_semantic_helpers import ContractSemanticHelpersMixin
 from .deterministic_rule_validator import DeterministicRuleValidatorMixin
-from .mapping_entry_resolver import MappingEntryResolverMixin
 from .manifest_resolution_loader import ManifestResolutionLoaderMixin
+from .mapping_entry_resolver import MappingEntryResolverMixin
 from .output_publisher import ResolutionOutputPublisher
 from .schema_output_builder import SchemaOutputBuilderMixin
 from .source_mapping_resolvers import SourceMappingResolversMixin

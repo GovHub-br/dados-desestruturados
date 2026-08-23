@@ -9,7 +9,10 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
-from document_processing.infrastructure.storage.semantic_contract_registry import SemanticContractRegistry
+from document_processing.infrastructure.storage.semantic_contract_registry import (
+    SemanticContractRegistry,
+)
+
 from .constants import DAG_NAME
 
 

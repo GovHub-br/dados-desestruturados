@@ -1,4 +1,3 @@
-"""Configuração compartilhada da plataforma."""
 """Configuração e caminhos independentes de orquestrador."""
 
 from .project_paths import PROJECT_PATHS, ProjectPaths

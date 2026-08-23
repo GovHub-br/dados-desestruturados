@@ -7,6 +7,7 @@ import unicodedata
 from pathlib import Path
 from typing import Any
 
+
 class ArtifactReaderMixin:
     def _load_json_from_uri_or_local(self, uri: str, *, local_fallback: str) -> dict[str, Any]:
         if uri.startswith("minio://"):

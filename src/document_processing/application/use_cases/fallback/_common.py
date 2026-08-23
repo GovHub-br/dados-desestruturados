@@ -6,11 +6,11 @@ necessários aos casos de uso especializados.
 
 from __future__ import annotations
 
-from copy import deepcopy
-from datetime import UTC, datetime
 import json
 import logging
 import re
+from copy import deepcopy
+from datetime import UTC, datetime
 from typing import Any
 
 from pydantic import ValidationError
@@ -45,7 +45,9 @@ from document_processing.infrastructure.llm.client import (
     FallbackLlmClientError,
 )
 from document_processing.infrastructure.storage.minio_artifact_repository import MinioStorageClient
-from document_processing.infrastructure.storage.semantic_contract_registry import SemanticContractRegistry
+from document_processing.infrastructure.storage.semantic_contract_registry import (
+    SemanticContractRegistry,
+)
 from document_processing.shared.config.runtime import RUNTIME_CONFIG_LOADER, RuntimeConfigLoader
 
 from .context_builder import FallbackProblemContextBuilder

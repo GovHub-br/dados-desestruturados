@@ -3,7 +3,12 @@ from __future__ import annotations
 from typing import Any
 
 from document_processing.domain.contracts.schema import is_type_descriptor
-from document_processing.domain.layouts.paths import get_nested_value, parse_mapping_path, set_nested_value
+from document_processing.domain.layouts.paths import (
+    get_nested_value,
+    parse_mapping_path,
+    set_nested_value,
+)
+
 
 class SchemaOutputBuilderMixin:
     @staticmethod

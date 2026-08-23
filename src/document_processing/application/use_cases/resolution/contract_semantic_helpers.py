@@ -3,6 +3,7 @@ from __future__ import annotations
 import re
 from typing import Any
 
+
 class ContractSemanticHelpersMixin:
     def _expand_accepted_labels_from_contract(
         self,

@@ -8,12 +8,13 @@ import re
 from pathlib import Path
 from typing import Any
 
-from document_processing.infrastructure.storage.semantic_contract_registry import SemanticContractRegistry
+from document_processing.infrastructure.storage.semantic_contract_registry import (
+    SemanticContractRegistry,
+)
 
 
 class ManifestResolutionLoaderMixin:
     def _discover_extraction_manifests(self) -> list[str]:
-        config = self.config_loader.load_local_platform_config()
         manifests = self.minio_client.list_object_keys(
             prefix="execucoes/",
             suffix="/extraction/manifesto_execucao.json",

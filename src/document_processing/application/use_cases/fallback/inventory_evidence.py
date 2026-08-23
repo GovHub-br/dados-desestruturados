@@ -6,8 +6,6 @@ from collections.abc import Callable
 from typing import Any
 
 
-
-
 class FallbackInventoryEvidenceMixin:
     def _table_evidence(self, table: dict[str, Any]) -> dict[str, Any]:
         """Preserva tabelas pequenas e distribui janelas de tabelas grandes."""

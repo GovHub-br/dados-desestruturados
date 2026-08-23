@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import Any
 
+
 def unit_mapping_scope_instruction(scope: str) -> str:
     """Abre uma chamada por unidade como uma tarefa completa de mapeamento."""
     if scope == "correcao_parcial_mapeamento":
