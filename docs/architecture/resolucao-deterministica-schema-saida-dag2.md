@@ -1,4 +1,4 @@
-# Resolução Determinística da DAG 2: Seletores e Metadados
+# Resolução Determinística do Schema de Saída na DAG 2
 
 ## Objetivo
 

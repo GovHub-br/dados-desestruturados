@@ -1,4 +1,4 @@
-# Linha de base da reorganização
+# Linha de Base da Reorganização do Repositório — 2026-08-23
 
 Status: arquivado  
 Owner: plataforma de inteligência documental  
@@ -50,7 +50,7 @@ layout signature, validação de layout, auditoria e
 Os imports `plugins.services.contract_schema`, `plugins.services.layout_paths`
 e os módulos puros de `plugins.services.fallback` são públicos durante a
 migração. Eles agora reexportam o pacote novo; a lista e o prazo de remoção
-ficam em [`../architecture/deprecations.md`](../architecture/deprecations.md).
+ficam em [`../architecture/compatibilidade-e-deprecacoes-arquiteturais.md`](../architecture/compatibilidade-e-deprecacoes-arquiteturais.md).
 
 ## Teste executado
 

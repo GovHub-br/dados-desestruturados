@@ -679,8 +679,8 @@ Pendencias naturais:
 - `docs/adr/0004-resolucao-deterministica-com-fallback-llm.md`
 - `resultados_contrutoras/contrato_semantico_construtora.json`
 - `resultados_contrutoras/layout_signature_cury_deterministico.json`
-- `docs/architecture/airflow-orchestration.md`
+- `docs/architecture/arquitetura-orquestracao-airflow.md`
 - `docs/reference/minio-data-model.md`
 - `docs/reference/postgres-schema.md`
-- `docs/architecture/openmetadata-governance.md`
+- `docs/architecture/governanca-e-linhagem-openmetadata.md`
 - `docs/reference/examples/cury-deterministic-layout.md`

@@ -27,9 +27,9 @@ Before designing or changing DAG 3 behavior, read:
 
 - `specs/platform/CONTEXT.md`
 - `specs/platform/SPEC.md`
-- `docs/architecture/airflow-orchestration.md`
+- `docs/architecture/arquitetura-orquestracao-airflow.md`
 - `docs/archive/implemented/dag3-minimal-reimplementation.md`
-- `docs/architecture/dag3-fallback-llm.md`
+- `docs/architecture/fallback-llm-e-geracao-layout-dag3.md`
 - `docs/archive/implemented/dag3-llm-payloads.md`
 - `airflow/dags/construtoras/dag_valida_e_fallback_llm.py`
 - `airflow/dags/construtoras/dag_resolve_schema_saida.py`

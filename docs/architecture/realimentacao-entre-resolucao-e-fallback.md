@@ -1,4 +1,4 @@
-# Arquitetura das DAGs e realimentação do fallback
+# Realimentação entre Resolução Determinística e Fallback LLM
 
 ## Resposta curta
 

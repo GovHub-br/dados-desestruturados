@@ -1,4 +1,4 @@
-# Plano de Implementacao — MVP de Producao
+# Plano de Implementação do MVP de Produção
 
 ## Criterio de pronto
 

@@ -1,4 +1,4 @@
-# Governança e linhagem no OpenMetadata
+# Governança de Ativos e Linhagem Estrutural no OpenMetadata
 
 ## Objetivo
 

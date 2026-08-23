@@ -1,4 +1,4 @@
-# Arquitetura das DAGs para PDFs de construtoras
+# Arquitetura de Orquestração Airflow para o Pipeline de Documentos
 
 ## Separacao entre coleta e extracao
 

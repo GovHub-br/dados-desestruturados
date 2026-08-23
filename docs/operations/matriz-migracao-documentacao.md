@@ -1,4 +1,4 @@
-# Matriz de migração da documentação
+# Matriz de Migração e Situação da Documentação
 
 - Status: Concluída para as fontes existentes em 2026-08-23
 - Owner: Engenharia da plataforma
@@ -57,4 +57,3 @@ Um novo Markdown deve nascer em `docs/` ou `specs/`. Use `docs/plans/` apenas
 para trabalho futuro ainda relevante; ao concluir um plano, mova-o para
 `docs/archive/implemented/` e registre a decisão duradoura em ADR quando
 necessário.
-

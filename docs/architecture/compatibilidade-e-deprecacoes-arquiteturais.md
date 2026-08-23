@@ -1,4 +1,4 @@
-# Compatibilidade e deprecações de arquitetura
+# Política de Compatibilidade e Deprecações Arquiteturais
 
 - Status: Ativo durante a reorganização
 - Owner: Engenharia da plataforma

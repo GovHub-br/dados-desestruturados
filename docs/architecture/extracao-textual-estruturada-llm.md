@@ -1,4 +1,4 @@
-# Extracao textual estruturada com LLM
+# Extração Textual Estruturada Assistida por LLM
 
 Este documento descreve a etapa adicionada para transformar trechos textuais com valores em JSON estruturado usando LLM. A implementacao foi desenhada para reduzir custo: a LLM nao recebe todo o texto do PDF, apenas janelas de contexto que contem valores detectados por regex.
 

@@ -1,4 +1,4 @@
-# Plano de Correções: Arrays, Tabelas e Fragmentos da DAG 3
+# Plano de Correções da DAG 3: Arrays, Tabelas e Fragmentos de Layout
 
 ## Objetivo
 

@@ -1,4 +1,4 @@
-# Plano de Implementacao da DAG 3: `dag_valida_e_fallback_llm`
+# Arquitetura do Fallback LLM e Geração de Layout na DAG 3
 
 ## Objetivo
 
@@ -603,7 +603,379 @@ de consolidacao antes de gerar o layout candidato.
 - O candidato gerado respeita o escopo: patch para correcao parcial, layout
   completo para criacao inicial ou regeneracao profunda.
 
-## Etapa 8: Observabilidade dos Requests LLM
+## Etapa 8: Redesenho dos Payloads LLM por Tipo de Fallback
+
+### Objetivo
+
+Separar claramente o que cada chamada LLM precisa receber em cada tipo de
+fallback. O payload da LLM deve nascer correto na origem, em vez de ser montado
+grande demais e filtrado depois.
+
+Esta etapa substitui a abordagem temporaria em que o `context_builder` monta um
+`fallback_problem_context` unico e o `orchestrator` remove metadados
+operacionais antes de chamar a LLM.
+
+### Como o Payload Atual e Montado
+
+Hoje o fluxo monta primeiro um `fallback_problem_context` comum para todos os
+casos.
+
+Esse contexto nasce em `FallbackProblemContextBuilder.build_fallback_problem_context`
+e inclui:
+
+- `tipo_artefato`;
+- `status`;
+- `escopo_permitido`;
+- `llm_constraints`;
+- `falha`;
+- `layout_signature_relevante`;
+- `contrato_semantico_relevante`;
+- `inventario_extracao`;
+- `manifesto_extracao_ref`;
+- `_manifesto_extracao_completo`.
+
+Depois, `FallbackLlmService.load_fallback_context` acrescenta mais dados
+operacionais e de suporte:
+
+- `fallback_context`;
+- `layout_signature_base_ref`;
+- `layout_signature_base_editable_sections`;
+- `layout_signature_base_validation_context`;
+- `modo_criacao_inicial_layout`, quando aplicavel.
+
+Na chamada de selecao de artefatos, o `orchestrator` usa esse mesmo contexto,
+remove chaves internas que comecam com `_`, remove `artefatos_contexto_llm` e
+`estado_chunking`, e envia o restante para a LLM.
+
+Na chamada de criacao do layout candidato, o `orchestrator` parte do mesmo
+contexto e adiciona:
+
+- `layout_candidate_lineage`;
+- `selecao_artefatos_llm`, quando houve primeira chamada;
+- `artefatos_contexto_llm`, com os arquivos selecionados carregados;
+- `estado_chunking`, quando aplicavel.
+
+Como mitigacao temporaria, existe uma funcao no `orchestrator`:
+
+```python
+_llm_visible_context(fallback_problem_context)
+```
+
+Ela remove metadados operacionais como:
+
+- `tipo_artefato`;
+- `status`;
+- `manifesto_extracao_ref`;
+- `modo_criacao_inicial_layout`.
+
+Essa funcao resolve o vazamento imediato de metadados para o prompt, mas nao e o
+desenho ideal. O desenho correto e construir payloads diferentes por tipo de
+fallback e por etapa LLM.
+
+### Problema do Desenho Atual
+
+O payload atual mistura tres responsabilidades:
+
+1. contexto operacional da DAG 3;
+2. informacoes de debug e rastreabilidade;
+3. instrucao efetiva para a LLM.
+
+Essa mistura funciona para testes iniciais, mas atrapalha quando os cenarios
+ficam diferentes:
+
+- em `correcao_parcial_mapeamento`, faz sentido enviar a falha da DAG 2,
+  trechos do layout base, campos quebrados e regras reprovadas;
+- em `criacao_inicial_layout`, nao existe layout base quebrado, entao enviar
+  falha de layout, trechos editaveis do layout anterior ou regras reprovadas
+  pode confundir a LLM;
+- em `regeneracao_total_mapeamento`, pode existir layout antigo, mas ele deve
+  ser tratado como pista fraca, nao como patch local;
+- a primeira chamada LLM escolhe onde buscar evidencias;
+- a segunda chamada LLM cria a assinatura de layout candidata.
+
+Portanto, o payload deve ser desenhado por combinacao de:
+
+- tipo de fallback;
+- etapa da LLM.
+
+### Fluxos de Payload Alvo
+
+Inicialmente devem existir dois grandes fluxos:
+
+1. `correcao_parcial_mapeamento`;
+2. `criacao_inicial_layout` ou `regeneracao_total_mapeamento`.
+
+Cada fluxo pode ter duas etapas:
+
+1. selecao de artefatos pelo `inventory.json`;
+2. geracao do `layout_signature_candidato`.
+
+#### Fluxo A: Correcao Parcial de Layout Existente
+
+Esse fluxo parte de uma DAG 2 que encontrou incompatibilidade usando um layout
+signature existente.
+
+##### A1. Payload de Selecao de Artefatos
+
+Objetivo da LLM:
+
+- escolher quais artefatos da extracao precisam ser abertos para corrigir os
+  campos quebrados ou regras reprovadas.
+
+Payload recomendado:
+
+```json
+{
+  "tipo_payload": "selecao_artefatos_correcao_parcial",
+  "escopo_permitido": "correcao_parcial_mapeamento",
+  "falha": {
+    "codigos_falha": [],
+    "campos_quebrados": [],
+    "regras_reprovadas": [],
+    "campos_obrigatorios_nao_resolvidos": []
+  },
+  "contrato_semantico_relevante": {},
+  "layout_signature_relevante": {
+    "mapeamento_canonico_relevante": {},
+    "regras_deteccao_mudanca_relevantes": [],
+    "fontes_relevantes": []
+  },
+  "inventario_extracao": {
+    "politica_uso": {},
+    "resumo": {}
+  }
+}
+```
+
+Nao deve receber:
+
+- `tipo_artefato`;
+- `status`;
+- contadores do manifesto usados apenas para debug;
+- manifesto completo;
+- artefatos completos da extracao;
+- metadados de publicacao;
+- `layout_signature_base_editable_sections` inteiro quando apenas alguns campos
+  quebraram.
+
+##### A2. Payload de Geracao do Candidato
+
+Objetivo da LLM:
+
+- gerar um candidato de layout focado em corrigir os seletores ou fontes
+  quebradas, preservando o restante do layout.
+
+Payload recomendado:
+
+```json
+{
+  "tipo_payload": "layout_candidato_correcao_parcial",
+  "escopo_permitido": "correcao_parcial_mapeamento",
+  "layout_candidate_lineage": {
+    "document_id": "...",
+    "execution_id_origem": "...",
+    "fallback_execution_id": "..."
+  },
+  "falha": {},
+  "contrato_semantico_relevante": {},
+  "layout_signature_base_ref": {},
+  "layout_signature_relevante": {},
+  "layout_signature_base_validation_context": {},
+  "selecao_artefatos_llm": {},
+  "artefatos_contexto_llm": []
+}
+```
+
+Neste fluxo, faz sentido a LLM ver o problema da DAG 2, porque a tarefa e
+justamente corrigir algo que quebrou no layout existente.
+
+#### Fluxo B: Criacao Inicial ou Regeneracao Total
+
+Esse fluxo deve tratar a assinatura de layout como descoberta ampla, nao como
+patch.
+
+Em `criacao_inicial_layout`, nao existe layout signature vigente confiavel.
+Portanto, nao faz sentido enviar:
+
+- `layout_signature_relevante`;
+- `layout_signature_base_editable_sections`;
+- regras reprovadas do layout anterior;
+- contexto de patch;
+- campos quebrados derivados de um mapeamento que nunca existiu.
+
+Em `regeneracao_total_mapeamento`, pode existir layout antigo, mas ele deve ser
+enviado, no maximo, como referencia fraca ou evidencia historica. A LLM nao deve
+ficar presa ao patch dos seletores antigos.
+
+##### B1. Payload de Selecao de Artefatos
+
+Objetivo da LLM:
+
+- escolher quais artefatos da extracao melhor cobrem o contrato semantico;
+- localizar tabelas, secoes, blocos ou graficos que permitam construir o layout
+  candidato completo.
+
+Payload recomendado:
+
+```json
+{
+  "tipo_payload": "selecao_artefatos_redescoberta_layout",
+  "escopo_permitido": "criacao_inicial_layout",
+  "contrato_semantico_relevante": {
+    "schema_saida_paths": [],
+    "schema_saida_array_paths": [],
+    "entidades": {},
+    "metricas": {}
+  },
+  "inventario_extracao": {
+    "inventario_completo_enviado": true,
+    "resumo": {}
+  },
+  "objetivo": {
+    "selecionar_fontes_para_criar_layout_signature": true,
+    "nao_resolver_valores_finais": true
+  }
+}
+```
+
+Para `regeneracao_total_mapeamento`, pode haver um bloco opcional:
+
+```json
+{
+  "layout_anterior_como_referencia_fraca": {
+    "empresa": "...",
+    "tipo_documento": "...",
+    "fontes_relevantes_antigas": [],
+    "observacao": "usar apenas como pista; redescobrir fontes pelo inventario atual"
+  }
+}
+```
+
+Nao deve receber:
+
+- falhas de campo como se fossem patch pontual;
+- `layout_signature_base_validation_context` completo;
+- lista de mapeamentos antigos como verdade operacional;
+- `modo_criacao_inicial_layout` como flag solta;
+- metadados de debug.
+
+##### B2. Payload de Geracao do Candidato
+
+Objetivo da LLM:
+
+- gerar um `layout_signature_candidato` completo o suficiente para a DAG 2
+  validar e resolver o schema de saida.
+
+Payload recomendado:
+
+```json
+{
+  "tipo_payload": "layout_candidato_redescoberta_layout",
+  "escopo_permitido": "criacao_inicial_layout",
+  "layout_candidate_lineage": {
+    "document_id": "...",
+    "execution_id_origem": "...",
+    "fallback_execution_id": "..."
+  },
+  "contrato_semantico_relevante": {},
+  "selecao_artefatos_llm": {},
+  "artefatos_contexto_llm": [],
+  "regras_de_saida": {
+    "gerar_layout_signature_candidato": true,
+    "base_layout_signature_null_quando_criacao_inicial": true,
+    "nao_gerar_schema_saida_resolvido": true,
+    "nao_gerar_valores_finais": true
+  }
+}
+```
+
+Para `regeneracao_total_mapeamento`, `base_layout_signature` pode apontar para o
+layout anterior por linhagem, mas o candidato deve ser completo e validado como
+redescoberta ampla.
+
+### Novos Builders Recomendados
+
+Substituir o builder unico por metodos explicitos:
+
+- `build_partial_artifact_selection_payload(...)`;
+- `build_partial_candidate_payload(...)`;
+- `build_full_artifact_selection_payload(...)`;
+- `build_full_candidate_payload(...)`.
+
+Ou, se preferir manter uma classe unica:
+
+```python
+build_llm_payload(
+    fallback_scope="correcao_parcial_mapeamento",
+    llm_stage="artifact_selection"
+)
+```
+
+Mas o retorno deve nascer enxuto, sem depender de filtro posterior.
+
+### Separacao entre Payload LLM e Debug Metadata
+
+O retorno de carregamento da DAG 3 deve separar:
+
+```json
+{
+  "fallback_problem_context": {},
+  "llm_payloads": {
+    "artifact_selection": {},
+    "candidate_generation": {}
+  },
+  "debug_metadata": {}
+}
+```
+
+`debug_metadata` pode conter:
+
+- `tipo_artefato`;
+- `status`;
+- `manifesto_extracao_ref`;
+- contadores;
+- object keys carregados;
+- politica interna usada;
+- timestamps;
+- `modo_criacao_inicial_layout`.
+
+Esses dados devem ser persistidos nos artefatos de observabilidade, mas nao
+devem entrar no prompt por padrao.
+
+### Mudancas de Implementacao Necessarias
+
+1. Alterar `FallbackProblemContextBuilder` para deixar de montar um
+   `fallback_problem_context` unico para todos os cenarios.
+2. Criar builders de payload por etapa:
+   - selecao de artefatos;
+   - geracao do candidato.
+3. Criar builders de payload por escopo:
+   - correcao parcial;
+   - criacao inicial;
+   - regeneracao total.
+4. Fazer `select_relevant_artifacts` receber diretamente o payload de selecao,
+   e nao o contexto operacional completo.
+5. Fazer `generate_candidate_layout` receber diretamente o payload de geracao,
+   enriquecido com a selecao validada e os artefatos carregados.
+6. Persistir separadamente:
+   - payload enviado para LLM;
+   - debug metadata;
+   - contexto operacional da execucao.
+7. Remover `_llm_visible_context` do `orchestrator`, porque o payload ja deve
+   nascer apropriado para a LLM.
+
+### Criterio de Aceite
+
+- Nao existe mais funcao que remove chaves operacionais antes da LLM.
+- Cada chamada LLM recebe um payload explicitamente construido para sua etapa.
+- Criacao inicial nao recebe contexto de patch de layout inexistente.
+- Regeneracao total nao trata layout antigo como fonte de verdade.
+- Correcao parcial continua recebendo falhas da DAG 2, layout relevante e
+  mapeamentos relacionados aos campos quebrados.
+- Artefatos de debug continuam sendo persistidos, mas fora do payload enviado a
+  LLM.
+
+## Etapa 9: Observabilidade dos Requests LLM
 
 ### Objetivo
 
@@ -647,7 +1019,7 @@ Cada artefato de erro deve conter:
 - Resposta bruta invalida tambem e persistida para permitir diagnostico de
   prompt, modelo ou provider.
 
-## Etapa 9: Validacao do Layout Signature Candidato
+## Etapa 10: Validacao do Layout Signature Candidato
 
 ### Objetivo
 
@@ -684,7 +1056,7 @@ Validacoes:
 - Candidato invalido e rejeitado com motivo claro.
 - Nenhum layout existente no MinIO e modificado.
 
-## Etapa 10: Materializar Layout Signature Candidato
+## Etapa 11: Materializar Layout Signature Candidato
 
 ### Objetivo
 
@@ -734,7 +1106,7 @@ fallback/<dominio>/<entidade>/document_id=.../execution_id=<fallback_execution_i
 - O candidato aponta para layout base, document_id, execution_id de origem e
   escopo de fallback.
 
-## Etapa 11: Revalidacao pela DAG 2
+## Etapa 12: Revalidacao pela DAG 2
 
 ### Objetivo
 
@@ -776,7 +1148,7 @@ Implementacao inicial:
 - Se passar, status do candidato vira `validado_para_publicacao_automatica`.
 - Se falhar, status vira `reprovado_na_revalidacao`.
 
-## Etapa 12: Publicacao Automatizada de Nova Versao
+## Etapa 13: Publicacao Automatizada de Nova Versao
 
 ### Objetivo
 
@@ -834,7 +1206,7 @@ Implementacao do ponteiro vigente:
 - A versao anterior permanece disponivel para rastreabilidade e reprocessamento.
 - Se a revalidacao falhar, nenhuma nova versao e publicada.
 
-## Etapa 13: Testes e Smokes
+## Etapa 14: Testes e Smokes
 
 ### Testes Minimos
 
@@ -864,7 +1236,7 @@ Implementacao do ponteiro vigente:
 7. Confirmar que foi criada uma nova versao versionada somente se a revalidacao
    do candidato passou.
 
-## Etapa 14: Postgres Operacional
+## Etapa 15: Postgres Operacional
 
 ### Objetivo
 

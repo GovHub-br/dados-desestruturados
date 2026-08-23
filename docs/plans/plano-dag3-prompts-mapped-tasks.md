@@ -1,4 +1,4 @@
-# Plano: prompts completos por unidade e mapped tasks na DAG 3
+# Plano da DAG 3: Prompts por Unidade e Mapped Tasks
 
 ## Contexto e diagnostico
 

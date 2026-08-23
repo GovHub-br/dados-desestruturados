@@ -1,4 +1,4 @@
-# Plano de governança no OpenMetadata e observabilidade de execuções
+# Plano de Governança no OpenMetadata e Observabilidade de Execuções
 
 ## Decisão arquitetural
 

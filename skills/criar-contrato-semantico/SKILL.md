@@ -15,7 +15,7 @@ Leia antes:
 
 - `specs/platform/CONTEXT.md`;
 - `specs/platform/SPEC.md`;
-- `docs/architecture/airflow-orchestration.md`;
+- `docs/architecture/arquitetura-orquestracao-airflow.md`;
 - um contrato e um layout existentes da família mais próxima;
 - `src/document_intelligence/application/use_cases/resolution/resolve_schema.py` se houver mudança
   que exija nova capacidade da DAG 2.

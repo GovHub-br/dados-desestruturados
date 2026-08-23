@@ -1,4 +1,4 @@
-# Classificacao Deterministica de Fallback da DAG 3
+# Classificação Determinística de Fallback na DAG 3
 
 Este documento explica como a DAG 3 classifica uma falha da DAG 2 antes de
 chamar qualquer LLM.

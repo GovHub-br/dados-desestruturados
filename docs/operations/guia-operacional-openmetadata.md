@@ -1,4 +1,4 @@
-# Guia de Configuracao do OpenMetadata para Construtoras
+# Guia Operacional de Configuração do OpenMetadata
 
 ## Objetivo
 
@@ -266,7 +266,7 @@ Alinhamento com a arquitetura:
 
 - os termos `contrato_semantico`, `layout_signature`, `schema_saida`,
   `validacao_layout_signature`, `auditoria_resolucao` e `fallback_llm` seguem a
-  divisao das DAGs descrita em `../architecture/airflow-orchestration.md`;
+  divisao das DAGs descrita em `../architecture/arquitetura-orquestracao-airflow.md`;
 - os termos `documento_origem`, `document_id` e `execution_id` seguem as
   convencoes de identificacao descritas em `../reference/minio-data-model.md`;
 - os termos de negocio, como `unidades_lancadas`, `unidades_vendidas` e `vso`,
@@ -1175,8 +1175,8 @@ Considere a configuracao inicial concluida quando voce tiver:
 
 ## Referencias internas do projeto
 
-- `../architecture/openmetadata-governance.md`
+- `../architecture/governanca-e-linhagem-openmetadata.md`
 - `../reference/minio-data-model.md`
-- `../architecture/airflow-orchestration.md`
+- `../architecture/arquitetura-orquestracao-airflow.md`
 - `../reference/postgres-schema.md`
 - `docker-compose.yml`
