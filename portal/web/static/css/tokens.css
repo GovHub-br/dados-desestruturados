@@ -1,0 +1,129 @@
+/* Fonte unica de cor, tipografia e movimento do portal.
+   Todo token e definido no :root claro; o bloco escuro apenas redefine valores. */
+
+:root {
+  color-scheme: light dark;
+
+  /* Identidade Gov Hub */
+  --brand: #7a34f3;
+  --brand-ink: #5a1ec4;
+  --brand-soft: #f4efff;
+  --brand-line: #ddccff;
+  --accent: #f19f42;
+  --accent-strong: #e98928;
+  --accent-ink: #3a2100;
+  --accent-soft: #fff2e4;
+
+  /* Superficies e texto */
+  --canvas: #faf8ff;
+  --surface: #fff;
+  --surface-raised: #fff;
+  --surface-sunken: #fbf9ff;
+  --ink: #261044;
+  --ink-soft: #3d2560;
+  --muted: #655a7a;
+  --line: #e4daf4;
+  --line-strong: #cfbfe8;
+
+  --success: #07563f;
+  --success-bg: #e8f8f1;
+  --success-line: #b9e6cf;
+  --danger: #b42318;
+  --danger-bg: #fff0ef;
+  --danger-line: #f7c5c1;
+  --warning: #8a4c12;
+  --warning-bg: #fff5e9;
+  --warning-line: #f7d9b7;
+
+  /* Materiais: translucidez e sombra por peso da superficie */
+  --glass-bg: rgba(122, 52, 243, .82);
+  --glass-blur: blur(20px) saturate(180%);
+  --glass-edge: rgba(255, 255, 255, .38);
+  --shadow-sm: 0 4px 12px rgba(88, 39, 154, .07);
+  --shadow-md: 0 12px 28px rgba(88, 39, 154, .10);
+  --shadow-lg: 0 22px 52px rgba(88, 39, 154, .13);
+
+  --radius-sm: 10px;
+  --radius-md: 14px;
+  --radius-lg: 18px;
+  --radius-xl: 22px;
+
+  /* Tipografia: escala em rem para acompanhar o ajuste do usuario.
+     Tracking e leading sao especificos por tamanho, nunca um valor unico. */
+  --font-ui: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-display: "Plus Jakarta Sans", var(--font-ui);
+  --text-2xs: .6875rem;
+  --text-xs: .75rem;
+  --text-sm: .8125rem;
+  --text-md: .875rem;
+  --text-base: .9375rem;
+  --text-lg: 1.0625rem;
+  --text-xl: 1.3125rem;
+  --text-2xl: 1.5rem;
+  --text-display: clamp(2.25rem, 4.2vw, 3.75rem);
+
+  /* Movimento: criticamente amortecido por padrao; bounce so em gesto. */
+  --ease-standard: cubic-bezier(.32, .72, 0, 1);
+  --ease-out: cubic-bezier(.2, .8, .3, 1);
+  --duration-press: 110ms;
+  --duration-fast: 180ms;
+  --duration-base: 320ms;
+  --duration-slow: 420ms;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --brand: #a97bff;
+    --brand-ink: #c3a3ff;
+    --brand-soft: #241242;
+    --brand-line: #43297a;
+    --accent: #f5ab57;
+    --accent-strong: #ffbc72;
+    --accent-ink: #2a1600;
+    --accent-soft: #35230c;
+
+    --canvas: #120a20;
+    --surface: #1c1130;
+    --surface-raised: #23153c;
+    --surface-sunken: #170e28;
+    --ink: #f4effd;
+    --ink-soft: #ded3f2;
+    --muted: #a99cc2;
+    --line: #33224f;
+    --line-strong: #4a3470;
+
+    --success: #7ee2bb;
+    --success-bg: #0e3a2c;
+    --success-line: #1c6a51;
+    --danger: #ffb4ac;
+    --danger-bg: #3d1512;
+    --danger-line: #7d2d25;
+    --warning: #f6c98c;
+    --warning-bg: #3a2710;
+    --warning-line: #6d4a1c;
+
+    --glass-bg: rgba(38, 18, 70, .78);
+    --glass-edge: rgba(255, 255, 255, .14);
+    --shadow-sm: 0 4px 12px rgba(0, 0, 0, .35);
+    --shadow-md: 0 12px 28px rgba(0, 0, 0, .42);
+    --shadow-lg: 0 22px 52px rgba(0, 0, 0, .5);
+  }
+}
+
+/* Menos transparencia: o material vira superficie solida, sem blur. */
+@media (prefers-reduced-transparency: reduce) {
+  :root {
+    --glass-bg: var(--brand-ink);
+    --glass-blur: none;
+  }
+}
+
+/* Mais contraste: bordas definidas e fundos quase solidos. */
+@media (prefers-contrast: more) {
+  :root {
+    --muted: var(--ink-soft);
+    --line: var(--line-strong);
+    --glass-bg: var(--brand-ink);
+    --glass-blur: none;
+  }
+}

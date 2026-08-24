@@ -1,0 +1,52 @@
+/* Animacoes ambiente e as preferencias de movimento do sistema. */
+
+@keyframes pulse-dot {
+  0%, 100% { box-shadow: 0 0 0 3px color-mix(in srgb, currentColor 22%, transparent); }
+  50% { box-shadow: 0 0 0 7px color-mix(in srgb, currentColor 6%, transparent); }
+}
+
+@keyframes pulse-node {
+  0%, 100% { box-shadow: 0 0 0 4px color-mix(in srgb, var(--brand) 16%, transparent), var(--shadow-md); }
+  50% { box-shadow: 0 0 0 9px color-mix(in srgb, var(--brand) 7%, transparent), var(--shadow-md); }
+}
+
+@keyframes breathe {
+  0%, 100% { transform: scale(1.06); }
+  50% { transform: scale(1.1); }
+}
+
+@keyframes slide-indeterminate {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(250%); }
+}
+
+/* Entrada de mensagem: aparece como material, com escala curta junto da opacidade. */
+@keyframes message-in {
+  from { opacity: 0; transform: translateY(4px) scale(.99); }
+  to { opacity: 1; transform: none; }
+}
+.message[data-kind] { animation: message-in var(--duration-base) var(--ease-standard); }
+
+/* Movimento reduzido nao significa ausencia de feedback: troca deslocamento
+   e oscilacao por transicoes curtas de opacidade e cor. */
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+
+  *, *::before, *::after {
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: var(--duration-fast) !important;
+    transition-property: opacity, background-color, border-color, color, box-shadow !important;
+  }
+
+  .journey-panel,
+  .lineage-details { transition: opacity var(--duration-fast) linear !important; }
+  .journey-card:not(.expanded) .journey-panel { display: none; }
+  .lineage-details:not([data-open="true"]) > div { display: none; }
+
+  .journey-chevron { transition: none; }
+  .hero-stage.active .stage-icon { transform: none; animation: none; }
+  .lineage-node.current { animation: none; }
+  .progress[data-indeterminate="true"] .progress-bar { width: 100%; animation: none; opacity: .6; }
+  .message[data-kind] { animation: none; }
+}

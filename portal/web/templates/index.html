@@ -1,0 +1,258 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#7A34F3" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#241242" media="(prefers-color-scheme: dark)">
+  <meta name="description" content="Envie um PDF, aplique seu contrato semântico e acompanhe cada etapa da extração.">
+  <title>Gov Hub · Orquestra</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/css/tokens.css">
+  <link rel="stylesheet" href="/static/css/base.css">
+  <link rel="stylesheet" href="/static/css/components.css">
+  <link rel="stylesheet" href="/static/css/lineage.css">
+  <link rel="stylesheet" href="/static/css/motion.css">
+</head>
+<body>
+  <a class="skip" href="#envio">Ir para envio do documento</a>
+
+  <header class="header">
+    <a class="brand" href="#inicio" aria-label="Gov Hub · Orquestra, início">
+      <img class="brand-logo" src="https://gov-hub.io/govhub/land/dist/images/logo.svg" alt="Gov Hub">
+      <span class="brand-product">Orquestra</span>
+    </a>
+    <nav class="nav" aria-label="Navegação principal">
+      <a href="#inicio">Visão geral</a>
+      <a href="#envio">Enviar PDF</a>
+      <a href="#contratos">Contratos</a>
+      <a href="#rastreabilidade">Rastreabilidade</a>
+    </nav>
+  </header>
+
+  <div class="shell">
+    <main>
+      <noscript>
+        <p class="noscript">Este portal precisa de JavaScript para enviar documentos e acompanhar a execução. As APIs em <code>/api</code> continuam disponíveis para uso direto.</p>
+      </noscript>
+
+      <section class="hero" id="inicio">
+        <div class="hero-copy">
+          <h1>De PDFs complexos a dados confiáveis.</h1>
+          <p class="lead">Envie um documento, aplique seu contrato e acompanhe a extração.</p>
+          <div class="hero-actions">
+            <a class="text-link" href="#caminhos">Escolha como começar ↓</a>
+          </div>
+        </div>
+
+        <div class="hero-panel" aria-label="Representação visual do pipeline">
+          <div class="panel-top">
+            <span class="panel-live" id="panel-live"><i aria-hidden="true"></i>Pipeline disponível</span>
+            <div class="panel-metadata">
+              <span>Execução<strong id="panel-run">—</strong></span>
+              <span>Iniciado em<strong id="panel-start">—</strong></span>
+              <span>Etapa<strong id="panel-stage">Aguardando</strong></span>
+            </div>
+          </div>
+          <div class="hero-stage-graph">
+            <article class="hero-stage" data-stage="origin">
+              <span class="stage-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M8 13h8M8 17h5"/></svg></span>
+              <h3>PDF</h3>
+              <span class="stage-state">Aguardando</span>
+            </article>
+            <article class="hero-stage" data-stage="extraction">
+              <span class="stage-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="7" cy="7" r="1"/><circle cx="17" cy="7" r="1"/><circle cx="7" cy="17" r="1"/><circle cx="17" cy="17" r="1"/><circle cx="12" cy="12" r="1"/></svg></span>
+              <h3>Extração</h3>
+              <span class="stage-state">Aguardando</span>
+            </article>
+            <article class="hero-stage" data-stage="evidence">
+              <span class="stage-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 6h18l-2 13H5L3 6Z"/><path d="M3 6 7 3h10l4 3M8 11h8"/></svg></span>
+              <h3>Evidências</h3>
+              <span class="stage-state">Aguardando</span>
+            </article>
+            <article class="hero-stage" data-stage="resolution">
+              <span class="stage-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="m12 3 8 4v5c0 5-3.4 8-8 9-4.6-1-8-4-8-9V7l8-4Z"/><path d="m8.5 12 2.3 2.3 4.7-4.7"/></svg></span>
+              <h3>Validação</h3>
+              <span class="stage-state">DAG 2</span>
+            </article>
+            <article class="hero-stage" data-stage="result">
+              <span class="stage-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 19V9m5 10V5m5 14v-7m5 7V3"/></svg></span>
+              <h3>Resultado</h3>
+              <span class="stage-state">Aguardando</span>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section class="onboarding" id="caminhos" aria-label="Escolha como começar">
+        <article class="card journey-card" id="envio">
+          <button class="journey-trigger" type="button" aria-expanded="false" aria-controls="journey-upload">
+            <span class="onboarding-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M8 13h8M8 17h5"/></svg></span>
+            <span class="journey-copy">
+              <small>CAMINHO 1</small>
+              <h2>Enviar PDF com contrato publicado</h2>
+              <p>Escolha o domínio e a versão do contrato para iniciar a extração.</p>
+            </span>
+            <span class="journey-chevron" aria-hidden="true">⌄</span>
+          </button>
+          <div class="journey-panel">
+            <div class="journey-form" id="journey-upload">
+              <div class="journey-form-inner">
+                <div class="journey-divider"></div>
+                <div class="section-heading">
+                  <div>
+                    <h2>Enviar documento</h2>
+                    <p>Selecione o contexto que descreve os dados do PDF.</p>
+                  </div>
+                  <span class="badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m5 12 4 4L19 6"/></svg>Upload seguro</span>
+                </div>
+                <form id="upload">
+                  <div class="form-grid">
+                    <div class="field">
+                      <label for="domain">Domínio do contrato</label>
+                      <input id="domain" name="domain" value="construtoras" list="known-domains" autocomplete="off" aria-describedby="domain-notice" required>
+                      <datalist id="known-domains"></datalist>
+                      <p id="domain-notice" class="domain-notice" aria-live="polite"></p>
+                    </div>
+                    <div class="field">
+                      <label for="contract">Versão do contrato</label>
+                      <input id="contract" name="contract_version" list="published-versions" placeholder="v1.7.0" autocomplete="off" required>
+                      <datalist id="published-versions"></datalist>
+                    </div>
+                    <div class="field">
+                      <label for="slug">Código da entidade</label>
+                      <input id="slug" name="entity_slug" placeholder="cury" autocomplete="off" aria-describedby="slug-help" required>
+                      <p id="slug-help" class="hint">Ex.: empresa-a</p>
+                    </div>
+                    <div class="field">
+                      <label for="name">Nome da entidade</label>
+                      <input id="name" name="entity_name" placeholder="Cury" aria-describedby="name-help" required>
+                      <p id="name-help" class="hint">Nome exibido no resultado.</p>
+                    </div>
+                    <div class="field wide">
+                      <label for="pdf">Arquivo PDF</label>
+                      <input id="pdf" name="pdf" type="file" accept="application/pdf" aria-describedby="pdf-help" required>
+                      <p id="pdf-help" class="hint">PDF, até 50 MB.</p>
+                    </div>
+                  </div>
+                  <div class="actions">
+                    <button class="button" id="submit" type="submit">Enviar e iniciar extração</button>
+                    <span class="form-note"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="10" width="16" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>A execução começa em segundo plano.</span>
+                  </div>
+                  <div class="progress" id="upload-progress" aria-hidden="true">
+                    <div class="progress-track"><div class="progress-bar" id="upload-progress-bar"></div></div>
+                    <p class="progress-label" id="upload-progress-label"></p>
+                  </div>
+                </form>
+                <div id="out" class="message" role="status" tabindex="-1"></div>
+              </div>
+            </div>
+          </div>
+        </article>
+
+        <article class="card journey-card" id="contratos">
+          <button class="journey-trigger" type="button" aria-expanded="false" aria-controls="journey-contract">
+            <span class="onboarding-icon warm" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/><circle cx="12" cy="12" r="9"/></svg></span>
+            <span class="journey-copy">
+              <small>CAMINHO 2</small>
+              <h2>Publicar um contrato semântico</h2>
+              <p>Crie o contrato antes de enviar PDFs de um novo domínio.</p>
+            </span>
+            <span class="journey-chevron" aria-hidden="true">⌄</span>
+          </button>
+          <div class="journey-panel">
+            <div class="journey-form" id="journey-contract">
+              <div class="journey-form-inner">
+                <div class="journey-divider"></div>
+                <div class="section-heading">
+                  <div>
+                    <h2>Publicar contrato</h2>
+                    <p>Faça isso antes de enviar um PDF de um domínio novo.</p>
+                  </div>
+                </div>
+                <form id="contract-upload">
+                  <div class="form-grid">
+                    <div class="field">
+                      <label for="contract-domain">Novo ou existente domínio</label>
+                      <input id="contract-domain" name="domain" list="known-domains" placeholder="construtoras" aria-describedby="contract-domain-help" required>
+                      <p id="contract-domain-help" class="hint">Pode ser um domínio novo.</p>
+                    </div>
+                    <div class="field">
+                      <label for="contract-version">Versão</label>
+                      <input id="contract-version" name="version" placeholder="v1.8.0" aria-describedby="contract-version-help" required>
+                      <p id="contract-version-help" class="hint">Use versionamento semântico.</p>
+                    </div>
+                    <div class="field wide">
+                      <label for="contract-file">Contrato semântico JSON</label>
+                      <input id="contract-file" name="contract" type="file" accept="application/json,.json" aria-describedby="contract-file-help" required>
+                      <p id="contract-file-help" class="hint">O domínio e a versão declarados no JSON serão validados.</p>
+                    </div>
+                  </div>
+                  <div class="actions">
+                    <button class="button" id="contract-submit" type="submit">Validar e publicar contrato</button>
+                  </div>
+                  <div class="progress" id="contract-progress" aria-hidden="true">
+                    <div class="progress-track"><div class="progress-bar" id="contract-progress-bar"></div></div>
+                    <p class="progress-label" id="contract-progress-label"></p>
+                  </div>
+                </form>
+                <div id="contract-out" class="message" role="status" tabindex="-1"></div>
+              </div>
+            </div>
+          </div>
+        </article>
+      </section>
+
+      <section class="card lineage" id="rastreabilidade" aria-labelledby="lineage-title">
+        <div class="lineage-top">
+          <div>
+            <h2 id="lineage-title">Rastreabilidade da execução</h2>
+            <button class="text-link lineage-toggle" type="button" id="lineage-toggle" aria-expanded="false" aria-controls="lineage-details">Ver detalhes técnicos</button>
+          </div>
+          <span class="lineage-status" id="lineage-status" role="status" aria-atomic="true"><i aria-hidden="true"></i>Nenhuma execução em andamento.</span>
+        </div>
+
+        <div class="lineage-details" id="lineage-details" data-open="false">
+          <div>
+            <div class="lineage-legend" aria-label="Legenda da linhagem">
+              <span class="legend-item"><i class="legend-line" aria-hidden="true"></i>Fluxo de resolução direta</span>
+              <span class="legend-item"><i class="legend-line dashed" aria-hidden="true"></i>Desvio somente em caso de falha</span>
+            </div>
+            <div class="lineage-scroller" role="region" aria-label="Grafo de linhagem da execução" tabindex="0">
+              <div class="lineage-graph">
+                <svg class="lineage-edges" viewBox="0 0 1000 296" preserveAspectRatio="none" aria-hidden="true">
+                  <defs>
+                    <marker id="arrow-main" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L0,6 L6,3 z" fill="currentColor"/></marker>
+                  </defs>
+                  <path class="edge-main" d="M185 89 H215" marker-end="url(#arrow-main)"/>
+                  <path class="edge-main" d="M385 89 H415" marker-end="url(#arrow-main)"/>
+                  <path class="edge-main" d="M585 89 H615" marker-end="url(#arrow-main)"/>
+                  <path class="edge-main" d="M785 89 H815" marker-end="url(#arrow-main)"/>
+                  <path class="edge-fallback" d="M700 140 V181"/>
+                  <path class="edge-fallback" d="M785 234 H800 Q815 234 815 219 V142"/>
+                </svg>
+                <article class="lineage-node node-origin current" data-stage="origin"><span class="node-kind">FONTE</span><h3>Documento de origem</h3><p>PDF, checksum e contrato versionado.</p></article>
+                <article class="lineage-node node-extraction" data-stage="extraction"><span class="node-kind">DAG 1</span><h3>Extração Docling</h3><p>Texto, tabelas, blocos e gráficos.</p></article>
+                <article class="lineage-node node-evidence" data-stage="evidence"><span class="node-kind">MINIO</span><h3>Artefatos de evidência</h3><p>Inventário e manifesto da execução.</p></article>
+                <article class="lineage-node node-resolution" data-stage="resolution"><span class="node-kind">DAG 2</span><h3>Resolução determinística</h3><p>Contrato e layout signature aplicados.</p></article>
+                <article class="lineage-node node-result" data-stage="result"><span class="node-kind">RESULTADO</span><h3>Schema de saída resolvido</h3><p>Dados, auditoria e publicação.</p></article>
+                <article class="lineage-node node-fallback optional" data-stage="fallback"><span class="node-kind">DAG 3 · OPCIONAL</span><h3>Fallback LLM + revalidação</h3><p>Corrige o layout e retorna à DAG 2.</p></article>
+                <span class="edge-label">falha de layout</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer>
+      <p class="footer-mark">Gov Hub · Orquestra</p>
+      <p>Inteligência documental com origem, contrato e resultado rastreáveis.</p>
+    </footer>
+  </div>
+
+  <script type="module" src="/static/js/main.js"></script>
+</body>
+</html>
