@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#FBFBFD">
+  <meta name="description" content="Entenda como o Orquestra usa contratos semânticos e assinaturas de layout para transformar PDFs em dados rastreáveis.">
+  <title>Visão geral · Gov Hub Orquestra</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;450;500;550;600;650;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/css/tokens.css?v=2">
+  <link rel="stylesheet" href="/static/css/base.css?v=3">
+  <link rel="stylesheet" href="/static/css/overview.css?v=7">
+</head>
+<body class="overview-page">
+  <a class="skip" href="#conteudo">Ir para o conteúdo</a>
+
+  <header class="header">
+    <div class="shell header-inner">
+      <a class="brand" href="/" aria-label="Gov Hub Orquestra, início">
+        <img class="brand-logo" src="/static/img/govhub-logo.svg" alt="">
+        <span class="brand-divider" aria-hidden="true">|</span>
+        <span class="brand-product">Orquestra</span>
+      </a>
+      <nav class="nav" aria-label="Navegação principal">
+        <a class="is-current" href="/visao-geral" aria-current="page">Visão geral</a>
+        <a href="/#envio">Enviar PDF</a>
+        <a href="/#contratos">Contratos</a>
+        <a href="/#rastreabilidade">Rastreabilidade</a>
+      </nav>
+      <a class="overview-header-action" href="/#envio">Enviar PDF</a>
+    </div>
+  </header>
+
+  <main class="overview-shell" id="conteudo">
+    <section class="overview-foundations" aria-labelledby="foundations-title">
+      <div class="reference-intro">
+        <p class="overview-kicker">Como funciona</p>
+        <h2 id="foundations-title">Entendendo como funciona!</h2>
+        <p>O PDF muda, mas a estrutura final sempre é a mesma.</p>
+      </div>
+      <div class="foundation-grid">
+        <article class="foundation-card">
+          <div class="foundation-card-main">
+            <span class="foundation-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2-2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 14h6M9 17h4"/></svg></span>
+            <p class="foundation-label">01 · Regra de negócio</p>
+            <h3>Contrato semântico</h3>
+            <p>Define o que precisa existir na saída: período, unidade, escala e granularidade.</p>
+            <p class="foundation-note"><span>Muda quando</span><strong>o significado muda</strong></p>
+          </div>
+        </article>
+        <article class="foundation-card foundation-card-accent">
+          <div class="foundation-card-main">
+            <span class="foundation-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h10M4 12h16M4 18h7"/><circle cx="18" cy="6" r="2"/><circle cx="16" cy="18" r="2"/></svg></span>
+            <p class="foundation-label">02 · Regra de leitura</p>
+            <h3>Assinatura de layout</h3>
+            <p>Indica onde está cada evidência: arquivo, seletor, caminho, índice e validação.</p>
+            <p class="foundation-note"><span>Muda quando</span><strong>a estrutura visual muda</strong></p>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section class="overview-explanation" aria-label="Como contrato e assinatura de layout trabalham juntos">
+      <p>O contrato semântico é a referência que protege o significado do dado ao longo do tempo. Ele estabelece quais fatos brutos precisam ser entregues, em qual granularidade e com quais períodos, unidades e escalas. A assinatura de layout entra como a referência operacional: ela relaciona cada campo prometido pelo contrato aos arquivos, tabelas, blocos ou gráficos realmente obtidos na extração do PDF.</p>
+      <p>Essa separação permite tratar mudanças de apresentação sem alterar a regra de negócio. Em cada execução, o Orquestra preserva o documento de origem, gera artefatos estruturados e valida se a assinatura ainda encontra as evidências esperadas. Quando a validação é bem-sucedida, a resolução produz o schema de saída acompanhado de auditoria; se houver uma ruptura crítica, o fallback propõe um ajuste de layout que volta pela mesma validação antes de ser usado.</p>
+    </section>
+
+    <section class="overview-flow" aria-labelledby="flow-title">
+      <div class="overview-section-heading">
+        <p class="overview-kicker">Do documento ao resultado</p>
+        <h2 id="flow-title">O processo, em cinco passos.</h2>
+      </div>
+      <ol class="flow-list">
+        <li class="flow-step"><span class="flow-number">01</span><div><h3>Receber e preservar</h3><p>O PDF é registrado com sua origem e contexto de execução, para que cada decisão possa ser rastreada depois.</p></div></li>
+        <li class="flow-step"><span class="flow-number">02</span><div><h3>Extrair evidências</h3><p>A primeira etapa produz tabelas, gráficos, blocos, seções e metadados estruturais a partir do documento.</p></div></li>
+        <li class="flow-step"><span class="flow-number">03</span><div><h3>Validar e resolver</h3><p>Contrato e assinatura de layout são aplicados juntos. A validação confere se a estrutura ainda é compatível e gera o resultado resolvido com auditoria.</p></div></li>
+        <li class="flow-step"><span class="flow-number">04</span><div><h3>Corrigir quando necessário</h3><p>Se houver uma falha crítica de layout, o fallback propõe apenas o ajuste necessário. A proposta só vale após nova validação determinística.</p></div></li>
+        <li class="flow-step"><span class="flow-number">05</span><div><h3>Disponibilizar para análise</h3><p>O resultado validado segue para a camada bronze, preservando as referências usadas para consultas, linhagem e auditoria.</p></div></li>
+      </ol>
+    </section>
+
+    <section class="overview-outcome" aria-labelledby="outcome-title">
+      <div>
+        <p class="overview-kicker">O resultado</p>
+        <h2 id="outcome-title">Um dado pronto para uso, com contexto preservado.</h2>
+      </div>
+      <p>Em vez de depender de interpretações manuais, você recebe uma saída estruturada acompanhada de contrato, assinatura de layout, evidências e auditoria da resolução.</p>
+    </section>
+  </main>
+
+  <footer class="shell">
+    <p class="footer-mark">Gov Hub · Orquestra</p>
+    <p>Inteligência documental com origem, contrato e resultado rastreáveis.</p>
+  </footer>
+</body>
+</html>
