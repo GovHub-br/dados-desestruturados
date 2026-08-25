@@ -1,34 +1,45 @@
-/* Animacoes ambiente e as preferencias de movimento do sistema. */
+/* Movimento: entrada curta com stagger, pulsos discretos e respeito integral
+   a preferencia de movimento reduzido. */
 
 @keyframes pulse-dot {
-  0%, 100% { box-shadow: 0 0 0 3px color-mix(in srgb, currentColor 22%, transparent); }
-  50% { box-shadow: 0 0 0 7px color-mix(in srgb, currentColor 6%, transparent); }
+  0%, 100% { box-shadow: 0 0 0 0 color-mix(in srgb, currentColor 45%, transparent); }
+  70%, 100% { box-shadow: 0 0 0 6px transparent; }
 }
 
-@keyframes pulse-node {
-  0%, 100% { box-shadow: 0 0 0 4px color-mix(in srgb, var(--brand) 16%, transparent), var(--shadow-md); }
-  50% { box-shadow: 0 0 0 9px color-mix(in srgb, var(--brand) 7%, transparent), var(--shadow-md); }
-}
-
-@keyframes breathe {
-  0%, 100% { transform: scale(1.06); }
-  50% { transform: scale(1.1); }
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 0 4px color-mix(in srgb, var(--purple) 10%, transparent); }
+  50% { box-shadow: 0 0 0 8px color-mix(in srgb, var(--purple) 4%, transparent); }
 }
 
 @keyframes slide-indeterminate {
-  0% { transform: translateX(-100%); }
-  100% { transform: translateX(250%); }
+  from { transform: translateX(-110%); }
+  to { transform: translateX(300%); }
 }
 
-/* Entrada de mensagem: aparece como material, com escala curta junto da opacidade. */
-@keyframes message-in {
-  from { opacity: 0; transform: translateY(4px) scale(.99); }
+@keyframes rise-in {
+  from { opacity: 0; transform: translateY(var(--rise-from, 10px)); }
   to { opacity: 1; transform: none; }
 }
-.message[data-kind] { animation: message-in var(--duration-base) var(--ease-standard); }
 
-/* Movimento reduzido nao significa ausencia de feedback: troca deslocamento
-   e oscilacao por transicoes curtas de opacidade e cor. */
+/* Os planos flutuantes entram no proprio lugar: a rotacao do pipeline
+   precisa sobreviver a animacao de entrada. */
+@keyframes rise-in-rotated {
+  from { opacity: 0; transform: translateY(18px) rotate(.5deg); }
+  to { opacity: 1; transform: rotate(.5deg); }
+}
+.card-pipeline[data-reveal].revealed { animation-name: rise-in-rotated; }
+
+/* Entrada da pagina: so opacidade e translacao, com atraso curto em cascata.
+   O estado inicial invisivel so existe onde ha script para revela-lo. */
+@media (scripting: enabled) {
+  [data-reveal] { opacity: 0; }
+}
+[data-reveal].revealed { animation: rise-in var(--duration-slow) var(--ease-standard) both; animation-delay: var(--reveal-delay, 0ms); }
+[data-reveal="card"] { --rise-from: 14px; }
+.card-upload[data-reveal] { --rise-from: 12px; }
+
+.message[data-kind] { animation: rise-in var(--duration-base) var(--ease-standard); }
+
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
 
@@ -39,14 +50,19 @@
     transition-property: opacity, background-color, border-color, color, box-shadow !important;
   }
 
-  .journey-panel,
+  [data-reveal] { opacity: 1; }
+  [data-reveal].revealed { animation: none; }
+
+  .panel-drawer,
   .lineage-details { transition: opacity var(--duration-fast) linear !important; }
-  .journey-card:not(.expanded) .journey-panel { display: none; }
+  .panel:not([data-open="true"]) .panel-drawer > div,
   .lineage-details:not([data-open="true"]) > div { display: none; }
 
-  .journey-chevron { transition: none; }
-  .hero-stage.active .stage-icon { transform: none; animation: none; }
-  .lineage-node.current { animation: none; }
+  .button-primary:hover,
+  .button-secondary:hover,
+  .card-upload:hover,
+  .card-trust:hover,
+  .lineage-node:hover { transform: none; }
+
   .progress[data-indeterminate="true"] .progress-bar { width: 100%; animation: none; opacity: .6; }
-  .message[data-kind] { animation: none; }
 }

@@ -2,7 +2,7 @@
 // o documento como identidade da jornada e consulta o backend periodicamente.
 
 import { fetchTrace } from './api.js';
-import * as lineage from './lineage.js';
+import * as execution from './execution.js';
 
 const STORAGE_KEY = 'portal.execution-trace';
 const POLL_INTERVAL_MS = 4000;
@@ -14,7 +14,7 @@ function persist() {
   try {
     sessionStorage.setItem(STORAGE_KEY, JSON.stringify(active));
   } catch {
-    // Sessao sem armazenamento (janela privada): a rastreabilidade segue em memoria.
+    // Janela privada ou armazenamento bloqueado: a jornada segue em memoria.
   }
 }
 
@@ -40,20 +40,45 @@ export function stop() {
     window.clearTimeout(timer);
     timer = null;
   }
-  lineage.setPolling(false);
+  execution.setPolling(false);
 }
 
 function render(trace) {
   const failed = trace.state === 'failed';
-  lineage.setStage(trace.stage, trace.label, { failed });
-  if (active?.fallbackSeen && trace.stage === 'resolution') lineage.markFallbackSeen();
+  execution.setStage(trace.stage, trace.label, { failed });
+
+  if (active?.fallbackSeen && trace.stage === 'resolution') execution.markFallbackSeen();
   if (trace.stage === 'fallback') active.fallbackSeen = true;
-  lineage.setRun(trace.run?.dag_run_id);
+
+  // A faixa diz o essencial em uma linha; o rotulo tecnico completo do backend
+  // continua visivel na etiqueta de rastreabilidade.
+  if (failed) {
+    execution.showResult({
+      kind: 'failed',
+      title: 'Execução interrompida',
+      detail: 'Veja onde parou',
+      action: 'Ver detalhes →',
+    });
+  } else if (trace.terminal) {
+    execution.showResult({
+      kind: 'success',
+      title: 'Extração concluída',
+      detail: 'Resultado pronto para consulta',
+      action: 'Ver resultado →',
+    });
+  } else {
+    execution.showResult({
+      kind: 'running',
+      title: 'Execução em andamento',
+      detail: execution.shortLabel(trace.stage),
+      action: 'Acompanhar →',
+    });
+  }
 }
 
 async function poll() {
   if (!active) return;
-  lineage.setPolling(true);
+  execution.setPolling(true);
   try {
     const trace = await fetchTrace({
       domain: active.domain,
@@ -70,7 +95,7 @@ async function poll() {
   } catch {
     // Mantem o ultimo estagio valido e tenta de novo: uma indisponibilidade
     // temporaria do Airflow nao deve fazer a pessoa perder a rastreabilidade.
-    lineage.setStatusText('Atualizando rastreabilidade…');
+    execution.setStatusText('Atualizando rastreabilidade…');
   }
   timer = window.setTimeout(poll, POLL_INTERVAL_MS);
 }

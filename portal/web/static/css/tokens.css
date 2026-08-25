@@ -1,129 +1,124 @@
-/* Fonte unica de cor, tipografia e movimento do portal.
-   Todo token e definido no :root claro; o bloco escuro apenas redefine valores. */
+/* Design tokens do Orquestra: cor, superficie, espaco, raio, sombra, blur,
+   tipografia e movimento. Nenhum valor cru deve aparecer fora deste arquivo. */
 
 :root {
-  color-scheme: light dark;
+  color-scheme: light;
 
-  /* Identidade Gov Hub */
-  --brand: #7a34f3;
-  --brand-ink: #5a1ec4;
-  --brand-soft: #f4efff;
-  --brand-line: #ddccff;
-  --accent: #f19f42;
-  --accent-strong: #e98928;
-  --accent-ink: #3a2100;
-  --accent-soft: #fff2e4;
+  /* Cor ------------------------------------------------------------- */
+  --background: #fbfbfd;
+  --background-tint-a: rgba(112, 71, 235, .08);
+  --background-tint-b: rgba(148, 109, 255, .06);
 
-  /* Superficies e texto */
-  --canvas: #faf8ff;
-  --surface: #fff;
-  --surface-raised: #fff;
-  --surface-sunken: #fbf9ff;
-  --ink: #261044;
-  --ink-soft: #3d2560;
-  --muted: #655a7a;
-  --line: #e4daf4;
-  --line-strong: #cfbfe8;
+  --text-primary: #17121f;
+  --text-secondary: #746e80;
+  --text-tertiary: #9a93a6;
+  --text-on-accent: #fff;
 
-  --success: #07563f;
-  --success-bg: #e8f8f1;
-  --success-line: #b9e6cf;
-  --danger: #b42318;
-  --danger-bg: #fff0ef;
-  --danger-line: #f7c5c1;
-  --warning: #8a4c12;
-  --warning-bg: #fff5e9;
-  --warning-line: #f7d9b7;
+  --purple: #7047eb;
+  --purple-strong: #6d3df5;
+  --purple-light: #946dff;
+  --purple-soft: #f1ecff;
+  --purple-line: rgba(112, 71, 235, .18);
 
-  /* Materiais: translucidez e sombra por peso da superficie */
-  --glass-bg: rgba(122, 52, 243, .82);
-  --glass-blur: blur(20px) saturate(180%);
-  --glass-edge: rgba(255, 255, 255, .38);
-  --shadow-sm: 0 4px 12px rgba(88, 39, 154, .07);
-  --shadow-md: 0 12px 28px rgba(88, 39, 154, .10);
-  --shadow-lg: 0 22px 52px rgba(88, 39, 154, .13);
+  --green: #25b87a;
+  --green-soft: #edfaf3;
+  --green-line: rgba(37, 184, 122, .22);
+  --amber: #b4740f;
+  --amber-soft: #fdf5e8;
+  --amber-line: rgba(180, 116, 15, .2);
+  --red: #c0392b;
+  --red-soft: #fdf0ee;
+  --red-line: rgba(192, 57, 43, .2);
 
+  --border: rgba(35, 25, 50, .07);
+  --border-strong: rgba(35, 25, 50, .12);
+  --hairline: rgba(0, 0, 0, .04);
+
+  /* Superficies: tres niveis, cada um com mais luz, blur e sombra ---- */
+  --surface-1: rgba(255, 255, 255, .72);
+  --surface-2: rgba(255, 255, 255, .55);
+  --surface-solid: #fff;
+  --surface-sunken: rgba(247, 246, 251, .8);
+  --surface-edge: rgba(255, 255, 255, .75);
+  --surface-highlight: rgba(255, 255, 255, .6);
+
+  --blur-header: blur(18px) saturate(160%);
+  --blur-card: blur(22px) saturate(150%);
+  --glass-card: rgba(255, 255, 255, .66);
+  --glass-card-edge: rgba(255, 255, 255, .78);
+
+  --shadow-1: 0 1px 2px rgba(0, 0, 0, .025), 0 8px 30px rgba(45, 35, 80, .035);
+  --shadow-2: 0 2px 6px rgba(45, 35, 80, .04), 0 18px 50px rgba(70, 50, 120, .07);
+  --shadow-3: 0 8px 30px rgba(70, 50, 120, .06), 0 30px 70px rgba(70, 50, 120, .1);
+  --shadow-accent: 0 4px 12px rgba(90, 55, 220, .18), 0 1px 2px rgba(0, 0, 0, .04);
+  --shadow-accent-hover: 0 8px 20px rgba(90, 55, 220, .24), 0 1px 2px rgba(0, 0, 0, .04);
+
+  /* Espaco ---------------------------------------------------------- */
+  --space-1: .25rem;
+  --space-2: .5rem;
+  --space-3: .75rem;
+  --space-4: 1rem;
+  --space-5: 1.25rem;
+  --space-6: 1.5rem;
+  --space-7: 1.75rem;
+  --space-8: 2rem;
+  --space-12: 3rem;
+  --space-16: 4rem;
+  --space-24: 6rem;
+
+  /* Raio ------------------------------------------------------------ */
   --radius-sm: 10px;
   --radius-md: 14px;
-  --radius-lg: 18px;
-  --radius-xl: 22px;
+  --radius-lg: 20px;
+  --radius-xl: 26px;
+  --radius-pill: 999px;
 
-  /* Tipografia: escala em rem para acompanhar o ajuste do usuario.
-     Tracking e leading sao especificos por tamanho, nunca um valor unico. */
-  --font-ui: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-  --font-display: "Plus Jakarta Sans", var(--font-ui);
-  --text-2xs: .6875rem;
-  --text-xs: .75rem;
-  --text-sm: .8125rem;
-  --text-md: .875rem;
-  --text-base: .9375rem;
+  --header-height: 4.125rem;
+
+  /* Tipografia ------------------------------------------------------ */
+  --font-sans: Inter, -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Segoe UI", system-ui, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  --text-2xs: .75rem;
+  --text-xs: .8125rem;
+  --text-sm: .875rem;
+  --text-md: .9375rem;
+  --text-base: 1rem;
   --text-lg: 1.0625rem;
-  --text-xl: 1.3125rem;
-  --text-2xl: 1.5rem;
-  --text-display: clamp(2.25rem, 4.2vw, 3.75rem);
+  --text-xl: 1.25rem;
+  --text-2xl: 1.75rem;
+  --text-display: clamp(2.375rem, 3.6vw, 3.5rem);
 
-  /* Movimento: criticamente amortecido por padrao; bounce so em gesto. */
+  /* Movimento: resposta curta, amortecimento critico por padrao ------ */
   --ease-standard: cubic-bezier(.32, .72, 0, 1);
   --ease-out: cubic-bezier(.2, .8, .3, 1);
+  --ease-spring: cubic-bezier(.34, 1.4, .64, 1);
   --duration-press: 110ms;
   --duration-fast: 180ms;
   --duration-base: 320ms;
-  --duration-slow: 420ms;
+  --duration-slow: 460ms;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --brand: #a97bff;
-    --brand-ink: #c3a3ff;
-    --brand-soft: #241242;
-    --brand-line: #43297a;
-    --accent: #f5ab57;
-    --accent-strong: #ffbc72;
-    --accent-ink: #2a1600;
-    --accent-soft: #35230c;
-
-    --canvas: #120a20;
-    --surface: #1c1130;
-    --surface-raised: #23153c;
-    --surface-sunken: #170e28;
-    --ink: #f4effd;
-    --ink-soft: #ded3f2;
-    --muted: #a99cc2;
-    --line: #33224f;
-    --line-strong: #4a3470;
-
-    --success: #7ee2bb;
-    --success-bg: #0e3a2c;
-    --success-line: #1c6a51;
-    --danger: #ffb4ac;
-    --danger-bg: #3d1512;
-    --danger-line: #7d2d25;
-    --warning: #f6c98c;
-    --warning-bg: #3a2710;
-    --warning-line: #6d4a1c;
-
-    --glass-bg: rgba(38, 18, 70, .78);
-    --glass-edge: rgba(255, 255, 255, .14);
-    --shadow-sm: 0 4px 12px rgba(0, 0, 0, .35);
-    --shadow-md: 0 12px 28px rgba(0, 0, 0, .42);
-    --shadow-lg: 0 22px 52px rgba(0, 0, 0, .5);
-  }
-}
-
-/* Menos transparencia: o material vira superficie solida, sem blur. */
+/* Menos transparencia: material vira superficie solida. */
 @media (prefers-reduced-transparency: reduce) {
   :root {
-    --glass-bg: var(--brand-ink);
-    --glass-blur: none;
+    --glass-card: var(--surface-solid);
+    --surface-1: var(--surface-solid);
+    --surface-2: var(--surface-solid);
+    --blur-header: none;
+    --blur-card: none;
   }
 }
 
-/* Mais contraste: bordas definidas e fundos quase solidos. */
+/* Mais contraste: bordas definidas, texto secundario mais forte. */
 @media (prefers-contrast: more) {
   :root {
-    --muted: var(--ink-soft);
-    --line: var(--line-strong);
-    --glass-bg: var(--brand-ink);
-    --glass-blur: none;
+    --glass-card: var(--surface-solid);
+    --text-secondary: var(--text-primary);
+    --border: var(--border-strong);
+    --surface-1: var(--surface-solid);
+    --surface-2: var(--surface-solid);
+    --blur-header: none;
+    --blur-card: none;
   }
 }
