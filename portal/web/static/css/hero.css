@@ -1,0 +1,405 @@
+/* Hero editorial a esquerda, composicao flutuante a direita.
+   A direita nao e uma fileira de cartoes: e uma cena unica, com planos que se
+   sobrepoem, luz de fundo e vidro. As posicoes sao percentuais sobre um palco
+   de 680x570 para que a cena inteira escale junto com a coluna. */
+
+.hero {
+  display: grid;
+  grid-template-columns: minmax(0, .95fr) minmax(0, 1.05fr);
+  gap: var(--space-12);
+  align-items: center;
+  align-content: center;
+  /* Um hero mais editorial: o conteudo entra antes na dobra, deixando o
+     proximo bloco visivel sem perder a presenca da composicao. */
+  min-height: min(51rem, calc(100vh - var(--header-height)));
+  padding: var(--space-6) 0 var(--space-5);
+}
+
+.hero-copy { position: relative; z-index: 2; }
+
+.hero h1 {
+  max-width: 620px;
+  font-size: clamp(3.375rem, 4.5vw, 4.25rem);
+  font-weight: 680;
+  line-height: 1;
+  letter-spacing: -.045em;
+}
+/* Gradiente so na palavra que carrega a promessa — elegante, nao neon. */
+.hero h1 .accent {
+  background: linear-gradient(100deg, #6f43ef, #9968ff);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.hero-lead {
+  max-width: 38ch;
+  margin-top: var(--space-8);
+  color: var(--text-secondary);
+  font-size: var(--text-md);
+  line-height: 1.5;
+}
+
+.hero-actions { display: flex; flex-wrap: wrap; gap: var(--space-4); margin-top: var(--space-7); }
+
+/* As acoes do hero apoiam o titulo; por isso usam uma escala mais contida
+   que os botoes dos paineis, sem reduzir a area clicavel abaixo de 44px. */
+.hero-actions .button {
+  min-height: 2.5rem;
+  padding-inline: var(--space-4);
+  font-size: var(--text-xs);
+}
+.hero-actions .button svg { width: .9rem; height: .9rem; }
+
+/* Botoes ------------------------------------------------------------ */
+
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  min-height: 3rem;
+  padding: 0 var(--space-6);
+  border: 1px solid transparent;
+  border-radius: 12px;
+  font: inherit;
+  font-size: var(--text-md);
+  font-weight: 600;
+  letter-spacing: -.01em;
+  text-decoration: none;
+  cursor: pointer;
+  transition: transform var(--duration-base) var(--ease-spring),
+              box-shadow var(--duration-fast) var(--ease-out),
+              background var(--duration-fast) var(--ease-out),
+              border-color var(--duration-fast) var(--ease-out);
+}
+.button svg { width: 1.05rem; height: 1.05rem; }
+
+.button-primary {
+  background: linear-gradient(135deg, var(--purple-strong), var(--purple-light));
+  color: var(--text-on-accent);
+  box-shadow: var(--shadow-accent);
+}
+.button-primary:hover { transform: translateY(-1px) scale(1.015); box-shadow: var(--shadow-accent-hover); }
+.button-primary:active { transform: scale(.98); transition-duration: var(--duration-press); }
+
+.button-secondary {
+  background: rgba(255, 255, 255, .58);
+  backdrop-filter: var(--blur-card);
+  -webkit-backdrop-filter: var(--blur-card);
+  border-color: var(--hairline);
+  color: var(--text-primary);
+  box-shadow: 0 1px 2px rgba(68, 44, 120, .04);
+}
+.button-secondary:hover { transform: translateY(-1px) scale(1.015); border-color: var(--purple-line); background: rgba(255, 255, 255, .72); }
+.button-secondary:active { transform: scale(.98); transition-duration: var(--duration-press); }
+
+.button-compact { min-height: 2.375rem; padding: 0 var(--space-4); font-size: var(--text-sm); }
+
+.button-ghost {
+  min-height: 2.5rem;
+  padding: 0 var(--space-3);
+  background: transparent;
+  color: var(--purple);
+  font-size: var(--text-sm);
+}
+.button-ghost:hover { background: var(--purple-soft); }
+.button-ghost:active { transform: scale(.97); }
+
+.button-pill {
+  flex: 0 0 auto;
+  min-height: 2.375rem;
+  padding: 0 var(--space-4);
+  border-color: var(--hairline);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, .75);
+  color: var(--purple);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  white-space: nowrap;
+  box-shadow: 0 1px 2px rgba(68, 44, 120, .05);
+}
+.button-pill[hidden] { display: none; }
+.button-pill:hover { border-color: var(--purple-line); background: #fff; transform: translateY(-1px); }
+.button-pill:active { transform: scale(.97); }
+
+.button:disabled { opacity: .55; cursor: not-allowed; transform: none; }
+
+/* Palco da composicao ----------------------------------------------- */
+
+.stage {
+  position: relative;
+  z-index: 1;
+  width: 126%;
+  max-width: 860px;
+  aspect-ratio: 770 / 675;
+  justify-self: end;
+}
+
+/* Luz ambiente: atmosfera, nunca uma mancha roxa evidente. */
+.stage::before {
+  content: "";
+  position: absolute;
+  z-index: 0;
+  left: 6%;
+  top: 3%;
+  width: 96%;
+  height: 88%;
+  background: radial-gradient(closest-side circle at 60% 40%,
+    rgba(134, 91, 255, .16),
+    rgba(134, 91, 255, .06) 45%,
+    transparent 100%);
+  filter: blur(25px);
+  pointer-events: none;
+}
+
+/* Fita de vidro: elipse difusa, sem nenhuma aresta reta possivel. */
+.stage::after {
+  content: "";
+  position: absolute;
+  z-index: 0;
+  left: -16%;
+  top: 44%;
+  width: 120%;
+  height: 48%;
+  border-radius: 50%;
+  background: radial-gradient(closest-side at 42% 50%,
+    rgba(255, 255, 255, .5),
+    rgba(131, 89, 255, .05) 62%,
+    transparent 100%);
+  transform: rotate(-8deg);
+  filter: blur(26px);
+  pointer-events: none;
+}
+
+/* Ilustracao da composicao: aparece em repouso e da lugar aos cartoes vivos
+   assim que existe um documento de verdade em andamento. */
+.stage-art {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  display: block;
+}
+.stage-art img {
+  display: block;
+  width: 100%;
+  height: auto;
+  /* A imagem e opaca: as bordas somem para nao virar um retangulo colado. */
+  -webkit-mask-image:
+    linear-gradient(to right, transparent, #000 4%, #000 96%, transparent),
+    linear-gradient(to bottom, transparent, #000 3%, #000 97%, transparent);
+  mask-image:
+    linear-gradient(to right, transparent, #000 4%, #000 96%, transparent),
+    linear-gradient(to bottom, transparent, #000 3%, #000 97%, transparent);
+  -webkit-mask-composite: source-in;
+  mask-composite: intersect;
+}
+
+/* Em repouso o palco assume a proporcao da ilustracao e avanca um pouco para
+   a esquerda, para a cena ter a mesma presenca da composicao viva. */
+.stage[data-mode="art"] {
+  width: 126%;
+  aspect-ratio: 1340 / 1005;
+}
+.stage[data-mode="art"] .floating { display: none; }
+.stage[data-mode="live"] .stage-art { display: none; }
+
+/* Vidro: translucido de verdade, com fio de luz interno na borda de cima. */
+.floating {
+  position: absolute;
+  border: 1px solid var(--glass-card-edge);
+  border-radius: 28px;
+  background: var(--glass-card);
+  transition: transform var(--duration-base) var(--ease-spring),
+              box-shadow var(--duration-base) var(--ease-out);
+}
+
+.card-upload {
+  z-index: 3;
+  right: 0;
+  top: 0;
+  width: 69%;
+  height: 64%;
+  display: flex;
+  flex-direction: column;
+  padding: var(--space-6);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, .75),
+    0 10px 28px rgba(68, 44, 120, .04),
+    0 28px 72px rgba(68, 44, 120, .08);
+}
+.card-upload:hover { transform: translateY(-2px); }
+
+.card-pipeline {
+  z-index: 2;
+  left: 0;
+  top: 58%;
+  width: 70%;
+  padding: var(--space-5);
+  border-radius: 24px;
+  /* Rotacao minima: quebra o alinhamento perfeito de dashboard. */
+  transform: rotate(.5deg);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, .6),
+    0 8px 24px rgba(68, 44, 120, .05),
+    0 18px 44px rgba(68, 44, 120, .06);
+}
+
+.card-trust {
+  z-index: 4;
+  right: 8%;
+  top: 75.5%;
+  width: 33%;
+  padding: var(--space-5);
+  border-radius: 24px;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, .8),
+    0 14px 36px rgba(68, 44, 120, .07),
+    0 40px 90px rgba(68, 44, 120, .12);
+}
+.card-trust:hover { transform: translateY(-2px) scale(1.01); }
+
+.card-kicker {
+  color: var(--purple);
+  font-size: var(--text-2xs);
+  font-weight: 650;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+}
+.card-title { margin-top: var(--space-1); font-size: var(--text-md); font-weight: 600; letter-spacing: -.015em; }
+.card-head { display: flex; align-items: flex-start; gap: var(--space-3); }
+
+.icon-tile {
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: 2.75rem;
+  height: 2.75rem;
+  border: 1px solid var(--purple-line);
+  border-radius: 12px;
+  background: var(--purple-soft);
+  color: var(--purple);
+}
+.icon-tile svg { width: 1.25rem; height: 1.25rem; }
+.icon-tile.plain { border-color: var(--hairline); background: rgba(255, 255, 255, .6); color: var(--text-primary); }
+
+/* Dropzone: quase so espaco em branco e um tracejado discreto. */
+.dropzone {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  width: 100%;
+  margin-top: var(--space-5);
+  padding: var(--space-6);
+  border: 1px dashed rgba(115, 74, 235, .18);
+  border-radius: 20px;
+  background: rgba(255, 255, 255, .18);
+  color: var(--text-secondary);
+  font: inherit;
+  text-align: center;
+  cursor: pointer;
+  transition: background var(--duration-fast) var(--ease-out),
+              border-color var(--duration-fast) var(--ease-out),
+              transform var(--duration-press) var(--ease-out);
+}
+.dropzone-icon { color: var(--purple); transition: transform var(--duration-base) var(--ease-spring); }
+.dropzone-icon svg { width: 1.5rem; height: 1.5rem; }
+.dropzone:hover { background: rgba(255, 255, 255, .34); border-color: rgba(115, 74, 235, .34); }
+.dropzone:hover .dropzone-icon { transform: translateY(-2px); }
+.dropzone:active { transform: scale(.995); }
+.dropzone[data-dragover="true"] {
+  background: var(--purple-soft);
+  border-color: var(--purple);
+  border-style: solid;
+  transform: scale(1.01);
+}
+.dropzone-title { color: var(--text-primary); font-size: var(--text-md); font-weight: 550; }
+.dropzone-hint { font-size: var(--text-xs); color: var(--text-tertiary); }
+
+/* Superficie de estado: sempre presente, sempre refletindo a execucao real. */
+.status-surface {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  margin-top: var(--space-4);
+  padding: var(--space-4);
+  border: 1px solid rgba(255, 255, 255, .7);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, .55);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .7);
+}
+.result-body { flex: 1; min-width: 0; }
+.result-title { font-size: var(--text-md); font-weight: 600; letter-spacing: -.01em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.result-detail {
+  margin-top: .1rem;
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+  /* Uma linha: o rotulo longo do backend nao pode empurrar o botao. */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.status-dot {
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: 2rem;
+  height: 2rem;
+  border-radius: var(--radius-pill);
+  background: var(--purple-soft);
+  color: var(--purple);
+}
+.status-dot svg { width: 1.1rem; height: 1.1rem; }
+.status-dot.success { background: var(--green-soft); color: var(--green); }
+.status-dot.failed { background: var(--red-soft); color: var(--red); }
+
+/* Arquivo escolhido: mesma caixa, conteudo diferente — sem salto de layout. */
+.dropzone[data-state="filled"] {
+  flex-direction: row;
+  justify-content: flex-start;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border-style: solid;
+  border-color: var(--green-line);
+  background: var(--green-soft);
+  text-align: left;
+}
+.dropzone[data-state="filled"] .icon-tile {
+  width: 2.25rem;
+  height: 2.25rem;
+  border-color: var(--green-line);
+  background: color-mix(in srgb, var(--green) 12%, transparent);
+  color: var(--green);
+}
+.dropzone.invalid { border-color: var(--red); background: var(--red-soft); }
+
+/* Abaixo de 1200px a cena deixa de se sobrepor e passa a empilhar:
+   sobreposicao em coluna estreita vira colisao, nao profundidade. */
+@media (max-width: 1200px) {
+  .hero { gap: var(--space-8); padding-top: var(--space-6); min-height: 0; align-content: normal; }
+  .hero-copy { z-index: auto; }
+  .stage-art { position: static; }
+  .stage {
+    display: grid;
+    gap: var(--space-4);
+    width: 100%;
+    max-width: none;
+    aspect-ratio: auto;
+  }
+  .stage[data-mode="art"] { width: 100%; aspect-ratio: auto; }
+  .stage::after { display: none; }
+  .floating { position: static; width: 100%; height: auto; transform: none; }
+  .card-upload { min-height: 24rem; }
+  .card-trust { display: flex; align-items: center; gap: var(--space-3); }
+}
+
+@media (max-width: 880px) {
+  .hero { grid-template-columns: 1fr; padding-top: var(--space-4); }
+  .hero h1 { font-size: clamp(2.5rem, 9vw, 3.375rem); }
+  .hero-actions { flex-direction: column; align-items: stretch; }
+  .hero-actions .button { min-height: 2.75rem; }
+}

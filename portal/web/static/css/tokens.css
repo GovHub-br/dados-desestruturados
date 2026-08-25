@@ -1,0 +1,124 @@
+/* Design tokens do Orquestra: cor, superficie, espaco, raio, sombra, blur,
+   tipografia e movimento. Nenhum valor cru deve aparecer fora deste arquivo. */
+
+:root {
+  color-scheme: light;
+
+  /* Cor ------------------------------------------------------------- */
+  --background: #fbfbfd;
+  --background-tint-a: rgba(112, 71, 235, .08);
+  --background-tint-b: rgba(148, 109, 255, .06);
+
+  --text-primary: #17121f;
+  --text-secondary: #746e80;
+  --text-tertiary: #9a93a6;
+  --text-on-accent: #fff;
+
+  --purple: #7047eb;
+  --purple-strong: #6d3df5;
+  --purple-light: #946dff;
+  --purple-soft: #f1ecff;
+  --purple-line: rgba(112, 71, 235, .18);
+
+  --green: #25b87a;
+  --green-soft: #edfaf3;
+  --green-line: rgba(37, 184, 122, .22);
+  --amber: #b4740f;
+  --amber-soft: #fdf5e8;
+  --amber-line: rgba(180, 116, 15, .2);
+  --red: #c0392b;
+  --red-soft: #fdf0ee;
+  --red-line: rgba(192, 57, 43, .2);
+
+  --border: rgba(35, 25, 50, .07);
+  --border-strong: rgba(35, 25, 50, .12);
+  --hairline: rgba(0, 0, 0, .04);
+
+  /* Superficies: tres niveis, cada um com mais luz, blur e sombra ---- */
+  --surface-1: rgba(255, 255, 255, .72);
+  --surface-2: rgba(255, 255, 255, .55);
+  --surface-solid: #fff;
+  --surface-sunken: rgba(247, 246, 251, .8);
+  --surface-edge: rgba(255, 255, 255, .75);
+  --surface-highlight: rgba(255, 255, 255, .6);
+
+  --blur-header: blur(18px) saturate(160%);
+  --blur-card: blur(22px) saturate(150%);
+  --glass-card: rgba(255, 255, 255, .66);
+  --glass-card-edge: rgba(255, 255, 255, .78);
+
+  --shadow-1: 0 1px 2px rgba(0, 0, 0, .025), 0 8px 30px rgba(45, 35, 80, .035);
+  --shadow-2: 0 2px 6px rgba(45, 35, 80, .04), 0 18px 50px rgba(70, 50, 120, .07);
+  --shadow-3: 0 8px 30px rgba(70, 50, 120, .06), 0 30px 70px rgba(70, 50, 120, .1);
+  --shadow-accent: 0 4px 12px rgba(90, 55, 220, .18), 0 1px 2px rgba(0, 0, 0, .04);
+  --shadow-accent-hover: 0 8px 20px rgba(90, 55, 220, .24), 0 1px 2px rgba(0, 0, 0, .04);
+
+  /* Espaco ---------------------------------------------------------- */
+  --space-1: .25rem;
+  --space-2: .5rem;
+  --space-3: .75rem;
+  --space-4: 1rem;
+  --space-5: 1.25rem;
+  --space-6: 1.5rem;
+  --space-7: 1.75rem;
+  --space-8: 2rem;
+  --space-12: 3rem;
+  --space-16: 4rem;
+  --space-24: 6rem;
+
+  /* Raio ------------------------------------------------------------ */
+  --radius-sm: 10px;
+  --radius-md: 14px;
+  --radius-lg: 20px;
+  --radius-xl: 26px;
+  --radius-pill: 999px;
+
+  --header-height: 4.125rem;
+
+  /* Tipografia ------------------------------------------------------ */
+  --font-sans: Inter, -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Segoe UI", system-ui, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  --text-2xs: .75rem;
+  --text-xs: .8125rem;
+  --text-sm: .875rem;
+  --text-md: .9375rem;
+  --text-base: 1rem;
+  --text-lg: 1.0625rem;
+  --text-xl: 1.25rem;
+  --text-2xl: 1.75rem;
+  --text-display: clamp(2.375rem, 3.6vw, 3.5rem);
+
+  /* Movimento: resposta curta, amortecimento critico por padrao ------ */
+  --ease-standard: cubic-bezier(.32, .72, 0, 1);
+  --ease-out: cubic-bezier(.2, .8, .3, 1);
+  --ease-spring: cubic-bezier(.34, 1.4, .64, 1);
+  --duration-press: 110ms;
+  --duration-fast: 180ms;
+  --duration-base: 320ms;
+  --duration-slow: 460ms;
+}
+
+/* Menos transparencia: material vira superficie solida. */
+@media (prefers-reduced-transparency: reduce) {
+  :root {
+    --glass-card: var(--surface-solid);
+    --surface-1: var(--surface-solid);
+    --surface-2: var(--surface-solid);
+    --blur-header: none;
+    --blur-card: none;
+  }
+}
+
+/* Mais contraste: bordas definidas, texto secundario mais forte. */
+@media (prefers-contrast: more) {
+  :root {
+    --glass-card: var(--surface-solid);
+    --text-secondary: var(--text-primary);
+    --border: var(--border-strong);
+    --surface-1: var(--surface-solid);
+    --surface-2: var(--surface-solid);
+    --blur-header: none;
+    --blur-card: none;
+  }
+}

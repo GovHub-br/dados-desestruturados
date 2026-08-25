@@ -1,0 +1,107 @@
+/* Pipeline como pequeno fluxo visual, nao como tabela:
+   superficies translucidas ligadas por fios de 1px com nos entre elas. */
+
+.pipeline-head { display: grid; justify-items: start; gap: var(--space-1); }
+.pipeline-label { color: var(--text-tertiary); font-size: var(--text-2xs); font-weight: 650; letter-spacing: .1em; text-transform: uppercase; }
+
+.pipeline-status {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+  font-weight: 550;
+}
+.pipeline-status i { width: .45rem; height: .45rem; border-radius: 50%; background: var(--green); }
+.pipeline-status[data-state="running"] i { background: var(--purple); animation: pulse-dot 1.9s var(--ease-out) infinite; }
+.pipeline-status[data-state="failed"] i { background: var(--red); }
+
+.pipeline-steps {
+  list-style: none;
+  margin: var(--space-5) 0 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: var(--space-2);
+  max-width: 80%;
+}
+
+.pipeline-step { position: relative; text-align: center; }
+/* Fio de 1px entre as etapas, com um no no meio do caminho. */
+.pipeline-step:not(:last-child)::after {
+  content: "";
+  position: absolute;
+  top: 1.375rem;
+  left: calc(50% + 1.5rem);
+  width: calc(100% - 3rem);
+  height: 1px;
+  background: var(--border-strong);
+}
+.pipeline-step:not(:last-child)::before {
+  content: "";
+  position: absolute;
+  z-index: 1;
+  top: 1.2rem;
+  left: calc(100% - .1rem);
+  width: .3rem;
+  height: .3rem;
+  border-radius: 50%;
+  background: var(--border-strong);
+}
+
+.pipeline-icon {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  width: 2.625rem;
+  height: 2.625rem;
+  margin: 0 auto var(--space-2);
+  border: 1px solid rgba(255, 255, 255, .8);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, .55);
+  color: var(--text-tertiary);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .8), 0 1px 2px rgba(68, 44, 120, .04);
+  transition: color var(--duration-base) var(--ease-standard),
+              border-color var(--duration-base) var(--ease-standard),
+              background var(--duration-base) var(--ease-standard),
+              box-shadow var(--duration-base) var(--ease-standard),
+              transform var(--duration-base) var(--ease-spring);
+}
+.pipeline-icon svg { width: 1.15rem; height: 1.15rem; }
+
+.pipeline-name { font-size: .6875rem; font-weight: 550; letter-spacing: -.005em; }
+.pipeline-state { display: block; min-height: 1rem; margin-top: .15rem; white-space: nowrap; color: var(--text-tertiary); font-size: .6875rem; }
+
+/* Verde so para concluido: a cor mora no icone e no rotulo, nao no bloco. */
+.pipeline-step[data-state="done"] .pipeline-icon { color: var(--green); }
+.pipeline-step[data-state="done"] .pipeline-state { color: var(--green); }
+
+/* Roxo para a etapa ativa, com um halo discreto. */
+.pipeline-step[data-state="current"] .pipeline-icon {
+  color: var(--purple);
+  border-color: var(--purple-line);
+  background: color-mix(in srgb, var(--purple-soft) 80%, transparent);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .8), 0 0 0 4px color-mix(in srgb, var(--purple) 9%, transparent);
+  transform: scale(1.04);
+  animation: pulse-glow 2.6s var(--ease-out) infinite;
+}
+.pipeline-step[data-state="current"] .pipeline-state { color: var(--purple); font-weight: 600; }
+
+.pipeline-step[data-state="failed"] .pipeline-icon {
+  color: var(--red);
+  border-color: var(--red-line);
+  background: var(--red-soft);
+  animation: none;
+}
+.pipeline-step[data-state="failed"] .pipeline-state { color: var(--red); font-weight: 600; }
+
+@media (max-width: 520px) {
+  .pipeline-steps { grid-template-columns: repeat(5, 5rem); overflow-x: auto; scroll-snap-type: x proximity; padding-bottom: var(--space-2); }
+  .pipeline-step { scroll-snap-align: center; }
+}
+
+/* Empilhado nao ha cartao sobreposto: o fluxo pode usar a largura inteira. */
+@media (max-width: 1200px) {
+  .pipeline-steps { max-width: 100%; }
+}

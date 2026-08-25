@@ -1,0 +1,370 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#FBFBFD">
+  <meta name="description" content="Envie um PDF, aplique seu contrato semântico e acompanhe cada etapa da extração com rastreabilidade ponta a ponta.">
+  <title>Gov Hub · Orquestra</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;450;500;550;600;650;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/css/tokens.css?v=2">
+  <link rel="stylesheet" href="/static/css/base.css?v=3">
+  <link rel="stylesheet" href="/static/css/hero.css">
+  <link rel="stylesheet" href="/static/css/pipeline.css">
+  <link rel="stylesheet" href="/static/css/workspace.css?v=4">
+  <link rel="stylesheet" href="/static/css/lineage.css">
+  <link rel="stylesheet" href="/static/css/motion.css">
+</head>
+<body>
+  <a class="skip" href="#envio">Ir para o envio do documento</a>
+
+  <header class="header" id="header">
+    <div class="shell header-inner">
+      <a class="brand" href="#inicio" aria-label="Gov Hub Orquestra, início">
+        <img class="brand-logo" src="/static/img/govhub-logo.svg" alt="">
+        <span class="brand-divider" aria-hidden="true">|</span>
+        <span class="brand-product">Orquestra</span>
+      </a>
+      <nav class="nav" aria-label="Navegação principal">
+        <a href="#inicio">Visão geral</a>
+        <a href="#envio">Enviar PDF</a>
+        <a href="#contratos">Contratos</a>
+        <a href="#rastreabilidade">Rastreabilidade</a>
+      </nav>
+      <button class="button button-secondary button-compact" type="button" data-open-panel="envio">Enviar PDF</button>
+    </div>
+  </header>
+
+  <div class="shell">
+    <main>
+      <noscript>
+        <p class="noscript">Este portal precisa de JavaScript para enviar documentos e acompanhar a execução. As APIs em <code>/api</code> seguem disponíveis para uso direto.</p>
+      </noscript>
+
+      <section class="hero" id="inicio">
+        <div class="hero-copy">
+          <h1 data-reveal style="--reveal-delay:0ms">De PDFs complexos<br>a dados <span class="accent">confiáveis.</span></h1>
+          <p class="hero-lead" data-reveal style="--reveal-delay:60ms">Envie um documento, aplique seu contrato e acompanhe a extração com total rastreabilidade.</p>
+          <div class="hero-actions" data-reveal style="--reveal-delay:120ms">
+            <button class="button button-primary" type="button" data-open-panel="envio">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 16V4m0 0L8 8m4-4 4 4"/><path d="M4 16v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>
+              Enviar PDF com contrato
+            </button>
+            <button class="button button-secondary" type="button" data-open-panel="contratos">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 14h6M9 17h4"/></svg>
+              Publicar contrato semântico
+            </button>
+          </div>
+        </div>
+
+        <div class="stage" id="stage" data-mode="art">
+          <!-- Ilustracao decorativa em repouso. O envio e iniciado pelos
+               botoes de acao, sem uma area clicavel escondida sobre a arte. -->
+          <div class="stage-art" aria-hidden="true">
+            <img src="/static/img/composicao-hero.jpg" alt="" width="1340" height="1005" fetchpriority="high">
+          </div>
+
+          <section class="floating card-upload" aria-labelledby="upload-card-title" data-reveal="card" style="--reveal-delay:120ms">
+            <div class="card-head">
+              <span class="icon-tile" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h4"/></svg></span>
+              <div>
+                <p class="card-kicker">Upload &amp; resultado</p>
+                <h2 class="card-title" id="upload-card-title">Contrato aplicado: <span id="applied-contract">selecione um domínio</span></h2>
+              </div>
+            </div>
+
+            <div class="dropzone" id="hero-dropzone" role="button" tabindex="0" aria-describedby="hero-dropzone-hint">
+              <span class="dropzone-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/><path d="M12 18v-6m0 0-2 2m2-2 2 2"/></svg></span>
+              <span class="dropzone-title">Arraste e solte seu PDF aqui</span>
+              <span class="dropzone-hint" id="hero-dropzone-hint">ou clique para selecionar · até 50 MB</span>
+            </div>
+
+            <div class="status-surface" id="result-strip">
+              <span class="status-dot" id="result-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 5 6v6c0 4 2.9 6.9 7 8 4.1-1.1 7-4 7-8V6l-7-3Z"/></svg></span>
+              <div class="result-body">
+                <p class="result-title" id="result-title">Pronto para receber PDF</p>
+                <p class="result-detail" id="result-detail">Original e checksum preservados.</p>
+              </div>
+              <button class="button button-pill" type="button" id="result-action" data-open-lineage hidden>Ver resultado →</button>
+            </div>
+          </section>
+
+          <section class="floating card-pipeline" aria-labelledby="pipeline-title" data-reveal="card" style="--reveal-delay:180ms">
+            <div class="pipeline-head">
+              <h2 class="pipeline-label" id="pipeline-title">Pipeline</h2>
+              <span class="pipeline-status" id="pipeline-status" data-state="idle" role="status"><i aria-hidden="true"></i><span id="pipeline-status-text">Pronto para receber</span></span>
+            </div>
+            <ol class="pipeline-steps" id="pipeline-steps">
+              <li class="pipeline-step" data-stage="origin" data-state="idle">
+                <span class="pipeline-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/></svg></span>
+                <p class="pipeline-name">PDF</p>
+                <span class="pipeline-state"></span>
+              </li>
+              <li class="pipeline-step" data-stage="extraction" data-state="idle">
+                <span class="pipeline-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h10M4 12h16M4 18h7"/><circle cx="18" cy="6" r="2"/><circle cx="16" cy="18" r="2"/></svg></span>
+                <p class="pipeline-name">Extração</p>
+                <span class="pipeline-state"></span>
+              </li>
+              <li class="pipeline-step" data-stage="evidence" data-state="idle">
+                <span class="pipeline-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16v12H4z"/><path d="M4 7l2-3h12l2 3M8 12h8"/></svg></span>
+                <p class="pipeline-name">Evidências</p>
+                <span class="pipeline-state"></span>
+              </li>
+              <li class="pipeline-step" data-stage="resolution" data-state="idle">
+                <span class="pipeline-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 5 6v6c0 4 2.9 6.9 7 8 4.1-1.1 7-4 7-8V6l-7-3Z"/><path d="m9 12 2.2 2.2L15.5 10"/></svg></span>
+                <p class="pipeline-name">Validação</p>
+                <span class="pipeline-state"></span>
+              </li>
+              <li class="pipeline-step" data-stage="result" data-state="idle">
+                <span class="pipeline-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 19V10m5 9V5m5 14v-6m5 6V8"/></svg></span>
+                <p class="pipeline-name">Resultado</p>
+                <span class="pipeline-state"></span>
+              </li>
+            </ol>
+          </section>
+
+          <section class="floating card-trust" aria-label="Confiabilidade" data-reveal="card" style="--reveal-delay:240ms">
+            <div class="card-head">
+              <span class="icon-tile plain" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 5 6v6c0 4 2.9 6.9 7 8 4.1-1.1 7-4 7-8V6l-7-3Z"/></svg></span>
+              <div>
+                <p class="card-title" style="margin-top:0">Dados confiáveis</p>
+                <p class="feature-text">Rastreáveis ponta a ponta.</p>
+              </div>
+            </div>
+          </section>
+        </div>
+      </section>
+
+      <section class="quick-links" aria-label="Atalhos do portal">
+        <button class="quick-link" type="button" data-open-panel="contratos" aria-controls="contratos">
+          <span class="icon-tile" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m8 3 8 4-8 4-4-2 8-4M8 11l8 4-8 4-4-2 8-4M8 19l8 4"/></svg></span>
+          <span class="quick-link-copy">
+            <span class="quick-link-title">Contratos semânticos</span>
+            <span class="quick-link-text">Defina uma vez. Extraia sempre com precisão.</span>
+          </span>
+          <span class="quick-link-arrow" aria-hidden="true">→</span>
+        </button>
+        <button class="quick-link" type="button" data-open-lineage aria-controls="rastreabilidade">
+          <span class="icon-tile" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10 14 14 10"/><path d="m8 7 2-2a3 3 0 0 1 4.2 4.2l-2 2M16 17l-2 2a3 3 0 0 1-4.2-4.2l2-2"/></svg></span>
+          <span class="quick-link-copy">
+            <span class="quick-link-title">Rastreabilidade completa</span>
+            <span class="quick-link-text">Cada campo, cada evidência, cada decisão.</span>
+          </span>
+          <span class="quick-link-arrow" aria-hidden="true">→</span>
+        </button>
+      </section>
+
+      <section class="workspace" id="caminhos" aria-label="Escolha como começar">
+        <article class="panel" id="envio" data-panel="envio" data-open="false" aria-labelledby="envio-title">
+          <button class="workflow-card workflow-card-upload" type="button" data-open-panel="envio" aria-controls="envio-drawer" aria-expanded="false">
+            <span class="workflow-card-top">
+              <span class="workflow-number">01</span>
+              <span class="workflow-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4m0 0L8 8m4-4 4 4"/><path d="M4 16v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg></span>
+            </span>
+            <span class="workflow-card-copy">
+              <span class="workflow-eyebrow">Extrair dados</span>
+              <span class="workflow-title">Enviar um PDF</span>
+              <span class="workflow-description">Selecione o contrato, identifique a entidade e envie o documento para iniciar a extração.</span>
+            </span>
+            <span class="workflow-fields" aria-hidden="true"><span>Contrato</span><span>Entidade</span><span>PDF</span></span>
+            <span class="workflow-card-footer"><span>Iniciar extração</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
+          </button>
+
+          <div class="panel-drawer" id="envio-drawer">
+            <div>
+              <div class="panel-content">
+<header class="panel-head">
+                  <span class="icon-tile" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4m0 0L8 8m4-4 4 4"/><path d="M4 16v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg></span>
+                  <div>
+                    <h2 class="panel-title" id="envio-title">Enviar PDF para extração</h2>
+                    <p class="panel-subtitle">Domínio, versão do contrato, entidade e arquivo.</p>
+                  </div>
+                  <button class="icon-button" type="button" data-close-panel aria-label="Fechar este formulário"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 6 18 18M18 6 6 18"/></svg></button>
+                </header>
+                <form id="upload" novalidate>
+                  <div class="form-grid">
+                    <div class="field">
+                      <label for="domain">Domínio do contrato</label>
+                      <input class="input" id="domain" name="domain" value="construtoras" list="known-domains" autocomplete="off" aria-describedby="domain-status domain-notice" required>
+                      <datalist id="known-domains"></datalist>
+                      <span class="field-status" id="domain-status" data-state="idle" aria-live="polite"></span>
+                    </div>
+
+                    <div class="field">
+                      <label for="contract">Versão do contrato</label>
+                      <input class="input" id="contract" name="contract_version" list="published-versions" placeholder="v1.8.0" autocomplete="off" aria-describedby="contract-status" required>
+                      <datalist id="published-versions"></datalist>
+                      <span class="field-status" id="contract-status" data-state="idle" aria-live="polite"></span>
+                    </div>
+
+                    <div class="field wide">
+                      <p class="notice" id="domain-notice" role="status"></p>
+                    </div>
+
+                    <div class="field">
+                      <label for="slug">Código da entidade</label>
+                      <input class="input" id="slug" name="entity_slug" placeholder="cury" autocomplete="off" aria-describedby="slug-hint" required>
+                      <span class="field-hint" id="slug-hint">Minúsculo, sem espaços. Ex.: empresa-a</span>
+                    </div>
+
+                    <div class="field">
+                      <label for="name">Nome da entidade</label>
+                      <input class="input" id="name" name="entity_name" placeholder="Cury" aria-describedby="name-hint" required>
+                      <span class="field-hint" id="name-hint">Nome exibido no resultado.</span>
+                    </div>
+
+                    <div class="field wide">
+                      <label for="pdf">Arquivo PDF</label>
+                      <input class="file-input visually-hidden" id="pdf" name="pdf" type="file" accept="application/pdf" aria-describedby="pdf-hint">
+                      <div class="dropzone compact" id="pdf-dropzone" data-for="pdf">
+                        <span class="dropzone-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4m0 0L8 8m4-4 4 4"/><path d="M4 16v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg></span>
+                        <span class="dropzone-title">Arraste seu PDF para cá</span>
+                        <span class="dropzone-hint" id="pdf-hint">ou selecione o arquivo · até 50 MB</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="form-actions">
+                    <button class="button button-primary" id="submit" type="submit">Enviar e iniciar extração</button>
+                    <span class="form-note">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="10" width="16" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>
+                      A execução começa em segundo plano.
+                    </span>
+                  </div>
+
+                  <div class="progress" id="upload-progress" aria-hidden="true">
+                    <div class="progress-track"><div class="progress-bar" id="upload-progress-bar"></div></div>
+                    <p class="progress-label" id="upload-progress-label"></p>
+                  </div>
+                </form>
+                <div class="message" id="out" role="status" tabindex="-1"></div>
+              </div>
+            </div>
+          </div>
+        </article>
+
+        <article class="panel" id="contratos" data-panel="contratos" data-open="false" aria-labelledby="contratos-title">
+          <button class="workflow-card workflow-card-contract" type="button" data-open-panel="contratos" aria-controls="contratos-drawer" aria-expanded="false">
+            <span class="workflow-card-top">
+              <span class="workflow-number">02</span>
+              <span class="workflow-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 14h6M9 17h4"/></svg></span>
+            </span>
+            <span class="workflow-card-copy">
+              <span class="workflow-eyebrow">Definir estrutura</span>
+              <span class="workflow-title">Publicar contrato</span>
+              <span class="workflow-description">Cadastre o domínio, versionamento e arquivo JSON antes de processar uma nova família de documentos.</span>
+            </span>
+            <span class="workflow-fields" aria-hidden="true"><span>Domínio</span><span>Versão</span><span>JSON</span></span>
+            <span class="workflow-card-footer"><span>Publicar contrato</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
+          </button>
+
+          <div class="panel-drawer" id="contratos-drawer">
+            <div>
+              <div class="panel-content">
+<header class="panel-head">
+                  <span class="icon-tile" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 14h6M9 17h4"/></svg></span>
+                  <div>
+                    <h2 class="panel-title" id="contratos-title">Contrato semântico</h2>
+                    <p class="panel-subtitle">Necessário antes do primeiro PDF de um domínio novo.</p>
+                  </div>
+                  <button class="icon-button" type="button" data-close-panel aria-label="Fechar este formulário"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 6 18 18M18 6 6 18"/></svg></button>
+                </header>
+                <form id="contract-upload" novalidate>
+                  <div class="form-grid">
+                    <div class="field">
+                      <label for="contract-domain">Novo ou existente domínio</label>
+                      <input class="input" id="contract-domain" name="domain" list="known-domains" placeholder="construtoras" autocomplete="off" aria-describedby="contract-domain-hint" required>
+                      <span class="field-hint" id="contract-domain-hint">Pode ser um domínio que ainda não existe.</span>
+                    </div>
+
+                    <div class="field">
+                      <label for="contract-version">Versão</label>
+                      <input class="input" id="contract-version" name="version" placeholder="v1.8.0" autocomplete="off" aria-describedby="contract-version-hint" required>
+                      <span class="field-hint" id="contract-version-hint">Versionamento semântico: vX.Y.Z</span>
+                    </div>
+
+                    <div class="field wide">
+                      <label for="contract-file">Contrato semântico JSON</label>
+                      <input class="file-input visually-hidden" id="contract-file" name="contract" type="file" accept="application/json,.json" aria-describedby="contract-file-hint">
+                      <div class="dropzone compact" id="contract-dropzone" data-for="contract-file">
+                        <span class="dropzone-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/><path d="M10 13h4M10 17h2"/></svg></span>
+                        <span class="dropzone-title">Arraste o JSON do contrato</span>
+                        <span class="dropzone-hint" id="contract-file-hint">O domínio e a versão declarados no arquivo serão validados.</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="form-actions">
+                    <button class="button button-primary" id="contract-submit" type="submit">Validar e publicar contrato</button>
+                    <span class="form-note">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 5 6v6c0 4 2.9 6.9 7 8 4.1-1.1 7-4 7-8V6l-7-3Z"/></svg>
+                      Contratos publicados são imutáveis.
+                    </span>
+                  </div>
+
+                  <div class="progress" id="contract-progress" aria-hidden="true">
+                    <div class="progress-track"><div class="progress-bar" id="contract-progress-bar"></div></div>
+                    <p class="progress-label" id="contract-progress-label"></p>
+                  </div>
+                </form>
+                <div class="message" id="contract-out" role="status" tabindex="-1"></div>
+              </div>
+            </div>
+          </div>
+        </article>
+      </section>
+
+      <section class="lineage" id="rastreabilidade" aria-labelledby="lineage-title" data-visible="false">
+        <div class="lineage-top">
+          <div>
+            <h2 id="lineage-title">Rastreabilidade da execução</h2>
+            <p>O percurso técnico do documento: extração, evidências, resolução determinística e desvio de fallback.</p>
+            <button class="button button-ghost" type="button" id="lineage-toggle" aria-expanded="false" aria-controls="lineage-details" style="margin-top:var(--space-3);padding:0">Ver detalhes técnicos</button>
+          </div>
+          <div class="lineage-top-actions">
+            <span class="lineage-status" id="lineage-status" role="status" aria-atomic="true"><i aria-hidden="true"></i>Nenhuma execução em andamento.</span>
+            <button class="icon-button" type="button" id="lineage-close" aria-label="Fechar rastreabilidade"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 6 18 18M18 6 6 18"/></svg></button>
+          </div>
+        </div>
+
+        <div class="lineage-details" id="lineage-details" data-open="false">
+          <div>
+            <div class="lineage-legend" aria-label="Legenda da linhagem">
+              <span class="legend-item"><i class="legend-line" aria-hidden="true"></i>Fluxo de resolução direta</span>
+              <span class="legend-item"><i class="legend-line dashed" aria-hidden="true"></i>Desvio somente em caso de falha</span>
+            </div>
+            <div class="lineage-scroller" role="region" aria-label="Grafo de linhagem da execução" tabindex="0">
+              <div class="lineage-graph">
+                <svg class="lineage-edges" viewBox="0 0 1000 296" preserveAspectRatio="none" aria-hidden="true">
+                  <path class="edge-main" d="M185 89 H215"/>
+                  <path class="edge-main" d="M385 89 H415"/>
+                  <path class="edge-main" d="M585 89 H615"/>
+                  <path class="edge-main" d="M785 89 H815"/>
+                  <path class="edge-fallback" d="M700 140 V181"/>
+                  <path class="edge-fallback" d="M785 234 H800 Q815 234 815 219 V142"/>
+                </svg>
+                <article class="lineage-node node-origin current" data-stage="origin"><span class="node-kind">FONTE</span><h3>Documento de origem</h3><p>PDF, checksum e contrato versionado.</p></article>
+                <article class="lineage-node node-extraction" data-stage="extraction"><span class="node-kind">DAG 1</span><h3>Extração Docling</h3><p>Texto, tabelas, blocos e gráficos.</p></article>
+                <article class="lineage-node node-evidence" data-stage="evidence"><span class="node-kind">MINIO</span><h3>Artefatos de evidência</h3><p>Inventário e manifesto da execução.</p></article>
+                <article class="lineage-node node-resolution" data-stage="resolution"><span class="node-kind">DAG 2</span><h3>Resolução determinística</h3><p>Contrato e layout signature aplicados.</p></article>
+                <article class="lineage-node node-result" data-stage="result"><span class="node-kind">RESULTADO</span><h3>Schema de saída resolvido</h3><p>Dados, auditoria e publicação.</p></article>
+                <article class="lineage-node node-fallback optional" data-stage="fallback"><span class="node-kind">DAG 3 · OPCIONAL</span><h3>Fallback LLM + revalidação</h3><p>Corrige o layout e retorna à DAG 2.</p></article>
+                <span class="edge-label">falha de layout</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer>
+      <p class="footer-mark">Gov Hub · Orquestra</p>
+      <p>Inteligência documental com origem, contrato e resultado rastreáveis.</p>
+    </footer>
+  </div>
+
+  <script type="module" src="/static/js/main.js?v=3"></script>
+</body>
+</html>
