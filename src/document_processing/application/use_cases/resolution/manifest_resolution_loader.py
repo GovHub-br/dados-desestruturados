@@ -119,16 +119,24 @@ class ManifestResolutionLoaderMixin:
             encoding="utf-8",
         )
         config = self.config_loader.load_local_platform_config()
-        contrato_uri_historico = str(
-            runtime.get("inputs", {}).get("contrato_semantico")
-            or manifest.get("contrato_semantico_uri")
-            or ""
+        contrato_uri_override = str(
+            runtime.get("inputs", {}).get("contrato_semantico") or ""
         ).strip()
-        contrato_uri, _versao_contrato = SemanticContractRegistry(
-            config=config,
-            minio_client=self.minio_client,
-        ).latest_contract_uri(domain)
-        if contrato_uri_historico and contrato_uri_historico != contrato_uri:
+        contrato_uri_historico = str(
+            manifest.get("contrato_semantico_uri") or ""
+        ).strip()
+        if contrato_uri_override:
+            contrato_uri = contrato_uri_override
+            logging.info(
+                "DAG 2 usando contrato informado explicitamente na execucao: %s",
+                contrato_uri,
+            )
+        else:
+            contrato_uri, _versao_contrato = SemanticContractRegistry(
+                config=config,
+                minio_client=self.minio_client,
+            ).latest_contract_uri(domain)
+        if not contrato_uri_override and contrato_uri_historico and contrato_uri_historico != contrato_uri:
             logging.info(
                 "Contrato historico do manifesto substituido pelo contrato ativo do dominio "
                 "na DAG 2: historico=%s ativo=%s",

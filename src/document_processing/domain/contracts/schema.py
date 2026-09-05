@@ -11,11 +11,21 @@ TYPE_DESCRIPTORS = frozenset(
 
 
 def is_type_descriptor(value: Any) -> bool:
-    """Diz se o valor do contrato descreve um tipo ainda a ser resolvido."""
+    """Diz se o valor do contrato descreve um campo ainda a ser resolvido.
+
+    Alem dos tipos tecnicos (por exemplo, ``string | null``), contratos podem
+    declarar um conjunto de valores permitidos (por exemplo,
+    ``mensal | acumulado_ano``). Nos dois casos o contrato descreve o campo,
+    mas nao fornece um literal que deva sobrescrever a evidencia extraida.
+    """
     if not isinstance(value, str):
         return False
     normalized = " ".join(value.lower().split())
-    return bool(normalized) and all(
+    if not normalized:
+        return False
+    if "|" in normalized:
+        return True
+    return all(
         part.strip() in TYPE_DESCRIPTORS
         for part in normalized.split("|")
     )
