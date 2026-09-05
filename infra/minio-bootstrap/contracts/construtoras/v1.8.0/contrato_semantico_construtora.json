@@ -1,0 +1,179 @@
+{
+  "contrato_semantico": {
+    "entidades": {
+      "empresa": {
+        "descricao": "Nome da empresa, construtora ou incorporadora analisada.",
+        "obrigatorio": true,
+        "sinonimos": ["empresa", "companhia", "construtora", "incorporadora", "player", "nome da empresa"],
+        "tipo": "string"
+      },
+      "escopo_periodo": {
+        "descricao": "Classificação do período extraído.",
+        "dominio": ["trimestre"],
+        "obrigatorio": true,
+        "sinonimos": ["trimestre"],
+        "tipo": "string"
+      },
+      "indicador": {
+        "descricao": "Indicador bruto observado para a operação.",
+        "dominio": ["numero_de_unidades"],
+        "obrigatorio": true,
+        "sinonimos": ["Número de Unidades", "número de unidades", "unidades", "unidades lançadas", "unidades vendidas", "UH", "imóveis", "imóveis comercializados"],
+        "tipo": "string"
+      },
+      "periodo": {
+        "descricao": "Período ao qual o valor bruto extraído se refere.",
+        "obrigatorio": true,
+        "sinonimos": ["período", "data-base", "trimestre", "ano", "competência", "referência", "período de apuração", "período referência"],
+        "tipo": "string"
+      },
+      "tipo_operacao": {
+        "descricao": "Tipo da operação imobiliária observada no balanço.",
+        "dominio": ["lancamento", "venda"],
+        "obrigatorio": true,
+        "sinonimos": ["lançamentos", "vendas", "vendas líquidas", "unidades lançadas", "unidades vendidas", "imóveis lançados", "imóveis vendidos", "UH vendidas", "comercialização"],
+        "tipo": "string"
+      },
+      "unidade": {
+        "descricao": "Unidade do valor bruto extraído.",
+        "dominio": ["unidades"],
+        "obrigatorio": true,
+        "tipo": "string"
+      },
+      "valor": {
+        "descricao": "Valor numérico bruto extraído do PDF.",
+        "obrigatorio": true,
+        "tipo": "number"
+      }
+    },
+    "metricas": {
+      "lancamentos": {
+        "descricao": "Valores brutos relacionados aos lançamentos imobiliários das empresas.",
+        "indicadores": {
+          "numero_de_unidades": {
+            "descricao": "Quantidade bruta de unidades lançadas no período.",
+            "obrigatorio": false,
+            "sinonimos": ["Número de Unidades", "unidades lançadas", "imóveis lançados", "UH lançadas", "volume lançado em unidades"],
+            "tipo": "number",
+            "unidade": "unidades"
+          }
+        },
+        "tipo": "grupo_metricas_brutas",
+        "tipo_operacao": "lancamento"
+      },
+      "vendas": {
+        "descricao": "Valores brutos relacionados às vendas imobiliárias das empresas.",
+        "indicadores": {
+          "numero_de_unidades": {
+            "descricao": "Quantidade bruta de unidades vendidas no período.",
+            "obrigatorio": false,
+            "sinonimos": ["Número de Unidades", "unidades vendidas", "imóveis vendidos", "UH vendidas", "unidades comercializadas", "imóveis comercializados"],
+            "tipo": "number",
+            "unidade": "unidades"
+          }
+        },
+        "tipo": "grupo_metricas_brutas",
+        "tipo_operacao": "venda"
+      }
+    },
+    "principios": {
+      "chaves_estaveis": "As chaves da saída devem ser genéricas, reutilizáveis e independentes do período do documento.",
+      "layout_independente": "A estrutura final deve permanecer igual mesmo que o PDF altere títulos, ordem das seções, nomes das colunas ou formato visual.",
+      "periodos_como_valores": "Períodos específicos do documento não devem aparecer nos nomes das chaves. Eles devem ser armazenados como valores dentro das observações de período.",
+      "valores_brutos_primeiro": "O pipeline deve extrair valores brutos observados no documento. Indicadores como variação trimestre contra trimestre, ano contra ano ou acumulado devem ser calculados depois, fora da etapa de extração."
+    },
+    "requisitos_mapeamento": {
+      "campos_obrigatorios": [
+        {
+          "path": "balancos_das_empresas.lancamentos.dados.valores.valor",
+          "observacoes_obrigatorias": [
+            {
+              "seletores": {"papel_periodo": "periodo_referencia"},
+              "campos_contexto_obrigatorios": ["periodo", "escopo_periodo"]
+            },
+            {
+              "seletores": {"papel_periodo": "periodo_comparativo_anterior"},
+              "campos_contexto_obrigatorios": ["periodo", "escopo_periodo"],
+              "obrigatorio": false
+            },
+            {
+              "seletores": {"papel_periodo": "mesmo_periodo_ano_anterior"},
+              "campos_contexto_obrigatorios": ["periodo", "escopo_periodo"],
+              "obrigatorio": false
+            }
+          ]
+        },
+        {
+          "path": "balancos_das_empresas.vendas.dados.valores.valor",
+          "observacoes_obrigatorias": [
+            {
+              "seletores": {"papel_periodo": "periodo_referencia"},
+              "campos_contexto_obrigatorios": ["periodo", "escopo_periodo"]
+            },
+            {
+              "seletores": {"papel_periodo": "periodo_comparativo_anterior"},
+              "campos_contexto_obrigatorios": ["periodo", "escopo_periodo"],
+              "obrigatorio": false
+            },
+            {
+              "seletores": {"papel_periodo": "mesmo_periodo_ano_anterior"},
+              "campos_contexto_obrigatorios": ["periodo", "escopo_periodo"],
+              "obrigatorio": false
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "descricao": "Contrato semântico para padronizar a extração de indicadores brutos de lançamentos e vendas de empresas do setor imobiliário. A observação do trimestre de referência é obrigatória; comparativos são desejáveis, mas não bloqueiam a publicação do layout quando ausentes.",
+  "fonte": "Balanços trimestrais das empresas",
+  "schema_saida": {
+    "balancos_das_empresas": {
+      "lancamentos": {
+        "dados": [
+          {
+            "empresa": "string",
+            "valores": [
+              {
+                "escopo_periodo": "trimestre",
+                "periodo": "string",
+                "valor": "number | null"
+              }
+            ]
+          }
+        ],
+        "indicador": "numero_de_unidades",
+        "tipo": "valor_bruto",
+        "tipo_operacao": "lancamento",
+        "unidade": "unidades"
+      },
+      "vendas": {
+        "dados": [
+          {
+            "empresa": "string",
+            "valores": [
+              {
+                "escopo_periodo": "trimestre",
+                "periodo": "string",
+                "valor": "number | null"
+              }
+            ]
+          }
+        ],
+        "indicador": "numero_de_unidades",
+        "tipo": "valor_bruto",
+        "tipo_operacao": "venda",
+        "unidade": "unidades"
+      }
+    },
+    "fonte": "string",
+    "periodo_referencia": "string",
+    "periodos_disponiveis": {
+      "mesmo_periodo_ano_anterior": "string | null",
+      "periodo_comparativo_anterior": "string | null",
+      "periodo_referencia": "string"
+    }
+  },
+  "tipo_documento": "contrato_semantico",
+  "versao": "1.8.0"
+}
