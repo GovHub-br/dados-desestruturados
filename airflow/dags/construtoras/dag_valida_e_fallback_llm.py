@@ -8,13 +8,14 @@ from airflow.exceptions import AirflowFailException
 from airflow.operators.python import get_current_context
 from airflow.operators.trigger_dagrun import TriggerDagRunOperator
 from airflow.providers.standard.operators.empty import EmptyOperator
+from airflow.utils.trigger_rule import TriggerRule
 
 from dags._shared.airflow_defaults import AirflowDefaults
 from dags._shared.dependencies import (
     build_construtoras_payload_builder,
+    build_execution_tracer,
     build_fallback_llm_service,
 )
-
 
 REQUIRED_FALLBACK_CONF_FIELDS = (
     "document_id",
@@ -230,6 +231,20 @@ def registrar_planejamento(
     return planning
 
 
+@task(multiple_outputs=False, trigger_rule=TriggerRule.ALL_DONE)
+def observar_execucao_fallback(fallback_context: dict[str, object]) -> dict[str, object]:
+    """Projeta a execucao de fallback para o Langfuse.
+
+    Roda com `ALL_DONE` de proposito: execucoes que falharam sao justamente as
+    que mais precisam de metrica. A observabilidade nunca falha a DAG.
+    """
+    resultado = build_execution_tracer().trace_fallback_execution(
+        fallback_context=fallback_context
+    )
+    logging.info("Observabilidade DAG 3: %s", resultado)
+    return resultado
+
+
 @dag(
     dag_id="dag_valida_e_fallback_llm",
     schedule=None,
@@ -277,6 +292,8 @@ def dag_valida_e_fallback_llm() -> None:
         published_layout,
     )
 
+    observabilidade = observar_execucao_fallback(fallback_context)
+
     (
         inicio
         >> runtime
@@ -291,6 +308,7 @@ def dag_valida_e_fallback_llm() -> None:
         >> revalidation_result
         >> published_layout
         >> planejamento
+        >> observabilidade
         >> fim
     )
 

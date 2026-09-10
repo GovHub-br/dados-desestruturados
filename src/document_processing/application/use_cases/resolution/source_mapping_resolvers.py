@@ -41,6 +41,78 @@ class SourceMappingResolversMixin:
                 }
         return None, {"arquivo_origem": block_file, "block_id": block_id or None, "padrao": pattern}
 
+    def _resolve_text_block_records_mapping(
+        self,
+        extraction_root: Path,
+        mapping_entry: dict[str, Any],
+    ) -> tuple[list[dict[str, Any]], dict[str, Any]]:
+        """Monta registros estruturados a partir de campos declarados em blocos textuais.
+
+        Cada registro declara seus valores fixos e os campos que devem ser capturados
+        de blocos identificados da extracao. O resolvedor apenas aplica os seletores
+        declarados pelo layout; nao conhece dominio, metrica ou periodo.
+        """
+        block_file = str(mapping_entry.get("arquivo_origem", "blocks/blocks.jsonl"))
+        blocks_by_id = {
+            str(block.get("block_id")): block
+            for block in self._read_jsonl(extraction_root / block_file)
+            if block.get("block_id")
+        }
+        records = mapping_entry.get("registros", [])
+        if not isinstance(records, list):
+            raise ValueError("registros_de_blocos_textuais exige uma lista registros")
+
+        result: list[dict[str, Any]] = []
+        evidence_records: list[dict[str, Any]] = []
+        for record_index, record in enumerate(records):
+            if not isinstance(record, dict):
+                continue
+            item: dict[str, Any] = {}
+            fixed_values = record.get("valores_fixos", {})
+            if isinstance(fixed_values, dict):
+                self._merge_nested_values(item, fixed_values)
+
+            field_evidence: list[dict[str, Any]] = []
+            for field in record.get("campos", []):
+                if not isinstance(field, dict):
+                    continue
+                output_path = str(field.get("campo_saida", "")).strip()
+                block_id = str(field.get("block_id", "")).strip()
+                pattern = str(field.get("padrao", "")).strip()
+                if not output_path or not block_id or not pattern:
+                    continue
+
+                block = blocks_by_id.get(block_id)
+                text = str(block.get("text", "")) if block else ""
+                match = re.search(pattern, text)
+                group = field.get("grupo", 0)
+                try:
+                    value = match.group(int(group)) if match else None
+                except (IndexError, ValueError):
+                    value = None
+                if str(field.get("tipo", "texto")) == "numero" and value is not None:
+                    value = parse_flexible_number(value)
+                self._set_nested_value(item, output_path, value)
+                field_evidence.append({
+                    "campo_saida": output_path,
+                    "block_id": block_id,
+                    "padrao": pattern,
+                    "grupo": group,
+                    "valor_resolvido": value,
+                    "page_number": block.get("page_number") if block else None,
+                    "bbox": block.get("bbox") if block else None,
+                    "texto": text or None,
+                })
+
+            result.append(item)
+            evidence_records.append({"indice_registro": record_index, "campos": field_evidence})
+
+        return result, {
+            "arquivo_origem": block_file,
+            "registros_resolvidos": len(result),
+            "registros": evidence_records,
+        }
+
     def _resolve_json_field_mapping(
         self,
         extraction_root: Path,
@@ -208,14 +280,44 @@ class SourceMappingResolversMixin:
                     }
                 fixed_values = mapping_entry.get("valores_fixos", {})
                 if selector_fields and isinstance(fixed_values, dict):
-                    item.update(fixed_values)
+                    self._merge_nested_values(item, fixed_values)
                 segment_values = selector.get("valores_por_segmento", {})
                 if selector_fields and isinstance(segment_values, dict):
-                    item.update(segment_values)
+                    self._merge_nested_values(item, segment_values)
                 result.append(item)
         return result, {
             "arquivo_origem": origin_file,
             "seletores": selectors,
+            "linhas_resolvidas": len(result),
+        }
+
+    def _resolve_table_rows_from_sources_mapping(
+        self,
+        extraction_root: Path,
+        mapping_entry: dict[str, Any],
+    ) -> tuple[list[dict[str, Any]], dict[str, Any]]:
+        """Concatena linhas declaradas em diversas tabelas, sem inferir semântica.
+
+        Alguns PDFs particionam a mesma coleção lógica em tabelas físicas
+        distintas (por exemplo, uma por modalidade). O layout conserva a
+        responsabilidade de declarar cada fonte, seus intervalos e valores
+        fixos; o resolvedor apenas preserva a ordem dessas fontes.
+        """
+        sources = mapping_entry.get("fontes", [])
+        if not isinstance(sources, list) or not sources:
+            raise ValueError("linhas_de_tabelas exige uma lista nao vazia de fontes")
+
+        result: list[dict[str, Any]] = []
+        evidence_sources: list[dict[str, Any]] = []
+        for source in sources:
+            if not isinstance(source, dict):
+                raise ValueError("Fonte de linhas_de_tabelas invalida")
+            rows, evidence = self._resolve_table_rows_mapping(extraction_root, source)
+            result.extend(rows)
+            evidence_sources.append(evidence)
+
+        return result, {
+            "fontes": evidence_sources,
             "linhas_resolvidas": len(result),
         }
 
@@ -396,7 +498,13 @@ class SourceMappingResolversMixin:
                 continue
             column_index = int(field.get("indice_coluna", -1))
             value = row[column_index] if 0 <= column_index < len(row) else None
-            resolved = parse_flexible_number(value) if field_type == "numero" else str(value or "").strip() or None
+            if field_type == "numero":
+                resolved = parse_flexible_number(value)
+            else:
+                resolved = str(value or "").strip() or None
+                replacements = field.get("substituicoes", {})
+                if resolved is not None and isinstance(replacements, dict):
+                    resolved = str(replacements.get(resolved, resolved)).strip() or None
             set_nested_value(item, output_path, resolved)
         return item
 

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from . import prompt_sets
 from ._common import *  # noqa: F401,F403
 
 
@@ -20,7 +21,7 @@ class ArtifactSelectionMixin:
         )
         response_schema = LayoutArtifactSelection.model_json_schema()
         llm_options = self._llm_options_for_stage("selecao_artefatos")
-        system_prompt = artifact_selection_system_prompt()
+        system_prompt = self._prompt_selecao("selecao-artefatos-system")
         user_payload = selection_payload
 
         for attempt in range(self.MAX_ARTIFACT_SELECTION_CORRECTION_ATTEMPTS + 1):
@@ -51,7 +52,7 @@ class ArtifactSelectionMixin:
                     raise RuntimeError(
                         f"Falha ao chamar LLM para selecao de artefatos: {exc}"
                     ) from exc
-                system_prompt = artifact_selection_repair_system_prompt()
+                system_prompt = self._prompt_selecao("selecao-artefatos-repair")
                 user_payload = self._artifact_selection_repair_payload(
                     selection_payload=selection_payload,
                     attempt=attempt + 1,
@@ -107,7 +108,7 @@ class ArtifactSelectionMixin:
                     raise RuntimeError(
                         f"Selecao de artefatos sem cobertura comprovada: {exc}"
                     ) from exc
-                system_prompt = artifact_selection_repair_system_prompt()
+                system_prompt = self._prompt_selecao("selecao-artefatos-repair")
                 user_payload = self._artifact_selection_repair_payload(
                     selection_payload=selection_payload,
                     attempt=attempt + 1,
@@ -144,3 +145,15 @@ class ArtifactSelectionMixin:
         if loaded_artifacts:
             payload["artefatos_carregados_para_correcao"] = loaded_artifacts
         return payload
+
+
+    def _prompt_selecao(self, sufixo: str) -> str:
+        """Resolve um bloco da etapa de selecao e registra a versao usada."""
+        conjunto = (
+            prompt_sets.CONJUNTO_SELECAO_REPARO
+            if sufixo.endswith("repair")
+            else prompt_sets.CONJUNTO_SELECAO
+        )
+        resolvido = prompt_sets.resolver(sufixo)
+        self._registrar_prompts([resolvido.como_registro()], conjunto=conjunto)
+        return resolvido.texto

@@ -2,10 +2,29 @@
 
 from __future__ import annotations
 
+from . import prompt_sets
 from ._common import *  # noqa: F401,F403
 
 
 class FallbackTracePersistenceMixin:
+    def _registrar_prompts(
+        self,
+        utilizados: list[dict[str, Any]],
+        *,
+        conjunto: str | None = None,
+    ) -> None:
+        """Guarda quais blocos de prompt produziram a proxima chamada.
+
+        O montador de mensagens resolve os blocos; a persistencia grava. Sem este
+        registro, atribuir uma variacao de metrica a uma mudanca de prompt seria
+        adivinhacao, porque o texto enviado deixou de vir so do repositorio.
+        """
+        self._prompts_utilizados = utilizados
+        self._prompt_conjunto = conjunto
+        self._prompt_conjunto_versao = (
+            prompt_sets.versao_do_conjunto(conjunto) if conjunto else None
+        )
+
     def _persist_llm_input(
         self,
         *,
@@ -35,6 +54,13 @@ class FallbackTracePersistenceMixin:
         else:
             payload["system_prompt"] = system_prompt
             payload["user_payload"] = user_payload
+        utilizados = getattr(self, "_prompts_utilizados", None)
+        if utilizados:
+            payload["prompts_utilizados"] = utilizados
+            payload["prompt_conjunto"] = getattr(self, "_prompt_conjunto", None)
+            payload["prompt_conjunto_versao"] = getattr(
+                self, "_prompt_conjunto_versao", None
+            )
         self.minio_client.put_json(
             object_key=self._fallback_object_key(
                 fallback_context,

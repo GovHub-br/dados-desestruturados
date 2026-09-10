@@ -11,6 +11,7 @@ from airflow.utils.trigger_rule import TriggerRule
 from dags._shared.airflow_defaults import AirflowDefaults
 from dags._shared.dependencies import (
     build_construtoras_payload_builder,
+    build_execution_tracer,
     build_resolution_use_case,
 )
 
@@ -153,6 +154,27 @@ def filtrar_execucoes_para_remapeamento(resultados: list[dict[str, object]]) -> 
     return confs
 
 
+@task(trigger_rule=TriggerRule.ALL_DONE)
+def observar_execucoes_resolucao(resultados: list[dict[str, object]]) -> dict[str, object]:
+    """Projeta cada execucao de resolucao para o Langfuse.
+
+    Roda com `ALL_DONE` porque execucoes reprovadas tambem precisam ser medidas.
+    A observabilidade nunca falha a DAG.
+    """
+    tracer = build_execution_tracer()
+    observados = [
+        tracer.trace_resolution_execution(resolution_result=item)
+        for item in (resultados or [])
+        if isinstance(item, dict)
+    ]
+    resumo = {
+        "execucoes_observadas": len([item for item in observados if item.get("observado")]),
+        "execucoes_totais": len(observados),
+    }
+    logging.info("Observabilidade DAG 2: %s", resumo)
+    return resumo
+
+
 @dag(
     dag_id="dag_resolve_schema_saida",
     schedule=None,
@@ -178,7 +200,10 @@ def dag_resolve_schema_saida() -> None:
         max_active_tis_per_dag=1,
     ).expand(conf=confs_remapeamento)
 
+    observabilidade = observar_execucoes_resolucao(resultados)
+
     inicio >> runtime >> manifests >> resultados >> summary >> confs_remapeamento
+    resultados >> observabilidade >> fim
     confs_remapeamento >> disparar_remapeamento_llm >> fim
     confs_remapeamento >> fim
 

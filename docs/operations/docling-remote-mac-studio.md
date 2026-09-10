@@ -433,7 +433,7 @@ python -m docling_runtime.server
 Para operacao, use `launchd` com um `LaunchAgent`, como descrito no documento:
 
 ```text
-dados-desestruturados/documentacao/DOCLING_REMOTO_VM_SEM_DOCKER.md
+dados-desestruturados/docs/operations/docling-runner-launchd.md
 ```
 
 O importante e que o `launchd` injete estas variaveis:

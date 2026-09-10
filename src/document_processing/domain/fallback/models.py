@@ -15,6 +15,7 @@ SupportedMappingOrigin = Literal[
     "campo_derivado",
     "campo_json",
     "bloco_textual",
+    "registros_de_blocos_textuais",
     "cabecalho_de_tabela",
     "celula_de_tabela",
     "linhas_de_tabela",

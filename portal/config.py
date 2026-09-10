@@ -13,6 +13,7 @@ PACKAGE_DIR = Path(__file__).resolve().parent
 WEB_DIR = PACKAGE_DIR / "web"
 STATIC_DIR = WEB_DIR / "static"
 INDEX_HTML = WEB_DIR / "templates" / "index.html"
+OVERVIEW_HTML = WEB_DIR / "templates" / "overview.html"
 
 DEFAULT_MAX_UPLOAD_BYTES = 50 * 1024 * 1024
 TRACE_DISCOVERY_TTL_SECONDS = 12

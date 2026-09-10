@@ -59,6 +59,13 @@ class MappingEntryResolverMixin:
                 value, evidence = self._resolve_text_block_mapping(extraction_root, mapping_entry)
                 return self._mapping_result(base, value, evidence)
 
+            if tipo_origem == "registros_de_blocos_textuais":
+                value, evidence = self._resolve_text_block_records_mapping(
+                    extraction_root,
+                    mapping_entry,
+                )
+                return self._mapping_result(base, value, evidence, resolved=bool(value))
+
             if tipo_origem == "cabecalho_de_tabela":
                 value, evidence = self._resolve_table_header_mapping(extraction_root, mapping_entry)
                 return self._mapping_result(base, value, evidence)
@@ -85,6 +92,13 @@ class MappingEntryResolverMixin:
 
             if tipo_origem == "linhas_de_tabela":
                 value, evidence = self._resolve_table_rows_mapping(extraction_root, mapping_entry)
+                return self._mapping_result(base, value, evidence, resolved=bool(value))
+
+            if tipo_origem == "linhas_de_tabelas":
+                value, evidence = self._resolve_table_rows_from_sources_mapping(
+                    extraction_root,
+                    mapping_entry,
+                )
                 return self._mapping_result(base, value, evidence, resolved=bool(value))
 
             if tipo_origem == "juncao_de_registros_json":

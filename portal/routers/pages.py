@@ -22,3 +22,14 @@ def home() -> FileResponse:
         media_type="text/html; charset=utf-8",
         headers={"Cache-Control": "no-cache"},
     )
+
+
+@router.get("/visao-geral", response_class=FileResponse, include_in_schema=False)
+@router.head("/visao-geral", response_class=FileResponse, include_in_schema=False)
+def overview() -> FileResponse:
+    """Explica os conceitos e o fluxo do portal em linguagem de produto."""
+    return FileResponse(
+        config.OVERVIEW_HTML,
+        media_type="text/html; charset=utf-8",
+        headers={"Cache-Control": "no-cache"},
+    )

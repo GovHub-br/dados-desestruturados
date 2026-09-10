@@ -1,32 +1,40 @@
 from __future__ import annotations
 
-
-def candidate_scope_instruction(scope: str) -> str:
-    """Explica em texto corrido a responsabilidade da LLM em cada escopo."""
-    if scope == "criacao_inicial_layout":
-        return (
-            "Esta e uma criacao inicial de layout signature: nao existe layout ativo "
-            "que possa ser reaproveitado. A DAG ja definiu a identidade do documento, "
-            "a referencia do contrato e as regras operacionais. Sua responsabilidade e "
-            "criar somente os mapeamentos canonicos que ensinam a DAG 2 a localizar os "
-            "valores brutos nos artefatos recebidos. Nao crie metadados de identidade "
-            "do documento, versao, publicacao ou regras de execucao; esses campos pertencem "
-            "ao esqueleto deterministico da DAG."
-        )
-    if scope == "correcao_parcial_mapeamento":
-        return (
-            "Esta e uma correcao parcial de layout signature. O layout existente continua "
-            "sendo a referencia e apenas os mapeamentos afetados pela falha podem mudar. "
-            "Preserve todos os demais mapeamentos e use as evidencias recebidas para corrigir "
-            "somente os paths permitidos. Metadados operacionais, publicacao e contrato nao "
-            "fazem parte da sua resposta."
-        )
-    return (
+# Cada escopo e um texto completo e independente, nao uma variacao de frase. Ficam
+# em um mapa para que cada um vire um prompt versionado separado no Langfuse: mudar
+# a instrucao de criacao inicial nao deve mexer no historico da correcao parcial.
+CANDIDATE_SCOPE_PROMPTS: dict[str, str] = {
+    "criacao_inicial_layout": (
+        "Esta e uma criacao inicial de layout signature: nao existe layout ativo "
+        "que possa ser reaproveitado. A DAG ja definiu a identidade do documento, "
+        "a referencia do contrato e as regras operacionais. Sua responsabilidade e "
+        "criar somente os mapeamentos canonicos que ensinam a DAG 2 a localizar os "
+        "valores brutos nos artefatos recebidos. Nao crie metadados de identidade "
+        "do documento, versao, publicacao ou regras de execucao; esses campos pertencem "
+        "ao esqueleto deterministico da DAG."
+    ),
+    "correcao_parcial_mapeamento": (
+        "Esta e uma correcao parcial de layout signature. O layout existente continua "
+        "sendo a referencia e apenas os mapeamentos afetados pela falha podem mudar. "
+        "Preserve todos os demais mapeamentos e use as evidencias recebidas para corrigir "
+        "somente os paths permitidos. Metadados operacionais, publicacao e contrato nao "
+        "fazem parte da sua resposta."
+    ),
+    "regeneracao_total_mapeamento": (
         "Esta e uma regeneracao completa de mapeamentos porque o layout anterior deixou "
         "de ser confiavel. Reconstrua somente os mapeamentos permitidos pelo contrato a "
         "partir das evidencias atuais. A DAG continua responsavel por contrato, identidade "
         "do documento, governanca, versao e publicacao."
-    )
+    ),
+}
+
+# Escopo desconhecido sempre caiu na regeneracao total; preservado explicitamente.
+CANDIDATE_SCOPE_PADRAO = "regeneracao_total_mapeamento"
+
+
+def candidate_scope_instruction(scope: str) -> str:
+    """Explica em texto corrido a responsabilidade da LLM em cada escopo."""
+    return CANDIDATE_SCOPE_PROMPTS.get(scope, CANDIDATE_SCOPE_PROMPTS[CANDIDATE_SCOPE_PADRAO])
 
 
 def candidate_contract_instruction() -> str:

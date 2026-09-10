@@ -1,0 +1,4 @@
+# Dependencias isoladas para scripts de promocao raw -> stage.
+duckdb>=1.4,<2
+minio>=7.2,<8
+python-dotenv>=1,<2

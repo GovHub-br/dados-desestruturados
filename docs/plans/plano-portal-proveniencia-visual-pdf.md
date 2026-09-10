@@ -28,17 +28,17 @@ visual do documento de origem.
 
 ### Limitações atuais
 
-- O portal está concentrado em um único arquivo, `portal/app.py`: rotas FastAPI,
-  acesso ao MinIO e Airflow, HTML, CSS e JavaScript convivem no mesmo módulo.
-  Isso é adequado para o protótipo, mas torna arriscado acrescentar uma tela de
-  resultado complexa e um visualizador de PDF.
+- (resolvido) O portal foi separado em `config`, `storage`, `security`,
+  `services/` e `routers/`, com a interface em `portal/web/`. `app.py` apenas
+  monta a aplicação. Falta ainda o visualizador de PDF e os modelos tipados.
 - A rota de detalhe da execução devolve somente o manifesto e uma lista plana de
   chaves de artefatos. Ela ainda não identifica e entrega explicitamente o
   schema resolvido, a auditoria, a validação e o PDF original.
-- O HTML contém JavaScript grande em linha. Há inclusive mais de uma atribuição
-  a `form.onsubmit`, o que torna a ordem de comportamento difícil de manter.
-- Não há testes próprios do portal nem modelos tipados para as respostas das
-  APIs de execução.
+- (resolvido) O HTML, o CSS e o JavaScript vivem em `portal/web/`, com módulos
+  ES separados por responsabilidade e um único handler por formulário.
+- Existem testes de rota em `tests/test_portal_api.py` com dublês de MinIO e
+  Airflow, mas ainda faltam modelos tipados para as respostas das APIs de
+  execução.
 - O cache do rastreamento é local ao processo. Isso é aceitável no Docker local,
   mas em produção com mais de uma réplica deverá ser substituído por cache
   compartilhado ou eliminado em favor de consultas idempotentes ao MinIO.
@@ -50,26 +50,42 @@ visual do documento de origem.
 Não é necessário reescrever o portal como uma SPA agora. A evolução mínima e
 segura é manter FastAPI, mas separar responsabilidades:
 
+Estrutura em vigor (o que estiver marcado como pendente ainda será criado):
+
 ```text
 portal/
   app.py                         # criação da aplicação e inclusão de rotas
+  config.py                      # variáveis de ambiente e caminhos
+  storage.py                     # acesso ao MinIO
+  security.py                    # token de bootstrap
+  validators.py                  # slug, semver e nomes de arquivo
   routers/
-    documents.py                 # upload e disparo
     contracts.py                 # contratos e domínios
-    executions.py                # status, resultado e PDF
+    documents.py                 # upload e disparo
+    executions.py                # status, rastreabilidade e detalhe
+    pages.py                     # entrega da interface estática
+    health.py
   services/
-    execution_locator.py         # localiza os artefatos corretos da execução
-    provenance_service.py        # normaliza evidência visual
-    airflow_gateway.py
-  repositories/
-    minio_repository.py
+    airflow.py                   # token, chamadas e disparo de DAG
+    contracts.py                 # validação e publicação
+    documents.py                 # manifesto de origem
+    executions.py                # listagem e detalhe
+    tracing.py                   # consolidação do percurso entre DAGs
+    provenance.py                # (pendente) evidência visual normalizada
   models/
-    api.py                       # modelos Pydantic das respostas
-  static/
-    portal.css
-    portal.js
-    result-viewer.js
+    api.py                       # (pendente) modelos Pydantic das respostas
+  web/
+    templates/index.html
+    static/css/                  # tokens, base, hero, pipeline, workspace, linhagem, movimento
+    static/js/                   # módulos ES: api, dropzone, execution, panels, trace…
+    static/js/result-viewer.js   # (pendente) visualizador de PDF
 ```
+
+A home segue *progressive disclosure*: o hero mostra apenas PDF → resultado, os
+formulários completos (com todos os campos obrigatórios) abrem em painéis
+expansíveis e os termos técnicos (DAG, MinIO, layout signature) ficam em
+"Rastreabilidade completa". `/#envio`, `/#contratos` e `/#rastreabilidade`
+abrem a seção correspondente já expandida.
 
 Essa estrutura permite evoluir o visualizador isoladamente, sem mudar o fluxo
 de upload já estabilizado. A tela deve manter controles nativos acessíveis,
