@@ -2,32 +2,49 @@ from __future__ import annotations
 
 from typing import Any
 
+# Aqui o escopo e uma frase dentro de um texto maior, e nao um texto inteiro como
+# no candidato. Entao o bloco versionado e o gabarito, com a frase entrando por
+# variavel: cada frase tambem e versionada, sem duplicar o texto que as cerca.
+UNIT_MAPPING_SCOPE_TEMPLATE = (
+    "Nesta chamada, os paths e o subesquema recebidos delimitam toda a tarefa de "
+    "mapeamento. Produza instrucoes deterministicas para todos e somente esses "
+    "paths. Quando um path representar uma colecao tabular, use uma unica "
+    "instrucao linhas_de_tabela no path da colecao, nunca uma entrada por linha "
+    "ou por campo interno. "
+    "{{instrucao_escopo}} Nao crie valores finais, identidade do documento, versao, "
+    "publicacao, contrato ou regras operacionais; esses elementos sao preenchidos "
+    "deterministicamente fora desta chamada."
+)
+
+UNIT_MAPPING_SCOPE_SENTENCES: dict[str, str] = {
+    "correcao_parcial_mapeamento": (
+        "Corrija exclusivamente os paths recebidos e preserve a semantica definida "
+        "pelo subcontrato."
+    ),
+    "regeneracao_total_mapeamento": (
+        "Reconstrua os mapeamentos recebidos exclusivamente a partir das evidencias "
+        "atuais."
+    ),
+    "criacao_inicial_layout": (
+        "Crie os mapeamentos recebidos exclusivamente a partir das evidencias atuais."
+    ),
+}
+
+# Escopo desconhecido sempre caiu na frase de criacao; preservado explicitamente.
+UNIT_MAPPING_SCOPE_PADRAO = "criacao_inicial_layout"
+
+
+def unit_mapping_scope_sentence(scope: str) -> str:
+    """Frase que particulariza o gabarito de escopo por tipo de correcao."""
+    return UNIT_MAPPING_SCOPE_SENTENCES.get(
+        scope, UNIT_MAPPING_SCOPE_SENTENCES[UNIT_MAPPING_SCOPE_PADRAO]
+    )
+
 
 def unit_mapping_scope_instruction(scope: str) -> str:
     """Abre uma chamada por unidade como uma tarefa completa de mapeamento."""
-    if scope == "correcao_parcial_mapeamento":
-        scope_instruction = (
-            "Corrija exclusivamente os paths recebidos e preserve a semantica definida "
-            "pelo subcontrato."
-        )
-    elif scope == "regeneracao_total_mapeamento":
-        scope_instruction = (
-            "Reconstrua os mapeamentos recebidos exclusivamente a partir das evidencias "
-            "atuais."
-        )
-    else:
-        scope_instruction = (
-            "Crie os mapeamentos recebidos exclusivamente a partir das evidencias atuais."
-        )
-    return (
-        "Nesta chamada, os paths e o subesquema recebidos delimitam toda a tarefa de "
-        "mapeamento. Produza instrucoes deterministicas para todos e somente esses "
-        "paths. Quando um path representar uma colecao tabular, use uma unica "
-        "instrucao linhas_de_tabela no path da colecao, nunca uma entrada por linha "
-        "ou por campo interno. "
-        f"{scope_instruction} Nao crie valores finais, identidade do documento, versao, "
-        "publicacao, contrato ou regras operacionais; esses elementos sao preenchidos "
-        "deterministicamente fora desta chamada."
+    return UNIT_MAPPING_SCOPE_TEMPLATE.replace(
+        "{{instrucao_escopo}}", unit_mapping_scope_sentence(scope)
     )
 
 

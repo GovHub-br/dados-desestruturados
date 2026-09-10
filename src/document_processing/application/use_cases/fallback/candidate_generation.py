@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from . import prompt_sets
 from ._common import *  # noqa: F401,F403
 
 
@@ -119,7 +120,7 @@ class CandidateGenerationMixin:
                     self.MAX_CANDIDATE_CORRECTION_ATTEMPTS,
                     validation_error,
                 )
-                system_prompt = candidate_layout_repair_system_prompt()
+                system_prompt = self._prompt_reparo_candidato()
                 messages = None
                 user_payload = self._candidate_repair_payload(
                     enriched_context=enriched_context,
@@ -183,7 +184,7 @@ class CandidateGenerationMixin:
                     self.MAX_CANDIDATE_CORRECTION_ATTEMPTS,
                     validation_error,
                 )
-                system_prompt = candidate_layout_repair_system_prompt()
+                system_prompt = self._prompt_reparo_candidato()
                 messages = None
                 user_payload = self._candidate_repair_payload(
                     enriched_context=enriched_context,
@@ -215,3 +216,12 @@ class CandidateGenerationMixin:
             "correction_attempts_used": corrections_used,
             "validation_errors_repaired": validation_errors,
         }
+
+
+    def _prompt_reparo_candidato(self) -> str:
+        """Resolve o bloco de reparo do candidato e registra a versao usada."""
+        resolvido = prompt_sets.resolver("candidato-repair")
+        self._registrar_prompts(
+            [resolvido.como_registro()], conjunto=prompt_sets.CONJUNTO_CANDIDATO_REPARO
+        )
+        return resolvido.texto

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from . import prompt_sets
 from ._common import *  # noqa: F401,F403
 
 
@@ -56,11 +57,15 @@ class CandidateJsonGenerationMixin:
             raise
 
 
-    @staticmethod
     def _initial_candidate_messages(
+        self,
         enriched_context: dict[str, Any],
     ) -> list[dict[str, str]]:
-        """Alterna instrucoes didaticas e blocos variaveis da primeira geracao."""
+        """Alterna instrucoes didaticas e blocos variaveis da primeira geracao.
+
+        A ordem das mensagens continua sendo decisao de codigo; o texto de cada
+        instrucao vem do conjunto `layout-candidato`, resolvido bloco a bloco.
+        """
         scope = str(enriched_context.get("escopo_permitido", "")).strip()
 
         def json_block(name: str) -> str:
@@ -70,13 +75,14 @@ class CandidateJsonGenerationMixin:
                 indent=2,
             )
 
-        return [
-            {"role": "system", "content": candidate_scope_instruction(scope)},
-            {"role": "user", "content": json_block("contexto_execucao")},
-            {"role": "system", "content": candidate_contract_instruction()},
-            {
-                "role": "user",
-                "content": json.dumps(
+        escopo = prompt_sets.escopo_candidato(scope)
+        mensagens, utilizados = prompt_sets.montar(
+            prompt_sets.CONJUNTO_CANDIDATO,
+            resolvidos={"instrucao_escopo": escopo},
+            variaveis={
+                "instrucao_escopo": escopo.texto,
+                "contexto_execucao": json_block("contexto_execucao"),
+                "contrato_e_alvos": json.dumps(
                     {
                         "contrato_semantico_relevante": enriched_context.get(
                             "contrato_semantico_relevante", {}
@@ -86,13 +92,9 @@ class CandidateJsonGenerationMixin:
                     ensure_ascii=False,
                     indent=2,
                 ),
+                "exemplo_estrutura": json_block("exemplo_estrutura_layout_signature"),
+                "artefatos_contexto_llm": json_block("artefatos_contexto_llm"),
             },
-            {"role": "system", "content": candidate_structure_instruction()},
-            {
-                "role": "user",
-                "content": json_block("exemplo_estrutura_layout_signature"),
-            },
-            {"role": "system", "content": candidate_artifacts_instruction()},
-            {"role": "user", "content": json_block("artefatos_contexto_llm")},
-            {"role": "system", "content": candidate_final_instruction()},
-        ]
+        )
+        self._registrar_prompts(utilizados, conjunto=prompt_sets.CONJUNTO_CANDIDATO)
+        return mensagens

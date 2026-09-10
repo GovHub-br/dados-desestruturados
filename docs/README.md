@@ -27,7 +27,9 @@ projeto consiga começar pelo objetivo do produto, entender as decisões e chega
 Descrição atual dos componentes e fluxos técnicos. Comece por
 [`arquitetura-orquestracao-airflow.md`](architecture/arquitetura-orquestracao-airflow.md) para ver as
 DAGs; depois consulte resolução determinística, fallback LLM, portal, Docling e
-governança no OpenMetadata conforme a área em que for trabalhar.
+governança no OpenMetadata conforme a área em que for trabalhar. Para saber o
+que o fluxo mede e como comparar versões, veja
+[`observabilidade-e-metricas-langfuse.md`](architecture/observabilidade-e-metricas-langfuse.md).
 
 ### [ADRs](adr/)
 
@@ -40,7 +42,11 @@ mudança que envolva contratos, layouts, Airflow, LLM, portal ou catálogo.
 
 Instruções reutilizáveis para quem cria ou revisa artefatos do produto. O guia
 de contrato semântico e layout signature é o ponto de partida para adicionar um
-novo tipo de PDF sem criar lógica específica na aplicação.
+novo tipo de PDF sem criar lógica específica na aplicação. O guia de
+[desenvolvimento orientado a métricas](guides/desenvolvimento-orientado-a-metricas.md)
+define como toda mudança de comportamento deve ser medida antes de permanecer, e
+[Langfuse do zero](guides/langfuse-guia-do-zero.md) ensina a navegar a ferramenta
+e a ler cada métrica para quem nunca a usou.
 
 ### [Referência](reference/)
 

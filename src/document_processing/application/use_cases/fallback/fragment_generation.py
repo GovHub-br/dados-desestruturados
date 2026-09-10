@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from . import prompt_sets
 from ._common import *  # noqa: F401,F403
 
 
@@ -240,13 +241,17 @@ class FragmentGenerationMixin:
         }
 
 
-    @staticmethod
     def _fragment_messages(
+        self,
         *,
         fragment_payload: dict[str, Any],
         repair_payload: dict[str, Any] | None = None,
     ) -> list[dict[str, str]]:
-        """Alterna instrucoes completas e dados reduzidos de uma unidade de mapeamento."""
+        """Alterna instrucoes completas e dados reduzidos de uma unidade de mapeamento.
+
+        A sequencia com reparo e um conjunto proprio: ela insere o bloco de
+        correcao antes da recapitulacao final, e nao apenas troca o system.
+        """
         execution_context = fragment_payload.get("contexto_execucao", {})
         if not isinstance(execution_context, dict):
             execution_context = {}
@@ -259,47 +264,37 @@ class FragmentGenerationMixin:
                 indent=2,
             )
 
-        messages = [
-            {"role": "system", "content": unit_mapping_scope_instruction(scope)},
-            {"role": "user", "content": json_block("contexto_execucao")},
-            {"role": "system", "content": candidate_contract_instruction()},
-            {
-                "role": "user",
-                "content": json.dumps(
-                    {
-                        "unidade_mapeamento": fragment_payload.get(
-                            "unidade_mapeamento", {}
-                        ),
-                        "contrato_semantico_relevante": fragment_payload.get(
-                            "contrato_semantico_relevante", {}
-                        ),
-                        "alvos_mapeaveis": fragment_payload.get(
-                            "alvos_mapeaveis", []
-                        ),
-                    },
-                    ensure_ascii=False,
-                    indent=2,
-                ),
-            },
-            {"role": "system", "content": unit_mapping_structure_instruction()},
-            {
-                "role": "user",
-                "content": json_block("exemplo_estrutura_mapeamento_unidade"),
-            },
-            {"role": "system", "content": unit_mapping_artifacts_instruction()},
-            {"role": "user", "content": json_block("artefatos_contexto_llm")},
-        ]
+        texto_escopo, blocos_escopo = prompt_sets.escopo_unidade(scope)
+        variaveis = {
+            "instrucao_escopo": texto_escopo,
+            "contexto_execucao": json_block("contexto_execucao"),
+            "unidade_e_contrato": json.dumps(
+                {
+                    "unidade_mapeamento": fragment_payload.get("unidade_mapeamento", {}),
+                    "contrato_semantico_relevante": fragment_payload.get(
+                        "contrato_semantico_relevante", {}
+                    ),
+                    "alvos_mapeaveis": fragment_payload.get("alvos_mapeaveis", []),
+                },
+                ensure_ascii=False,
+                indent=2,
+            ),
+            "exemplo_estrutura": json_block("exemplo_estrutura_mapeamento_unidade"),
+            "artefatos_contexto_llm": json_block("artefatos_contexto_llm"),
+        }
+        conjunto = prompt_sets.CONJUNTO_UNIDADE
         if repair_payload is not None:
-            messages.extend(
-                [
-                    {"role": "system", "content": unit_mapping_repair_instruction()},
-                    {
-                        "role": "user",
-                        "content": json.dumps(
-                            repair_payload, ensure_ascii=False, indent=2
-                        ),
-                    },
-                ]
+            conjunto = prompt_sets.CONJUNTO_UNIDADE_REPARO
+            variaveis["payload_correcao"] = json.dumps(
+                repair_payload, ensure_ascii=False, indent=2
             )
-        messages.append({"role": "system", "content": unit_mapping_final_instruction()})
-        return messages
+
+        mensagens, utilizados = prompt_sets.montar(
+            conjunto,
+            resolvidos={
+                bloco.nome: bloco for bloco in blocos_escopo
+            },
+            variaveis=variaveis,
+        )
+        self._registrar_prompts(utilizados, conjunto=conjunto)
+        return mensagens

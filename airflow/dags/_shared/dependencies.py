@@ -8,6 +8,7 @@ from functools import lru_cache
 
 from document_processing.application.use_cases.documents import SourceDocumentProcessingUseCase
 from document_processing.application.use_cases.fallback import FallbackLlmService
+from document_processing.application.use_cases.observability import AtlasExecutionTracer
 from document_processing.application.use_cases.resolution import ResolveSchemaUseCase
 from document_processing.application.use_cases.runtime_payloads import ConstrutorasPayloadBuilder
 from document_processing.infrastructure.docling import DoclingPipelineClient
@@ -81,4 +82,14 @@ def build_fallback_llm_service() -> FallbackLlmService:
             config_loader=loader,
             http_client=http_client,
         ),
+    )
+
+
+@lru_cache(maxsize=1)
+def build_execution_tracer() -> AtlasExecutionTracer:
+    """Monta o projetor de execucoes para o Langfuse com clientes concretos."""
+    loader, config = _settings()
+    return AtlasExecutionTracer(
+        config_loader=loader,
+        minio_client=MinioStorageClient(config),
     )
