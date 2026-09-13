@@ -13,6 +13,7 @@ from document_processing.domain.contracts.mapping_requirements import (
 from document_processing.domain.contracts.schema import normalize_schema_path
 from document_processing.domain.layouts.paths import (
     normalize_mapping_path,
+    parse_mapping_path,
     split_mapping_path,
 )
 
@@ -75,6 +76,7 @@ class FallbackCandidateValidationService:
         array_paths = self._contract_schema_array_paths_from_context(
             fallback_problem_context
         )
+        item_keys = self._contract_item_keys_from_context(fallback_problem_context)
         fixed_paths = {
             str(path).strip()
             for path in fallback_problem_context.get("_paths_fixos_do_contrato", [])
@@ -86,6 +88,9 @@ class FallbackCandidateValidationService:
                     "Resposta da LLM tentou mapear valor fixo do contrato semantico: "
                     f"{mapping_path}. Esse valor e preenchido deterministicamente pela DAG 2."
                 )
+            concatenated = self._describe_concatenated_selector(mapping_path)
+            if concatenated:
+                raise RuntimeError(concatenated)
             if not self._mapping_path_is_in_contract(
                 mapping_path,
                 schema_roots,
@@ -106,6 +111,9 @@ class FallbackCandidateValidationService:
                     "Resposta da LLM criou mapeamento que atravessa array sem "
                     f"seletor explicito: {mapping_path}."
                 )
+            item_key_problem = self._describe_item_key_violation(mapping_path, item_keys)
+            if item_key_problem:
+                raise RuntimeError(item_key_problem)
 
         allowed_scope = str(fallback_problem_context.get("escopo_permitido", "")).strip()
         if allowed_scope and candidate_model.escopo_correcao != allowed_scope:
@@ -681,6 +689,71 @@ class FallbackCandidateValidationService:
         return {str(path).strip() for path in paths if str(path).strip()}
 
     @staticmethod
+    def _contract_item_keys_from_context(
+        fallback_problem_context: dict[str, Any],
+    ) -> dict[str, str]:
+        """Le ``chaves_de_item`` do recorte; vazio significa contrato legado."""
+        contract = fallback_problem_context.get("contrato_semantico_relevante", {})
+        if not isinstance(contract, dict):
+            return {}
+        structure = contract.get("estrutura_schema_saida", {})
+        raw = structure.get("chaves_de_item", {}) if isinstance(structure, dict) else {}
+        if not isinstance(raw, dict):
+            return {}
+        return {
+            str(path).strip(): str(key).strip()
+            for path, key in raw.items()
+            if str(path).strip() and str(key).strip()
+        }
+
+    @staticmethod
+    def _describe_item_key_violation(path: str, item_keys: dict[str, str]) -> str | None:
+        """Com ``chaves_de_item`` declarado, cada filtro usa a chave do seu array.
+
+        Foi assim que ``valores[indicador=...]`` passou: ``indicador`` identifica
+        ``dados``, nao ``valores``. E um path que termina no array com seletor
+        (observacao inteira) e forma legada; no modo generico cada campo do item
+        e mapeado separadamente.
+        """
+        if not item_keys:
+            return None
+        try:
+            tokens = parse_mapping_path(path)
+        except ValueError:
+            return None
+        cumulative: list[str] = []
+        arrays_by_key: dict[str, list[str]] = {}
+        for array_path, key in item_keys.items():
+            arrays_by_key.setdefault(key, []).append(array_path)
+        for index, token in enumerate(tokens):
+            cumulative.append(str(token["field"]))
+            selector = token.get("selector")
+            if selector is None:
+                continue
+            array_path = ".".join(cumulative)
+            expected = item_keys.get(array_path)
+            used_key = str(selector[0])
+            if expected and used_key != expected:
+                owner = arrays_by_key.get(used_key)
+                hint = (
+                    f" '{used_key}' identifica {owner[0]}, nao {array_path}."
+                    if owner
+                    else f" '{used_key}' nao identifica nenhum array declarado."
+                )
+                return (
+                    f"Caminho de mapeamento canonico invalido: o array {array_path} e "
+                    f"identificado por '{expected}' (chaves_de_item), mas o filtro usou "
+                    f"'{used_key}'.{hint} Path: {path}."
+                )
+            if index == len(tokens) - 1 and expected:
+                return (
+                    "Caminho de mapeamento canonico termina no array "
+                    f"{array_path}[{used_key}=...] em vez de num campo do item. Mapeie "
+                    f"cada campo separadamente ({array_path}[...].<campo>): {path}."
+                )
+        return None
+
+    @staticmethod
     def _mapping_path_has_required_array_selectors(
         path: str,
         array_paths: set[str],
@@ -730,6 +803,37 @@ class FallbackCandidateValidationService:
         root = normalized.split(".", maxsplit=1)[0]
         return root in schema_roots
 
+    _CONDICAO_CONCATENADA = re.compile(r"&\s*[A-Za-z_][A-Za-z0-9_.]*\s*=")
+
+    @staticmethod
+    def _describe_concatenated_selector(
+        path: str, *, segment: str | None = None, filtro: str | None = None
+    ) -> str | None:
+        """Nomeia ``[periodo=x&recorte=y]`` sem recusar um '&' literal como Plano&Plano.
+
+        So conta como concatenacao quando o '&' introduz outra ``chave=``; um '&'
+        dentro de um valor legitimo passa.
+        """
+        alvos = (
+            [(segment, filtro)]
+            if segment is not None and filtro is not None
+            else [
+                (seg, f)
+                for seg in str(path).split(".")
+                for f in re.findall(r"\[([^\]]*)\]", seg)
+            ]
+        )
+        for seg, f in alvos:
+            valor = f.partition("=")[2]
+            if FallbackCandidateValidationService._CONDICAO_CONCATENADA.search(valor):
+                return (
+                    f"Caminho de mapeamento canonico invalido: o filtro '[{f}]' em '{seg}' "
+                    "concatena condicoes com '&'. Cada segmento aceita um unico filtro "
+                    "chave=valor: escolha a chave que identifica o item e mapeie as demais "
+                    f"como campos do proprio item: {path}."
+                )
+        return None
+
     @staticmethod
     def _describe_bad_mapping_path(path: str) -> str:
         """Nomeia a violacao de gramatica encontrada, em vez de supor indice posicional."""
@@ -754,13 +858,11 @@ class FallbackCandidateValidationService:
                         f"{rotulo} '[{filtro}]'. Em arrays use somente filtros "
                         f"semanticos no formato campo[chave=valor]: {path}."
                     )
-                if "&" in filtro.partition("=")[2]:
-                    return (
-                        f"Caminho de mapeamento canonico invalido: o filtro '[{filtro}]' "
-                        f"em '{segment}' concatena condicoes com '&'. Cada segmento aceita "
-                        "um unico filtro chave=valor: escolha a chave que identifica o item "
-                        f"e mapeie as demais como campos do proprio item: {path}."
-                    )
+                concatenado = FallbackCandidateValidationService._describe_concatenated_selector(
+                    path, segment=segment, filtro=filtro
+                )
+                if concatenado:
+                    return concatenado
         return (
             "Caminho de mapeamento canonico invalido. Use campo.campo para objetos "
             f"e campo[chave=valor] para itens de array: {path}."

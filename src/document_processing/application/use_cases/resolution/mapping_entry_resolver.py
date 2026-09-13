@@ -82,6 +82,7 @@ class MappingEntryResolverMixin:
                     mapping_path=mapping_path,
                     resolved_cell=value,
                     raw_value=evidence.get("valor_bruto"),
+                    contrato=contrato,
                 )
                 return self._mapping_result(
                     base,

@@ -176,6 +176,9 @@ class FallbackContextProjectionMixin:
             "paths_permitidos": sorted(schema_paths(schema_saida) - set(fixed_paths)),
             "arrays_que_exigem_seletor": sorted(schema_array_paths(schema_saida)),
         }
+        declared_item_keys = item_keys(contract)
+        if declared_item_keys:
+            structure["chaves_de_item"] = declared_item_keys
         return {
             "identificacao": {
                 "nome": contract.get("nome"),

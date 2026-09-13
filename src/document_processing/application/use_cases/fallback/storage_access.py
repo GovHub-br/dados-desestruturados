@@ -142,9 +142,10 @@ class FallbackStorageAccessMixin:
 
     def load_base_layout_signature(self, fallback_context: dict[str, str]) -> tuple[str, dict[str, Any]]:
         """Le a versao vigente do layout usada como base para o candidato."""
+        config = self.config_loader.load_local_platform_config()
         key = self._current_layout_signature_object_key(
             fallback_context["entity_slug"],
-            domain=fallback_context.get("domain", "construtoras"),
+            domain=str(fallback_context.get("domain") or config.dominio),
         )
         return key, self._load_json_object(key, "layout_signature_base")
 
@@ -186,7 +187,7 @@ class FallbackStorageAccessMixin:
         )
 
 
-    def _current_layout_signature_object_key(self, entity_slug: str, *, domain: str = "construtoras") -> str:
+    def _current_layout_signature_object_key(self, entity_slug: str, *, domain: str) -> str:
         """Resolve pelo ponteiro `current.json` qual layout vigente carregar."""
         pointer_key = self._current_layout_pointer_object_key(entity_slug, domain=domain)
         pointer = self._load_json_object(pointer_key, "layout_signature_current_pointer")
@@ -198,7 +199,7 @@ class FallbackStorageAccessMixin:
         return object_key
 
 
-    def _current_layout_pointer_object_key(self, entity_slug: str, *, domain: str = "construtoras") -> str:
+    def _current_layout_pointer_object_key(self, entity_slug: str, *, domain: str) -> str:
         """Object key do ponteiro de layout vigente."""
         config = self.config_loader.load_local_platform_config()
         return f"{self._prefix_for_domain(config.minio_layout_prefix, domain)}/{entity_slug}/current.json"

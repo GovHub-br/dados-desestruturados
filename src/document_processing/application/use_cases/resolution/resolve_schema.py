@@ -6,6 +6,10 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
+from document_processing.domain.contracts.capabilities import (
+    apply_derivations,
+    derivations,
+)
 from document_processing.domain.contracts.schema import (
     apply_contract_literals,
     contract_literal_paths,
@@ -302,18 +306,45 @@ class ResolveSchemaUseCase(
             schema_saida,
             contrato.get("schema_saida", {}),
         )
-        self._derive_construtoras_global_periods(
-            contrato=contrato,
-            schema_saida=schema_saida,
-            resolved_by_path=resolved_by_path,
-        )
+        declared_derivations = derivations(contrato)
+        derivation_audit: list[dict[str, Any]] = []
+        if declared_derivations:
+            derivation_audit = apply_derivations(
+                schema_saida,
+                declared_derivations,
+                contract=contrato,
+                manifest=self._manifest_for_derivations(loaded),
+                resolved_by_path=resolved_by_path,
+            )
+        else:
+            # Legado: contratos sem ``derivacoes`` (construtoras) preenchem o resumo
+            # de periodos pela regra fixa abaixo.
+            self._derive_construtoras_global_periods(
+                contrato=contrato,
+                schema_saida=schema_saida,
+                resolved_by_path=resolved_by_path,
+            )
         schema_saida = self._strip_internal_schema_metadata(schema_saida)
 
         return {
             "schema_saida": schema_saida,
             "validation_status": validation["status_compatibilidade"]["status"],
             "auditoria_resolucao": audit,
+            "derivacoes": derivation_audit,
         }
+
+    def _manifest_for_derivations(self, loaded: dict[str, Any]) -> dict[str, Any]:
+        """Manifesto de extracao: do carregamento ou da copia gravada junto aos artefatos."""
+        manifest = loaded.get("manifest")
+        if isinstance(manifest, dict):
+            return manifest
+        local_copy = Path(loaded["extraction_root"]) / "manifesto_execucao.json"
+        if local_copy.exists():
+            try:
+                return self._read_json(local_copy)
+            except RuntimeError:
+                logging.warning("Manifesto local ilegivel para derivacoes: %s", local_copy)
+        return {}
 
     @staticmethod
     def _derive_construtoras_global_periods(
@@ -322,11 +353,11 @@ class ResolveSchemaUseCase(
         schema_saida: dict[str, Any],
         resolved_by_path: dict[str, Any],
     ) -> None:
-        """Preenche o resumo de periodos exclusivo do contrato de construtoras.
+        """Legado: resumo de periodos do contrato de construtoras sem ``derivacoes``.
 
         Os papeis de periodo sao resolvidos junto aos valores de lancamentos e
-        vendas. O contrato de construtoras tambem expoe um resumo global desses
-        mesmos papeis; ele e derivado aqui para nao duplicar seletores no layout.
+        vendas. Um contrato que declare ``derivacoes`` de origem ``observacao``
+        expressa a mesma regra sem nomear dominio e nao passa por aqui.
         """
         contract_schema = contrato.get("schema_saida")
         if not isinstance(contract_schema, dict) or not isinstance(

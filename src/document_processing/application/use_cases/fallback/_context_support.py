@@ -10,6 +10,7 @@ from document_processing.domain.contracts.mapping_requirements import (
     mapping_requirements_from_context,
     mapping_requirements_payload,
 )
+from document_processing.domain.contracts.capabilities import item_keys
 from document_processing.domain.contracts.schema import (
     contract_literal_paths,
     schema_array_paths,
