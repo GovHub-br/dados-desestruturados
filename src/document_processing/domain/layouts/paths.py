@@ -48,13 +48,7 @@ def parse_mapping_path(path: str) -> list[dict[str, Any]]:
             raise ValueError(f"Caminho de mapeamento canonico invalido: {path}")
         token: dict[str, Any] = {"field": match.group(1).strip()}
         if match.group(2) is not None:
-            selector_value = match.group(3).strip()
-            if "&" in selector_value:
-                raise ValueError(
-                    f"Caminho de mapeamento com condicoes concatenadas por '&' em "
-                    f"'{raw_part}'; cada filtro aceita uma unica condicao chave=valor: {path}"
-                )
-            token["selector"] = (match.group(2).strip(), selector_value)
+            token["selector"] = (match.group(2).strip(), match.group(3).strip())
         tokens.append(token)
     return tokens
 

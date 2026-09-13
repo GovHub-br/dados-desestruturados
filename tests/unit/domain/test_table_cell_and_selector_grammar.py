@@ -88,9 +88,17 @@ def test_cabecalho_de_tabela_nao_exige_seletor_linha():
     _validar_tabelas(candidato, schema_paths=set())
 
 
-def test_gramatica_recusa_condicoes_concatenadas_por_e_comercial():
-    with pytest.raises(ValueError, match="'&'"):
-        parse_mapping_path("dados[indicador=npl].valores[periodo=jun/26&recorte=consolidado].valor")
+def test_gramatica_aceita_e_comercial_literal_no_valor():
+    """Plano&Plano e uma empresa real de construtoras; o parser nao pode recusar."""
+    tokens = parse_mapping_path("dados[empresa=Plano&Plano].valores[papel_periodo=ref].valor")
+    assert tokens[0]["selector"] == ("empresa", "Plano&Plano")
+
+
+def test_validador_distingue_e_comercial_literal_de_condicao_concatenada():
+    _concat = FallbackCandidateValidationService._describe_concatenated_selector
+    assert _concat("dados[empresa=Plano&Plano].valores[papel_periodo=ref].valor") is None
+    assert "concatena condicoes" in _concat("dados[i=x].valores[periodo=jun/26&recorte=consolidado].valor")
+    assert "concatena condicoes" in _concat("dados[i=x].valores[periodo=jun/26 & recorte = consolidado].valor")
 
 
 def test_gramatica_continua_aceitando_barra_e_espaco_no_valor():

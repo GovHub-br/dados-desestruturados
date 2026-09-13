@@ -44,11 +44,19 @@ class ManifestResolutionLoaderMixin:
         """Le a identidade generica, aceitando o campo legado de construtoras."""
         return str(candidate.get("entity_slug") or candidate.get("company_slug") or "").strip()
 
-    @staticmethod
-    def _domain_from_manifest(manifest: dict[str, Any]) -> str:
-        """Le a familia documental, preservando construtoras para manifestos legados."""
+    def _domain_from_manifest(self, manifest: dict[str, Any]) -> str:
+        """Le a familia documental; sem declaracao, usa o dominio configurado e avisa."""
         candidate = manifest.get("candidate") if isinstance(manifest.get("candidate"), dict) else {}
-        return str(manifest.get("dominio") or candidate.get("domain") or "construtoras").strip()
+        declared = str(manifest.get("dominio") or candidate.get("domain") or "").strip()
+        if declared:
+            return declared
+        fallback = str(self.config_loader.load_local_platform_config().dominio).strip()
+        logging.warning(
+            "Manifesto sem dominio (execution_id=%s); assumindo PIPELINE_DOMINIO=%s.",
+            manifest.get("execution_id"),
+            fallback,
+        )
+        return fallback
 
     def _manifest_resolution_is_complete(self, manifest: dict[str, Any]) -> bool:
         """Confirma pela auditoria se a execucao mais recente foi totalmente resolvida."""
@@ -186,6 +194,7 @@ class ManifestResolutionLoaderMixin:
             },
             "contrato_semantico": contrato,
             "layout_signature": layout,
+            "manifest": manifest,
             "extraction_root": str(extraction_root),
             "output_keys": {
                 "validacao_layout_signature": f"{resolution_prefix}/validacao_layout_signature.json",
@@ -199,7 +208,7 @@ class ManifestResolutionLoaderMixin:
         self,
         entity_slug: str,
         *,
-        domain: str = "construtoras",
+        domain: str,
     ) -> str:
         """Resolve pelo ponteiro `current.json` o layout vigente da entidade."""
         pointer_key = self._current_layout_pointer_object_key(entity_slug, domain=domain)
@@ -218,7 +227,7 @@ class ManifestResolutionLoaderMixin:
         self,
         entity_slug: str,
         *,
-        domain: str = "construtoras",
+        domain: str,
     ) -> str:
         """Object key do ponteiro que indica a versao vigente do layout."""
         config = self.config_loader.load_local_platform_config()

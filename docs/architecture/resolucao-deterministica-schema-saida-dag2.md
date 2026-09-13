@@ -127,6 +127,40 @@ aplicáveis. O resolvedor não interpreta o período, não converte unidade e n�
 atribui significado aos campos: essas decisões permanecem no contrato e na
 assinatura de layout.
 
+## `chaves_de_item` e `derivacoes` (ADR 0011)
+
+Dois blocos opcionais em `contrato_semantico` colocam sob o contrato regras que
+antes estavam fixas no resolvedor com nomes de construtoras. **A presença de
+`chaves_de_item` liga o modo genérico**; sem ela, o caminho legado executa igual.
+
+```json
+"chaves_de_item": {
+  "indicadores_percentuais.dados": "indicador",
+  "indicadores_percentuais.dados.valores": "periodo"
+},
+"derivacoes": [
+  {"destino": "fonte", "origem": {"tipo": "contrato", "campo": "fonte"}},
+  {"destino": "instituicao", "origem": {"tipo": "manifesto", "campo": "candidate.entity_name"}},
+  {"destino": "indicadores_percentuais.dados[*].instituicao",
+   "origem": {"tipo": "manifesto", "campo": "candidate.entity_name"}},
+  {"destino": "periodo_referencia",
+   "origem": {"tipo": "observacao", "seletor": {"papel_periodo": "periodo_referencia"}, "campo": "periodo"}}
+]
+```
+
+- `chaves_de_item`: um path de array do `schema_saida` → a chave usada nos filtros
+  `[chave=valor]` daquele array. Pode ser um campo do item (`periodo`) ou um papel
+  que não é campo (`papel_periodo`). O validador da DAG 3 recusa filtro com outra
+  chave e recusa path que termina no array (observação inteira).
+- No modo genérico, `celula_de_tabela` devolve só o valor do campo terminal, tipado
+  pelo descritor do contrato; `.periodo` vem de `cabecalho_de_tabela` e constantes
+  da observação (`escopo_periodo`, `recorte`, `escala`) de `valor_fixo`.
+- `derivacoes`: preenchem apenas campos ainda `null`, depois do mapeamento. `[*]`
+  aplica a todos os itens de um array. Origem `observacao` lê o `campo` das
+  observações resolvidas cujo path carrega o `seletor`; valores divergentes são
+  registrados e não preenchem. A auditoria sai em `derivacoes` do artefato
+  `auditoria_resolucao.json`.
+
 ## Seleção de linha em validações
 
 Regras de validação tabular podem declarar `indice_linha_esperado`. O resolvedor

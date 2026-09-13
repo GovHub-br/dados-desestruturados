@@ -71,6 +71,26 @@ mexem no mesmo criterio de validacao e nao ha como executar uma sem as outras.
 Linha de base para este rotulo: os traces `exp-lote-completo` de 2026-09-11
 (Itau ao vivo `2646b269…`, Santander por backfill `befb9300…`).
 
+## Lote 3: contrato dirige a resolucao (ADR 0011)
+
+| rotulo | itens | hipotese | metrica-alvo | guarda |
+| --- | --- | --- | --- | --- |
+| `exp-contrato-dirige-resolucao` | 12-16 | com `chaves_de_item` e `derivacoes` no contrato v2.1.0, um layout gerado do zero resolve o `schema_saida` inteiro | `resolucao_cobertura_obrigatorios`; campos de raiz do `schema_saida_resolvido.json` deixam de ser `null` | `llm_tentativas` (validador mais estrito) e **construtoras: todos os deltas 0,000** |
+
+- **12** — celula projetada pelo tipo do contrato, sem nomes de campo (`source_mapping_resolvers.py`).
+- **13** — contexto semantico pelos seletores do path (`contract_semantic_helpers.py`).
+- **14** — `derivacoes` no lugar de `_derive_construtoras_global_periods` (`resolve_schema.py`).
+- **15** — `chaves_de_item` no plano, no validador e no prompt.
+- **16** — defaults `"construtoras"` trocados por `PIPELINE_DOMINIO`.
+
+Provas ja feitas em 2026-09-13, antes de qualquer execucao ao vivo: resolucao local
+do gabarito com o contrato v2.1.0 e o manifesto real — Itau 23/23, Santander 19/19,
+raiz preenchida (`fonte`, `instituicao`, `periodo_referencia`, `dados[].instituicao`);
+construtoras — 7 entidades com layout vigente (cury, cyre3, direcional, eztc3,
+pacaembu, plano-plano, tenda) resolvem byte a byte igual ao codigo `42fd719`.
+Correcao colateral: `Plano&Plano` voltou a ser um valor de seletor valido; so `&`
+que introduz outra `chave=` e recusado.
+
 ## Linha de base
 
 A execucao de 2026-09-10T23:24Z rodou o codigo anterior a este lote sob o contrato
