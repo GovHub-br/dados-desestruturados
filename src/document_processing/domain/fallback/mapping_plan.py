@@ -142,12 +142,16 @@ class MappingPlanService:
                 for required_path in required_paths
             )
         ]
+        # Um array e sempre ancestral do campo terminal exigido, nunca descendente:
+        # "colecao.itens" contem "colecao.itens.valor". Testar descendencia aqui,
+        # como se faz com paths_permitidos logo acima, esvazia a lista e a LLM
+        # recebe "nenhum array exige seletor" enquanto o validador exige seletor.
         arrays = [
             str(path)
             for path in array_paths
             if isinstance(path, str)
             and any(
-                path == required_path or path.startswith(f"{required_path}.")
+                path == required_path or required_path.startswith(f"{path}.")
                 for required_path in required_paths
             )
         ]

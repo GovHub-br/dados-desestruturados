@@ -74,14 +74,31 @@ métrica em que não se pode confiar para reprovar o trabalho de alguém.
 
 ### 5. Execute com um release próprio
 
+Para reprojetar execuções já gravadas, exportar na shell basta:
+
 ```bash
 export ATLAS_RELEASE="exp-prompt-selecao-v2"
-# dispare a DAG normalmente, ou reprojete execuções existentes:
 python scripts/backfill_langfuse_atlas.py --release "$ATLAS_RELEASE"
 ```
 
-Sem `ATLAS_RELEASE`, o rótulo sai de git: `dev-<branch>-<sha>[-dirty]`. Isso já
-separa versões, mas nomear o experimento facilita a leitura depois.
+Para **disparar a DAG**, não basta: o Airflow lê a variável do ambiente do
+container e `resolve_release` é memoizada no processo. Recrie os serviços:
+
+```bash
+ATLAS_RELEASE="exp-prompt-selecao-v2" docker compose up -d airflow-scheduler airflow-worker
+docker compose exec -T airflow-scheduler bash -lc 'echo "$ATLAS_RELEASE"'   # confirme antes de disparar
+```
+
+Sem `ATLAS_RELEASE`, o rótulo sai de git: `dev-<branch>-<sha>[-dirty]`. Isso
+separa mudanças **commitadas**, e só. Não separa duas árvores sujas diferentes (o
+sufixo `-dirty` é booleano), nem mudança de variável de ambiente, nem troca de
+contrato no MinIO ou de prompt no Langfuse — que são justamente as variáveis
+independentes mais comuns aqui. Nomeie a hipótese, não o commit, e registre o
+rótulo em [registro-de-releases.md](registro-de-releases.md).
+
+A identidade do código continua rastreável de outro jeito: o trace carrega
+`commit`, `branch` e `arvore_suja` no metadata. O `release` agrupa o experimento;
+o metadata guarda a proveniência.
 
 ### 6. Compare
 
@@ -202,6 +219,41 @@ O modo `executar` pontua com `avaliacao_precisao`, `avaliacao_revocacao`,
 `avaliacao_f1` e `avaliacao_igualdade_exata`. Precisão e revocação ficam
 separadas de propósito: escolher 8 artefatos certos entre 10 e escolher os mesmos
 8 entre 20 são resultados diferentes, e uma média só esconderia isso.
+
+### Os degraus do mapeamento canônico
+
+Para o layout candidato, as métricas acima respondem só "achou os campos certos?".
+Elas não distinguem *mapeou o campo errado* de *mapeou o campo certo pela
+instrução errada* — e as duas correções são diferentes. Por isso a avaliação desse
+dataset é feita em degraus, sobre o mesmo denominador (os campos presentes nos
+dois lados):
+
+| Degrau | Métrica | Pergunta |
+| --- | --- | --- |
+| 1 | `avaliacao_f1` | achou os campos certos? |
+| 2 | `avaliacao_acerto_tipo_origem` | escolheu a estratégia de extração certa? |
+| 3 | `avaliacao_acerto_arquivo_origem` | apontou para o arquivo certo? |
+| 4 | `avaliacao_acerto_instrucao_origem` | acertou a instrução inteira, seletor incluído? |
+
+A queda entre degraus localiza a falha. `f1=0,95 / tipo=0,95 / instrucao=0,40` diz
+"acha os campos e escolhe a estratégia, mas erra os seletores" — o que é
+acionável, ao contrário de um número médio.
+
+O degrau 3 tem denominador próprio: só os campos que leem arquivo. `valor_fixo` e
+`campo_derivado` não têm `arquivo_origem`, e contá-los como acerto inflaria a
+métrica.
+
+### O portão de validade
+
+`avaliacao_candidato_valido` roda o mesmo `FallbackCandidateValidationService` da
+produção sobre a resposta. Sem ele, um candidato que a DAG rejeitaria — campo
+fora do contrato, escopo não autorizado, array sem seletor — tira F1 alto e passa
+por bom. **Leia essa métrica antes das outras**: se ela é 0, as demais descrevem
+um candidato que nunca chegaria a publicar.
+
+Quando o contexto histórico não permite validar, ela não é emitida. Contrato em
+formato anterior ao parser atual mediria a idade do artefato, não a qualidade do
+candidato — é o mesmo princípio de "distinga não aplicável de zero".
 
 ## Armadilhas já encontradas
 

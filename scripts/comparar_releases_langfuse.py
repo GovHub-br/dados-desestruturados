@@ -50,6 +50,12 @@ MAIOR_MELHOR = {
     "avaliacao_f1",
     "avaliacao_igualdade_exata",
     "avaliacao_schema_valido",
+    "avaliacao_candidato_valido",
+    "avaliacao_acerto_tipo_origem",
+    "avaliacao_acerto_arquivo_origem",
+    "avaliacao_acerto_instrucao_origem",
+    # Selecao de artefatos: quanto da evidencia escolhida sustenta a unidade.
+    "selecao_evidencia_especifica",
 }
 
 # Metricas em que descer e melhor.
@@ -63,6 +69,7 @@ MENOR_MELHOR = {
     "resolucao_campos_nao_resolvidos",
     "validacao_regras_reprovadas",
     "transicao_resolucao_para_fallback",
+    "selecao_evidencia_descartada",
 }
 
 # Metricas de guarda: nunca podem regredir, mesmo que nao sejam o alvo.
@@ -71,6 +78,9 @@ GUARDA = {
     "resolucao_cobertura_obrigatorios",
     "revalidacao_gate_efetivo",
     "validacao_cobertura_de_regras",
+    # Perder a fonte certa nao tem conserto nas etapas seguintes: revocacao e
+    # guarda, e a precisao da selecao so vale como alvo enquanto ela nao cair.
+    "avaliacao_revocacao",
 }
 
 

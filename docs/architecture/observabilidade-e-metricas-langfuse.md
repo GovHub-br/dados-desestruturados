@@ -183,6 +183,20 @@ mantém o catálogo pequeno e comparável entre etapas.
 | `revalidacao_gate_efetivo` | booleana | aprovação sustentada por regras executadas |
 | `publicacao_realizada` | booleana | nova versão publicada como ativa |
 | `prompt_conjunto_versao` | categórica | combinação exata de versões de bloco de prompt da chamada |
+| `selecao_evidencia_especifica` | numérica | fração da evidência escolhida que ancora em indicador da unidade |
+| `selecao_evidencia_descartada` | numérica | artefatos removidos por não sustentarem indicador obrigatório; **menor é melhor** |
+
+`llm_acerto_1a_tentativa` responde "a etapa respondeu sem erro" — e uma seleção
+que devolvesse o inventário inteiro também responderia que sim. As duas métricas
+acima olham o resultado, não o protocolo, e não dependem de gabarito, então valem
+em produção. Ambas são projetadas de `poda_evidencia.json`, persistido por unidade
+pela DAG 3, e seguem a ADR 0009: nenhuma métrica é calculada em memória durante a
+execução.
+
+Quando há gabarito, a avaliação off-line acrescenta `avaliacao_precisao` e
+`avaliacao_revocacao` sobre os artefatos. A revocação é **métrica de guarda**:
+perder a fonte certa não tem conserto nas etapas seguintes, e a precisão só vale
+como alvo enquanto a revocação não cair.
 
 ### Transições entre etapas
 
@@ -275,7 +289,42 @@ Execuções reprovadas entram como itens negativos, com `metadata.rotulo =
 "reprovado"`, para que a avaliação também meça falso positivo — um avaliador
 que aprova tudo precisa ser reprovado pelo próprio conjunto.
 
-Populados por `scripts/popular_datasets_langfuse_atlas.py`.
+Populados por `scripts/popular_datasets_langfuse_atlas.py` e executados por
+`scripts/executar_datasets_langfuse_atlas.py`, em dois modos: `replay` liga os
+traces já projetados aos itens (custo zero, alimenta a aba Experiments) e
+`executar` reexecuta a etapa isolada e pontua contra a referência.
+
+### Métricas da avaliação off-line
+
+| Métrica | Tipo | O que mede |
+| --- | --- | --- |
+| `avaliacao_schema_valido` | booleana | a LLM devolveu JSON utilizável |
+| `avaliacao_precisao` | taxa | do que foi proposto, quanto estava certo |
+| `avaliacao_revocacao` | taxa | do esperado, quanto foi encontrado |
+| `avaliacao_f1` | taxa | média harmônica das duas |
+| `avaliacao_igualdade_exata` | booleana | conjunto idêntico ao esperado |
+| `avaliacao_acerto_tipo_origem` | taxa | estratégia de extração correta |
+| `avaliacao_acerto_arquivo_origem` | taxa | arquivo de evidência correto |
+| `avaliacao_acerto_instrucao_origem` | taxa | instrução de origem inteira idêntica |
+| `avaliacao_candidato_valido` | booleana | passaria pelas regras de negócio da DAG |
+
+As quatro últimas são exclusivas de `atlas-fallback-layout-candidato`. As três
+taxas de acerto compartilham o denominador — os campos presentes nos dois lados —
+para que a queda de uma para a outra localize a falha: campo certo com estratégia
+errada, estratégia certa com arquivo errado, arquivo certo com seletor errado.
+`avaliacao_acerto_arquivo_origem` é a exceção e só conta campos que leem arquivo,
+porque `valor_fixo` e `campo_derivado` não têm `arquivo_origem`.
+
+`avaliacao_candidato_valido` roda o mesmo `FallbackCandidateValidationService` da
+produção: sem ele, uma resposta que a DAG rejeitaria pode tirar F1 alto, já que a
+comparação de conjuntos não conhece contrato, escopo nem seletor obrigatório de
+array. Quando o contexto histórico não permite validar — contrato em formato
+anterior ao parser atual — a métrica não é emitida, para não medir a idade do
+artefato no lugar da qualidade do candidato.
+
+O cálculo é puro e fica em `domain/observability/evaluation.py`; a aplicação das
+regras de negócio, em
+`application/use_cases/fallback/candidate_evaluation.py`.
 
 ## Versionamento por rótulo
 
@@ -301,6 +350,7 @@ requisito: cada mudança do projeto fica registrada e comparável.
 | Arquivo | Papel |
 | --- | --- |
 | `src/document_processing/domain/observability/metrics.py` | cálculo puro das métricas |
+| `src/document_processing/domain/observability/evaluation.py` | cálculo puro da avaliação off-line por etapa |
 | `src/document_processing/infrastructure/observability/langfuse_client.py` | ingestão em lote, só biblioteca padrão |
 | `src/document_processing/application/use_cases/observability/execution_tracing.py` | projeção de execução para trace |
 | `src/document_processing/shared/config/release.py` | rótulo de versão |
@@ -311,6 +361,7 @@ requisito: cada mudança do projeto fica registrada e comparável.
 | `scripts/executar_datasets_langfuse_atlas.py` | cria dataset runs; enche a aba Experiments |
 | `src/document_processing/infrastructure/prompts/langfuse_prompt_registry.py` | resolve prompt publicado, com queda para o código |
 | `src/document_processing/application/use_cases/fallback/prompt_sets.py` | declara os conjuntos de prompt por etapa |
+| `src/document_processing/application/use_cases/fallback/candidate_evaluation.py` | aplica as regras de negócio da produção na avaliação off-line |
 | `scripts/sincronizar_prompts_langfuse.py` | sincroniza os prompts entre repositório e Langfuse |
 
 O cliente de ingestão usa apenas `urllib` e `base64`. Nenhuma dependência nova

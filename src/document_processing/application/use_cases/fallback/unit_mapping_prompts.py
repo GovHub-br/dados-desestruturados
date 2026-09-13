@@ -56,8 +56,10 @@ def unit_mapping_structure_instruction() -> str:
         "mapeamento_canonico deve ser uma instrucao executavel e conter tipo_origem; "
         "nao use descricoes como tipo_estrutura, fonte, tabela, coluna ou celula no "
         "lugar de tipo_origem. Os unicos tipos aceitos estao listados no exemplo. "
-        "Para celula_de_tabela, use seletor_linha.indice_linha_esperado e "
-        "seletor_coluna.indice_coluna_esperado. Para cabecalho_de_tabela, use "
+        "Para celula_de_tabela, seletor_linha exige valor_aceito com o rotulo da linha "
+        "copiado exatamente como aparece no arquivo, sem parafrasear, corrigir espacos ou "
+        "normalizar; indice_linha_esperado e apenas uma dica de posicao e nao substitui o "
+        "rotulo. seletor_coluna exige indice_coluna_esperado. Para cabecalho_de_tabela, use "
         "seletor_coluna.indice_coluna_esperado. Para linhas_de_tabela que preenche "
         "uma colecao inteira, mapeie o path da colecao sem filtro e declare segmentos "
         "ou faixas_linhas, mais campos que relacionem cada indice_coluna ao campo do "
@@ -78,8 +80,11 @@ def unit_mapping_artifacts_instruction() -> str:
         "faixas que estejam realmente observados neles. Uma instrucao de tabela deve "
         "referenciar arquivo_origem e os indices necessarios para o resolvedor. Nao "
         "invente arquivos, campos ou valores. Se uma colecao inteira for preenchida "
-        "por linhas_de_tabela, use diretamente o path da colecao. Se o mapeamento "
-        "atingir somente um item de um array, use seletor explicito entre colchetes. Se um "
+        "por linhas_de_tabela, use diretamente o path da colecao. Fora desse caso, todo "
+        "array listado em arrays_que_exigem_seletor, inclusive os aninhados dentro de outro "
+        "array, exige o proprio filtro [chave=valor] no segmento correspondente do path; a "
+        "chave deve ser um campo do item daquele array, nunca de um array ancestral, e cada "
+        "filtro carrega uma unica condicao, sem concatenar com '&'. Se um "
         "requisito obrigatorio nao estiver comprovado, registre-o em campos_nao_mapeados com path, "
         "seletores, motivo e artefatos_verificados; nao invente mapeamento para ele. A ausencia "
         "de uma observacao com obrigatorio=false nao deve ser registrada como erro."
@@ -127,7 +132,11 @@ def unit_mapping_structure_example(*, unit_id: str) -> dict[str, Any]:
             "celula_de_tabela": {
                 "tipo_origem": "celula_de_tabela",
                 "arquivo_origem": "tables/table001.json",
-                "seletor_linha": {"indice_linha_esperado": 2},
+                "seletor_linha": {
+                    "coluna_rotulo": 0,
+                    "valor_aceito": "rotulo exatamente como aparece na linha",
+                    "indice_linha_esperado": 2,
+                },
                 "seletor_coluna": {"indice_coluna_esperado": 4},
                 "obrigatorio": True,
             },
@@ -191,7 +200,18 @@ def unit_mapping_structure_example(*, unit_id: str) -> dict[str, Any]:
                         {"caminho_saida": "valor", "indice_coluna": 4, "tipo": "numero"},
                     ],
                     "obrigatorio": True,
-                }
+                },
+                "serie.pontos[identificador=observado].observacoes[periodo=rotulo publicado].valor": {
+                    "tipo_origem": "celula_de_tabela",
+                    "arquivo_origem": "tables/table002.json",
+                    "seletor_linha": {
+                        "coluna_rotulo": 0,
+                        "valor_aceito": "rotulo exatamente como aparece na linha",
+                        "indice_linha_esperado": 3,
+                    },
+                    "seletor_coluna": {"indice_coluna_esperado": 1},
+                    "obrigatorio": True,
+                },
             },
             "fontes_relevantes": {},
             "metadados_estruturais_evidencia": {},

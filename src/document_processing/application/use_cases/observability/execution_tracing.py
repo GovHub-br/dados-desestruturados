@@ -14,11 +14,13 @@ Essa escolha tem tres consequencias praticas:
 from __future__ import annotations
 
 import logging
+import os
 import re
 from datetime import UTC, datetime, timedelta
 from typing import Any
 
 from document_processing.domain.observability import (
+    artifact_selection_quality_metrics,
     end_to_end_metrics,
     extraction_metrics,
     fallback_execution_metrics,
@@ -88,6 +90,39 @@ class AtlasExecutionTracer:
             return list(self.minio_client.list_object_keys(prefix=prefix))
         except Exception:  # noqa: BLE001
             return []
+
+    @staticmethod
+    def _execution_id_from_key(object_key: Any) -> str:
+        """Le o execution_id do proprio caminho do artefato.
+
+        E o id da execucao de extracao, que se mantem quando a DAG 2 e a DAG 3
+        rodam de novo sobre a mesma extracao. Por isso serve de chave de
+        pareamento entre releases; o id da propria rodada nao serviria.
+        """
+        match = re.search(r"execution_id=([^/]+)", str(object_key or ""))
+        return match.group(1) if match else ""
+
+    @staticmethod
+    def _code_provenance() -> dict[str, str]:
+        """Anexa a identidade do codigo ao trace, que o rotulo de release nao guarda.
+
+        `release` e apenas a chave de agrupamento do experimento: um `-dirty` nao
+        distingue uma arvore suja de outra. O commit e o estado da arvore ficam
+        aqui, e observabilidade nunca pode derrubar o pipeline.
+        """
+        try:
+            from document_processing.shared.config.release import describe_release
+
+            descricao = describe_release(
+                os.getenv("LANGFUSE_ENVIRONMENT", "development").strip().lower()
+            )
+        except Exception:  # noqa: BLE001
+            return {}
+        return {
+            chave: str(descricao.get(chave, ""))
+            for chave in ("commit", "branch", "arvore_suja")
+            if descricao.get(chave)
+        }
 
     @staticmethod
     def _object_key_from_uri(value: Any) -> str:
@@ -171,6 +206,15 @@ class AtlasExecutionTracer:
             or ""
         ).strip()
 
+        # O id da execucao de fallback muda a cada rodada, entao nao serve para
+        # parear a mesma execucao entre duas releases. A chave estavel e a
+        # execucao de extracao que originou o documento.
+        source_execution_id = str(
+            fallback_context.get("source_execution_id")
+            or fallback_context.get("execution_id")
+            or ""
+        ).strip()
+
         prefix = str(fallback_context.get("fallback_prefix") or "").rstrip("/")
         if not prefix:
             if not (entity_slug and document_id and execution_id):
@@ -223,8 +267,16 @@ class AtlasExecutionTracer:
                 "dominio": domain,
                 "entidade": entity_slug,
                 "document_id": document_id,
+                "execution_id": source_execution_id
+                or candidate.get("execution_id_origem")
+                or execution_id,
+                "fallback_execution_id": execution_id,
                 "fallback_prefix": prefix,
                 "dag": "dag_valida_e_fallback_llm",
+                # Distingue projecao ao vivo de reprojecao por backfill: o conteudo
+                # e o mesmo, o caminho nao, e a diferenca precisa ficar legivel.
+                "origem_projecao": "execucao",
+                **self._code_provenance(),
             },
             tags=[
                 f"dominio:{domain}",
@@ -239,6 +291,11 @@ class AtlasExecutionTracer:
         total_attempts = 0
         total_tokens = 0
         cursor = started_at
+        # started_at e o instante da projecao, que roda depois da execucao. Medir
+        # contra ele da duracao negativa. O intervalo real e o que separa o
+        # primeiro do ultimo artefato persistido.
+        first_mark: datetime | None = None
+        last_mark: datetime | None = None
 
         for stage, attempts in sorted(stage_index.items()):
             usages: list[dict[str, Any]] = []
@@ -265,6 +322,9 @@ class AtlasExecutionTracer:
                     fallback=cursor + timedelta(seconds=1),
                 )
                 cursor = datetime.fromisoformat(end)
+                inicio_marca = datetime.fromisoformat(start)
+                first_mark = inicio_marca if first_mark is None else min(first_mark, inicio_marca)
+                last_mark = cursor if last_mark is None else max(last_mark, cursor)
                 total_attempts += 1
                 failed = bool(error)
                 if not failed:
@@ -394,6 +454,19 @@ class AtlasExecutionTracer:
         approved = bool(revalidation.get("aprovado_para_publicacao"))
         published = str(publication.get("status") or "") == "publicado"
 
+        for nome_artefato, chave in sorted(by_name.items()):
+            if not nome_artefato.endswith("/poda_evidencia.json"):
+                continue
+            for metric in artifact_selection_quality_metrics(self._read_json(chave)):
+                client.score(
+                    trace_id=trace_id,
+                    name=metric.name,
+                    value=metric.value,
+                    data_type=metric.data_type,
+                    comment=metric.comment,
+                    metadata=metric.metadata,
+                )
+
         metrics = list(
             fallback_execution_metrics(
                 scope=scope,
@@ -414,7 +487,11 @@ class AtlasExecutionTracer:
         metrics += end_to_end_metrics(
             sucesso=published,
             exigiu_llm=True,
-            duracao_segundos=(cursor - started_at).total_seconds(),
+            duracao_segundos=(
+                (last_mark - first_mark).total_seconds()
+                if first_mark is not None and last_mark is not None
+                else None
+            ),
             tokens_totais=total_tokens,
             cobertura_final=coverage,
             apto_para_bronze=approved,
@@ -485,6 +562,9 @@ class AtlasExecutionTracer:
         document_id = str(resolution_result.get("document_id") or "")
         domain = str(resolution_result.get("domain") or "")
         execution_mode = str(resolution_result.get("modo_execucao") or "resolucao")
+        execution_id = str(
+            resolution_result.get("execution_id") or ""
+        ).strip() or self._execution_id_from_key(object_keys["manifesto_execucao"])
 
         started_at = datetime.now(UTC)
         trace_id = new_id()
@@ -511,8 +591,11 @@ class AtlasExecutionTracer:
                 "dominio": domain,
                 "entidade": entity_slug,
                 "document_id": document_id,
+                "execution_id": execution_id,
                 "dag": "dag_resolve_schema_saida",
                 "modo_execucao": execution_mode,
+                "origem_projecao": "execucao",
+                **self._code_provenance(),
             },
             tags=[
                 f"dominio:{domain}",
@@ -595,7 +678,10 @@ class AtlasExecutionTracer:
         metrics += end_to_end_metrics(
             sucesso=not fallback_needed,
             exigiu_llm=execution_mode == "revalidacao_layout_candidato",
-            duracao_segundos=(datetime.now(UTC) - started_at).total_seconds(),
+            # A resolucao nao persiste marco de inicio, so de conclusao. Medir
+            # daqui mediria a propria projecao; emitir 0 seria pior, porque
+            # "nao aplicavel" viraria "instantaneo" na media.
+            duracao_segundos=None,
             cobertura_final=coverage,
             apto_para_bronze=not fallback_needed,
         )

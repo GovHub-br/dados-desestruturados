@@ -361,6 +361,47 @@ def fallback_stage_metrics(
     return metrics
 
 
+def artifact_selection_quality_metrics(
+    pruning: dict[str, Any],
+) -> list[MetricValue]:
+    """Mede se a selecao trouxe evidencia especifica ou varreu o inventario.
+
+    `llm_acerto_1a_tentativa` responde "a etapa respondeu sem erro", o que uma
+    selecao que devolvesse o inventario inteiro tambem responderia. Esta metrica
+    olha o resultado: quanta da evidencia escolhida ancora em algum indicador da
+    unidade. Ela nao depende de gabarito, entao vale em producao.
+    """
+    mantidos = _as_list(pruning.get("mantidos"))
+    descartados = _as_list(pruning.get("descartados"))
+    total = len(mantidos) + len(descartados)
+    if not total:
+        # Sem selecao nao ha o que medir: emitir 0 diria "selecao pessima"
+        # onde a verdade e "nao aplicavel".
+        return []
+    unidade = str(pruning.get("unidade_mapeamento") or "")
+    contexto = {"unidade_mapeamento": unidade} if unidade else {}
+    return [
+        MetricValue(
+            name="selecao_evidencia_especifica",
+            value=_ratio(len(mantidos), total),
+            comment=(
+                "Fracao da evidencia escolhida que ancora em indicador da unidade. "
+                f"{len(mantidos)} de {total} artefatos."
+            ),
+            metadata=contexto,
+        ),
+        MetricValue(
+            name="selecao_evidencia_descartada",
+            value=float(len(descartados)),
+            comment=(
+                "Artefatos removidos por nao sustentarem nenhum indicador obrigatorio "
+                "da unidade."
+            ),
+            metadata=contexto,
+        ),
+    ]
+
+
 def fallback_execution_metrics(
     *,
     scope: str | None,

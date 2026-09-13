@@ -100,6 +100,40 @@ class MappingUnitGenerationMixin:
                 payload=artifact_selection.model_dump(mode="json"),
             )
 
+            poda = self._prune_unit_evidence(
+                artifact_selection=artifact_selection,
+                loaded_artifacts=loaded_artifacts,
+                candidate_payload=llm_payloads["candidate_generation"],
+                unit=unit,
+            )
+            if poda.pruned:
+                loaded_artifacts = {
+                    caminho: conteudo
+                    for caminho, conteudo in loaded_artifacts.items()
+                    if caminho in set(poda.kept)
+                }
+                logging.info(
+                    "Unidade %s/%s (%s): evidencia podada de %s para %s artefato(s). %s",
+                    position,
+                    len(units),
+                    unit.id,
+                    len(poda.kept) + len(poda.dropped),
+                    len(poda.kept),
+                    poda.reason,
+                )
+            self._persist_llm_validated(
+                fallback_context=fallback_context,
+                stage=f"{unit_stage_prefix}/selecao_artefatos",
+                filename=f"{unit_stage_prefix}/poda_evidencia.json",
+                payload={
+                    "tipo_artefato": "poda_evidencia_unidade",
+                    "unidade_mapeamento": unit.id,
+                    "mantidos": list(poda.kept),
+                    "descartados": list(poda.dropped),
+                    "motivo": poda.reason,
+                },
+            )
+
             fragment_payload = self._fragment_payload_for_unit(
                 candidate_payload=llm_payloads["candidate_generation"],
                 unit=unit,
@@ -217,6 +251,43 @@ class MappingUnitGenerationMixin:
         )
         payload["unidade_mapeamento"] = unit.payload()
         return payload
+
+
+    def _prune_unit_evidence(
+        self,
+        *,
+        artifact_selection: LayoutArtifactSelection,
+        loaded_artifacts: dict[str, Any],
+        candidate_payload: dict[str, Any],
+        unit: MappingUnit,
+    ) -> PruningDecision:
+        """Decide, pelas ancoras ja verificadas, que evidencia e superflua aqui.
+
+        A decisao usa somente ancoras que ``validate_coverage`` confirmou existir
+        literalmente no artefato, entao nao introduz confianca nova na LLM.
+        """
+        contract_context = candidate_payload.get("contrato_semantico_relevante", {})
+        if not isinstance(contract_context, dict):
+            return PruningDecision(tuple(loaded_artifacts), (), "contrato indisponivel")
+        ancoras: dict[str, list[str]] = {}
+        for item in artifact_selection.artifact_paths:
+            caminho = item.path.strip("/")
+            if caminho not in loaded_artifacts:
+                continue
+            ancoras[caminho] = [
+                str(ancora)
+                for cobertura in item.coberturas
+                for ancora in cobertura.ancoras
+            ]
+        for caminho in loaded_artifacts:
+            ancoras.setdefault(caminho, [])
+        return prune_generic_evidence(
+            anchors_by_artifact=ancoras,
+            scoped_contract=self.mapping_plan_service.scoped_contract_context(
+                contract_context, unit
+            ),
+            unit_root=unit.root_path,
+        )
 
 
     def _fragment_payload_for_unit(

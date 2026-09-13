@@ -39,6 +39,16 @@ from typing import Any
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 
+from document_processing.application.use_cases.fallback.candidate_evaluation import (  # noqa: E402
+    validar_candidato,
+)
+from document_processing.domain.observability import (  # noqa: E402
+    MetricValue,
+    avaliar_mapeamento_canonico,
+    avaliar_selecao_artefatos,
+    metrica_de_validade,
+)
+
 DATASETS_REPLAY = (
     "atlas-e2e-regressao",
     "atlas-fallback-selecao-artefatos",
@@ -215,43 +225,59 @@ def _caminhos_selecao(payload: Any) -> set[str]:
     }
 
 
-def _caminhos_mapeamento(payload: Any) -> set[str]:
-    """Extrai as chaves mapeadas de um layout candidato."""
-    if not isinstance(payload, dict):
-        return set()
-    mapeamento = payload.get("mapeamento_canonico")
-    return set(map(str, mapeamento)) if isinstance(mapeamento, dict) else set()
+def _avaliar_selecao(resposta: Any, item: dict[str, Any]) -> list[MetricValue]:
+    """Pontua a selecao de evidencias contra os artefatos da referencia."""
+    esperado = _caminhos_selecao(item.get("expectedOutput"))
+    return avaliar_selecao_artefatos(_caminhos_selecao(resposta), esperado)
 
 
-EXTRATORES = {
-    "selecao_artefatos": _caminhos_selecao,
-    "layout_signature_candidato": _caminhos_mapeamento,
+def _avaliar_candidato(resposta: Any, item: dict[str, Any]) -> list[MetricValue]:
+    """Pontua o mapeamento canonico e aplica as regras de negocio da producao.
+
+    A validade vem junto de proposito: F1 alto num candidato que a DAG rejeitaria
+    e um numero que engana. Quando o contexto historico nao permite validar, a
+    metrica nao e emitida — ausencia e diferente de reprovacao.
+    """
+    obtido = resposta if isinstance(resposta, dict) else {}
+    esperado = item.get("expectedOutput")
+    esperado = esperado if isinstance(esperado, dict) else {}
+    metricas = avaliar_mapeamento_canonico(
+        obtido.get("mapeamento_canonico"),
+        esperado.get("mapeamento_canonico"),
+    )
+    veredito = validar_candidato(resposta, mensagens=item.get("input"))
+    if veredito.validavel:
+        metricas.append(
+            metrica_de_validade(valido=veredito.valido, motivo=veredito.motivo)
+        )
+    return metricas
+
+
+AVALIADORES = {
+    "selecao_artefatos": _avaliar_selecao,
+    "layout_signature_candidato": _avaliar_candidato,
 }
 
 
-def pontuar(obtido: set[str], esperado: set[str]) -> dict[str, float]:
-    """Compara dois conjuntos de paths com precisao, revocacao e F1.
-
-    Sao metricas de conjunto porque o que a etapa produz e um conjunto de
-    referencias, nao um texto: acertar 8 de 10 caminhos certos e acertar 8 caminhos
-    entre 20 propostos sao resultados diferentes, e a media harmonica separa os dois.
-    """
-    if not esperado:
-        return {}
-    acertos = len(obtido & esperado)
-    precisao = acertos / len(obtido) if obtido else 0.0
-    revocacao = acertos / len(esperado)
-    f1 = (
-        2 * precisao * revocacao / (precisao + revocacao)
-        if precisao + revocacao
-        else 0.0
-    )
-    return {
-        "avaliacao_precisao": precisao,
-        "avaliacao_revocacao": revocacao,
-        "avaliacao_f1": f1,
-        "avaliacao_igualdade_exata": 1.0 if obtido == esperado else 0.0,
-    }
+def _resumo(erro: str | None, metricas: list[MetricValue]) -> str:
+    """Linha curta de acompanhamento, com os degraus que existirem no item."""
+    if erro:
+        return "erro"
+    por_nome = {metrica.name: metrica.value for metrica in metricas}
+    partes = []
+    for rotulo, nome in (
+        ("f1", "avaliacao_f1"),
+        ("tipo", "avaliacao_acerto_tipo_origem"),
+        ("arquivo", "avaliacao_acerto_arquivo_origem"),
+        ("instrucao", "avaliacao_acerto_instrucao_origem"),
+    ):
+        valor = por_nome.get(nome)
+        if isinstance(valor, (int, float)):
+            partes.append(f"{rotulo}={valor:.2f}")
+    validade = por_nome.get("avaliacao_candidato_valido")
+    if validade is not None:
+        partes.append("valido" if validade else "INVALIDO")
+    return "  ".join(partes) or "sem referencia"
 
 
 def executar_etapa(
@@ -273,7 +299,7 @@ def executar_etapa(
     )
 
     etapa = DATASETS_EXECUTAVEIS[dataset]
-    extrair = EXTRATORES[etapa]
+    avaliar = AVALIADORES[etapa]
     itens = api.dataset_items(dataset)[:limite]
     cliente_llm = FallbackLlmClient()
     observador = LangfuseIngestionClient.from_environment()
@@ -282,14 +308,12 @@ def executar_etapa(
     executados = 0
     for item in itens:
         entrada = item.get("input")
-        esperado = extrair(item.get("expectedOutput"))
         inicio = datetime.now(UTC)
         if dry_run:
             print(f"  [dry-run] {item['id']}")
             continue
 
         erro: str | None = None
-        obtido: set[str] = set()
         resposta: Any = None
         try:
             if isinstance(entrada, list):
@@ -304,7 +328,6 @@ def executar_etapa(
                     system_prompt=artifact_selection_system_prompt(),
                     user_payload=entrada,
                 )
-            obtido = extrair(resposta)
         except FallbackLlmClientError as exc:
             erro = str(exc)
 
@@ -325,11 +348,24 @@ def executar_etapa(
             },
             tags=[f"dataset:{dataset}", f"etapa:{etapa}", "avaliacao_offline"],
         )
-        metricas = {"avaliacao_schema_valido": 0.0 if erro else 1.0}
+        metricas = [
+            MetricValue(
+                name="avaliacao_schema_valido",
+                value=0.0 if erro else 1.0,
+                data_type="BOOLEAN",
+                comment=erro[:500] if erro else "A LLM devolveu JSON utilizavel.",
+            )
+        ]
         if erro is None:
-            metricas.update(pontuar(obtido, esperado))
-        for nome, valor in metricas.items():
-            observador.score(trace_id=trace_id, name=nome, value=valor)
+            metricas.extend(avaliar(resposta, item))
+        for metrica in metricas:
+            observador.score(
+                trace_id=trace_id,
+                name=metrica.name,
+                value=metrica.value,
+                data_type=metrica.data_type,
+                comment=metrica.comment,
+            )
         observador.flush()
 
         api.criar_run_item(
@@ -340,8 +376,7 @@ def executar_etapa(
             metadata={"modo": "executar", "etapa": etapa},
         )
         executados += 1
-        resumo = "erro" if erro else f"f1={metricas.get('avaliacao_f1', 0):.2f}"
-        print(f"  {item['id'][:60]}  {resumo}")
+        print(f"  {item['id'][:58]}  {_resumo(erro, metricas)}")
 
     print(f"\n{executados} itens executados.")
     return 0

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 from typing import Any
 
 from pydantic import ValidationError
@@ -154,19 +155,38 @@ class FallbackCandidateValidationService:
             )
 
         allowed_prefixes = unit.mapping_paths
-        invalid_paths = [
-            mapping_path
-            for mapping_path in fragment_model.mapeamento_canonico
-            if not any(
-                normalize_schema_path(mapping_path) == required_path
-                or normalize_schema_path(mapping_path).startswith(f"{required_path}.")
+        # Um path pode falhar por dois motivos opostos, e a LLM precisa saber qual:
+        # ou parou antes do campo terminal (esta dentro da unidade, so incompleto),
+        # ou aponta para outra unidade. Reportar os dois como "fora da unidade"
+        # manda o laco de reparo procurar o erro onde ele nao esta.
+        incomplete_paths: list[str] = []
+        foreign_paths: list[str] = []
+        for mapping_path in fragment_model.mapeamento_canonico:
+            normalized = normalize_schema_path(mapping_path)
+            if any(
+                normalized == required_path or normalized.startswith(f"{required_path}.")
                 for required_path in allowed_prefixes
+            ):
+                continue
+            if any(
+                required_path.startswith(f"{normalized}.")
+                for required_path in allowed_prefixes
+            ):
+                incomplete_paths.append(mapping_path)
+            else:
+                foreign_paths.append(mapping_path)
+        if incomplete_paths:
+            raise RuntimeError(
+                "Fragmento parou antes do campo terminal: "
+                f"{incomplete_paths}. Cada entrada de mapeamento_canonico precisa "
+                "terminar em um campo mapeavel da unidade "
+                f"{unit.id}, e nao no array que o contem. Complete com um de: "
+                f"{sorted(allowed_prefixes)}."
             )
-        ]
-        if invalid_paths:
+        if foreign_paths:
             raise RuntimeError(
                 "Fragmento tentou mapear campo fora da unidade semantica "
-                f"{unit.id}: {invalid_paths}."
+                f"{unit.id}: {foreign_paths}."
             )
 
         contract_context = fallback_problem_context.get("contrato_semantico_relevante", {})
@@ -453,6 +473,23 @@ class FallbackCandidateValidationService:
                     "use apenas o indice de coluna observado: "
                     f"{mapping_path}."
                 )
+            if entry.tipo_origem != "celula_de_tabela":
+                continue
+            # Coluna e posicional (periodos ficam fixos dentro da tabela), mas
+            # linha e semantica: o mesmo indicador aparece na linha 17 de uma
+            # tabela e na linha 7 de outra do mesmo documento. O resolvedor so
+            # aceita a linha pelo rotulo; o indice e apenas uma dica.
+            row_selector = payload.get("seletor_linha")
+            accepted_label = (
+                row_selector.get("valor_aceito") if isinstance(row_selector, dict) else None
+            )
+            if not isinstance(accepted_label, str) or not accepted_label.strip():
+                raise RuntimeError(
+                    "Mapeamento celula_de_tabela deve declarar seletor_linha.valor_aceito "
+                    "com o rotulo observado na linha; indice_linha_esperado sozinho nao "
+                    "basta porque a posicao da linha varia entre tabelas do mesmo "
+                    f"documento: {mapping_path}."
+                )
 
     @staticmethod
     def _validate_candidate_lineage(
@@ -686,14 +723,48 @@ class FallbackCandidateValidationService:
             normalized = FallbackCandidateValidationService._normalize_mapping_path(normalized)
         except ValueError as exc:
             raise RuntimeError(
-                "Caminho de mapeamento canonico invalido. Em arrays use somente "
-                "filtros semanticos no formato campo[chave=valor]; indices "
-                f"posicionais como [0] nao sao aceitos: {path}."
+                FallbackCandidateValidationService._describe_bad_mapping_path(path)
             ) from exc
         if schema_paths and normalized not in schema_paths:
             return False
         root = normalized.split(".", maxsplit=1)[0]
         return root in schema_roots
+
+    @staticmethod
+    def _describe_bad_mapping_path(path: str) -> str:
+        """Nomeia a violacao de gramatica encontrada, em vez de supor indice posicional."""
+        for segment in str(path).split("."):
+            filtros = re.findall(r"\[([^\]]*)\]", segment)
+            if len(filtros) > 1:
+                return (
+                    "Caminho de mapeamento canonico invalido: o segmento "
+                    f"'{segment}' acumula {len(filtros)} filtros. Use no maximo um "
+                    "filtro por segmento, no formato campo[chave=valor]; para "
+                    f"distinguir por mais de uma chave, filtre em segmentos diferentes: {path}."
+                )
+            for filtro in filtros:
+                if "=" not in filtro:
+                    rotulo = (
+                        "indice posicional"
+                        if filtro.strip().lstrip("-").isdigit()
+                        else "filtro sem chave"
+                    )
+                    return (
+                        f"Caminho de mapeamento canonico invalido: '{segment}' usa "
+                        f"{rotulo} '[{filtro}]'. Em arrays use somente filtros "
+                        f"semanticos no formato campo[chave=valor]: {path}."
+                    )
+                if "&" in filtro.partition("=")[2]:
+                    return (
+                        f"Caminho de mapeamento canonico invalido: o filtro '[{filtro}]' "
+                        f"em '{segment}' concatena condicoes com '&'. Cada segmento aceita "
+                        "um unico filtro chave=valor: escolha a chave que identifica o item "
+                        f"e mapeie as demais como campos do proprio item: {path}."
+                    )
+        return (
+            "Caminho de mapeamento canonico invalido. Use campo.campo para objetos "
+            f"e campo[chave=valor] para itens de array: {path}."
+        )
 
     @staticmethod
     def _normalize_mapping_path(path: str) -> str:

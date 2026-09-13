@@ -22,6 +22,7 @@ class FragmentGenerationMixin:
         messages = self._fragment_messages(fragment_payload=fragment_payload)
         errors: list[str] = []
         corrections_used = 0
+        budget_relief_used = False
         attempt = 0
         raw_content = ""
         while True:
@@ -56,11 +57,22 @@ class FragmentGenerationMixin:
                     attempt=attempt,
                     error=exc,
                 )
-                if self._is_length_exhausted_without_content(exc):
-                    raise RuntimeError(
-                        "LLM esgotou a janela de conclusao sem emitir JSON para a unidade "
-                        f"{unit.id}. Reduza o bloco ou aumente o limite de saida."
-                    ) from exc
+                if self._is_response_without_content(exc):
+                    # Resposta vazia nao e erro de conteudo: nao ha o que corrigir,
+                    # e repetir identico so repete o gasto. A unica tentativa que
+                    # muda alguma coisa e a que devolve orcamento a conclusao.
+                    relief = (
+                        None if budget_relief_used else self._budget_relief_options(llm_options)
+                    )
+                    if relief is None:
+                        raise RuntimeError(
+                            "LLM esgotou a janela de conclusao sem emitir JSON para a unidade "
+                            f"{unit.id}. Reduza o bloco ou aumente o limite de saida."
+                        ) from exc
+                    llm_options = relief
+                    budget_relief_used = True
+                    attempt += 1
+                    continue
                 if (
                     not self._is_correctable_llm_response_error(exc)
                     or corrections_used >= self.MAX_CANDIDATE_CORRECTION_ATTEMPTS
