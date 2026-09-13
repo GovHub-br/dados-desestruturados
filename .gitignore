@@ -24,3 +24,5 @@ airflow/logs/*
 airflow/state/*
 !airflow/state/.gitkeep
 *.egg-info/
+
+resultados*
