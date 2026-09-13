@@ -1,0 +1,368 @@
+{
+  "nome": "Apresentacoes trimestrais de resultados de bancos",
+  "dominio": "bancos",
+  "fonte": "Apresentacoes de resultados trimestrais divulgadas por instituicoes financeiras",
+  "tipo_documento": "contrato_semantico",
+  "versao": "1.0.0",
+  "descricao": "Contrato semantico para padronizar a extracao de indicadores brutos publicados nas apresentacoes trimestrais de resultados de bancos. Cobre seis indicadores comparaveis entre instituicoes: capital principal, inadimplencia acima de 90 dias, retorno sobre o patrimonio recorrente, margem financeira, carteira de credito e resultado recorrente. A observacao do periodo de referencia e obrigatoria; comparativos sao desejaveis e nao bloqueiam a publicacao do layout quando ausentes.",
+  "contrato_semantico": {
+    "principios": {
+      "chaves_estaveis": "As chaves da saida devem ser genericas, reutilizaveis e independentes da instituicao e do periodo do documento.",
+      "layout_independente": "A estrutura final deve permanecer igual mesmo que a apresentacao altere titulos, ordem das secoes, nomes das colunas ou formato visual.",
+      "periodos_como_valores": "Periodos especificos do documento nao devem aparecer nos nomes das chaves. Eles ficam como valores dentro das observacoes.",
+      "valores_brutos_primeiro": "O pipeline extrai o valor publicado. Variacoes contra o trimestre anterior, contra o mesmo trimestre do ano anterior e qualquer indicador derivado sao calculados depois, fora da extracao.",
+      "escala_explicita": "Bancos publicam o mesmo indicador em bilhoes no destaque e em milhoes na tabela detalhada. A escala lida acompanha cada observacao monetaria e nunca e convertida na resolucao.",
+      "recorte_explicito": "Um mesmo indicador e publicado para recortes diferentes, como consolidado, Brasil, America Latina, pessoa fisica e pessoa juridica. O recorte lido acompanha cada observacao."
+    },
+    "entidades": {
+      "instituicao": {
+        "descricao": "Instituicao financeira que divulgou a apresentacao de resultados.",
+        "obrigatorio": true,
+        "tipo": "string",
+        "sinonimos": [
+          "instituicao",
+          "banco",
+          "holding",
+          "conglomerado",
+          "nome da instituicao"
+        ]
+      },
+      "indicador": {
+        "descricao": "Indicador bruto observado na apresentacao de resultados.",
+        "obrigatorio": true,
+        "tipo": "string",
+        "dominio": [
+          "capital_principal",
+          "inadimplencia_90_dias",
+          "retorno_sobre_patrimonio_recorrente",
+          "margem_financeira",
+          "carteira_de_credito",
+          "resultado_recorrente",
+          "margem_financeira_com_clientes",
+          "margem_financeira_com_mercado"
+        ]
+      },
+      "recorte": {
+        "descricao": "Recorte geografico ou de segmento ao qual a observacao se refere. O recorte que consolida a instituicao inteira e o valor canonico consolidado, ainda que a apresentacao o rotule como Total.",
+        "obrigatorio": true,
+        "tipo": "string",
+        "dominio": [
+          "consolidado",
+          "brasil",
+          "america_latina",
+          "pessoa_fisica",
+          "pessoa_juridica",
+          "micro_pequenas_medias_empresas",
+          "grandes_empresas"
+        ],
+        "sinonimos": [
+          "Consolidado",
+          "Total",
+          "TOTAL",
+          "Brasil",
+          "America Latina",
+          "Pessoas fisicas",
+          "Pessoa fisica",
+          "Pessoas juridicas",
+          "Pessoa juridica",
+          "Micro, pequenas e medias empresas",
+          "Pequenas e medias empresas",
+          "Grandes empresas"
+        ]
+      },
+      "escopo_periodo": {
+        "descricao": "Natureza do periodo da observacao. Fluxos acumulados no trimestre usam trimestre; saldos e indices de uma data usam data_base.",
+        "obrigatorio": true,
+        "tipo": "string",
+        "dominio": [
+          "trimestre",
+          "data_base"
+        ],
+        "sinonimos": [
+          "trimestre",
+          "2T26",
+          "1T26",
+          "data-base",
+          "posicao",
+          "saldo em",
+          "jun/26",
+          "mar/26"
+        ]
+      },
+      "periodo": {
+        "descricao": "Rotulo do periodo tal como publicado, sem reinterpretacao de datas.",
+        "obrigatorio": true,
+        "tipo": "string",
+        "sinonimos": [
+          "periodo",
+          "trimestre",
+          "data-base",
+          "competencia",
+          "referencia"
+        ]
+      },
+      "escala": {
+        "descricao": "Escala em que o valor monetario foi publicado no ponto lido do documento.",
+        "obrigatorio": true,
+        "tipo": "string",
+        "dominio": [
+          "unidades",
+          "milhares",
+          "milhoes",
+          "bilhoes"
+        ],
+        "sinonimos": [
+          "R$ milhoes",
+          "em R$ milhoes",
+          "R$ bilhoes",
+          "em R$ bilhoes",
+          "bilhoes",
+          "milhoes"
+        ]
+      },
+      "valor": {
+        "descricao": "Valor numerico bruto extraido do documento, na escala publicada.",
+        "obrigatorio": true,
+        "tipo": "number"
+      }
+    },
+    "metricas": {
+      "indicadores_percentuais": {
+        "descricao": "Indicadores publicados como percentual, sem escala monetaria.",
+        "tipo": "grupo_metricas_brutas",
+        "unidade": "percentual",
+        "indicadores": {
+          "capital_principal": {
+            "descricao": "Indice de capital principal da instituicao na data-base.",
+            "tipo": "number",
+            "unidade": "percentual",
+            "obrigatorio": true,
+            "sinonimos": [
+              "Capital principal",
+              "Capital principal (CET I)",
+              "CET I",
+              "CET1",
+              "Common Equity Tier 1",
+              "capital principal CET1"
+            ]
+          },
+          "inadimplencia_90_dias": {
+            "descricao": "Participacao da carteira em atraso acima de 90 dias na data-base.",
+            "tipo": "number",
+            "unidade": "percentual",
+            "obrigatorio": true,
+            "sinonimos": [
+              "NPL 90 dias",
+              "NPL acima de 90 dias",
+              "NPL > 90 dias",
+              "inadimplencia",
+              "indice de inadimplencia",
+              "atraso acima de 90 dias"
+            ]
+          },
+          "retorno_sobre_patrimonio_recorrente": {
+            "descricao": "Retorno recorrente sobre o patrimonio liquido no trimestre.",
+            "tipo": "number",
+            "unidade": "percentual",
+            "obrigatorio": true,
+            "sinonimos": [
+              "ROE recorrente gerencial",
+              "ROE recorrente",
+              "ROE",
+              "ROAE Recorrente",
+              "ROAE recorrente",
+              "ROAE",
+              "retorno sobre o patrimonio liquido"
+            ]
+          }
+        }
+      },
+      "indicadores_monetarios": {
+        "descricao": "Indicadores publicados como valor monetario em reais, com escala declarada na observacao.",
+        "tipo": "grupo_metricas_brutas",
+        "moeda": "BRL",
+        "indicadores": {
+          "margem_financeira": {
+            "descricao": "Margem financeira total do trimestre, somando a parcela com clientes e a parcela com o mercado.",
+            "tipo": "number",
+            "obrigatorio": true,
+            "sinonimos": [
+              "Margem financeira",
+              "Margem Financeira Gerencial",
+              "margem financeira gerencial",
+              "Margem financeira bruta",
+              "margem financeira total"
+            ]
+          },
+          "carteira_de_credito": {
+            "descricao": "Saldo da carteira de credito na data-base, no recorte publicado.",
+            "tipo": "number",
+            "obrigatorio": true,
+            "sinonimos": [
+              "Carteira de credito",
+              "carteira de credito total",
+              "Carteira ampliada",
+              "carteira de credito ampliada"
+            ]
+          },
+          "resultado_recorrente": {
+            "descricao": "Resultado recorrente do trimestre, antes de ajustes nao recorrentes.",
+            "tipo": "number",
+            "obrigatorio": true,
+            "sinonimos": [
+              "Resultado recorrente gerencial",
+              "resultado recorrente",
+              "Lucro Liquido Recorrente",
+              "lucro liquido recorrente",
+              "lucro recorrente"
+            ]
+          },
+          "margem_financeira_com_clientes": {
+            "descricao": "Parcela da margem financeira originada em operacoes com clientes.",
+            "tipo": "number",
+            "obrigatorio": false,
+            "sinonimos": [
+              "Margem financeira com clientes",
+              "Margem Financeira com Clientes",
+              "Clientes"
+            ]
+          },
+          "margem_financeira_com_mercado": {
+            "descricao": "Parcela da margem financeira originada em operacoes com o mercado.",
+            "tipo": "number",
+            "obrigatorio": false,
+            "sinonimos": [
+              "Margem financeira com o mercado",
+              "Margem Financeira com o Mercado",
+              "Margem com o mercado"
+            ]
+          }
+        }
+      }
+    },
+    "requisitos_mapeamento": {
+      "campos_obrigatorios": [
+        {
+          "path": "indicadores_percentuais.dados.valores.valor",
+          "observacoes_obrigatorias": [
+            {
+              "seletores": {
+                "indicador": "capital_principal"
+              },
+              "campos_contexto_obrigatorios": [
+                "periodo",
+                "escopo_periodo",
+                "recorte"
+              ]
+            },
+            {
+              "seletores": {
+                "indicador": "inadimplencia_90_dias"
+              },
+              "campos_contexto_obrigatorios": [
+                "periodo",
+                "escopo_periodo",
+                "recorte"
+              ]
+            },
+            {
+              "seletores": {
+                "indicador": "retorno_sobre_patrimonio_recorrente"
+              },
+              "campos_contexto_obrigatorios": [
+                "periodo",
+                "escopo_periodo",
+                "recorte"
+              ]
+            }
+          ]
+        },
+        {
+          "path": "indicadores_monetarios.dados.valores.valor",
+          "observacoes_obrigatorias": [
+            {
+              "seletores": {
+                "indicador": "margem_financeira"
+              },
+              "campos_contexto_obrigatorios": [
+                "periodo",
+                "escopo_periodo",
+                "recorte",
+                "escala"
+              ]
+            },
+            {
+              "seletores": {
+                "indicador": "carteira_de_credito"
+              },
+              "campos_contexto_obrigatorios": [
+                "periodo",
+                "escopo_periodo",
+                "recorte",
+                "escala"
+              ]
+            },
+            {
+              "seletores": {
+                "indicador": "resultado_recorrente"
+              },
+              "campos_contexto_obrigatorios": [
+                "periodo",
+                "escopo_periodo",
+                "recorte",
+                "escala"
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "schema_saida": {
+    "fonte": "string",
+    "instituicao": "string",
+    "periodo_referencia": "string",
+    "periodos_disponiveis": {
+      "periodo_referencia": "string",
+      "periodo_comparativo_anterior": "string | null",
+      "mesmo_periodo_ano_anterior": "string | null"
+    },
+    "indicadores_percentuais": {
+      "tipo": "valor_bruto",
+      "unidade": "percentual",
+      "dados": [
+        {
+          "instituicao": "string",
+          "indicador": "string",
+          "valores": [
+            {
+              "periodo": "string",
+              "escopo_periodo": "string",
+              "recorte": "string",
+              "valor": "number | null"
+            }
+          ]
+        }
+      ]
+    },
+    "indicadores_monetarios": {
+      "tipo": "valor_bruto",
+      "moeda": "BRL",
+      "dados": [
+        {
+          "instituicao": "string",
+          "indicador": "string",
+          "valores": [
+            {
+              "periodo": "string",
+              "escopo_periodo": "string",
+              "recorte": "string",
+              "escala": "string",
+              "valor": "number | null"
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

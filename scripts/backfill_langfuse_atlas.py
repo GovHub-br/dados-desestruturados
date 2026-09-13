@@ -151,6 +151,38 @@ def _group_fallback_executions(keys: list[str]) -> dict[tuple[str, ...], list[st
     return grouped
 
 
+def _source_execution_id(
+    reader: "MinioReader", by_name: dict[str, str], candidate: dict[str, Any]
+) -> str:
+    """Descobre a execucao de extracao que originou o fallback.
+
+    E a chave estavel entre rodadas: o id do proprio fallback muda a cada
+    execucao e por isso nunca parearia a mesma execucao entre duas releases.
+    O projetor vivo usa essa mesma convencao; aqui ela e reconstruida do
+    artefato porque a execucao ja terminou.
+    """
+    direto = str(candidate.get("execution_id_origem") or "").strip()
+    if direto:
+        return direto
+    # Execucao que falhou antes de compor o candidato ainda registra a
+    # linhagem no payload enviado a LLM.
+    for nome, chave in sorted(by_name.items()):
+        if not nome.endswith("entrada_llm_fragmento_layout_signature.json"):
+            continue
+        for mensagem in reader.get_json(chave).get("messages", []) or []:
+            conteudo = mensagem.get("content")
+            if not isinstance(conteudo, str) or "execution_id_origem" not in conteudo:
+                continue
+            try:
+                contexto = json.loads(conteudo).get("contexto_execucao", {})
+            except (TypeError, ValueError):
+                continue
+            origem = str(contexto.get("execution_id_origem") or "").strip()
+            if origem:
+                return origem
+    return ""
+
+
 def _stage_artifacts(keys: list[str], root: str) -> dict[str, dict[int, dict[str, str]]]:
     """Indexa os artefatos de LLM por estagio e tentativa."""
     index: dict[str, dict[int, dict[str, str]]] = defaultdict(lambda: defaultdict(dict))
@@ -226,6 +258,8 @@ def backfill_fallback_execution(
     ]
     if scope:
         tags.append(f"escopo:{scope}")
+    tags.append("origem:backfill")
+    source_execution_id = _source_execution_id(reader, by_name, candidate)
 
     client.trace(
         trace_id=trace_id,
@@ -237,7 +271,8 @@ def backfill_fallback_execution(
             "dominio": dominio,
             "entidade": entidade,
             "document_id": document_id,
-            "execution_id": execution_id,
+            "execution_id": source_execution_id or execution_id,
+            "fallback_execution_id": execution_id,
         },
         output_payload={
             "escopo_correcao": scope,
@@ -249,8 +284,16 @@ def backfill_fallback_execution(
             "dominio": dominio,
             "entidade": entidade,
             "document_id": document_id,
-            "execution_id": execution_id,
+            # Mesma convencao do projetor vivo: a chave de pareamento e a
+            # execucao de extracao, nao a rodada de fallback.
+            "execution_id": source_execution_id or execution_id,
+            "fallback_execution_id": execution_id,
             "fallback_prefix": root,
+            # Reprojecao e execucao ao vivo produzem o mesmo conteudo por
+            # caminhos diferentes. Marcar a origem mantem as duas comparaveis
+            # sem fingir que sao a mesma coisa.
+            "origem_projecao": "backfill",
+            "projetado_em": datetime.now(UTC).isoformat(),
         },
         tags=tags,
     )
@@ -486,6 +529,14 @@ def main() -> int:
     parser.add_argument("--release", default=None, help="Rotulo de versao do backfill.")
     parser.add_argument("--limit", type=int, default=0, help="Maximo de execucoes.")
     parser.add_argument("--entidade", default=None, help="Filtra por entidade.")
+    parser.add_argument(
+        "--execution-id",
+        default=None,
+        help=(
+            "Filtra por execucao de fallback (casa por trecho do id). Use para "
+            "reprojetar uma execucao isolada sem rotular o historico inteiro."
+        ),
+    )
     parser.add_argument("--dry-run", action="store_true", help="Nao envia ao Langfuse.")
     args = parser.parse_args()
 
@@ -502,6 +553,11 @@ def main() -> int:
     grouped = _group_fallback_executions(keys)
     if args.entidade:
         grouped = {k: v for k, v in grouped.items() if k[1] == args.entidade}
+    if args.execution_id:
+        grouped = {k: v for k, v in grouped.items() if args.execution_id in k[3]}
+        if not grouped:
+            print(f"nenhuma execucao casa com --execution-id {args.execution_id}.")
+            return 1
 
     identities = sorted(grouped, key=lambda item: item[3])
     if args.limit:

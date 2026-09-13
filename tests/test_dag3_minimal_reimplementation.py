@@ -887,7 +887,7 @@ class Dag3MinimalReimplementationTest(unittest.TestCase):
             },
         }
 
-        with self.assertRaisesRegex(RuntimeError, "indices posicionais como \[0\]"):
+        with self.assertRaisesRegex(RuntimeError, r"usa indice posicional '\[0\]'"):
             FallbackCandidateValidationService().validate_candidate_layout(candidate, context)
 
     def test_mappable_targets_follow_contract_declaration_not_path_name(self) -> None:

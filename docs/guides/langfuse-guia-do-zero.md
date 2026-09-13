@@ -327,8 +327,8 @@ em português explicando como ler**.
 É a documentação viva. Quando esquecer o que uma métrica significa, consulte aqui
 antes de ir ao código.
 
-> Nota: o projeto emite **41 métricas** — 36 do fluxo mais 5 da avaliação
-> off-line — e **27** têm ficha cadastrada aqui. Cadastrar é opcional: serve para
+> Nota: o projeto emite **45 métricas** — 36 do fluxo mais 9 da avaliação
+> off-line — e **31** têm ficha cadastrada aqui. Cadastrar é opcional: serve para
 > dar tipo, faixa e descrição na interface. As 14 restantes funcionam
 > normalmente, apenas aparecem sem descrição. Uma delas,
 > `prompt_conjunto_versao`, não pode ter ficha: os valores possíveis são
@@ -383,10 +383,12 @@ organiza sob a forma de experimento o que já foi observado. O modo `executar` �
 que responde "o que aconteceria hoje", e por isso pede `--limit` — cada item é
 uma chamada de LLM.
 
-No modo `executar`, cada item ganha quatro métricas de avaliação:
+No modo `executar`, cada item ganha métricas de avaliação. Estas cinco valem para
+as duas etapas avaliáveis:
 
 | Métrica | O que mede |
 |---|---|
+| `avaliacao_schema_valido` | a LLM devolveu JSON utilizável |
 | `avaliacao_precisao` | dos caminhos que a etapa escolheu, quantos estavam certos |
 | `avaliacao_revocacao` | dos caminhos certos, quantos a etapa encontrou |
 | `avaliacao_f1` | as duas acima em um número só |
@@ -395,6 +397,45 @@ No modo `executar`, cada item ganha quatro métricas de avaliação:
 Precisão e revocação aparecem separadas de propósito. Escolher 8 artefatos certos
 entre 10 e escolher os mesmos 8 entre 20 são resultados muito diferentes, e uma
 média só esconderia isso.
+
+### Os degraus do mapeamento canônico
+
+O layout candidato ganha mais quatro. A razão é que as métricas acima só olham
+**quais campos** foram mapeados — não olham *como*. Um candidato pode apontar
+para o campo certo, na tabela certa, e ainda assim pegar a célula errada: o
+resolvedor devolve um número real, plausível e errado, sem acusar erro nenhum.
+
+| Métrica | Pergunta que responde |
+|---|---|
+| `avaliacao_acerto_tipo_origem` | escolheu a estratégia de extração certa? |
+| `avaliacao_acerto_arquivo_origem` | apontou para o arquivo de evidência certo? |
+| `avaliacao_acerto_instrucao_origem` | reproduziu a instrução inteira, seletor incluído? |
+| `avaliacao_candidato_valido` | esse candidato passaria pelas regras da DAG? |
+
+Os três primeiros compartilham o denominador — os campos presentes nos dois lados
+— então a queda de um degrau para o seguinte **localiza** o problema. Este é um
+teste real, com uma perturbação por vez sobre um candidato aprovado:
+
+| O que foi corrompido | f1 | tipo | arquivo | instrução | válido |
+|---|---|---|---|---|---|
+| seletor de coluna | 1,00 | 1,00 | 1,00 | **0,93** | 1,00 |
+| arquivo de origem | 1,00 | 1,00 | **0,92** | **0,93** | 1,00 |
+| estratégia de extração | 1,00 | **0,93** | 1,00 | **0,93** | 1,00 |
+| campo fora do contrato | 0,97 | 1,00 | 1,00 | 1,00 | **0,00** |
+
+Repare que nos três primeiros o **F1 continua 1,00**. Sozinho, ele diria que o
+candidato está perfeito nas três situações.
+
+`avaliacao_acerto_arquivo_origem` tem denominador próprio: só entram os campos que
+de fato leem arquivo. `valor_fixo` e `campo_derivado` não têm `arquivo_origem`, e
+contá-los como acerto inflaria a métrica.
+
+`avaliacao_candidato_valido` roda o mesmo validador da produção. Sem ele, um
+candidato que a DAG rejeitaria — campo fora do contrato, escopo não autorizado,
+array sem seletor — pode tirar F1 alto e parecer bom. **Quando o contexto
+histórico não permite validar, a métrica não é emitida.** Execuções antigas
+guardam o contrato num formato que o parser atual recusa, e reprovar por isso
+mediria a idade do artefato, não a qualidade do candidato.
 
 ---
 
@@ -523,7 +564,7 @@ cópia do código.
 # Parte 5 — O catálogo completo de métricas
 
 Esta é a parte central do guia. Vou explicar as 36 métricas do fluxo, agrupadas
-por etapa. As 5 da avaliação off-line estão na seção 4.7.
+por etapa. As 9 da avaliação off-line estão na seção 4.7.
 
 ## Como ler qualquer métrica
 

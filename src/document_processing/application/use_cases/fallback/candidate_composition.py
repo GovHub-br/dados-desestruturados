@@ -42,7 +42,7 @@ class CandidateCompositionMixin:
 
     @staticmethod
     def _is_length_exhausted_without_content(error: FallbackLlmClientError) -> bool:
-        """Evita repetir uma chamada que esgotou a conclusao sem resposta util."""
+        """Reconhece a chamada que esgotou a conclusao sem emitir resposta util."""
         metadata = error.response_metadata
         if not isinstance(metadata, dict):
             return False
@@ -50,6 +50,34 @@ class CandidateCompositionMixin:
             str(metadata.get("finish_reason", "")).strip().lower() == "length"
             and not bool(metadata.get("content_presente"))
         )
+
+
+    @staticmethod
+    def _is_response_without_content(error: FallbackLlmClientError) -> bool:
+        """Reconhece a resposta que nao trouxe texto algum, por qualquer caminho.
+
+        Repetir a mesma chamada nao adianta, mas repetir com outro orcamento sim:
+        quando o raciocinio consome a conclusao inteira, o que falta e espaco para
+        a resposta, nao capacidade do modelo.
+        """
+        if error.raw_content:
+            return False
+        if CandidateCompositionMixin._is_length_exhausted_without_content(error):
+            return True
+        return "conteudo textual vazio" in str(error).lower()
+
+
+    @staticmethod
+    def _budget_relief_options(llm_options: dict[str, Any]) -> dict[str, Any] | None:
+        """Devolve opcoes que liberam a conclusao, ou None se nao ha o que liberar.
+
+        O raciocinio divide o mesmo teto com a resposta. Desliga-lo devolve o
+        orcamento inteiro ao JSON, que e o que esta etapa precisa emitir: o
+        mapeamento tem gramatica fechada e nao se beneficia de deliberacao longa.
+        """
+        if str(llm_options.get("thinking_mode", "")).strip().lower() != "enabled":
+            return None
+        return {**llm_options, "thinking_mode": "disabled"}
 
 
     @staticmethod
