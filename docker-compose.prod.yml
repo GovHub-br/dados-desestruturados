@@ -29,7 +29,6 @@ services:
 
   openmetadata-ingestion:
     profiles: ["openmetadata"]
-
   portal:
     # Em produção, o portal só é acessível pela rede interna; o Nginx é a única
     # superfície HTTP publicada pela stack.

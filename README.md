@@ -96,13 +96,13 @@ A produção usa o [docker-compose.prod.yml](docker-compose.prod.yml) como uma
 sobreposição do Compose base. Ela adiciona o Nginx, publica apenas a porta 80
 e deixa o `portal` acessível somente pela rede Docker. O Nginx entrega o front
 em `/` e encaminha `/api/*` para o FastAPI, portanto navegador e API usam a
-mesma origem: `atlas.lablivre.rocks`.
+mesma origem: `atlas.gov-hub.io`.
 
 O OpenMetadata, PostgreSQL do OpenMetadata e Elasticsearch são desativados por
 padrão nesse modo. Eles são componentes de catálogo/governança, não um
 requisito para publicar documentos, executar as DAGs ou consultar o portal.
 
-1. No DNS, aponte um registro `A` de `atlas.lablivre.rocks` para o IP público
+1. No DNS, aponte um registro `A` de `atlas.gov-hub.io` para o IP público
    da VM. Libere a porta TCP 80 no firewall/provedor.
 
 2. Na VM, clone o repositório e crie o arquivo de ambiente de produção:
@@ -135,11 +135,11 @@ requisito para publicar documentos, executar as DAGs ou consultar o portal.
    ```bash
    docker compose -f docker-compose.yml -f docker-compose.prod.yml ps
    curl -fsS http://127.0.0.1/healthz
-   curl -fsS http://atlas.lablivre.rocks/healthz
+   curl -fsS http://atlas.gov-hub.io/healthz
    ```
 
    O primeiro comando deve retornar `{"status":"ok"}`. Em seguida, acesse
-   `http://atlas.lablivre.rocks` no navegador. Rotas como `/api/documents` e
+   `http://atlas.gov-hub.io` no navegador. Rotas como `/api/documents` e
    `/api/contracts` passam pelo mesmo host e não exigem configuração de CORS.
 
 6. Para investigar uma subida que falhou, consulte primeiro Nginx, portal e
@@ -155,7 +155,7 @@ os volumes persistentes de MinIO e dos bancos. O `down` simples é suficiente
 quando precisar parar a stack.
 
 Este Nginx serve HTTP na porta 80. Para HTTPS, mantenha-o atrás de um
-terminador TLS que gerencie o certificado de `atlas.lablivre.rocks` ou amplie a
+terminador TLS que gerencie o certificado de `atlas.gov-hub.io` ou amplie a
 configuração Nginx com certificados antes de expor o domínio publicamente.
 
 O bootstrap do MinIO publica a estrutura base e o contrato semântico de
