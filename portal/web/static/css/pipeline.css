@@ -96,9 +96,35 @@
 }
 .pipeline-step[data-state="failed"] .pipeline-state { color: var(--red); font-weight: 600; }
 
+/* Celular: cabecalho e icones um degrau menores, no mesmo espirito do resto
+   dos cartoes vivos do hero. */
+@media (max-width: 720px) {
+  .pipeline-head { gap: 0; }
+  .pipeline-status { font-size: var(--text-xs); }
+  .pipeline-steps { margin-top: var(--space-4); }
+  .pipeline-icon { width: 2rem; height: 2rem; border-radius: 9px; }
+  .pipeline-icon svg { width: .9rem; height: .9rem; }
+  .pipeline-name { font-size: .625rem; }
+  .pipeline-state { font-size: .625rem; }
+}
+
+/* Celular estreito: as cinco etapas dividem a largura do cartao. Colunas
+   fixas forcariam a largura minima do cartao e empurrariam a pagina para
+   fora da tela; abaixo de ~3.5rem por etapa o fluxo rola na horizontal. */
 @media (max-width: 520px) {
-  .pipeline-steps { grid-template-columns: repeat(5, 5rem); overflow-x: auto; scroll-snap-type: x proximity; padding-bottom: var(--space-2); }
+  .pipeline-steps {
+    grid-template-columns: repeat(5, minmax(3.5rem, 1fr));
+    gap: var(--space-1);
+    min-width: 0;
+    overflow-x: auto;
+    scroll-snap-type: x proximity;
+    padding-bottom: var(--space-1);
+  }
   .pipeline-step { scroll-snap-align: center; }
+  .pipeline-step:not(:last-child)::after { left: calc(50% + 1.25rem); width: calc(100% - 2.5rem); }
+  .pipeline-icon { width: 2rem; height: 2rem; }
+  .pipeline-icon svg { width: .9rem; height: .9rem; }
+  .pipeline-name, .pipeline-state { font-size: .625rem; }
 }
 
 /* Empilhado nao ha cartao sobreposto: o fluxo pode usar a largura inteira. */

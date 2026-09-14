@@ -116,6 +116,50 @@
 
 @media (max-width: 880px) {
   .lineage { padding: var(--space-6); }
-  .lineage-top { display: block; }
+  .lineage-top { display: block; position: relative; padding-right: 3rem; }
   .lineage-top-actions { margin-top: var(--space-4); }
+  /* O fechar fica no canto, como nos paineis; o status segue abaixo do texto. */
+  #lineage-close { position: absolute; top: 0; right: 0; }
+  .lineage-status { white-space: normal; }
+}
+
+/* Celular: um grafo de 62rem num scroll horizontal mostra um no e meio.
+   As etapas empilham na vertical, ligadas por um fio; o desvio de fallback
+   fica por ultimo com o proprio rotulo. */
+@media (max-width: 720px) {
+  .lineage { padding: var(--space-5) var(--space-4); border-radius: var(--radius-lg); }
+  .lineage-top h2 { font-size: var(--text-lg); }
+  .lineage-legend { margin: var(--space-6) 0 var(--space-4); }
+  .lineage-scroller { overflow: visible; padding-bottom: 0; }
+  .lineage-graph {
+    display: grid;
+    gap: var(--space-4);
+    min-width: 0;
+    height: auto;
+    padding: var(--space-4) var(--space-4) var(--space-4) var(--space-5);
+    overflow: hidden;
+  }
+  .lineage-graph::before {
+    content: "";
+    position: absolute;
+    top: var(--space-4);
+    bottom: var(--space-4);
+    left: calc(var(--space-5) + 1.5rem);
+    border-left: 1.5px solid color-mix(in srgb, var(--purple) 45%, transparent);
+  }
+  .lineage-edges { display: none; }
+  .lineage-node { position: relative; z-index: 1; left: auto; top: auto; width: auto; min-height: 0; padding: var(--space-2) var(--space-3); border-radius: var(--radius-sm); }
+  .lineage-node h3 { font-size: var(--text-sm); }
+  .lineage-node p { font-size: var(--text-xs); }
+  .node-fallback { order: 7; }
+  .lineage-status { padding: var(--space-1) var(--space-3); }
+  .edge-label {
+    position: relative;
+    z-index: 1;
+    order: 6;
+    left: auto;
+    top: auto;
+    justify-self: start;
+    margin-left: var(--space-4);
+  }
 }
