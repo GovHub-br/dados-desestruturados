@@ -6,6 +6,30 @@
 # O Compose de desenvolvimento continua inalterado: sem este arquivo, o portal
 # permanece exposto diretamente na PORTAL_PORT (8000 por padrão).
 services:
+  # Governança/catálogo não participa do deploy operacional inicial. Esses
+  # serviços continuam definidos no Compose base para desenvolvimento, mas só
+  # podem ser iniciados em produção se alguém optar explicitamente pelo perfil.
+  postgres-openmetadata:
+    profiles: ["openmetadata"]
+
+  elasticsearch:
+    profiles: ["openmetadata"]
+
+  openmetadata-migrate:
+    profiles: ["openmetadata"]
+
+  openmetadata-server:
+    profiles: ["openmetadata"]
+
+  openmetadata-bootstrap:
+    profiles: ["openmetadata"]
+
+  openmetadata-catalog-sync:
+    profiles: ["openmetadata"]
+
+  openmetadata-ingestion:
+    profiles: ["openmetadata"]
+
   portal:
     # Em produção, o portal só é acessível pela rede interna; o Nginx é a única
     # superfície HTTP publicada pela stack.
