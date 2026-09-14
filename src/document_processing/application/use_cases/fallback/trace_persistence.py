@@ -91,6 +91,9 @@ class FallbackTracePersistenceMixin:
             ),
             "persistido_em": datetime.now(UTC).isoformat(),
         }
+        reasoning_content = getattr(self.llm_client, "last_reasoning_content", None)
+        if isinstance(reasoning_content, str) and reasoning_content:
+            payload["reasoning_content"] = reasoning_content
         self.minio_client.put_json(
             object_key=self._fallback_object_key(
                 fallback_context,
@@ -129,6 +132,13 @@ class FallbackTracePersistenceMixin:
             ),
             "persistido_em": datetime.now(UTC).isoformat(),
         }
+        reasoning_content = (
+            error.reasoning_content
+            if isinstance(error, FallbackLlmClientError)
+            else getattr(self.llm_client, "last_reasoning_content", None)
+        )
+        if isinstance(reasoning_content, str) and reasoning_content:
+            payload["reasoning_content"] = reasoning_content
         if persisted_raw_response != parsed_response:
             payload["raw_response"] = persisted_raw_response
         self.minio_client.put_json(

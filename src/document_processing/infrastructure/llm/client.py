@@ -16,10 +16,15 @@ class FallbackLlmClientError(RuntimeError):
         *,
         raw_content: str | None = None,
         response_metadata: dict[str, Any] | None = None,
+        reasoning_content: str | None = None,
     ) -> None:
         super().__init__(message)
         self.raw_content = raw_content
         self.response_metadata = response_metadata
+        # Alguns provedores compativeis com OpenAI (como DeepSeek) separam o
+        # raciocinio do conteudo final. Ele e diagnostico de execucao e precisa
+        # sobreviver inclusive quando o JSON final e invalido ou vem vazio.
+        self.reasoning_content = reasoning_content
 
 
 class FallbackLlmClient:
@@ -33,9 +38,10 @@ class FallbackLlmClient:
     ) -> None:
         self.config_loader = config_loader or RUNTIME_CONFIG_LOADER
         self.http_client = http_client or HTTP_CLIENT
-        # A orquestracao persiste este resumo junto da resposta aceita. Em erros,
-        # os metadados continuam no proprio FallbackLlmClientError.
+        # A orquestracao persiste este resumo e o reasoning junto da resposta
+        # aceita. Em erros, ambos continuam no proprio FallbackLlmClientError.
         self.last_response_metadata: dict[str, Any] | None = None
+        self.last_reasoning_content: str | None = None
 
     def generate_json(
         self,
@@ -49,6 +55,7 @@ class FallbackLlmClient:
     ) -> tuple[dict[str, Any], str]:
         """Chama a LLM configurada e exige que o conteudo retornado seja JSON object."""
         self.last_response_metadata = None
+        self.last_reasoning_content = None
         chat_messages = self._build_chat_messages(
             system_prompt=system_prompt,
             user_payload=user_payload,
@@ -75,8 +82,17 @@ class FallbackLlmClient:
             )
             response_metadata = self._openai_response_metadata(raw)
             self.last_response_metadata = response_metadata
-            content = self._extract_openai_content(raw, response_metadata=response_metadata)
-            return self._parse_json_with_metadata(content, response_metadata), content
+            self.last_reasoning_content = self._openai_reasoning_content(raw)
+            try:
+                content = self._extract_openai_content(raw, response_metadata=response_metadata)
+                return self._parse_json_with_metadata(
+                    content,
+                    response_metadata,
+                    reasoning_content=self.last_reasoning_content,
+                ), content
+            except FallbackLlmClientError as exc:
+                exc.reasoning_content = exc.reasoning_content or self.last_reasoning_content
+                raise
 
         if provider == "ollama":
             raw = self._call_ollama(
@@ -89,8 +105,17 @@ class FallbackLlmClient:
             )
             response_metadata = self._ollama_response_metadata(raw)
             self.last_response_metadata = response_metadata
-            content = self._extract_ollama_content(raw, response_metadata=response_metadata)
-            return self._parse_json_with_metadata(content, response_metadata), content
+            self.last_reasoning_content = self._ollama_reasoning_content(raw)
+            try:
+                content = self._extract_ollama_content(raw, response_metadata=response_metadata)
+                return self._parse_json_with_metadata(
+                    content,
+                    response_metadata,
+                    reasoning_content=self.last_reasoning_content,
+                ), content
+            except FallbackLlmClientError as exc:
+                exc.reasoning_content = exc.reasoning_content or self.last_reasoning_content
+                raise
 
         raise FallbackLlmClientError(
             "FALLBACK_LLM_PROVIDER invalido. Use 'openai' ou 'ollama'."
@@ -287,13 +312,33 @@ class FallbackLlmClient:
     def _parse_json_with_metadata(
         content: str,
         response_metadata: dict[str, Any],
+        *,
+        reasoning_content: str | None = None,
     ) -> dict[str, Any]:
         """Propaga os metadados do envelope quando a resposta textual nao for JSON."""
         try:
             return FallbackLlmClient._parse_json_content(content)
         except FallbackLlmClientError as exc:
             exc.response_metadata = response_metadata
+            exc.reasoning_content = reasoning_content
             raise
+
+    @staticmethod
+    def _openai_reasoning_content(payload: dict[str, Any]) -> str | None:
+        """Extrai o reasoning textual de respostas Chat Completions compativeis."""
+        try:
+            message = payload["choices"][0]["message"]
+        except (KeyError, IndexError, TypeError):
+            return None
+        reasoning = message.get("reasoning_content") if isinstance(message, dict) else None
+        return reasoning if isinstance(reasoning, str) and reasoning else None
+
+    @staticmethod
+    def _ollama_reasoning_content(payload: dict[str, Any]) -> str | None:
+        """Extrai o campo `thinking` quando um modelo Ollama o disponibiliza."""
+        message = payload.get("message")
+        reasoning = message.get("thinking") if isinstance(message, dict) else None
+        return reasoning if isinstance(reasoning, str) and reasoning else None
 
     @staticmethod
     def _openai_response_metadata(payload: dict[str, Any]) -> dict[str, Any]:
@@ -323,6 +368,7 @@ class FallbackLlmClient:
         """Mantem observabilidade equivalente para respostas do Ollama."""
         message = payload.get("message", {})
         content = message.get("content") if isinstance(message, dict) else payload.get("response")
+        reasoning = message.get("thinking") if isinstance(message, dict) else None
         return {
             "provider": "ollama",
             "finish_reason": payload.get("done_reason"),
@@ -332,6 +378,8 @@ class FallbackLlmClient:
             },
             "content_presente": isinstance(content, str) and bool(content.strip()),
             "content_caracteres": len(content) if isinstance(content, str) else 0,
+            "reasoning_content_presente": isinstance(reasoning, str) and bool(reasoning.strip()),
+            "reasoning_content_caracteres": len(reasoning) if isinstance(reasoning, str) else 0,
             "envelope_sanitizado": FallbackLlmClient._sanitize_api_envelope(payload),
         }
 

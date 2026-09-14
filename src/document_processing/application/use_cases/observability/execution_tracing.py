@@ -176,6 +176,28 @@ class AtlasExecutionTracer:
                 index.setdefault(stage, {}).setdefault(attempt, {})[kind] = key
         return index
 
+    @staticmethod
+    def _generation_output(
+        *,
+        response: dict[str, Any],
+        error: dict[str, Any],
+    ) -> dict[str, Any] | None:
+        """Mantem o JSON final e o reasoning no mesmo output da generation.
+
+        O conteudo completo vem dos artefatos de resposta/erro persistidos no
+        MinIO. Esta projecao deliberadamente nao tenta chamar o provedor de novo:
+        abrir o trace no Langfuse nunca gera custo nem altera a execucao.
+        """
+        artifact = response or error
+        parsed_response = artifact.get("parsed_response")
+        reasoning_content = artifact.get("reasoning_content")
+        if parsed_response is None and not reasoning_content:
+            return None
+        output: dict[str, Any] = {"parsed_response": parsed_response}
+        if isinstance(reasoning_content, str) and reasoning_content:
+            output["reasoning_content"] = reasoning_content
+        return output
+
     # -- projecao do fallback (DAG 3) --------------------------------------
 
     def trace_fallback_execution(self, *, fallback_context: dict[str, Any]) -> dict[str, Any]:
@@ -355,8 +377,10 @@ class AtlasExecutionTracer:
                         "system_prompt": request.get("system_prompt"),
                         "user_payload": request.get("user_payload"),
                     },
-                    output_payload=response.get("parsed_response")
-                    or error.get("parsed_response"),
+                    output_payload=self._generation_output(
+                        response=response,
+                        error=error,
+                    ),
                     usage=usage if isinstance(usage, dict) else None,
                     level="ERROR" if failed else "DEFAULT",
                     status_message=error.get("error_message") if failed else None,
@@ -365,6 +389,9 @@ class AtlasExecutionTracer:
                         "tentativa": attempt,
                         "provider": request.get("provider"),
                         "error_type": error.get("error_type"),
+                        "reasoning_content_presente": bool(
+                            (response or error).get("reasoning_content")
+                        ),
                         "prompts_utilizados": prompts_usados or None,
                     },
                     prompt_name=(
