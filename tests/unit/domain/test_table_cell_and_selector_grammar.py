@@ -139,3 +139,18 @@ def test_validador_de_candidato_usa_a_diagnose_do_e_comercial():
     }
     with pytest.raises(RuntimeError, match="concatena condicoes com '&'"):
         FallbackCandidateValidationService().validate_candidate_layout(candidato, contexto)
+
+
+def test_rotulo_exato_vence_sinonimo_do_contrato() -> None:
+    """Sinonimos herdados do contrato nao podem casar uma linha vizinha antes da pedida."""
+    from document_processing.application.use_cases.resolution.artifact_readers import (
+        ArtifactReaderMixin,
+    )
+
+    reader = ArtifactReaderMixin()
+    table = {"rows": [["Jun/25", "2.6"], ["Mar/26", "3.3"], ["Jun/26", "3.3"]]}
+    accepted = {"jun/26", "mar/26", "trimestre"}
+
+    assert reader._find_row_index(table, accepted, 0) == 1
+    assert reader._find_row_index(table, accepted, 0, exact={"jun/26"}) == 2
+    assert reader._find_row_index(table, accepted, 0, exact={"jun/26"}, preferred_row_index=1) == 1

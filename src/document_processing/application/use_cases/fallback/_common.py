@@ -29,6 +29,10 @@ from document_processing.domain.fallback.classification import (
     FALLBACK_CLASSIFICATION_SERVICE,
     FallbackClassificationService,
 )
+from document_processing.domain.fallback.evidence_prefilter import (
+    prefilter_inventory,
+    prefilter_payload,
+)
 from document_processing.domain.fallback.evidence_pruning import (
     PruningDecision,
     prune_generic_evidence,

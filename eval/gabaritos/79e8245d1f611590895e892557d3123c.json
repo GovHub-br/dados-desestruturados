@@ -1,0 +1,118 @@
+{
+  "document_id": "79e8245d1f611590895e892557d3123c",
+  "entidade": "itau",
+  "dominio": "bancos",
+  "execution_id": "dag_detecta_pdf_e_extrai__itau__2T26__20260910T161613Z",
+  "contrato": {
+    "tipo_documento": "bancos",
+    "versao": "2.2.0"
+  },
+  "identidade": {
+    "entidade": "Itau Unibanco Holding S.A.",
+    "periodo": "2T26"
+  },
+  "artefatos_esperados_por_requisito": {
+    "indicadores_monetarios.dados.valores.valor": [
+      "tables/table002.json",
+      "tables/table007.json"
+    ],
+    "indicadores_percentuais.dados.valores.valor": [
+      "charts/chart004.json"
+    ]
+  },
+  "ancoragens": {
+    "indicadores_monetarios.dados.valores.valor": [
+      {
+        "seletores": {
+          "indicador": "carteira_de_credito",
+          "periodo": "jun/26"
+        },
+        "arquivo_origem": "tables/table002.json",
+        "indice_linha": 10,
+        "rotulo_linha": "Total¹",
+        "indice_coluna": 1,
+        "cabecalho_coluna": "jun/26",
+        "valor": 1522.4,
+        "obrigatorio": true,
+        "periodo": "jun/26"
+      },
+      {
+        "seletores": {
+          "indicador": "margem_financeira",
+          "periodo": "2T26"
+        },
+        "arquivo_origem": "tables/table007.json",
+        "indice_linha": 1,
+        "rotulo_linha": "MargemFinanceira Gerencial",
+        "indice_coluna": 1,
+        "cabecalho_coluna": "2T26",
+        "valor": 33488.0,
+        "obrigatorio": true,
+        "periodo": "2T26"
+      },
+      {
+        "seletores": {
+          "indicador": "margem_financeira_com_clientes",
+          "periodo": "2T26"
+        },
+        "arquivo_origem": "tables/table007.json",
+        "indice_linha": 2,
+        "rotulo_linha": "MargemFinanceira comClientes",
+        "indice_coluna": 1,
+        "cabecalho_coluna": "2T26",
+        "valor": 32557.0,
+        "obrigatorio": false,
+        "periodo": "2T26"
+      },
+      {
+        "seletores": {
+          "indicador": "margem_financeira_com_mercado",
+          "periodo": "2T26"
+        },
+        "arquivo_origem": "tables/table007.json",
+        "indice_linha": 3,
+        "rotulo_linha": "MargemFinanceiracomo Mercado",
+        "indice_coluna": 1,
+        "cabecalho_coluna": "2T26",
+        "valor": 931.0,
+        "obrigatorio": false,
+        "periodo": "2T26"
+      },
+      {
+        "seletores": {
+          "indicador": "resultado_recorrente",
+          "periodo": "2T26"
+        },
+        "arquivo_origem": "tables/table007.json",
+        "indice_linha": 17,
+        "rotulo_linha": "Resultado Recorrente Gerencial",
+        "indice_coluna": 1,
+        "cabecalho_coluna": "2T26",
+        "valor": 12407.0,
+        "obrigatorio": true,
+        "periodo": "2T26"
+      }
+    ],
+    "indicadores_percentuais.dados.valores.valor": [
+      {
+        "seletores": {
+          "indicador": "inadimplencia_90_dias",
+          "periodo": "jun/26"
+        },
+        "arquivo_origem": "charts/chart004.json",
+        "indice_linha": 8,
+        "rotulo_linha": "jun/26",
+        "indice_coluna": 2,
+        "cabecalho_coluna": "Total",
+        "valor": 1.9,
+        "obrigatorio": true,
+        "periodo": "jun/26"
+      }
+    ]
+  },
+  "ausencias_esperadas": [],
+  "origem": "derivado da execucao baseline0 (candidato validado + auditoria da resolucao local), valores conferidos contra atlas-e2e-regressao / gabarito curado de bancos",
+  "revisao_pendente": [
+    "capital_principal existe no documento e nao foi mapeado na baseline0 (falso negativo); nao incluido aqui por falta de ancoragem conferida"
+  ]
+}

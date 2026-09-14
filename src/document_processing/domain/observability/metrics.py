@@ -402,6 +402,73 @@ def artifact_selection_quality_metrics(
     ]
 
 
+def evidence_prefilter_metrics(
+    prefilter: dict[str, Any],
+    *,
+    selected_paths: list[str] | None = None,
+) -> list[MetricValue]:
+    """Mede o pre-filtro deterministico da fase 0 (sem gabarito).
+
+    ``selecao_candidatos_por_requisito``: media de candidatos por requisito —
+    quanto menor, mais o contrato explica a evidencia. ``selecao_prefiltro_reducao``:
+    fracao do inventario que o pre-filtro dispensou. ``selecao_escolha_dentro_do_prefiltro``:
+    fracao dos artefatos escolhidos pela LLM que estavam entre os candidatos por termo
+    (nao apenas por amostra incompleta).
+    """
+    candidates = _as_dict(prefilter.get("candidatos_por_requisito"))
+    total_items = int(prefilter.get("total_artefatos_inventario") or 0)
+    if not candidates or not total_items:
+        return []
+    unidade = str(prefilter.get("unidade_mapeamento") or "")
+    contexto = {"unidade_mapeamento": unidade} if unidade else {}
+    counts = [len(_as_list(items)) for items in candidates.values()]
+    union: set[str] = set()
+    by_term: set[str] = set()
+    for items in candidates.values():
+        for item in _as_list(items):
+            entry = _as_dict(item)
+            path = str(entry.get("path") or "").strip("/")
+            if not path:
+                continue
+            union.add(path)
+            if str(entry.get("motivo") or "") == "termo_casado":
+                by_term.add(path)
+    metrics = [
+        MetricValue(
+            name="selecao_candidatos_por_requisito",
+            value=float(sum(counts)) / len(counts),
+            comment=(
+                "Media de artefatos candidatos por requisito apos o pre-filtro por "
+                f"sinonimos do contrato; inventario com {total_items} artefatos."
+            ),
+            metadata=contexto,
+        ),
+        MetricValue(
+            name="selecao_prefiltro_reducao",
+            value=_ratio(total_items - len(union), total_items),
+            comment=(
+                "Fracao do inventario dispensada pelo pre-filtro deterministico. "
+                f"{len(union)} de {total_items} artefatos seguiram como candidatos."
+            ),
+            metadata=contexto,
+        ),
+    ]
+    chosen = [str(path).strip("/") for path in (selected_paths or []) if str(path).strip()]
+    if chosen:
+        metrics.append(
+            MetricValue(
+                name="selecao_escolha_dentro_do_prefiltro",
+                value=_ratio(sum(1 for path in chosen if path in by_term), len(chosen)),
+                comment=(
+                    "Fracao dos artefatos escolhidos que o pre-filtro ja apontava por "
+                    f"termo do contrato. {len(chosen)} escolhidos."
+                ),
+                metadata=contexto,
+            )
+        )
+    return metrics
+
+
 def fallback_execution_metrics(
     *,
     scope: str | None,

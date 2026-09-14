@@ -26,3 +26,5 @@ airflow/state/*
 *.egg-info/
 
 resultados*
+# Relatorios do harness da assinatura de layout (saida derivada do Langfuse)
+eval/relatorios/

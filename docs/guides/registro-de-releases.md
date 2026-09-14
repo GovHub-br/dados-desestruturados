@@ -118,3 +118,25 @@ Selecao de artefatos na mesma execucao: precisao 0,17 (percentuais) e 0,25
 **Antes de medir o lote, rode a linha de base limpa** com
 `ATLAS_RELEASE=base-contrato-v2` a partir do codigo anterior ao lote. Sem isso a
 comparacao herda a mistura descrita acima.
+
+## Lote 4: pre-requisitos e fase 0 do plano da assinatura de layout
+
+Linha de base: `baseline0` (2026-09-13/14), codigo `1c67bf2`, contratos
+construtoras v1.8.0 e bancos v2.1.0, 10 documentos (8 construtoras + Itau e
+Santander) em criacao inicial forcada. O trace do Itau foi reprojetado por
+backfill (a ingestao caiu enquanto o host dormia). Scores `assinatura_f*`
+calculados por `scripts/avaliar_assinatura_layout.py --release baseline0`.
+
+| rotulo | itens | hipotese | metrica-alvo | guarda |
+| --- | --- | --- | --- | --- |
+| `exp-prereq-fase0` | P1, P2, P3, F0, 3.2 (rotulo exato) | com `chaves_de_item{chave, origem_valor}`, `papeis` e `evidencia_esperada` no contrato, mais o pre-filtro de evidencia, a LLM erra menos a gramatica das chaves e escolhe menos artefatos | `assinatura_f1_filtro_chave_declarada` (= 1,0), `assinatura_f0_selecao_precisao`, `selecao_prefiltro_reducao` | `assinatura_f0_selecao_revocacao` (= 1,0), `assinatura_f1_cobertura_obrigatorios`, `llm_tentativas` (validador mais estrito nao pode explodir) |
+
+- Contratos publicados: `contratos/construtoras/v1.9.0/`, `contratos/bancos/v2.2.0/`
+  (bootstrap atualizado). Bancos v2.2.0 retira rotulos de periodo de
+  `escopo_periodo.sinonimos` — era o que fazia o Santander perder o Jun/26.
+- P2 provado antes da rodada: os 9 candidatos da baseline0 resolvidos localmente
+  com o codigo novo e os contratos novos sao identicos aos do codigo anterior
+  (so `fonte` deixa de ser nulo em construtoras).
+- Gabaritos: `eval/gabaritos/<document_id>.json` (10 documentos).
+- Operacional: rodar com `caffeinate -i`; o sleep do host mata as tasks por
+  falta de heartbeat e derruba a ingestao no Langfuse.

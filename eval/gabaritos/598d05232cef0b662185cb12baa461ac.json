@@ -1,0 +1,121 @@
+{
+  "document_id": "598d05232cef0b662185cb12baa461ac",
+  "entidade": "cury",
+  "dominio": "construtoras",
+  "execution_id": "dag_detecta_pdf_e_extrai__cury__2T26__20260710T002738Z",
+  "contrato": {
+    "tipo_documento": "construtoras",
+    "versao": "1.9.0"
+  },
+  "identidade": {
+    "entidade": "Cury",
+    "periodo": "2T26"
+  },
+  "artefatos_esperados_por_requisito": {
+    "balancos_das_empresas.lancamentos.dados.valores.valor": [
+      "tables/table001.json"
+    ],
+    "balancos_das_empresas.vendas.dados.valores.valor": [
+      "tables/table002.json"
+    ]
+  },
+  "ancoragens": {
+    "balancos_das_empresas.lancamentos.dados.valores.valor": [
+      {
+        "seletores": {
+          "empresa": "cury",
+          "papel_periodo": "mesmo_periodo_ano_anterior"
+        },
+        "arquivo_origem": "tables/table001.json",
+        "indice_linha": 2,
+        "rotulo_linha": "Número de Unidades",
+        "indice_coluna": 4,
+        "cabecalho_coluna": "2T25",
+        "valor": 6588.0,
+        "obrigatorio": false,
+        "periodo": "2T25",
+        "conferido_e2e": true
+      },
+      {
+        "seletores": {
+          "empresa": "cury",
+          "papel_periodo": "periodo_comparativo_anterior"
+        },
+        "arquivo_origem": "tables/table001.json",
+        "indice_linha": 2,
+        "rotulo_linha": "Número de Unidades",
+        "indice_coluna": 2,
+        "cabecalho_coluna": "1T26",
+        "valor": 8001.0,
+        "obrigatorio": false,
+        "periodo": "1T26",
+        "conferido_e2e": true
+      },
+      {
+        "seletores": {
+          "empresa": "cury",
+          "papel_periodo": "periodo_referencia"
+        },
+        "arquivo_origem": "tables/table001.json",
+        "indice_linha": 2,
+        "rotulo_linha": "Número de Unidades",
+        "indice_coluna": 1,
+        "cabecalho_coluna": "2T26",
+        "valor": 6549.0,
+        "obrigatorio": true,
+        "periodo": "2T26",
+        "conferido_e2e": true
+      }
+    ],
+    "balancos_das_empresas.vendas.dados.valores.valor": [
+      {
+        "seletores": {
+          "empresa": "cury",
+          "papel_periodo": "mesmo_periodo_ano_anterior"
+        },
+        "arquivo_origem": "tables/table002.json",
+        "indice_linha": 1,
+        "rotulo_linha": "Número de Unidades",
+        "indice_coluna": 4,
+        "cabecalho_coluna": "2T25",
+        "valor": 8067.0,
+        "obrigatorio": false,
+        "periodo": "2T25",
+        "conferido_e2e": true
+      },
+      {
+        "seletores": {
+          "empresa": "cury",
+          "papel_periodo": "periodo_comparativo_anterior"
+        },
+        "arquivo_origem": "tables/table002.json",
+        "indice_linha": 1,
+        "rotulo_linha": "Número de Unidades",
+        "indice_coluna": 2,
+        "cabecalho_coluna": "1T26",
+        "valor": 7786.0,
+        "obrigatorio": false,
+        "periodo": "1T26",
+        "conferido_e2e": true
+      },
+      {
+        "seletores": {
+          "empresa": "cury",
+          "papel_periodo": "periodo_referencia"
+        },
+        "arquivo_origem": "tables/table002.json",
+        "indice_linha": 1,
+        "rotulo_linha": "Número de Unidades",
+        "indice_coluna": 1,
+        "cabecalho_coluna": "2T26",
+        "valor": 6697.0,
+        "obrigatorio": true,
+        "periodo": "2T26",
+        "conferido_e2e": true
+      }
+    ]
+  },
+  "ausencias_esperadas": [],
+  "origem": "derivado da execucao baseline0 (candidato validado + auditoria da resolucao local), valores conferidos contra atlas-e2e-regressao / gabarito curado de bancos",
+  "revisao_pendente": []
+}

@@ -189,6 +189,7 @@ class SourceMappingResolversMixin:
             preferred_row_index=self._optional_int(
                 row_selector.get("indice_linha_esperado")
             ),
+            exact={self._normalize_text(str(row_selector.get("valor_aceito", "")))},
         )
         col_idx = int(column_selector.get("indice_coluna_esperado", -1))
         header = schema[col_idx] if col_idx >= 0 and col_idx < len(schema) else None

@@ -1,0 +1,121 @@
+{
+  "document_id": "cd576a419b93b81890ea676edd0cfedd",
+  "entidade": "tenda",
+  "dominio": "construtoras",
+  "execution_id": "dag_detecta_pdf_e_extrai__tenda__2T26__20260709T234655Z",
+  "contrato": {
+    "tipo_documento": "construtoras",
+    "versao": "1.9.0"
+  },
+  "identidade": {
+    "entidade": "Tenda",
+    "periodo": "2T26"
+  },
+  "artefatos_esperados_por_requisito": {
+    "balancos_das_empresas.lancamentos.dados.valores.valor": [
+      "tables/table001.json"
+    ],
+    "balancos_das_empresas.vendas.dados.valores.valor": [
+      "tables/table002.json"
+    ]
+  },
+  "ancoragens": {
+    "balancos_das_empresas.lancamentos.dados.valores.valor": [
+      {
+        "seletores": {
+          "empresa": "Tenda",
+          "papel_periodo": "mesmo_periodo_ano_anterior"
+        },
+        "arquivo_origem": "tables/table001.json",
+        "indice_linha": 3,
+        "rotulo_linha": "Número de unidades",
+        "indice_coluna": 4,
+        "cabecalho_coluna": "2T25",
+        "valor": 5016.0,
+        "obrigatorio": false,
+        "periodo": "2T25",
+        "conferido_e2e": true
+      },
+      {
+        "seletores": {
+          "empresa": "Tenda",
+          "papel_periodo": "periodo_comparativo_anterior"
+        },
+        "arquivo_origem": "tables/table001.json",
+        "indice_linha": 3,
+        "rotulo_linha": "Número de unidades",
+        "indice_coluna": 2,
+        "cabecalho_coluna": "1T26",
+        "valor": 6083.0,
+        "obrigatorio": false,
+        "periodo": "1T26",
+        "conferido_e2e": true
+      },
+      {
+        "seletores": {
+          "empresa": "Tenda",
+          "papel_periodo": "periodo_referencia"
+        },
+        "arquivo_origem": "tables/table001.json",
+        "indice_linha": 3,
+        "rotulo_linha": "Número de unidades",
+        "indice_coluna": 1,
+        "cabecalho_coluna": "2T26",
+        "valor": 6715.0,
+        "obrigatorio": true,
+        "periodo": "2T26",
+        "conferido_e2e": true
+      }
+    ],
+    "balancos_das_empresas.vendas.dados.valores.valor": [
+      {
+        "seletores": {
+          "empresa": "Tenda",
+          "papel_periodo": "mesmo_periodo_ano_anterior"
+        },
+        "arquivo_origem": "tables/table002.json",
+        "indice_linha": 2,
+        "rotulo_linha": "Número de unidades",
+        "indice_coluna": 4,
+        "cabecalho_coluna": "2T25",
+        "valor": 5310.0,
+        "obrigatorio": false,
+        "periodo": "2T25",
+        "conferido_e2e": true
+      },
+      {
+        "seletores": {
+          "empresa": "Tenda",
+          "papel_periodo": "periodo_comparativo_anterior"
+        },
+        "arquivo_origem": "tables/table002.json",
+        "indice_linha": 2,
+        "rotulo_linha": "Número de unidades",
+        "indice_coluna": 2,
+        "cabecalho_coluna": "1T26",
+        "valor": 6647.0,
+        "obrigatorio": false,
+        "periodo": "1T26",
+        "conferido_e2e": true
+      },
+      {
+        "seletores": {
+          "empresa": "Tenda",
+          "papel_periodo": "periodo_referencia"
+        },
+        "arquivo_origem": "tables/table002.json",
+        "indice_linha": 2,
+        "rotulo_linha": "Número de unidades",
+        "indice_coluna": 1,
+        "cabecalho_coluna": "2T26",
+        "valor": 6154.0,
+        "obrigatorio": true,
+        "periodo": "2T26",
+        "conferido_e2e": true
+      }
+    ]
+  },
+  "ausencias_esperadas": [],
+  "origem": "derivado da execucao baseline0 (candidato validado + auditoria da resolucao local), valores conferidos contra atlas-e2e-regressao / gabarito curado de bancos",
+  "revisao_pendente": []
+}

@@ -1,0 +1,121 @@
+{
+  "document_id": "fd5cc6115dc5844bd417936fb72df0e6",
+  "entidade": "plano-plano",
+  "dominio": "construtoras",
+  "execution_id": "dag_detecta_pdf_e_extrai__plano-plano__2T26__20260722T140001Z",
+  "contrato": {
+    "tipo_documento": "construtoras",
+    "versao": "1.9.0"
+  },
+  "identidade": {
+    "entidade": "Plano&Plano",
+    "periodo": "2T26"
+  },
+  "artefatos_esperados_por_requisito": {
+    "balancos_das_empresas.lancamentos.dados.valores.valor": [
+      "tables/table001.json"
+    ],
+    "balancos_das_empresas.vendas.dados.valores.valor": [
+      "tables/table002.json"
+    ]
+  },
+  "ancoragens": {
+    "balancos_das_empresas.lancamentos.dados.valores.valor": [
+      {
+        "seletores": {
+          "empresa": "Plano&Plano",
+          "papel_periodo": "periodo_referencia"
+        },
+        "arquivo_origem": "tables/table001.json",
+        "indice_linha": 2,
+        "rotulo_linha": "Unidades",
+        "indice_coluna": 1,
+        "cabecalho_coluna": "2T26",
+        "valor": 3138.0,
+        "obrigatorio": true,
+        "periodo": "2T26",
+        "conferido_e2e": true
+      },
+      {
+        "seletores": {
+          "empresa": "Plano&Plano",
+          "periodo": "1T26"
+        },
+        "arquivo_origem": "tables/table001.json",
+        "indice_linha": 2,
+        "rotulo_linha": "Unidades",
+        "indice_coluna": 2,
+        "cabecalho_coluna": "1T26",
+        "valor": 3663.0,
+        "obrigatorio": false,
+        "periodo": "1T26",
+        "conferido_e2e": true
+      },
+      {
+        "seletores": {
+          "empresa": "Plano&Plano",
+          "periodo": "2T25"
+        },
+        "arquivo_origem": "tables/table001.json",
+        "indice_linha": 2,
+        "rotulo_linha": "Unidades",
+        "indice_coluna": 4,
+        "cabecalho_coluna": "2T25",
+        "valor": 2749.0,
+        "obrigatorio": false,
+        "periodo": "2T25",
+        "conferido_e2e": true
+      }
+    ],
+    "balancos_das_empresas.vendas.dados.valores.valor": [
+      {
+        "seletores": {
+          "empresa": "Plano&Plano",
+          "papel_periodo": "periodo_referencia"
+        },
+        "arquivo_origem": "tables/table002.json",
+        "indice_linha": 1,
+        "rotulo_linha": "Vendas Contratadas Brutas (Unidades)",
+        "indice_coluna": 1,
+        "cabecalho_coluna": "2T26",
+        "valor": 3601.0,
+        "obrigatorio": true,
+        "periodo": "2T26",
+        "conferido_e2e": true
+      },
+      {
+        "seletores": {
+          "empresa": "Plano&Plano",
+          "periodo": "1T26"
+        },
+        "arquivo_origem": "tables/table002.json",
+        "indice_linha": 1,
+        "rotulo_linha": "Vendas Contratadas Brutas (Unidades)",
+        "indice_coluna": 2,
+        "cabecalho_coluna": "1T26",
+        "valor": 3536.0,
+        "obrigatorio": false,
+        "periodo": "1T26",
+        "conferido_e2e": true
+      },
+      {
+        "seletores": {
+          "empresa": "Plano&Plano",
+          "periodo": "2T25"
+        },
+        "arquivo_origem": "tables/table002.json",
+        "indice_linha": 1,
+        "rotulo_linha": "Vendas Contratadas Brutas (Unidades)",
+        "indice_coluna": 4,
+        "cabecalho_coluna": "2T25",
+        "valor": 3570.0,
+        "obrigatorio": false,
+        "periodo": "2T25",
+        "conferido_e2e": true
+      }
+    ]
+  },
+  "ausencias_esperadas": [],
+  "origem": "derivado da execucao baseline0 (candidato validado + auditoria da resolucao local), valores conferidos contra atlas-e2e-regressao / gabarito curado de bancos",
+  "revisao_pendente": []
+}
