@@ -16,6 +16,9 @@ from document_processing.application.use_cases.fallback.prompts import (
 )
 from document_processing.application.use_cases.fallback.service import FallbackLlmService
 from document_processing.application.use_cases.resolution.resolve_schema import SchemaResolutionService
+from document_processing.application.use_cases.observability.execution_tracing import (
+    AtlasExecutionTracer,
+)
 from document_processing.domain.contracts.mapping_requirements import (
     mapping_requirements_from_context,
     mapping_requirements_payload,
@@ -1350,6 +1353,31 @@ class Dag3MinimalReimplementationTest(unittest.TestCase):
         self.assertTrue(metadata["reasoning_content_presente"])
         self.assertEqual(metadata["reasoning_content_caracteres"], len("raciocinio do modelo"))
 
+    def test_invalid_openai_json_keeps_reasoning_for_diagnostics(self) -> None:
+        response = {
+            "choices": [
+                {
+                    "message": {
+                        "content": '{"campo":',
+                        "reasoning_content": "O objeto ficou incompleto no fim.",
+                    }
+                }
+            ]
+        }
+        metadata = FallbackLlmClient._openai_response_metadata(response)
+
+        with self.assertRaises(FallbackLlmClientError) as raised:
+            FallbackLlmClient._parse_json_with_metadata(
+                '{"campo":',
+                metadata,
+                reasoning_content=FallbackLlmClient._openai_reasoning_content(response),
+            )
+
+        self.assertEqual(
+            raised.exception.reasoning_content,
+            "O objeto ficou incompleto no fim.",
+        )
+
     def test_fallback_prefix_uses_dag3_execution_id(self) -> None:
         service = FallbackLlmService(
             config_loader=_ConfigLoader(),
@@ -1417,6 +1445,66 @@ class Dag3MinimalReimplementationTest(unittest.TestCase):
         self.assertEqual(
             minio.writes[0][1]["raw_response"],
             '{"mapeamento_canonico":',
+        )
+
+    def test_persists_reasoning_in_response_and_error_artifacts(self) -> None:
+        minio = _MinioRecorder()
+        service = FallbackLlmService(
+            config_loader=_ConfigLoader(),
+            minio_client=minio,
+        )
+        service.llm_client = SimpleNamespace(
+            last_response_metadata={"usage": {"total_tokens": 12}},
+            last_reasoning_content="Raciocinio aceito pelo provedor.",
+        )
+        fallback_context = {
+            "company_slug": "cury",
+            "document_id": "doc-1",
+            "execution_id": "dag1__old",
+            "fallback_execution_id": "dag3__manual",
+        }
+
+        service._persist_llm_response(
+            fallback_context=fallback_context,
+            stage="layout_signature_candidato",
+            attempt=0,
+            parsed_response={"campo": "valor"},
+            raw_response='{"campo":"valor"}',
+        )
+        service._persist_llm_error(
+            fallback_context=fallback_context,
+            stage="layout_signature_candidato",
+            attempt=1,
+            error=FallbackLlmClientError(
+                "JSON invalido",
+                reasoning_content="Raciocinio da tentativa invalida.",
+            ),
+        )
+
+        self.assertEqual(
+            minio.writes[0][1]["reasoning_content"],
+            "Raciocinio aceito pelo provedor.",
+        )
+        self.assertEqual(
+            minio.writes[1][1]["reasoning_content"],
+            "Raciocinio da tentativa invalida.",
+        )
+
+    def test_generation_output_contains_reasoning_from_persisted_artifact(self) -> None:
+        output = AtlasExecutionTracer._generation_output(
+            response={
+                "parsed_response": {"campo": "valor"},
+                "reasoning_content": "Raciocinio da resposta.",
+            },
+            error={},
+        )
+
+        self.assertEqual(
+            output,
+            {
+                "parsed_response": {"campo": "valor"},
+                "reasoning_content": "Raciocinio da resposta.",
+            },
         )
 
     def test_omits_raw_response_when_it_duplicates_parsed_error_response(self) -> None:
