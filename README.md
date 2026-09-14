@@ -90,6 +90,74 @@ O portal fica disponível em `http://localhost:8000` por padrão. As portas dos
 demais serviços, credenciais locais e integrações opcionais são configuradas
 no `.env` e no [docker-compose.yml](docker-compose.yml).
 
+### Produção: deploy ponta a ponta
+
+A produção usa o [docker-compose.prod.yml](docker-compose.prod.yml) como uma
+sobreposição do Compose base. Ela adiciona o Nginx, publica apenas a porta 80
+e deixa o `portal` acessível somente pela rede Docker. O Nginx entrega o front
+em `/` e encaminha `/api/*` para o FastAPI, portanto navegador e API usam a
+mesma origem: `atlas.lablivre.rocks`.
+
+O OpenMetadata, PostgreSQL do OpenMetadata e Elasticsearch são desativados por
+padrão nesse modo. Eles são componentes de catálogo/governança, não um
+requisito para publicar documentos, executar as DAGs ou consultar o portal.
+
+1. No DNS, aponte um registro `A` de `atlas.lablivre.rocks` para o IP público
+   da VM. Libere a porta TCP 80 no firewall/provedor.
+
+2. Na VM, clone o repositório e crie o arquivo de ambiente de produção:
+
+   ```bash
+   git clone <URL_DO_REPOSITORIO> atlas
+   cd atlas
+   cp .env.example .env
+   nano .env
+   ```
+
+   Troque ao menos as senhas padrão de Postgres, Airflow e MinIO. Mantenha
+   `ATLAS_HTTP_PORT=80`; não é preciso declarar `PORTAL_PORT`, pois a porta
+   interna 8000 não é publicada em produção.
+
+3. Valide a combinação de arquivos antes de iniciar:
+
+   ```bash
+   docker compose -f docker-compose.yml -f docker-compose.prod.yml config --quiet
+   ```
+
+4. Construa e suba a stack:
+
+   ```bash
+   docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
+   ```
+
+5. Espere os health checks e valide a entrada HTTP:
+
+   ```bash
+   docker compose -f docker-compose.yml -f docker-compose.prod.yml ps
+   curl -fsS http://127.0.0.1/healthz
+   curl -fsS http://atlas.lablivre.rocks/healthz
+   ```
+
+   O primeiro comando deve retornar `{"status":"ok"}`. Em seguida, acesse
+   `http://atlas.lablivre.rocks` no navegador. Rotas como `/api/documents` e
+   `/api/contracts` passam pelo mesmo host e não exigem configuração de CORS.
+
+6. Para investigar uma subida que falhou, consulte primeiro Nginx, portal e
+   MinIO:
+
+   ```bash
+   docker compose -f docker-compose.yml -f docker-compose.prod.yml logs --tail=200 nginx portal minio minio-bootstrap
+   ```
+
+Para atualizar a aplicação posteriormente, execute `git pull --ff-only` e
+repita o comando `up -d --build`. Evite `docker compose down -v`: o `-v` remove
+os volumes persistentes de MinIO e dos bancos. O `down` simples é suficiente
+quando precisar parar a stack.
+
+Este Nginx serve HTTP na porta 80. Para HTTPS, mantenha-o atrás de um
+terminador TLS que gerencie o certificado de `atlas.lablivre.rocks` ou amplie a
+configuração Nginx com certificados antes de expor o domínio publicamente.
+
 O bootstrap do MinIO publica a estrutura base e o contrato semântico de
 construtoras. Em produção, contratos e layouts devem continuar sendo
 versionados como artefatos explícitos; não dependa da versão interna do

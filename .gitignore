@@ -26,3 +26,5 @@ airflow/state/*
 *.egg-info/
 
 resultados*
+
+eval/relatorios/*

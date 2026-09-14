@@ -31,7 +31,9 @@ x-docling-runtime-env: &docling-runtime-env
 
 services:
   minio:
-    image: minio/minio:${MINIO_IMAGE_TAG:-RELEASE.2025-09-07T16-13-09Z}
+    # As imagens oficiais deixaram o Docker Hub; Quay e o registro publicado
+    # pelo MinIO para as mesmas tags release.
+    image: quay.io/minio/minio:${MINIO_IMAGE_TAG:-RELEASE.2025-09-07T16-13-09Z}
     container_name: ocr_minio
     command: server /data --console-address ":9001"
     environment:
@@ -52,12 +54,19 @@ services:
       - ocr_net
 
   minio-bootstrap:
-    image: minio/mc:${MINIO_MC_IMAGE_TAG:-RELEASE.2025-08-13T08-35-41Z}
+    image: quay.io/minio/mc:${MINIO_MC_IMAGE_TAG:-RELEASE.2025-08-13T08-35-41Z}
     container_name: ocr_minio_bootstrap
     depends_on:
       minio:
         condition: service_healthy
     entrypoint: ["/bin/sh", "/bootstrap/bootstrap.sh"]
+    # O bootstrap deve usar exatamente a mesma identidade e bucket do MinIO.
+    # Sem este bloco ele caía nos defaults do shell, falhando quando o .env
+    # configurava credenciais ou bucket próprios.
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minioadmin123}
+      MINIO_BUCKET_DATA_LAKE: ${MINIO_BUCKET_DATA_LAKE:-ocr-cidades}
     volumes:
       - ./infra/minio-bootstrap:/bootstrap:ro
     restart: "no"
