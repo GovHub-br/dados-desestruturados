@@ -90,6 +90,21 @@ O portal fica disponível em `http://localhost:8000` por padrão. As portas dos
 demais serviços, credenciais locais e integrações opcionais são configuradas
 no `.env` e no [docker-compose.yml](docker-compose.yml).
 
+### Produção com uma única origem HTTP
+
+Para publicar o portal em `http://atlas.lablivre.rocks`, use a sobreposição de
+produção. Ela adiciona Nginx na porta 80, encaminha `/api/*` ao FastAPI e o
+restante ao front servido pelo portal. O serviço `portal` deixa de publicar a
+porta 8000 no host, portanto Nginx passa a ser a única entrada HTTP da stack.
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
+```
+
+Defina `ATLAS_HTTP_PORT=80` no `.env` de produção (ou outra porta caso exista
+um proxy externo). Para HTTPS, mantenha este Nginx atrás do terminador TLS que
+gerencia o certificado de `atlas.lablivre.rocks`.
+
 O bootstrap do MinIO publica a estrutura base e o contrato semântico de
 construtoras. Em produção, contratos e layouts devem continuar sendo
 versionados como artefatos explícitos; não dependa da versão interna do
