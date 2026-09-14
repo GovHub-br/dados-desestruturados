@@ -202,9 +202,62 @@
 .message-detail { color: inherit; font-size: var(--text-sm); opacity: .88; }
 
 @media (max-width: 880px) {
-  .workspace { grid-template-columns: 1fr; }
+  .workspace { grid-template-columns: minmax(0, 1fr); }
   .quick-links { grid-template-columns: 1fr; }
   .workflow-card { min-height: 17rem; }
   .form-grid { grid-template-columns: 1fr; }
   .form-actions { flex-direction: column; align-items: stretch; }
+  .form-note { justify-content: center; }
+}
+
+/* Celular: o cartao nao reserva altura fixa (o vazio entre icone e texto
+   sumia com a hierarquia) e todo o respiro interno encolhe um degrau. Meta:
+   ~230px de altura por cartao (eram ~300px), sem cortar nenhum texto. */
+@media (max-width: 720px) {
+  /* Ritmo: gap-block (16px) separa os dois cartoes como itens distintos do
+     mesmo grupo; gap-section (32px) fecha o grupo antes do rodape. Dentro
+     de cada cartao o respiro sobe meio degrau (nao volta ao tamanho antigo)
+     para a hierarquia icone/titulo/descricao/chips/rodape voltar a se ler. */
+  .workspace { row-gap: var(--gap-block); margin-bottom: var(--gap-section); }
+  .workflow-card { min-height: 0; padding: .875rem; border-radius: var(--radius-md); }
+  .workflow-number { font-size: var(--text-2xs); }
+  .workflow-icon { width: 1.875rem; height: 1.875rem; border-radius: var(--radius-sm); }
+  .workflow-icon svg { width: .9rem; height: .9rem; }
+  .workflow-card-copy { gap: .25rem; margin-top: var(--space-3); }
+  .workflow-eyebrow { font-size: var(--text-2xs); }
+  .workflow-title { font-size: var(--text-md); }
+  .workflow-description { font-size: var(--text-xs); line-height: 1.4; }
+  .workflow-fields { gap: var(--space-1); margin-top: var(--space-3); }
+  .workflow-fields span { padding: .15rem .5rem; font-size: var(--text-2xs); }
+  .workflow-card-footer { margin-top: var(--space-4); padding-top: var(--space-2); font-size: var(--text-xs); }
+  .workflow-card-footer svg { width: .875rem; height: .875rem; }
+
+  .panel, .panel[data-open="true"] { border-radius: var(--radius-lg); }
+  .panel-content { padding: var(--space-4) var(--space-4) var(--space-5); }
+  .panel-head {
+    grid-template-columns: 2.25rem minmax(0, 1fr) 2rem;
+    gap: var(--space-2);
+    padding-bottom: var(--space-3);
+    margin-bottom: var(--space-5);
+  }
+  .panel-head .icon-tile { width: 2.25rem; height: 2.25rem; }
+  .panel-head .icon-tile svg { width: 1.05rem; height: 1.05rem; }
+  .panel-title { font-size: var(--text-base); }
+  .panel-subtitle { font-size: var(--text-xs); }
+  .icon-button { width: 2rem; height: 2rem; }
+
+  .field { gap: var(--space-1); }
+  .form-grid { gap: var(--gap-block); }
+  /* O tamanho da fonte fica em 16px mesmo com a escala mobile: abaixo disso
+     o Safari do iOS da zoom automatico ao focar o campo. */
+  .input { height: 2.75rem; font-size: 1rem; padding-inline: var(--space-3); }
+  .field label { font-size: var(--text-xs); }
+  .field-hint, .field-status { font-size: var(--text-2xs); }
+  .form-actions { gap: var(--space-3); margin-top: var(--space-6); }
+  .form-actions .button { min-height: 2.75rem; }
+  .dropzone.compact { padding: var(--space-4); }
+  .progress-label { font-size: var(--text-2xs); }
+  .message { margin-top: var(--space-5); padding: var(--space-3) var(--space-4); }
+  .message-title { font-size: var(--text-sm); }
+  .message-detail { font-size: var(--text-xs); }
 }

@@ -7,7 +7,7 @@ html {
   font-size: 100%;
   line-height: 1.55;
   scroll-behavior: smooth;
-  scroll-padding-top: var(--space-16);
+  scroll-padding-top: calc(var(--header-height) + var(--space-4));
 }
 
 body {
@@ -108,6 +108,29 @@ a { color: var(--purple); }
 .nav a:hover { color: var(--text-on-accent); background: color-mix(in srgb, var(--text-on-accent) 16%, transparent); }
 .nav a:active { transform: scale(.97); }
 
+/* Botao do menu: so existe em telas estreitas (ver media query abaixo). */
+.nav-toggle {
+  display: none;
+  place-items: center;
+  flex: 0 0 auto;
+  width: 2.75rem;
+  height: 2.75rem;
+  margin-right: calc(-1 * var(--space-2));
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-on-accent);
+  cursor: pointer;
+  transition: background var(--duration-fast) var(--ease-out),
+              transform var(--duration-press) var(--ease-out);
+}
+.nav-toggle:hover { background: color-mix(in srgb, var(--text-on-accent) 16%, transparent); }
+.nav-toggle:active { transform: scale(.94); }
+.nav-toggle svg { width: 1.375rem; height: 1.375rem; }
+.nav-toggle-close { display: none; }
+.header[data-menu-open="true"] .nav-toggle-open { display: none; }
+.header[data-menu-open="true"] .nav-toggle-close { display: block; }
+
 .header .button-secondary {
   border-color: color-mix(in srgb, var(--text-on-accent) 30%, transparent);
   background: var(--surface-solid);
@@ -147,11 +170,62 @@ main { display: flex; flex-direction: column; padding-bottom: var(--space-16); }
   .shell { width: calc(100% - var(--space-8)); }
 }
 
+/* Telas estreitas: a barra de links vira um menu sob a faixa roxa, aberto
+   pelo botao a direita. Os links ganham altura de toque. */
 @media (max-width: 720px) {
-  .shell { width: calc(100% - var(--space-6)); }
-  .nav { display: none; }
-  footer { display: block; }
+  .shell { width: calc(100% - var(--space-8)); }
+  .header-inner { gap: var(--space-2); }
+  .brand { gap: var(--space-2); }
+  .brand-logo { height: 1.5rem; }
+  .header-cta {
+    margin-left: auto;
+    min-height: 2.125rem;
+    padding-inline: var(--space-3);
+  }
+
+  .nav-toggle { display: grid; }
+  .nav {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    display: none;
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--space-1);
+    padding: var(--space-2) var(--space-2) var(--space-3);
+    background: linear-gradient(105deg, var(--purple-strong), var(--purple-light));
+    border-bottom: 1px solid color-mix(in srgb, var(--text-on-accent) 22%, transparent);
+    box-shadow: var(--shadow-3);
+  }
+  .header[data-menu-open="true"] .nav { display: flex; }
+  .nav a {
+    min-height: 2.75rem;
+    display: flex;
+    align-items: center;
+    /* Texto alinhado com a marca: gutter da shell menos o respiro do menu. */
+    padding-inline: var(--space-2);
+    font-size: var(--text-base);
+  }
+
+  footer { display: block; padding-bottom: var(--space-8); }
   footer p + p { margin-top: var(--space-2); }
+  main { padding-bottom: 2.5rem; }
+}
+
+/* Celulares muito estreitos: a marca cede espaco ao botao e ao menu. */
+@media (max-width: 360px) {
+  .brand-divider, .brand-product { display: none; }
+}
+
+/* Fundo fixo em celular custa repaint e o iOS o ignora; rolar junto e mais
+   estavel e o gradiente fica confinado a primeira tela. */
+@media (max-width: 880px) {
+  body {
+    background-attachment: scroll;
+    background-repeat: no-repeat;
+    background-size: 100% 100vh, 100% 100vh, auto;
+  }
 }
 
 .visually-hidden {

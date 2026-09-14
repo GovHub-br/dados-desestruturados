@@ -201,6 +201,12 @@
   width: 126%;
   aspect-ratio: 1340 / 1005;
 }
+/* A arte estatica ja contem sua propria composicao. Sem camadas extras atras,
+   ela aparece exatamente como o arquivo fornecido. */
+.stage[data-mode="art"]::before,
+.stage[data-mode="art"]::after {
+  display: none;
+}
 .stage[data-mode="art"] .floating { display: none; }
 .stage[data-mode="live"] .stage-art { display: none; }
 
@@ -381,25 +387,93 @@
    sobreposicao em coluna estreita vira colisao, nao profundidade. */
 @media (max-width: 1200px) {
   .hero { gap: var(--space-8); padding-top: var(--space-6); min-height: 0; align-content: normal; }
-  .hero-copy { z-index: auto; }
+  .hero-copy { z-index: auto; min-width: 0; }
   .stage-art { position: static; }
   .stage {
     display: grid;
     gap: var(--space-4);
     width: 100%;
     max-width: none;
+    /* Sem isso a coluna do grid herda a largura minima do conteudo (a fileira
+       de etapas do pipeline) e a pagina inteira ganha rolagem horizontal. */
+    min-width: 0;
     aspect-ratio: auto;
   }
   .stage[data-mode="art"] { width: 100%; aspect-ratio: auto; }
   .stage::after { display: none; }
-  .floating { position: static; width: 100%; height: auto; transform: none; }
+  .floating { position: static; width: 100%; min-width: 0; height: auto; transform: none; }
   .card-upload { min-height: 24rem; }
   .card-trust { display: flex; align-items: center; gap: var(--space-3); }
 }
 
 @media (max-width: 880px) {
-  .hero { grid-template-columns: 1fr; padding-top: var(--space-4); }
-  .hero h1 { font-size: clamp(2.5rem, 9vw, 3.375rem); }
+  .hero { grid-template-columns: minmax(0, 1fr); gap: var(--space-6); padding-top: var(--space-6); }
+  .hero h1 { font-size: clamp(1.875rem, 9.8vw, 3.375rem); }
+  .hero-lead { margin-top: var(--space-5); }
+  .hero-actions { margin-top: var(--space-6); }
+  .hero-actions .button { min-height: 2.875rem; font-size: var(--text-sm); }
+  .card-upload { min-height: 0; }
+  .card-upload .dropzone { min-height: 11rem; }
+}
+
+/* Celular: um degrau menor de novo. Em 880px o hero ainda tem largura de
+   sobra para o clamp de 9.8vw; abaixo de 720px a mesma proporcao de tela
+   produziria um titulo que ocupa metade da dobra, entao o teto do clamp cai
+   junto com o resto da escala mobile. */
+@media (max-width: 720px) {
+  .hero { padding-top: var(--space-7); }
+  .hero h1 { font-size: clamp(1.75rem, 8.2vw, 2.125rem); line-height: 1.06; }
+  .hero-lead { margin-top: var(--space-4); }
+  .hero-actions { gap: var(--space-3); margin-top: var(--space-5); }
+  .hero-actions .button { min-height: 2.5rem; }
+}
+
+/* So quando os dois botoes nao cabem lado a lado eles empilham. */
+@media (max-width: 560px) {
+  .hero-lead { max-width: none; }
   .hero-actions { flex-direction: column; align-items: stretch; }
-  .hero-actions .button { min-height: 2.75rem; }
+}
+
+/* Celular: a ilustracao ocupa a largura toda da tela, sem a moldura da
+   coluna, e sobe um pouco para encostar nas acoes. Os cartoes vivos
+   reduzem o respiro interno. */
+@media (max-width: 720px) {
+  /* Antes o hero encostava direto no primeiro cartao (padding-bottom:0) e a
+     ilustracao subia por cima do respiro texto->imagem (margin-top
+     negativo). Isso juntava dois blocos que deveriam ler como secoes
+     separadas; o respiro de secao volta para o padding e a ilustracao
+     para de comer o espaco acima dela. */
+  .hero { padding-bottom: var(--gap-section); }
+  .stage[data-mode="art"] {
+    width: calc(100% + var(--space-8));
+    margin-inline: calc(-1 * var(--space-4));
+  }
+  /* A ilustracao em repouso, no aspect-ratio original, chegava a 1/3 da tela
+     e empurrava os cartoes de acao para fora da primeira dobra. Um teto de
+     altura com corte central preserva o centro da composicao. */
+  .stage-art { max-height: 13.5rem; overflow: hidden; }
+  .stage-art img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 38%; }
+
+  /* Cartoes vivos (upload/pipeline/confianca) empilhados: o gap entre
+     eles crescer um pouco os separa como blocos distintos. */
+  .stage[data-mode="live"] { gap: var(--space-5); }
+  .floating { border-radius: 18px; }
+  .card-upload { padding: var(--space-4); }
+  .card-pipeline, .card-trust { padding: var(--space-3) var(--space-4); }
+  .card-kicker { font-size: .625rem; }
+  .card-title { font-size: var(--text-sm); }
+  .card-head { gap: var(--space-2); }
+  .icon-tile { width: 2.25rem; height: 2.25rem; border-radius: 10px; }
+  .icon-tile svg { width: 1.05rem; height: 1.05rem; }
+  .dropzone { margin-top: var(--space-4); padding: var(--space-4); min-height: 8.5rem !important; gap: var(--space-1); }
+  .dropzone-icon svg { width: 1.25rem; height: 1.25rem; }
+  .dropzone-title { font-size: var(--text-sm); }
+  .dropzone-hint { font-size: .6875rem; }
+  .status-surface { gap: var(--space-2); margin-top: var(--space-4); padding: var(--space-3); border-radius: 14px; }
+  .status-dot { width: 1.75rem; height: 1.75rem; }
+  .status-dot svg { width: 1rem; height: 1rem; }
+  .result-title { font-size: var(--text-sm); }
+  .result-detail { font-size: var(--text-xs); }
+  .result-title, .result-detail { white-space: normal; }
+  .button-pill { min-height: 2rem; padding-inline: var(--space-3); font-size: var(--text-2xs); }
 }

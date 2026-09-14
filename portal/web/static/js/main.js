@@ -5,6 +5,7 @@ import { attachPicker, createFileField } from './dropzone.js';
 import * as execution from './execution.js';
 import { clearMessage, showMessage } from './messages.js';
 import { revealOnLoad, watchHeaderScroll } from './motion.js';
+import './nav.js';
 import { openPanel, setupLineage, setupPanels } from './panels.js';
 import { createProgress } from './progress.js';
 import * as trace from './trace.js';

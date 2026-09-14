@@ -1,4 +1,4 @@
-"""Portal de Documentos: montagem da aplicacao FastAPI.
+"""Gov Hub Atlas: montagem da aplicacao FastAPI.
 
 As regras vivem em `services/`, as rotas em `routers/` e a interface em
 `web/`. Este modulo apenas conecta as pecas.
@@ -12,7 +12,7 @@ from fastapi.staticfiles import StaticFiles
 from . import config
 from .routers import contracts, documents, executions, health, pages
 
-app = FastAPI(title="Portal de Documentos", version="0.2.0")
+app = FastAPI(title="Gov Hub · Atlas", version="0.2.0")
 
 app.include_router(health.router)
 app.include_router(contracts.router)

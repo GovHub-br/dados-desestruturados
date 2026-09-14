@@ -5,16 +5,16 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#FBFBFD">
   <meta name="description" content="Envie um PDF, aplique seu contrato semântico e acompanhe cada etapa da extração com rastreabilidade ponta a ponta.">
-  <title>Gov Hub · Orquestra</title>
+  <title>Gov Hub · Atlas</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;450;500;550;600;650;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/static/css/tokens.css?v=2">
-  <link rel="stylesheet" href="/static/css/base.css?v=3">
-  <link rel="stylesheet" href="/static/css/hero.css">
-  <link rel="stylesheet" href="/static/css/pipeline.css">
-  <link rel="stylesheet" href="/static/css/workspace.css?v=4">
-  <link rel="stylesheet" href="/static/css/lineage.css">
+  <link rel="stylesheet" href="/static/css/tokens.css?v=4">
+  <link rel="stylesheet" href="/static/css/base.css?v=7">
+  <link rel="stylesheet" href="/static/css/hero.css?v=5">
+  <link rel="stylesheet" href="/static/css/pipeline.css?v=3">
+  <link rel="stylesheet" href="/static/css/workspace.css?v=8">
+  <link rel="stylesheet" href="/static/css/lineage.css?v=4">
   <link rel="stylesheet" href="/static/css/motion.css">
 </head>
 <body>
@@ -22,18 +22,22 @@
 
   <header class="header" id="header">
     <div class="shell header-inner">
-      <a class="brand" href="/" aria-label="Gov Hub Orquestra, início">
+      <a class="brand" href="/" aria-label="Gov Hub Atlas, início">
         <img class="brand-logo" src="/static/img/govhub-logo.svg" alt="">
         <span class="brand-divider" aria-hidden="true">|</span>
-        <span class="brand-product">Orquestra</span>
+        <span class="brand-product">Atlas</span>
       </a>
-      <nav class="nav" aria-label="Navegação principal">
+      <nav class="nav" id="site-nav" aria-label="Navegação principal">
         <a href="/visao-geral">Visão geral</a>
         <a href="#envio">Enviar PDF</a>
         <a href="#contratos">Contratos</a>
         <a href="#rastreabilidade">Rastreabilidade</a>
       </nav>
-      <button class="button button-secondary button-compact" type="button" data-open-panel="envio">Enviar PDF</button>
+      <button class="button button-secondary button-compact header-cta" type="button" data-open-panel="envio">Enviar PDF</button>
+      <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="site-nav" aria-label="Abrir menu">
+        <svg class="nav-toggle-open" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+        <svg class="nav-toggle-close" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6 18 18M18 6 6 18"/></svg>
+      </button>
     </div>
   </header>
 
@@ -360,11 +364,11 @@
     </main>
 
     <footer>
-      <p class="footer-mark">Gov Hub · Orquestra</p>
+      <p class="footer-mark">Gov Hub · Atlas</p>
       <p>Inteligência documental com origem, contrato e resultado rastreáveis.</p>
     </footer>
   </div>
 
-  <script type="module" src="/static/js/main.js?v=3"></script>
+  <script type="module" src="/static/js/main.js?v=4"></script>
 </body>
 </html>
