@@ -29,6 +29,33 @@ services:
 
   openmetadata-ingestion:
     profiles: ["openmetadata"]
+
+  # Em Linux, volumes Docker novos pertencem a root. Em produção os processos
+  # do Airflow rodam como UID 50000, então este inicializador prepara os
+  # diretórios compartilhados antes de qualquer DAG escrever downloads ou logs.
+  # Ele não inicia nem habilita o Docling local.
+  airflow-permissions-init:
+    image: alpine:3.20
+    container_name: ocr_airflow_permissions_init
+    user: "0:0"
+    entrypoint: ["/bin/sh", "-ec"]
+    command: |
+      mkdir -p /pipeline-tmp/downloads /airflow-state/auth /airflow-logs
+      chown -R 50000:0 /pipeline-tmp /airflow-state /airflow-logs
+      chmod -R u+rwX,g+rwX /pipeline-tmp /airflow-state /airflow-logs
+    volumes:
+      - pipeline_tmp_data:/pipeline-tmp
+      - ./airflow/state:/airflow-state
+      - ./airflow/logs:/airflow-logs
+    restart: "no"
+    networks:
+      - ocr_net
+
+  airflow-init:
+    depends_on:
+      airflow-permissions-init:
+        condition: service_completed_successfully
+
   portal:
     # Em produção, o portal só é acessível pela rede interna; o Nginx é a única
     # superfície HTTP publicada pela stack.
