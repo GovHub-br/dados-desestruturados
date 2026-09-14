@@ -5,12 +5,13 @@ from __future__ import annotations
 from copy import deepcopy
 from typing import Any
 
+from document_processing.domain.contracts.capabilities import item_key_origins, item_keys
 from document_processing.domain.contracts.mapping_requirements import (
     mappable_targets_payload,
     mapping_requirements_from_context,
     mapping_requirements_payload,
+    role_specs_from_context,
 )
-from document_processing.domain.contracts.capabilities import item_keys
 from document_processing.domain.contracts.schema import (
     contract_literal_paths,
     schema_array_paths,

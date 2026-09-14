@@ -19,6 +19,11 @@ class ArtifactSelectionMixin:
         self.artifact_selection_validator.validate_inventory(
             selection_payload=selection_payload
         )
+        selection_payload = self._with_evidence_prefilter(
+            selection_payload,
+            fallback_context=fallback_context,
+            stage=stage,
+        )
         response_schema = LayoutArtifactSelection.model_json_schema()
         llm_options = self._llm_options_for_stage("selecao_artefatos")
         system_prompt = self._prompt_selecao("selecao-artefatos-system")
@@ -121,6 +126,54 @@ class ArtifactSelectionMixin:
             return artifact_selection, raw_content, loaded_artifacts
 
         raise RuntimeError("Selecao de artefatos excedeu o limite de tentativas.")
+
+
+    def _with_evidence_prefilter(
+        self,
+        selection_payload: dict[str, Any],
+        *,
+        fallback_context: dict[str, str],
+        stage: str,
+    ) -> dict[str, Any]:
+        """Fase 0: restringe a escolha da LLM aos artefatos que o contrato sustenta.
+
+        O pre-filtro e deterministico (sinonimos do contrato x resumo do inventario)
+        e fica gravado como ``prefiltro_evidencia.json`` para auditoria e metricas.
+        """
+        inventory = selection_payload.get("inventario_extracao", {})
+        summary = inventory.get("resumo", {}) if isinstance(inventory, dict) else {}
+        items = summary.get("items", []) if isinstance(summary, dict) else []
+        prefiltered = prefilter_inventory(
+            items if isinstance(items, list) else [],
+            selection_payload.get("contrato_semantico_relevante", {}),
+        )
+        candidates = prefilter_payload(prefiltered)
+        total_items = len(items) if isinstance(items, list) else 0
+        prefix = stage.rsplit("/", 1)[0] + "/" if "/" in stage else ""
+        self._persist_llm_validated(
+            fallback_context=fallback_context,
+            stage=stage,
+            filename=f"{prefix}prefiltro_evidencia.json",
+            payload={
+                "tipo_artefato": "prefiltro_evidencia",
+                "unidade_mapeamento": (
+                    dict(selection_payload.get("unidade_mapeamento") or {}).get("id")
+                ),
+                "total_artefatos_inventario": total_items,
+                "candidatos_por_requisito": candidates,
+            },
+        )
+        return {
+            **selection_payload,
+            "candidatos_por_requisito": candidates,
+            "politica_candidatos": (
+                "Para cada campo_saida, escolha somente entre os paths listados em "
+                "candidatos_por_requisito; quando a lista de um campo estiver vazia, "
+                "qualquer artefato do inventario e permitido para ele. Um candidato com "
+                "motivo 'amostra_incompleta' so deve ser escolhido se o titulo ou o "
+                "contexto indicarem que ele contem o indicador."
+            ),
+        }
 
 
     def _artifact_selection_repair_payload(

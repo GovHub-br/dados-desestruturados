@@ -91,6 +91,7 @@ class FallbackInventoryPolicyMixin:
                     "section_title": item.get("section_title"),
                     "schema": item.get("schema"),
                     "row_labels_sample": item.get("row_labels_sample"),
+                    "row_count": item.get("row_count"),
                     "record_count": item.get("record_count"),
                 }
                 for item in selected_items

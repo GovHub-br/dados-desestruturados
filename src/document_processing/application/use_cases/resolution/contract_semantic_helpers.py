@@ -1,10 +1,11 @@
 from __future__ import annotations
 
-import re
 from typing import Any
 
 from document_processing.domain.contracts.capabilities import uses_generic_resolution
 from document_processing.domain.contracts.mapping_requirements import parsed_mapping_path
+from document_processing.domain.contracts.schema import schema_array_paths
+from document_processing.domain.layouts.paths import parse_mapping_path
 
 
 class ContractSemanticHelpersMixin:
@@ -70,15 +71,34 @@ class ContractSemanticHelpersMixin:
             return {}
         if contrato is not None and uses_generic_resolution(contrato):
             return self._selector_context(mapping_path)
-        # Legado (contratos sem chaves_de_item): procura campos irmaos ja resolvidos
-        # sob o prefixo anterior ao primeiro array conhecido de construtoras.
-        prefix = re.split(r"\.dados\[|\.valores\[", mapping_path, maxsplit=1)[0]
+        # Legado (contratos sem chaves_de_item): procura, entre os campos ja
+        # resolvidos, os irmaos escalares do grupo que contem o primeiro array do
+        # path. Quais irmaos importam vem das entidades do contrato, nao de uma lista.
+        prefix = self._prefix_before_first_array(mapping_path, contrato)
+        entity_names = set(dict((contrato or {}).get("contrato_semantico", {}).get("entidades", {})))
         context: dict[str, str] = {}
-        for field in ("tipo_operacao", "indicador", "unidade"):
+        for field in sorted(entity_names):
             value = resolved_by_path.get(f"{prefix}.{field}")
-            if value is not None:
+            if value is not None and not isinstance(value, (dict, list)):
                 context[field] = str(value)
         return context
+
+    @staticmethod
+    def _prefix_before_first_array(mapping_path: str, contrato: dict[str, Any] | None) -> str:
+        """Path ate o segmento anterior ao primeiro array do schema_saida."""
+        schema_saida = (contrato or {}).get("schema_saida")
+        arrays = schema_array_paths(schema_saida) if isinstance(schema_saida, dict) else set()
+        try:
+            tokens = parse_mapping_path(mapping_path)
+        except ValueError:
+            return mapping_path.split("[", 1)[0].rpartition(".")[0]
+        fields: list[str] = []
+        for token in tokens:
+            candidate = ".".join([*fields, str(token["field"])])
+            if candidate in arrays or token.get("selector"):
+                break
+            fields.append(str(token["field"]))
+        return ".".join(fields)
 
     @staticmethod
     def _selector_context(mapping_path: str) -> dict[str, str]:
@@ -115,7 +135,11 @@ class ContractSemanticHelpersMixin:
             return False
         if generic:
             return metric_name in context.values()
-        # Legado: casa o grupo pelo tipo_operacao resolvido ao lado (construtoras).
-        if context.get("tipo_operacao") and str(metric_spec.get("tipo_operacao")) == context["tipo_operacao"]:
-            return True
+        # Legado: o grupo casa quando algum atributo escalar do proprio grupo de
+        # metricas (``tipo_operacao``, ``unidade``...) e igual ao irmao resolvido
+        # de mesmo nome. Nenhum nome de atributo e conhecido pelo codigo.
+        for key, value in context.items():
+            declared = metric_spec.get(key)
+            if declared is not None and not isinstance(declared, (dict, list)) and str(declared) == value:
+                return True
         return metric_name in context.values()

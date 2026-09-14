@@ -56,6 +56,19 @@ MAIOR_MELHOR = {
     "avaliacao_acerto_instrucao_origem",
     # Selecao de artefatos: quanto da evidencia escolhida sustenta a unidade.
     "selecao_evidencia_especifica",
+    "selecao_prefiltro_reducao",
+    "selecao_escolha_dentro_do_prefiltro",
+    # Harness da assinatura de layout (scripts/avaliar_assinatura_layout.py).
+    "assinatura_f0_selecao_precisao",
+    "assinatura_f0_selecao_revocacao",
+    "assinatura_f1_filtro_chave_declarada",
+    "assinatura_f1_filtro_seletor_igual_ao_contrato",
+    "assinatura_f1_cobertura_obrigatorios",
+    "assinatura_f1_cobertura_opcionais",
+    "assinatura_f1_estrutura_valida",
+    "assinatura_f3_arquivo_origem_correto",
+    "assinatura_f3_rotulo_linha_correto",
+    "assinatura_f3_indice_coluna_correto",
 }
 
 # Metricas em que descer e melhor.
@@ -70,6 +83,13 @@ MENOR_MELHOR = {
     "validacao_regras_reprovadas",
     "transicao_resolucao_para_fallback",
     "selecao_evidencia_descartada",
+    "selecao_candidatos_por_requisito",
+    "assinatura_f0_selecao_artefatos_por_requisito",
+    "assinatura_f1_array_sem_filtro",
+    "assinatura_f1_paths_fora_do_permitido",
+    "assinatura_f1_filtro_papel_literal",
+    "assinatura_f3_ausencia_falso_negativo",
+    "assinatura_f3_ausencia_falso_positivo",
 }
 
 # Metricas de guarda: nunca podem regredir, mesmo que nao sejam o alvo.
@@ -81,6 +101,9 @@ GUARDA = {
     # Perder a fonte certa nao tem conserto nas etapas seguintes: revocacao e
     # guarda, e a precisao da selecao so vale como alvo enquanto ela nao cair.
     "avaliacao_revocacao",
+    "assinatura_f0_selecao_revocacao",
+    "assinatura_f1_cobertura_obrigatorios",
+    "assinatura_f3_arquivo_origem_correto",
 }
 
 

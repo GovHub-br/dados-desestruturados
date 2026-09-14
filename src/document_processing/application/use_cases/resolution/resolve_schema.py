@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import logging
-import re
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
@@ -306,24 +305,16 @@ class ResolveSchemaUseCase(
             schema_saida,
             contrato.get("schema_saida", {}),
         )
-        declared_derivations = derivations(contrato)
-        derivation_audit: list[dict[str, Any]] = []
-        if declared_derivations:
-            derivation_audit = apply_derivations(
-                schema_saida,
-                declared_derivations,
-                contract=contrato,
-                manifest=self._manifest_for_derivations(loaded),
-                resolved_by_path=resolved_by_path,
-            )
-        else:
-            # Legado: contratos sem ``derivacoes`` (construtoras) preenchem o resumo
-            # de periodos pela regra fixa abaixo.
-            self._derive_construtoras_global_periods(
-                contrato=contrato,
-                schema_saida=schema_saida,
-                resolved_by_path=resolved_by_path,
-            )
+        # Campos de raiz (fonte, periodo de referencia, resumo de periodos) so sao
+        # preenchidos pelo que o contrato declarar em ``derivacoes``; um contrato
+        # sem o bloco deixa esses campos nulos em vez de cair numa regra de dominio.
+        derivation_audit = apply_derivations(
+            schema_saida,
+            derivations(contrato),
+            contract=contrato,
+            manifest=self._manifest_for_derivations(loaded),
+            resolved_by_path=resolved_by_path,
+        )
         schema_saida = self._strip_internal_schema_metadata(schema_saida)
 
         return {
@@ -345,61 +336,6 @@ class ResolveSchemaUseCase(
             except RuntimeError:
                 logging.warning("Manifesto local ilegivel para derivacoes: %s", local_copy)
         return {}
-
-    @staticmethod
-    def _derive_construtoras_global_periods(
-        *,
-        contrato: dict[str, Any],
-        schema_saida: dict[str, Any],
-        resolved_by_path: dict[str, Any],
-    ) -> None:
-        """Legado: resumo de periodos do contrato de construtoras sem ``derivacoes``.
-
-        Os papeis de periodo sao resolvidos junto aos valores de lancamentos e
-        vendas. Um contrato que declare ``derivacoes`` de origem ``observacao``
-        expressa a mesma regra sem nomear dominio e nao passa por aqui.
-        """
-        contract_schema = contrato.get("schema_saida")
-        if not isinstance(contract_schema, dict) or not isinstance(
-            contract_schema.get("balancos_das_empresas"), dict
-        ):
-            return
-
-        roles = (
-            "periodo_referencia",
-            "periodo_comparativo_anterior",
-            "mesmo_periodo_ano_anterior",
-        )
-        values_by_role: dict[str, set[str]] = {role: set() for role in roles}
-        for mapping_path, value in resolved_by_path.items():
-            match = re.fullmatch(
-                r"balancos_das_empresas\.(?:lancamentos|vendas)\.dados"
-                r"\[empresa=[^\]]+\]\.valores\[papel_periodo=([^\]]+)\](?:\.periodo)?",
-                mapping_path,
-            )
-            if not match or match.group(1) not in values_by_role:
-                continue
-            period = value.get("periodo") if isinstance(value, dict) else value
-            if isinstance(period, str) and period.strip():
-                values_by_role[match.group(1)].add(period.strip())
-
-        periodos_disponiveis = schema_saida.get("periodos_disponiveis")
-        if not isinstance(periodos_disponiveis, dict):
-            return
-
-        for role, values in values_by_role.items():
-            if len(values) != 1:
-                if len(values) > 1:
-                    logging.warning(
-                        "Periodos divergentes para %s no contrato de construtoras: %s",
-                        role,
-                        sorted(values),
-                    )
-                continue
-            value = next(iter(values))
-            periodos_disponiveis[role] = value
-            if role == "periodo_referencia":
-                schema_saida["periodo_referencia"] = value
 
     def build_execution_log(
         self,

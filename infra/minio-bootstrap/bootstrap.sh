@@ -27,6 +27,8 @@ publicar_contrato() {
 }
 
 publicar_contrato "construtoras/v1.8.0/contrato_semantico_construtora.json"
+publicar_contrato "construtoras/v1.9.0/contrato_semantico_construtora.json"
 publicar_contrato "bancos/v1.0.0/contrato_semantico_bancos.json"
 publicar_contrato "bancos/v2.0.0/contrato_semantico_bancos.json"
 publicar_contrato "bancos/v2.1.0/contrato_semantico_bancos.json"
+publicar_contrato "bancos/v2.2.0/contrato_semantico_bancos.json"

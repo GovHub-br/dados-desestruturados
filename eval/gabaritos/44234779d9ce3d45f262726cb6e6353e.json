@@ -1,0 +1,123 @@
+{
+  "document_id": "44234779d9ce3d45f262726cb6e6353e",
+  "entidade": "direcional",
+  "dominio": "construtoras",
+  "execution_id": "dag_detecta_pdf_e_extrai__direcional__2T26__20260709T234159Z",
+  "contrato": {
+    "tipo_documento": "construtoras",
+    "versao": "1.9.0"
+  },
+  "identidade": {
+    "entidade": "Direcional",
+    "periodo": "2T26"
+  },
+  "artefatos_esperados_por_requisito": {
+    "balancos_das_empresas.lancamentos.dados.valores.valor": [
+      "tables/table001.json"
+    ],
+    "balancos_das_empresas.vendas.dados.valores.valor": [
+      "tables/table002.json"
+    ]
+  },
+  "ancoragens": {
+    "balancos_das_empresas.lancamentos.dados.valores.valor": [
+      {
+        "seletores": {
+          "empresa": "Direcional",
+          "papel_periodo": "mesmo_periodo_ano_anterior"
+        },
+        "arquivo_origem": "tables/table001.json",
+        "indice_linha": 7,
+        "rotulo_linha": "Direcional",
+        "indice_coluna": 3,
+        "cabecalho_coluna": "2T25 (c)",
+        "valor": 3661.0,
+        "obrigatorio": false,
+        "periodo": "2T25 (c)",
+        "conferido_e2e": true
+      },
+      {
+        "seletores": {
+          "empresa": "Direcional",
+          "papel_periodo": "periodo_comparativo_anterior"
+        },
+        "arquivo_origem": "tables/table001.json",
+        "indice_linha": 7,
+        "rotulo_linha": "Direcional",
+        "indice_coluna": 2,
+        "cabecalho_coluna": "1T26 (b)",
+        "valor": 2447.0,
+        "obrigatorio": false,
+        "periodo": "1T26 (b)",
+        "conferido_e2e": true
+      },
+      {
+        "seletores": {
+          "empresa": "Direcional",
+          "papel_periodo": "periodo_referencia"
+        },
+        "arquivo_origem": "tables/table001.json",
+        "indice_linha": 7,
+        "rotulo_linha": "Direcional",
+        "indice_coluna": 1,
+        "cabecalho_coluna": "2T26 (a)",
+        "valor": 3896.0,
+        "obrigatorio": true,
+        "periodo": "2T26 (a)",
+        "conferido_e2e": true
+      }
+    ],
+    "balancos_das_empresas.vendas.dados.valores.valor": [
+      {
+        "seletores": {
+          "empresa": "Direcional",
+          "papel_periodo": "mesmo_periodo_ano_anterior"
+        },
+        "arquivo_origem": "tables/table002.json",
+        "indice_linha": 7,
+        "rotulo_linha": "Direcional",
+        "indice_coluna": 3,
+        "cabecalho_coluna": "2T25 (c)",
+        "valor": 3781.0,
+        "obrigatorio": false,
+        "periodo": "2T25 (c)",
+        "conferido_e2e": true
+      },
+      {
+        "seletores": {
+          "empresa": "Direcional",
+          "papel_periodo": "periodo_comparativo_anterior"
+        },
+        "arquivo_origem": "tables/table002.json",
+        "indice_linha": 7,
+        "rotulo_linha": "Direcional",
+        "indice_coluna": 2,
+        "cabecalho_coluna": "1T26 (b)",
+        "valor": 3585.0,
+        "obrigatorio": false,
+        "periodo": "1T26 (b)",
+        "conferido_e2e": true
+      },
+      {
+        "seletores": {
+          "empresa": "Direcional",
+          "papel_periodo": "periodo_referencia"
+        },
+        "arquivo_origem": "tables/table002.json",
+        "indice_linha": 7,
+        "rotulo_linha": "Direcional",
+        "indice_coluna": 1,
+        "cabecalho_coluna": "2T26 (a)",
+        "valor": 3717.0,
+        "obrigatorio": true,
+        "periodo": "2T26 (a)",
+        "conferido_e2e": true
+      }
+    ]
+  },
+  "ausencias_esperadas": [],
+  "origem": "derivado da execucao baseline0 (candidato validado + auditoria da resolucao local), valores conferidos contra atlas-e2e-regressao / gabarito curado de bancos",
+  "revisao_pendente": [
+    "rotulos de periodo com sufixo '(a)', '(b)', '(c)' vindos do cabecalho; a normalizacao do rotulo e item da fase 2"
+  ]
+}

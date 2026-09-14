@@ -22,6 +22,7 @@ from typing import Any
 from document_processing.domain.observability import (
     artifact_selection_quality_metrics,
     end_to_end_metrics,
+    evidence_prefilter_metrics,
     extraction_metrics,
     fallback_execution_metrics,
     fallback_stage_metrics,
@@ -482,6 +483,24 @@ class AtlasExecutionTracer:
         published = str(publication.get("status") or "") == "publicado"
 
         for nome_artefato, chave in sorted(by_name.items()):
+            if nome_artefato.endswith("/prefiltro_evidencia.json") or nome_artefato == "prefiltro_evidencia.json":
+                selection_name = nome_artefato.replace("prefiltro_evidencia.json", "selecao_artefatos_layout.json")
+                selection = self._read_json(by_name[selection_name]) if selection_name in by_name else {}
+                chosen = [
+                    str(item.get("path") or "")
+                    for item in (selection.get("artifact_paths") or [])
+                    if isinstance(item, dict)
+                ]
+                for metric in evidence_prefilter_metrics(self._read_json(chave), selected_paths=chosen):
+                    client.score(
+                        trace_id=trace_id,
+                        name=metric.name,
+                        value=metric.value,
+                        data_type=metric.data_type,
+                        comment=metric.comment,
+                        metadata=metric.metadata,
+                    )
+                continue
             if not nome_artefato.endswith("/poda_evidencia.json"):
                 continue
             for metric in artifact_selection_quality_metrics(self._read_json(chave)):

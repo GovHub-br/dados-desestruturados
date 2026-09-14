@@ -1,0 +1,113 @@
+{
+  "document_id": "9661cd074ba06b42d12e7fcb80f77260",
+  "entidade": "eztc3",
+  "dominio": "construtoras",
+  "execution_id": "dag_detecta_pdf_e_extrai__eztc3__sem_periodo__20260822T111429Z",
+  "contrato": {
+    "tipo_documento": "construtoras",
+    "versao": "1.9.0"
+  },
+  "identidade": {
+    "entidade": "Eztec",
+    "periodo": "2T26"
+  },
+  "artefatos_esperados_por_requisito": {
+    "balancos_das_empresas.lancamentos.dados.valores.valor": [
+      "tables/table002.json"
+    ],
+    "balancos_das_empresas.vendas.dados.valores.valor": [
+      "tables/table003.json"
+    ]
+  },
+  "ancoragens": {
+    "balancos_das_empresas.lancamentos.dados.valores.valor": [
+      {
+        "seletores": {
+          "empresa": "EZTEC",
+          "papel_periodo": "periodo_comparativo_anterior"
+        },
+        "arquivo_origem": "tables/table002.json",
+        "indice_linha": 0,
+        "rotulo_linha": "1T",
+        "indice_coluna": 8,
+        "cabecalho_coluna": "# Und.",
+        "valor": 2022.0,
+        "obrigatorio": false,
+        "periodo": "1T26",
+        "conferido_e2e": true
+      },
+      {
+        "seletores": {
+          "empresa": "EZTEC",
+          "papel_periodo": "periodo_referencia"
+        },
+        "arquivo_origem": "tables/table002.json",
+        "indice_linha": 1,
+        "rotulo_linha": "2T",
+        "indice_coluna": 8,
+        "cabecalho_coluna": "# Und.",
+        "valor": 914.0,
+        "obrigatorio": true,
+        "periodo": "2T26",
+        "conferido_e2e": true
+      }
+    ],
+    "balancos_das_empresas.vendas.dados.valores.valor": [
+      {
+        "seletores": {
+          "empresa": "EZTEC",
+          "papel_periodo": "mesmo_periodo_ano_anterior"
+        },
+        "arquivo_origem": "tables/table003.json",
+        "indice_linha": 10,
+        "rotulo_linha": "Número de unidades (#)",
+        "indice_coluna": 4,
+        "cabecalho_coluna": "2T25",
+        "valor": 779.0,
+        "obrigatorio": false,
+        "periodo": "2T25",
+        "conferido_e2e": true
+      },
+      {
+        "seletores": {
+          "empresa": "EZTEC",
+          "papel_periodo": "periodo_comparativo_anterior"
+        },
+        "arquivo_origem": "tables/table003.json",
+        "indice_linha": 10,
+        "rotulo_linha": "Número de unidades (#)",
+        "indice_coluna": 2,
+        "cabecalho_coluna": "1T26",
+        "valor": 1982.0,
+        "obrigatorio": false,
+        "periodo": "1T26",
+        "conferido_e2e": true
+      },
+      {
+        "seletores": {
+          "empresa": "EZTEC",
+          "papel_periodo": "periodo_referencia"
+        },
+        "arquivo_origem": "tables/table003.json",
+        "indice_linha": 10,
+        "rotulo_linha": "Número de unidades (#)",
+        "indice_coluna": 1,
+        "cabecalho_coluna": "2T26",
+        "valor": 756.0,
+        "obrigatorio": true,
+        "periodo": "2T26",
+        "conferido_e2e": true
+      }
+    ]
+  },
+  "ausencias_esperadas": [],
+  "origem": "derivado da execucao baseline0 (candidato validado + auditoria da resolucao local), valores conferidos contra atlas-e2e-regressao / gabarito curado de bancos",
+  "revisao_pendente": [
+    "candidato gravou empresa='EZTEC'; identidade do manifesto e o slug 'eztc3'",
+    "manifesto sem period_label: periodo da identidade curado a mao"
+  ],
+  "identidade_manifesto": {
+    "entidade": "Eztec",
+    "periodo": "sem_periodo"
+  }
+}

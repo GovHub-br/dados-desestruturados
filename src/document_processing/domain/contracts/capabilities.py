@@ -25,11 +25,26 @@ from document_processing.domain.contracts.schema import (
 from document_processing.domain.layouts.paths import get_nested_value
 
 ORIGENS_DE_DERIVACAO = frozenset({"contrato", "manifesto", "observacao"})
+# De onde sai o valor do filtro de cada array quando o layout e construido:
+# - identidade_documento: quem e o documento (entidade, periodo) — o codigo copia;
+# - seletor_observacao: o valor e um seletor declarado em observacoes_obrigatorias
+#   (papel de periodo, nome de indicador) — o codigo enumera;
+# - evidencia: so o documento diz (um rotulo de periodo literal) — fica com a LLM.
+ORIGENS_DE_CHAVE = frozenset({"identidade_documento", "seletor_observacao", "evidencia"})
 WILDCARD = "[*]"
 
 
 class ContractCapabilitiesError(RuntimeError):
     """O contrato declarou uma capacidade inconsistente com o proprio schema."""
+
+
+@dataclass(frozen=True)
+class ItemKeySpec:
+    """Chave de item de um array e a origem do valor usado no filtro."""
+
+    path: str
+    chave: str
+    origem_valor: str | None = None
 
 
 @dataclass(frozen=True)
@@ -53,31 +68,61 @@ def _semantic(contract: Any) -> dict[str, Any]:
     return semantic if isinstance(semantic, dict) else {}
 
 
-def item_keys(contract: Any) -> dict[str, str]:
-    """Le ``chaves_de_item``; vazio quando o contrato nao declara."""
+def item_key_specs(contract: Any) -> dict[str, ItemKeySpec]:
+    """Le ``chaves_de_item`` nas duas formas aceitas; vazio quando nao declarado.
+
+    Forma curta: ``{"grupo.dados": "empresa"}``. Forma completa:
+    ``{"grupo.dados": {"chave": "empresa", "origem_valor": "identidade_documento"}}``.
+    """
     raw = _semantic(contract).get("chaves_de_item")
     if raw in (None, {}):
         return {}
     if not isinstance(raw, dict):
         raise ContractCapabilitiesError("chaves_de_item deve ser um objeto path -> chave.")
-    keys: dict[str, str] = {}
-    for path, key in raw.items():
+    specs: dict[str, ItemKeySpec] = {}
+    for path, declared in raw.items():
         clean_path = str(path).strip()
-        clean_key = str(key).strip()
+        origem_valor: str | None = None
+        if isinstance(declared, dict):
+            clean_key = str(declared.get("chave", "")).strip()
+            raw_origin = declared.get("origem_valor")
+            if raw_origin is not None:
+                origem_valor = str(raw_origin).strip()
+                if origem_valor not in ORIGENS_DE_CHAVE:
+                    raise ContractCapabilitiesError(
+                        f"chaves_de_item[{clean_path!r}] usa origem_valor desconhecida "
+                        f"{origem_valor!r}; aceitas: {sorted(ORIGENS_DE_CHAVE)}."
+                    )
+        else:
+            clean_key = str(declared).strip()
         if not clean_path or not clean_key:
             raise ContractCapabilitiesError(
-                f"chaves_de_item com entrada vazia: {path!r} -> {key!r}."
+                f"chaves_de_item com entrada vazia: {path!r} -> {declared!r}."
             )
-        keys[clean_path] = clean_key
+        specs[clean_path] = ItemKeySpec(clean_path, clean_key, origem_valor)
     schema_saida = contract.get("schema_saida") if isinstance(contract, dict) else None
     if schema_saida is not None:
         arrays = schema_array_paths(schema_saida)
-        unknown = sorted(path for path in keys if path not in arrays)
+        unknown = sorted(path for path in specs if path not in arrays)
         if unknown:
             raise ContractCapabilitiesError(
                 f"chaves_de_item aponta para paths que nao sao arrays do schema_saida: {unknown}."
             )
-    return keys
+    return specs
+
+
+def item_keys(contract: Any) -> dict[str, str]:
+    """``chaves_de_item`` reduzido a path -> chave; vazio quando o contrato nao declara."""
+    return {path: spec.chave for path, spec in item_key_specs(contract).items()}
+
+
+def item_key_origins(contract: Any) -> dict[str, str]:
+    """path -> origem_valor, somente para os arrays que a declararam."""
+    return {
+        path: spec.origem_valor
+        for path, spec in item_key_specs(contract).items()
+        if spec.origem_valor
+    }
 
 
 def uses_generic_resolution(contract: Any) -> bool:

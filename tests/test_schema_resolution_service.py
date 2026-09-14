@@ -100,74 +100,74 @@ def test_resolution_ignores_layout_mapping_for_contract_literal() -> None:
     }
 
 
-def test_derives_global_periods_only_for_construtoras_contract() -> None:
-    contrato = {
-        "schema_saida": {
-            "periodo_referencia": "string",
-            "periodos_disponiveis": {
-                "periodo_referencia": "string",
-                "periodo_comparativo_anterior": "string | null",
-                "mesmo_periodo_ano_anterior": "string | null",
-                "periodo_12m_atual": "string | null",
-                "periodo_12m_anterior": "string | null",
-            },
-            "balancos_das_empresas": {"lancamentos": {}, "vendas": {}},
-        }
-    }
-    schema_saida = {
-        "periodo_referencia": None,
+def test_root_periods_come_only_from_declared_derivations() -> None:
+    """Sem ``derivacoes`` o codigo nao adivinha campos de raiz; com elas, preenche."""
+    from document_processing.domain.contracts.capabilities import apply_derivations, derivations
+
+    schema_template = {
+        "periodo_referencia": "string",
         "periodos_disponiveis": {
-            "periodo_referencia": None,
-            "periodo_comparativo_anterior": None,
-            "mesmo_periodo_ano_anterior": None,
-            "periodo_12m_atual": None,
-            "periodo_12m_anterior": None,
+            "periodo_referencia": "string",
+            "periodo_comparativo_anterior": "string | null",
+            "mesmo_periodo_ano_anterior": "string | null",
         },
+        "grupo": {"dados": [{"empresa": "string", "valores": [{"periodo": "string"}]}]},
     }
     resolved_by_path = {
-        "balancos_das_empresas.lancamentos.dados[empresa=Cury]."
-        "valores[papel_periodo=periodo_referencia].periodo": "2T26",
-        "balancos_das_empresas.vendas.dados[empresa=Cury]."
-        "valores[papel_periodo=periodo_referencia]": {
-            "periodo": "2T26",
-            "escopo_periodo": "trimestre",
-            "valor": 6697.0,
-        },
-        "balancos_das_empresas.lancamentos.dados[empresa=Cury]."
-        "valores[papel_periodo=periodo_comparativo_anterior].periodo": "1T26",
-        "balancos_das_empresas.lancamentos.dados[empresa=Cury]."
-        "valores[papel_periodo=mesmo_periodo_ano_anterior].periodo": "2T25",
+        "grupo.dados[empresa=Cury].valores[papel_periodo=periodo_referencia].periodo": "2T26",
+        "grupo.dados[empresa=Cury].valores[papel_periodo=periodo_comparativo_anterior].periodo": "1T26",
+        "grupo.dados[empresa=Cury].valores[papel_periodo=mesmo_periodo_ano_anterior].periodo": "2T25",
     }
 
-    SchemaResolutionService._derive_construtoras_global_periods(
-        contrato=contrato,
-        schema_saida=schema_saida,
+    def fresh() -> dict:
+        return {
+            "periodo_referencia": None,
+            "periodos_disponiveis": {
+                "periodo_referencia": None,
+                "periodo_comparativo_anterior": None,
+                "mesmo_periodo_ano_anterior": None,
+            },
+        }
+
+    sem_derivacoes = {"schema_saida": schema_template}
+    schema_saida = fresh()
+    apply_derivations(
+        schema_saida,
+        derivations(sem_derivacoes),
+        contract=sem_derivacoes,
+        manifest={},
         resolved_by_path=resolved_by_path,
     )
+    assert schema_saida == fresh()
 
+    def observacao(papel: str) -> dict:
+        return {"tipo": "observacao", "campo": "periodo", "seletor": {"papel_periodo": papel}}
+
+    com_derivacoes = {
+        "schema_saida": schema_template,
+        "contrato_semantico": {
+            "derivacoes": [
+                {"destino": "periodo_referencia", "origem": observacao("periodo_referencia")},
+                {"destino": "periodos_disponiveis.periodo_referencia", "origem": observacao("periodo_referencia")},
+                {"destino": "periodos_disponiveis.periodo_comparativo_anterior", "origem": observacao("periodo_comparativo_anterior")},
+                {"destino": "periodos_disponiveis.mesmo_periodo_ano_anterior", "origem": observacao("mesmo_periodo_ano_anterior")},
+            ]
+        },
+    }
+    schema_saida = fresh()
+    apply_derivations(
+        schema_saida,
+        derivations(com_derivacoes),
+        contract=com_derivacoes,
+        manifest={},
+        resolved_by_path=resolved_by_path,
+    )
     assert schema_saida["periodo_referencia"] == "2T26"
     assert schema_saida["periodos_disponiveis"] == {
         "periodo_referencia": "2T26",
         "periodo_comparativo_anterior": "1T26",
         "mesmo_periodo_ano_anterior": "2T25",
-        "periodo_12m_atual": None,
-        "periodo_12m_anterior": None,
     }
-
-
-def test_does_not_derive_periods_for_another_contract() -> None:
-    schema_saida = {"periodo_referencia": None, "periodos_disponiveis": {}}
-
-    SchemaResolutionService._derive_construtoras_global_periods(
-        contrato={"schema_saida": {"periodo_referencia": "string"}},
-        schema_saida=schema_saida,
-        resolved_by_path={
-            "balancos_das_empresas.lancamentos.dados[empresa=Cury]."
-            "valores[papel_periodo=periodo_referencia].periodo": "2T26",
-        },
-    )
-
-    assert schema_saida["periodo_referencia"] is None
 
 
 def test_resolves_rows_from_multiple_table_sources() -> None:
@@ -263,11 +263,8 @@ class SchemaResolutionServiceTest(unittest.TestCase):
     def test_resolution_ignores_layout_mapping_for_contract_literal(self) -> None:
         test_resolution_ignores_layout_mapping_for_contract_literal()
 
-    def test_derives_global_periods_only_for_construtoras_contract(self) -> None:
-        test_derives_global_periods_only_for_construtoras_contract()
-
-    def test_does_not_derive_periods_for_another_contract(self) -> None:
-        test_does_not_derive_periods_for_another_contract()
+    def test_root_periods_come_only_from_declared_derivations(self) -> None:
+        test_root_periods_come_only_from_declared_derivations()
 
     def test_resolves_rows_from_multiple_table_sources(self) -> None:
         test_resolves_rows_from_multiple_table_sources()
