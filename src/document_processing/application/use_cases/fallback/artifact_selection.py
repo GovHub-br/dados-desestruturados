@@ -22,6 +22,7 @@ class ArtifactSelectionMixin:
         selection_payload = self._with_evidence_prefilter(
             selection_payload,
             fallback_context=fallback_context,
+            manifest=manifest,
             stage=stage,
         )
         response_schema = LayoutArtifactSelection.model_json_schema()
@@ -133,22 +134,26 @@ class ArtifactSelectionMixin:
         selection_payload: dict[str, Any],
         *,
         fallback_context: dict[str, str],
+        manifest: dict[str, Any],
         stage: str,
     ) -> dict[str, Any]:
         """Fase 0: restringe a escolha da LLM aos artefatos que o contrato sustenta.
 
-        O pre-filtro e deterministico (sinonimos do contrato x resumo do inventario)
-        e fica gravado como ``prefiltro_evidencia.json`` para auditoria e metricas.
+        O pre-filtro e deterministico: sinonimos do contrato contra o resumo do
+        inventario e, quando o resumo nao decide, contra o artefato inteiro lido
+        do MinIO (uma leitura por artefato). Fica gravado como
+        ``prefiltro_evidencia.json`` para auditoria e metricas.
         """
         inventory = selection_payload.get("inventario_extracao", {})
         summary = inventory.get("resumo", {}) if isinstance(inventory, dict) else {}
         items = summary.get("items", []) if isinstance(summary, dict) else []
-        prefiltered = prefilter_inventory(
-            items if isinstance(items, list) else [],
+        items = items if isinstance(items, list) else []
+        result = run_prefilter(
+            items,
             selection_payload.get("contrato_semantico_relevante", {}),
+            load_artifact_text=self._artifact_text_loader(manifest=manifest, items=items),
         )
-        candidates = prefilter_payload(prefiltered)
-        total_items = len(items) if isinstance(items, list) else 0
+        candidates = prefilter_payload(result.candidates)
         prefix = stage.rsplit("/", 1)[0] + "/" if "/" in stage else ""
         self._persist_llm_validated(
             fallback_context=fallback_context,
@@ -159,8 +164,13 @@ class ArtifactSelectionMixin:
                 "unidade_mapeamento": (
                     dict(selection_payload.get("unidade_mapeamento") or {}).get("id")
                 ),
-                "total_artefatos_inventario": total_items,
+                "total_artefatos_inventario": len(items),
                 "candidatos_por_requisito": candidates,
+                "leitura_completa": {
+                    "artefatos_lidos": list(result.artefatos_lidos),
+                    "excluidos_apos_leitura": list(result.excluidos_apos_leitura),
+                    "sem_leitura": list(result.sem_leitura),
+                },
             },
         )
         return {
@@ -169,11 +179,48 @@ class ArtifactSelectionMixin:
             "politica_candidatos": (
                 "Para cada campo_saida, escolha somente entre os paths listados em "
                 "candidatos_por_requisito; quando a lista de um campo estiver vazia, "
-                "qualquer artefato do inventario e permitido para ele. Um candidato com "
-                "motivo 'amostra_incompleta' so deve ser escolhido se o titulo ou o "
+                "qualquer artefato do inventario e permitido para ele. Cada candidato "
+                "traz os termos do contrato encontrados nele (fonte 'resumo' ou "
+                "'artefato_completo'). Um candidato com motivo 'amostra_incompleta' "
+                "nao pode ser lido por inteiro e so deve ser escolhido se o titulo ou o "
                 "contexto indicarem que ele contem o indicador."
             ),
         }
+
+
+    def _artifact_text_loader(
+        self,
+        *,
+        manifest: dict[str, Any],
+        items: list[Any],
+    ):
+        """Leitor do artefato inteiro para o pre-filtro: path do inventario -> texto.
+
+        Resolve o object key pelo manifesto e le o JSON do MinIO; qualquer falha
+        devolve None e o dominio trata o artefato como nao lido.
+        """
+        artifact_uris = [str(uri) for uri in manifest.get("artifact_uris", []) or []]
+        by_path = {
+            str(item.get("path", "")).strip("/"): item
+            for item in items
+            if isinstance(item, dict)
+        }
+
+        def load(path: str) -> str | None:
+            object_key = self.inventory_service.find_artifact_object_key(
+                artifact_uris=artifact_uris,
+                origin_file=path,
+            )
+            if not object_key or not object_key.endswith(".json"):
+                return None
+            try:
+                parsed = json.loads(self.minio_client.get_bytes(object_key=object_key))
+            except Exception as exc:
+                logging.warning("Pre-filtro: nao foi possivel ler %s (%s).", object_key, exc)
+                return None
+            return artifact_full_text(parsed, item=by_path.get(path))
+
+        return load
 
 
     def _artifact_selection_repair_payload(

@@ -57,6 +57,7 @@ MAIOR_MELHOR = {
     # Selecao de artefatos: quanto da evidencia escolhida sustenta a unidade.
     "selecao_evidencia_especifica",
     "selecao_prefiltro_reducao",
+    "selecao_prefiltro_leitura_completa",
     "selecao_escolha_dentro_do_prefiltro",
     # Harness da assinatura de layout (scripts/avaliar_assinatura_layout.py).
     "assinatura_f0_selecao_precisao",

@@ -5,14 +5,18 @@ do grupo de metricas, dos indicadores selecionados e das entidades de contexto)
 e marca quais artefatos do inventario os contem. A LLM continua escolhendo, mas
 entre candidatos; o validador recusa o que ficou fora.
 
-Nenhum termo e conhecido pelo codigo: tudo sai do contrato. Um artefato cujo
-resumo nao mostra todas as linhas (``row_count`` maior que a amostra de rotulos)
-nao pode ser excluido pelo que nao foi visto e entra como candidato com o motivo
-``amostra_incompleta``.
+Nenhum termo e conhecido pelo codigo: tudo sai do contrato. O resumo do
+inventario mostra poucas linhas por tabela e nenhuma por grafico; quando ele nao
+basta para decidir, o artefato completo (``schema`` + todas as ``rows``) e lido
+por um carregador injetado pela aplicacao e a busca e refeita sobre o texto
+inteiro. So quando nem isso e possivel (artefato ilegivel, sem carregador) o
+artefato entra como candidato com o motivo ``amostra_incompleta`` — nunca se
+exclui o que nao foi visto.
 """
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from typing import Any
 
@@ -24,6 +28,12 @@ from document_processing.domain.contracts.mapping_requirements import (
 from document_processing.domain.contracts.text_normalization import normalize_text
 
 MIN_TERM_LENGTH = 3
+
+FONTE_RESUMO = "resumo"
+FONTE_ARTEFATO_COMPLETO = "artefato_completo"
+
+# path do artefato -> texto normalizado do artefato inteiro, ou None se ilegivel.
+ArtifactTextLoader = Callable[[str], str | None]
 
 
 @dataclass(frozen=True)
@@ -39,6 +49,17 @@ class ArtifactCandidate:
     path: str
     motivo: str  # "termo_casado" | "amostra_incompleta"
     termos_casados: tuple[str, ...] = ()
+    fonte: str = FONTE_RESUMO  # onde o termo foi encontrado
+
+
+@dataclass(frozen=True)
+class PrefilterResult:
+    """Candidatos por requisito e o que a leitura completa decidiu."""
+
+    candidates: dict[str, list[ArtifactCandidate]]
+    artefatos_lidos: tuple[str, ...] = ()  # lidos por completo (cache por path)
+    excluidos_apos_leitura: tuple[str, ...] = ()  # lidos e candidatos de nenhum requisito
+    sem_leitura: tuple[str, ...] = ()  # amostra incompleta e leitura indisponivel
 
 
 def search_criteria_by_requirement(contract_context: Any) -> dict[str, RequirementSearchCriteria]:
@@ -62,9 +83,40 @@ def search_criteria_by_requirement(contract_context: Any) -> dict[str, Requireme
 def prefilter_inventory(
     inventory_items: list[Any],
     contract_context: Any,
+    *,
+    load_artifact_text: ArtifactTextLoader | None = None,
 ) -> dict[str, list[ArtifactCandidate]]:
     """requisito -> artefatos candidatos, na ordem do inventario."""
+    return run_prefilter(
+        inventory_items, contract_context, load_artifact_text=load_artifact_text
+    ).candidates
+
+
+def run_prefilter(
+    inventory_items: list[Any],
+    contract_context: Any,
+    *,
+    load_artifact_text: ArtifactTextLoader | None = None,
+) -> PrefilterResult:
+    """Pre-filtro em duas passadas: resumo do inventario e, se preciso, artefato inteiro.
+
+    O artefato completo e lido no maximo uma vez por path, mesmo com varios
+    requisitos; a leitura so acontece quando o resumo nao decide (amostra
+    incompleta) e nenhum termo casou nele.
+    """
     criteria = search_criteria_by_requirement(contract_context)
+    full_text_cache: dict[str, str | None] = {}
+
+    def full_text(path: str) -> str | None:
+        if load_artifact_text is None:
+            return None
+        if path not in full_text_cache:
+            try:
+                full_text_cache[path] = load_artifact_text(path)
+            except Exception:  # leitura e melhor esforco: sem texto, sem exclusao
+                full_text_cache[path] = None
+        return full_text_cache[path]
+
     result: dict[str, list[ArtifactCandidate]] = {}
     for requisito, spec in criteria.items():
         candidates: list[ArtifactCandidate] = []
@@ -74,14 +126,59 @@ def prefilter_inventory(
             path = str(item.get("path", "")).strip("/")
             if not path:
                 continue
-            text = _item_text(item)
-            matched = tuple(sorted(term for term in spec.termos if term in text))
+            matched = _matched_terms(spec.termos, _item_text(item))
             if matched:
-                candidates.append(ArtifactCandidate(path, "termo_casado", matched))
-            elif _sample_is_incomplete(item):
+                candidates.append(ArtifactCandidate(path, "termo_casado", matched, FONTE_RESUMO))
+                continue
+            if not _sample_is_incomplete(item):
+                continue
+            text = full_text(path)
+            if text is None:
                 candidates.append(ArtifactCandidate(path, "amostra_incompleta"))
+                continue
+            matched = _matched_terms(spec.termos, text)
+            if matched:
+                candidates.append(
+                    ArtifactCandidate(path, "termo_casado", matched, FONTE_ARTEFATO_COMPLETO)
+                )
         result[requisito] = candidates
-    return result
+
+    lidos = tuple(path for path, text in full_text_cache.items() if text is not None)
+    ainda_candidatos = {c.path for candidates in result.values() for c in candidates}
+    return PrefilterResult(
+        candidates=result,
+        artefatos_lidos=lidos,
+        excluidos_apos_leitura=tuple(p for p in lidos if p not in ainda_candidatos),
+        sem_leitura=tuple(path for path, text in full_text_cache.items() if text is None),
+    )
+
+
+def artifact_full_text(artifact: Any, *, item: Any = None) -> str | None:
+    """Texto de busca do artefato inteiro: nome, secao, cabecalhos e todas as celulas.
+
+    Tabelas e graficos persistidos pela extracao tem a mesma forma
+    (``name``, ``schema``, ``rows``); ``item`` e o registro do inventario, que
+    traz o ``section_title`` que o arquivo nao repete.
+    """
+    if not isinstance(artifact, dict):
+        return None
+    rows = artifact.get("rows")
+    if not isinstance(rows, list):
+        return None
+    parts: list[Any] = [artifact.get("name")]
+    if isinstance(item, dict):
+        parts.extend([item.get("name"), item.get("section_title")])
+    schema = artifact.get("schema")
+    if isinstance(schema, list):
+        parts.extend(schema)
+    for row in rows:
+        if isinstance(row, list):
+            parts.extend(row)
+    return " | ".join(normalize_text(str(part)) for part in parts if part not in (None, ""))
+
+
+def _matched_terms(terms: dict[str, str], text: str) -> tuple[str, ...]:
+    return tuple(sorted(term for term in terms if term in text))
 
 
 def prefilter_payload(prefiltered: dict[str, list[ArtifactCandidate]]) -> dict[str, Any]:
@@ -91,6 +188,7 @@ def prefilter_payload(prefiltered: dict[str, list[ArtifactCandidate]]) -> dict[s
             {
                 "path": candidate.path,
                 "motivo": candidate.motivo,
+                **({"fonte": candidate.fonte} if candidate.motivo == "termo_casado" else {}),
                 **({"termos_casados": list(candidate.termos_casados)} if candidate.termos_casados else {}),
             }
             for candidate in candidates
@@ -176,8 +274,9 @@ def _terms_for_requirement(
 
 
 def _item_text(item: dict[str, Any]) -> str:
+    """Texto do resumo do inventario (tabelas: amostra de rotulos; graficos: series e categorias)."""
     parts: list[Any] = [item.get("name"), item.get("section_title")]
-    for key in ("schema", "row_labels_sample"):
+    for key in ("schema", "row_labels_sample", "series_sample", "categories_sample"):
         values = item.get(key)
         if isinstance(values, list):
             parts.extend(values)
@@ -188,7 +287,7 @@ def _sample_is_incomplete(item: dict[str, Any]) -> bool:
     """O resumo mostrou todas as linhas? Sem ``row_count`` e sem amostra, nao se sabe.
 
     Graficos chegam sem rotulos de linha e tabelas trazem uma amostra curta; um
-    artefato que nao foi visto inteiro nao pode ser descartado por ausencia de termo.
+    artefato que nao foi visto inteiro so pode ser descartado depois de lido.
     """
     sample = item.get("row_labels_sample")
     seen = len(sample) if isinstance(sample, list) else 0

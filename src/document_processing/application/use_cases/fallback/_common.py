@@ -30,8 +30,9 @@ from document_processing.domain.fallback.classification import (
     FallbackClassificationService,
 )
 from document_processing.domain.fallback.evidence_prefilter import (
-    prefilter_inventory,
+    artifact_full_text,
     prefilter_payload,
+    run_prefilter,
 )
 from document_processing.domain.fallback.evidence_pruning import (
     PruningDecision,
