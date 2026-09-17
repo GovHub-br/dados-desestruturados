@@ -181,9 +181,10 @@ efeito das tres juntas; a tabela abaixo separa a hipotese de cada uma para que
 uma regressao aponte para a causa certa. Rotulo desta release:
 `exp-prereq-fase0.1`.
 
-> **Nao rodar ainda.** Esta release so dispara com autorizacao explicita do
-> usuario nesta conversa — as pendencias abaixo (commit do item 5.3, correcao
-> do gabarito, scores limpos) tem de estar resolvidas antes do sinal.
+> **Autorizada em 2026-09-17.** O usuario liberou a execucao com os itens 2 e
+> 3 da secao "Como rodar e comparar" ainda em aberto (gabarito do Plano&Plano
+> e regravacao de `assinatura_*`) — a comparacao inicial deve ser lida com
+> essa ressalva ate esses dois itens fecharem.
 
 ### 5.1 · Prompt de construtoras explica `chaves_de_item` na 1a tentativa (commit `a687994`)
 
@@ -231,7 +232,7 @@ rodar `python scripts/sincronizar_contratos_langfuse.py --publicar` para o
 Langfuse acompanhar — e da pra abrir `atlas/contratos/construtoras` na
 interface e navegar o historico v1.7.0 -> v1.9.0 com diff nativo.
 
-### 5.3 · Pre-filtro le o artefato inteiro (em arvore de trabalho, a commitar)
+### 5.3 · Pre-filtro le o artefato inteiro (commit `3b9c5f5`)
 
 O lote 4 mostrou que o pre-filtro da fase 0 quase nao reduzia: ele so olhava o
 resumo do inventario e, sem poder decidir, empurrava o artefato para o contexto
@@ -279,15 +280,19 @@ Rotulo unico para os tres itens (`5.1`+`5.3`; `5.2` nao afeta pipeline):
 forcada. Base de comparacao: `exp-prereq-fase0`.
 
 Pendencias antes de rodar:
-1. Commitar o item 5.3 (hoje em arvore de trabalho).
+1. ~~Commitar o item 5.3~~ — feito em `3b9c5f5` (2026-09-17).
 2. Corrigir o gabarito do Plano&Plano — `eval/gabaritos/…` usa seletores
    literais (`periodo: 1T26`/`2T25`) em vez de papel
    (`papel_periodo: periodo_comparativo_anterior`/`mesmo_periodo_ano_anterior`),
    o que fez `assinatura_f3_arquivo_origem_correto` e
    `_ausencia_falso_negativo` acusarem regressao falsa na comparacao anterior.
+   **Ainda pendente.**
 3. Regravar `assinatura_*` de `baseline0` e `exp-prereq-fase0` depois da
    correcao acima, para a proxima comparacao partir de numeros limpos.
-4. **Aguardar autorizacao explicita do usuario para disparar a execucao.**
+   **Ainda pendente.**
+4. Autorizacao explicita do usuario para disparar a execucao — **dada em
+   2026-09-17**; os itens 2 e 3 seguem em aberto, o usuario optou por rodar
+   os 10 documentos antes de fecha-los.
 
 ### Ultimo commit de cada release
 
@@ -295,5 +300,5 @@ Pendencias antes de rodar:
 | --- | --- | --- |
 | `baseline0` | `1c67bf2` — "feat: agora modelos retornam resoning para facilitar debug de execucoes" | rodada e comparada |
 | `exp-prereq-fase0` | `f41cbff` — "feat: pre-requisitos + fase 0 (pre-filtro de evidencia) da assinatura de layout" | rodada e comparada (Lote 4) |
-| `exp-prereq-fase0.1` | `c4a5a42` — "feat: publica contratos semanticos versionados no Langfuse" **+ item 5.3 commitado nesta rodada** — hash definitivo apos o commit, ver secao 5.3 | a rodar; aguardando autorizacao |
+| `exp-prereq-fase0.1` | `3b9c5f5` — "feat: pre-filtro de evidencia le o artefato inteiro quando o resumo nao decide" (item 5.3; fecha os tres itens do lote 5) | a rodar |
 
