@@ -140,3 +140,160 @@ calculados por `scripts/avaliar_assinatura_layout.py --release baseline0`.
 - Gabaritos: `eval/gabaritos/<document_id>.json` (10 documentos).
 - Operacional: rodar com `caffeinate -i`; o sleep do host mata as tasks por
   falta de heartbeat e derruba a ingestao no Langfuse.
+- Traces `atlas.fallback` no Langfuse: `baseline0` tem exatamente 10 (um por
+  entidade — cury, cyre3, direcional, eztc3, itau, mrv, pacaembu, plano-plano,
+  santander, tenda); `exp-prereq-fase0` tem 11 (o 11o e um re-processamento
+  manual do Cury feito depois, sem periodo no execution_id, que carregou o
+  rotulo por engano — nao entrou na comparacao porque o pareamento e por
+  `execution_id`, nao so por release).
+
+### Resultado do lote 4 (comparacao em 2026-09-14)
+
+`python scripts/comparar_releases_langfuse.py --base baseline0 --novo exp-prereq-fase0`,
+18 execucoes pareadas. Desfecho e2e identico (9/10 publicados; Cyrela e
+negativo verdadeiro nas duas).
+
+| metrica | base | novo | leitura |
+| --- | --- | --- | --- |
+| `assinatura_f1_filtro_chave_declarada` (alvo) | 0,954 | 1,000 | atingido |
+| `assinatura_f0_selecao_precisao` (alvo) | 0,635 | 0,783 | atingido (eztc3 6,5 -> 2 artefatos/requisito) |
+| `selecao_prefiltro_reducao` (alvo) | - | 0,076 | reportado: pre-filtro so decidia pelo resumo do inventario (5 rotulos por tabela, nenhum por grafico); 100% das escolhas dentro dos candidatos, mas quase nenhuma exclusao |
+| `assinatura_f1_filtro_papel_literal` | 1,11 | 0 | Plano&Plano deixou de emitir `valores[periodo=1T26]` |
+| `assinatura_f0_selecao_revocacao` (guarda) | 1,0 | 1,0 | ok |
+| `assinatura_f1_cobertura_obrigatorios` (guarda) | 0,85 | 0,95 | ok |
+| `llm_tentativas` (guarda) | 1,29 | 1,21 | ok |
+| `e2e_tokens_llm` | 40,1k | 36,2k | -10% |
+| `assinatura_f3_arquivo_origem_correto` (guarda) | 1,0 | 0,926 | artefato de medicao: gabarito do Plano&Plano usava `periodo=1T26`; o candidato novo ancora as mesmas celulas por `papel_periodo` |
+| `assinatura_f3_ausencia_falso_positivo` | 0 | 1 | real: Cyrela mapeou "Numero de Lancamentos" como unidades; sem efeito no desfecho |
+| `e2e_duracao_segundos` | 130 | 175 | ambiente: mesmo numero de chamadas, throughput do provedor 146 -> 91 tok/s |
+
+Veredito: aprovada com ressalva; passa a ser a base de referencia. Santander
+recuperou o Jun/26 (5 periodos de `inadimplencia_90_dias`, conferidos no
+`chart006`). Pendencias abertas: corrigir o gabarito do Plano&Plano (seletores
+por papel) e regravar os scores `assinatura_*`; MRV segue `revisao_pendente`.
+
+## Lote 5: prompt de construtoras, contratos no Langfuse e pre-filtro completo
+
+Tres mudancas sobre `exp-prereq-fase0`, as duas primeiras ja commitadas, a
+terceira ainda em arvore de trabalho. Nao sao unidades de medida separadas —
+por estarem todas no mesmo branch, a proxima rodada de 10 documentos mede o
+efeito das tres juntas; a tabela abaixo separa a hipotese de cada uma para que
+uma regressao aponte para a causa certa. Rotulo desta release:
+`exp-prereq-fase0.1`.
+
+> **Nao rodar ainda.** Esta release so dispara com autorizacao explicita do
+> usuario nesta conversa — as pendencias abaixo (commit do item 5.3, correcao
+> do gabarito, scores limpos) tem de estar resolvidas antes do sinal.
+
+### 5.1 · Prompt de construtoras explica `chaves_de_item` na 1a tentativa (commit `a687994`)
+
+`candidate_artifacts_instruction()` so mencionava `papeis` numa frase curta;
+`chaves_de_item`, `origem_das_chaves` (as tres origens:
+`identidade_documento`/`seletor_observacao`/`evidencia`) e `evidencia_esperada`
+so eram explicados no prompt de reparo, depois que o validador ja tinha
+rejeitado o candidato. O fluxo de bancos (`unit_mapping_artifacts_instruction`)
+ja explicava tudo desde a 1a chamada — construtoras nao. Alinha os dois: a
+explicacao completa entra na primeira tentativa, nao so na correcao.
+126 testes passando, ruff limpo (commit isolado, antes das mudancas do 5.3).
+
+| item | hipotese | metrica-alvo | guarda |
+| --- | --- | --- | --- |
+| 5.1 | com a explicacao completa desde a 1a chamada, construtoras erra menos estrutura na 1a tentativa (o padrao que bancos ja tinha) | `assinatura_f1_estrutura_valida@primeira_tentativa` e `llm_acerto_1a_tentativa` (etapa `layout_signature_candidato`), so em construtoras | `assinatura_f1_cobertura_obrigatorios`, `fallback_tentativas_llm_total` (nao pode subir) |
+
+### 5.2 · Contratos semanticos versionados no Langfuse (commit `c4a5a42`)
+
+Nao e uma mudanca de pipeline — nao tem `ATLAS_RELEASE`, nao entra na
+comparacao de traces. E uma lacuna de observabilidade fechada: confirmado por
+inspecao (`/api/public/v2/prompts`, `/api/public/datasets`) que nenhum dos 24
+prompts do fallback, nenhum dos 4 datasets (`atlas-e2e-regressao`,
+`atlas-fallback-layout-candidato`, `atlas-fallback-selecao-artefatos`,
+`atlas-transicao-resolucao-fallback`) e nenhuma metadata de trace continha os
+contratos ou suas versoes — so os prompts do fallback e as metricas do harness
+estavam la.
+
+Novo `scripts/sincronizar_contratos_langfuse.py`, mesmo padrao de
+`sincronizar_prompts_langfuse.py`: um text prompt por dominio
+(`atlas/contratos/bancos`, `atlas/contratos/construtoras`), uma versao do
+prompt Langfuse por versao local do contrato, rotulada com a propria versao
+semantica (nao `latest`/`production` — varias versoes coexistem por design).
+`--verificar` lista divergencias sem escrever; `--publicar` publica o que
+faltar (`--dry-run` so mostra).
+
+Rodado uma vez em 17/09: `--verificar` (7 ausentes) -> `--publicar --dry-run`
+(conferencia) -> `--publicar` (real). As 7 versoes locais (bancos
+v1.0.0-v2.2.0, construtoras v1.7.0-v1.9.0) publicadas; o rotulo automatico
+`latest` do Langfuse caiu certo em v2.2.0/v1.9.0. Reverificado agora: **7
+iguais, 0 divergentes, 0 ausentes**; total de prompts distintos no projeto
+24 -> 26.
+
+A partir de agora, toda vez que um contrato novo for publicado no MinIO, basta
+rodar `python scripts/sincronizar_contratos_langfuse.py --publicar` para o
+Langfuse acompanhar — e da pra abrir `atlas/contratos/construtoras` na
+interface e navegar o historico v1.7.0 -> v1.9.0 com diff nativo.
+
+### 5.3 · Pre-filtro le o artefato inteiro (em arvore de trabalho, a commitar)
+
+O lote 4 mostrou que o pre-filtro da fase 0 quase nao reduzia: ele so olhava o
+resumo do inventario e, sem poder decidir, empurrava o artefato para o contexto
+da LLM como `amostra_incompleta`. O artefato completo (`tables/*.json`,
+`charts/*.json`, com todas as `rows`) ja esta no MinIO no momento da selecao —
+e o mesmo objeto que a fase 3 le para ancorar a linha. Agora o pre-filtro le o
+artefato inteiro (uma leitura por artefato, cache por chamada) quando o resumo
+nao decide, e so cai em `amostra_incompleta` se a leitura falhar.
+
+- Dominio (`evidence_prefilter.py`): `run_prefilter()` em duas passadas —
+  resumo do inventario e, so quando ele nao decide, o artefato inteiro via um
+  `ArtifactTextLoader` injetado (o dominio continua sem I/O); uma leitura por
+  artefato, cache por chamada, mesmo com varios requisitos. `artifact_full_text()`
+  monta o texto de busca a partir de `name`, `section_title`, `schema` e todas
+  as celulas de `rows` — formato que tabelas e graficos compartilham
+  (confirmado em `docling_pipeline/persistence.py`). Sem termo em nenhuma
+  passada, o artefato sai; `amostra_incompleta` so sobra se a leitura falhar
+  (erro nunca exclui). O resumo passou a incluir `series_sample`/
+  `categories_sample` de graficos, que o inventario ja trazia e ninguem lia.
+  Cada candidato ganha `fonte` (`resumo` | `artefato_completo`);
+  `PrefilterResult` expoe `artefatos_lidos`, `excluidos_apos_leitura`,
+  `sem_leitura`.
+- Aplicacao (`artifact_selection.py`): `_artifact_text_loader()` resolve o
+  object key pelo manifesto e le do MinIO; `prefiltro_evidencia.json` grava o
+  bloco `leitura_completa`; `politica_candidatos` atualizada.
+- Metrica nova: `selecao_prefiltro_leitura_completa` (diagnostico: dos
+  artefatos que o resumo nao decidiu, fracao lida por inteiro — o resto ficou
+  `amostra_incompleta` sem verificacao), emitida pelo tracing existente e
+  registrada no comparador.
+- Prova offline (extracao local do Cury, 16 artefatos, contrato v1.9.0):
+  reducao 0,19 -> 0,56; candidatos por requisito 13 -> 5,5; 9 artefatos lidos,
+  6 excluidos; as fontes reais (`table001`, `table002`) seguem candidatas.
+- Testes: `test_evidence_prefilter.py` vai de 4 para 8 casos (4 novos; 1 dos
+  4 antigos foi renomeado, nao substituido); suite completa 126 -> 130
+  passed; ruff limpo.
+
+| item | hipotese | metrica-alvo | guarda | custo |
+| --- | --- | --- | --- | --- | --- |
+| 5.3 | com a busca sobre o artefato inteiro, o pre-filtro exclui de verdade, a lista de candidatos encolhe e a selecao gasta menos contexto sem perder a fonte certa | `selecao_prefiltro_reducao` (>= 0,4), `selecao_candidatos_por_requisito` (queda), `llm_tokens_total` da etapa `selecao_artefatos` (queda) | `assinatura_f0_selecao_revocacao` (= 1,0), `selecao_escolha_dentro_do_prefiltro` (= 1,0), `assinatura_f1_cobertura_obrigatorios`, `assinatura_f3_arquivo_origem_correto` | `e2e_tokens_llm` sem subir; `e2e_duracao_segundos` so conta se tokens de saida ou chamadas subirem |
+
+### Como rodar e comparar
+
+Rotulo unico para os tres itens (`5.1`+`5.3`; `5.2` nao afeta pipeline):
+`ATLAS_RELEASE=exp-prereq-fase0.1`, mesmos 10 documentos, criacao inicial
+forcada. Base de comparacao: `exp-prereq-fase0`.
+
+Pendencias antes de rodar:
+1. Commitar o item 5.3 (hoje em arvore de trabalho).
+2. Corrigir o gabarito do Plano&Plano — `eval/gabaritos/…` usa seletores
+   literais (`periodo: 1T26`/`2T25`) em vez de papel
+   (`papel_periodo: periodo_comparativo_anterior`/`mesmo_periodo_ano_anterior`),
+   o que fez `assinatura_f3_arquivo_origem_correto` e
+   `_ausencia_falso_negativo` acusarem regressao falsa na comparacao anterior.
+3. Regravar `assinatura_*` de `baseline0` e `exp-prereq-fase0` depois da
+   correcao acima, para a proxima comparacao partir de numeros limpos.
+4. **Aguardar autorizacao explicita do usuario para disparar a execucao.**
+
+### Ultimo commit de cada release
+
+| release | ultimo commit | estado |
+| --- | --- | --- |
+| `baseline0` | `1c67bf2` — "feat: agora modelos retornam resoning para facilitar debug de execucoes" | rodada e comparada |
+| `exp-prereq-fase0` | `f41cbff` — "feat: pre-requisitos + fase 0 (pre-filtro de evidencia) da assinatura de layout" | rodada e comparada (Lote 4) |
+| `exp-prereq-fase0.1` | `c4a5a42` — "feat: publica contratos semanticos versionados no Langfuse" **+ item 5.3 commitado nesta rodada** — hash definitivo apos o commit, ver secao 5.3 | a rodar; aguardando autorizacao |
+

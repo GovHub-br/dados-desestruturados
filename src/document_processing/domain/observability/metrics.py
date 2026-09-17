@@ -413,7 +413,9 @@ def evidence_prefilter_metrics(
     quanto menor, mais o contrato explica a evidencia. ``selecao_prefiltro_reducao``:
     fracao do inventario que o pre-filtro dispensou. ``selecao_escolha_dentro_do_prefiltro``:
     fracao dos artefatos escolhidos pela LLM que estavam entre os candidatos por termo
-    (nao apenas por amostra incompleta).
+    (nao apenas por amostra incompleta). ``selecao_prefiltro_leitura_completa``:
+    dos artefatos que o resumo nao decidiu, fracao lida por inteiro — o resto
+    entrou como ``amostra_incompleta`` sem verificacao.
     """
     candidates = _as_dict(prefilter.get("candidatos_por_requisito"))
     total_items = int(prefilter.get("total_artefatos_inventario") or 0)
@@ -453,6 +455,23 @@ def evidence_prefilter_metrics(
             metadata=contexto,
         ),
     ]
+    leitura = _as_dict(prefilter.get("leitura_completa"))
+    lidos = len(_as_list(leitura.get("artefatos_lidos")))
+    sem_leitura = len(_as_list(leitura.get("sem_leitura")))
+    if leitura and (lidos or sem_leitura):
+        excluidos = len(_as_list(leitura.get("excluidos_apos_leitura")))
+        metrics.append(
+            MetricValue(
+                name="selecao_prefiltro_leitura_completa",
+                value=_ratio(lidos, lidos + sem_leitura),
+                comment=(
+                    "Dos artefatos que o resumo do inventario nao decidiu, fracao lida por "
+                    f"inteiro. {lidos} lidos, {excluidos} excluidos apos a leitura, "
+                    f"{sem_leitura} sem leitura."
+                ),
+                metadata=contexto,
+            )
+        )
     chosen = [str(path).strip("/") for path in (selected_paths or []) if str(path).strip()]
     if chosen:
         metrics.append(
