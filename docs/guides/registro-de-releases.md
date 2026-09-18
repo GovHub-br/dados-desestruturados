@@ -553,6 +553,79 @@ ponteiro v1.4.0 guardada em `layouts/bancos/<entidade>/current.rollback-2026-09-
   segue aceito. `tests/unit/domain/test_collection_by_evidence.py` (11 casos) e
   `tests/unit/application/test_revalidation_gate.py` (3). Suite 200.
 
+### Resultado do lote 7 (comparacao em 2026-09-18)
+
+Rodada 04:07-04:37 UTC, codigo `1e50fbd`, prompts `comum-contrato` v3 e
+`unit-mapping-escopo` v3. Release limpa (10 fallback + 9 revalidacoes).
+Harness uma vez (286 scores). Base: `exp-prereq-fase0.1` (Santander `__r2`).
+
+**Veredito: reprovada, com o alvo atingido.** Bancos saiu como planejado, mas
+tres documentos mudaram de linha ou de artefato e a guarda
+`assinatura_f3_arquivo_origem_correto` regrediu (0,792 -> 0,685) por
+regressao real — a regra "construtoras delta 0,000" nao se sustentou.
+
+| metrica | papel | base | novo | leitura |
+| --- | --- | --- | --- | --- |
+| `llm_tentativas` fragmento percentuais (Santander) | alvo | 2 | **1** | colecao `chart006` aceita na 1a resposta; 5 periodos |
+| `resolucao_cobertura_obrigatorios` (bancos) | alvo | 1,0 | **1,0** | Santander monetarios voltaram a celula com rotulo: 714.769 / 15.341 / 16.058 / 718 / 3.014 = base |
+| `e2e_tokens_llm` | custo | 31,9k | **29,1k** (-9 %) | Santander 65,8k -> 59,2k; Itau 56k -> 47k; Cyrela 41k -> 19k |
+| `llm_tentativas` / `llm_acerto_1a_tentativa` | — | 1,17 / 0,83 | 1,08 / 0,88 | melhor no agregado |
+| `assinatura_f3_arquivo_origem_correto` | guarda | 0,792 | **0,685** | Direcional 1,0 -> 0; Itau 1,0 -> 0,83; Plano&Plano 0,33 -> 0,33 (mas rotulo 0,33 -> 0,17) |
+| `assinatura_f3_ausencia_falso_negativo` | guarda | 1,125 | 1,667 | Direcional +6 (filtro `empresa=identidade_documento` nao casa com o gabarito) |
+| `e2e_duracao_segundos` | custo | 109 | 143 | provedor |
+| gate C3 | — | — | 0 bloqueios | nenhum obrigatorio ficou sem valor nesta rodada |
+
+Por documento (valores resolvidos contra a base e o gabarito):
+
+- **Santander — alvo.** Percentuais: colecao aceita na 1a tentativa, 5
+  periodos. Monetarios: celula com rotulo, valores identicos a base. Mantido
+  em v1.5.0 (equivale a v1.3.0 com os 5 periodos). Persistiu o reparo na
+  selecao por ancora nao literal em `table005` ("Resultado recorrente"; 3 de
+  3 rodadas nesta linha de codigo).
+- **Direcional — regressao real, publicada e revertida.** A LLM escreveu o
+  filtro como `[empresa=identidade_documento]` (o nome da *origem* da chave no
+  lugar do valor) e, sem a entidade para procurar, ancorou a linha 6 "Unidades
+  Lancadas" (5.511, Direcional + Riva) em vez da linha 7 "Direcional" (3.896,
+  gabarito). O validador aceitou: nao ha checagem do *valor* do filtro para
+  `origem_valor=identidade_documento` (item 1.5). Revalidacao e gate passaram
+  (tudo resolvido, so que na linha errada). v1.5.0 -> v1.3.0.
+- **Plano&Plano — regressao real, publicada e revertida.** Vendas ancoradas em
+  "Vendas Liquidas 100% (Unid.)" (3.351) em vez de "Vendas Contratadas Brutas
+  (Unidades)" (3.601, gabarito). Escolha semantica da LLM entre dois rotulos
+  plausiveis; e o que o item 3.2 (linha por sinonimos do contrato, em codigo)
+  tira da LLM. v1.5.0 -> v1.3.0.
+- **Itau — regressao real, publicada e revertida.** `inadimplencia_90_dias`
+  ancorada em `chart002` col 1 (2,2) em vez de `chart004` col 2 (1,9,
+  gabarito); os dois graficos estavam no contexto (precisao da selecao 0,27
+  nas duas rodadas). Uma resposta vazia (transporte) consumiu uma tentativa.
+  v1.5.0 -> v1.3.0.
+- Cury, EZTEC, Tenda, Pacaembu, MRV: valores identicos a base. Cyrela:
+  verdadeiro negativo com 2 tentativas (era 4) e metade dos tokens.
+
+Leitura que atravessa os lotes 5, 6 e 7: a cada rodada algum documento troca
+de linha, de artefato ou de valor de filtro por decisao livre da LLM, e o
+validador so pega o que a gramatica do path e a cobertura de paths
+enxergam. Mudar prompt fecha um caminho e abre outro (`identidade_documento`
+como valor nunca tinha aparecido em 4 rodadas x 8 construtoras). As
+correcoes com mecanismo sao as da Fase 1 e 3 do plano — o codigo enumera as
+chaves (inclusive o filtro de identidade) e ancora a linha por sinonimo, e a
+LLM decide so o residuo:
+
+1. Validador (barato, determinista): recusar valor de filtro igual a um token
+   de origem (`identidade_documento`, `seletor_observacao`, `evidencia`) e,
+   para `origem_valor=identidade_documento`, exigir que o valor seja o slug ou
+   o nome do cabecalho `entidade` do candidato. Fecha o caso Direcional.
+2. Fase 1 em codigo (item 1.5): o filtro de identidade e preenchido pelo
+   codigo, nao pela LLM.
+3. Fase 3.2: linha por sinonimos do contrato com LLM so no residuo — fecha
+   Plano&Plano (brutas x liquidas) e Direcional (marca x consolidado, item 2.4).
+4. Resposta vazia como retry de transporte (item 7.3) — Itau, 3a rodada seguida.
+
+Ponteiros apos o lote: cury/eztc3/tenda/pacaembu v1.5.0 (valores = base),
+mrv v1.4.0 (= base), santander v1.5.0 (melhor que a base), direcional/
+plano-plano/itau v1.3.0 (rollback; copias dos ponteiros v1.5.0 ao lado).
+Base de referencia continua `exp-prereq-fase0.1`.
+
 ### Ultimo commit de cada release
 
 | release | ultimo commit | estado |
@@ -561,5 +634,5 @@ ponteiro v1.4.0 guardada em `layouts/bancos/<entidade>/current.rollback-2026-09-
 | `exp-prereq-fase0` | `f41cbff` — "feat: pre-requisitos + fase 0 (pre-filtro de evidencia) da assinatura de layout" | rodada e comparada (Lote 4) |
 | `exp-prereq-fase0.1` | `3b9c5f5` — "feat: pre-filtro de evidencia le o artefato inteiro quando o resumo nao decide" (item 5.3; fecha os tres itens do lote 5) | rodada e comparada em 17/09, `__r2` do Santander em 18/09: aprovada com ressalva; base do lote 6 |
 | `exp-colecao-fragmento` | `2879aba` — colecao por evidencia aceita sem reparo (M1-M5) | rodada e comparada em 18/09: **reprovada** (Santander publicou valores errados nos monetarios); base segue `exp-prereq-fase0.1` |
-| `exp-colecao-chave-coluna` | `15668c1` — colecao so com a chave numa coluna; gate por obrigatorios (C1-C3) | a rodar |
+| `exp-colecao-chave-coluna` | `15668c1` — colecao so com a chave numa coluna; gate por obrigatorios (C1-C3) | rodada e comparada em 18/09: **reprovada** (alvo atingido em bancos; Direcional, Plano&Plano e Itau trocaram de linha/artefato); base segue `exp-prereq-fase0.1` |
 
