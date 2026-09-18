@@ -1167,8 +1167,14 @@ Registrar:
 Implementacao inicial:
 
 - `FallbackLlmService.evaluate_revalidation_result(...)` le
-  `fallback/.../revalidation/validacao_layout_signature.json`;
+  `fallback/.../revalidation/validacao_layout_signature.json` e
+  `fallback/.../revalidation/auditoria_resolucao.json`;
 - se a revalidacao nao estiver `compativel`, a DAG 3 falha e nao publica nada;
+- se a auditoria da revalidacao tiver campo `obrigatorio` sem `resolvido`, a
+  DAG 3 tambem falha (`OBRIGATORIOS_NAO_RESOLVIDOS_NA_REVALIDACAO`): enquanto
+  o layout nao declara `regras_deteccao_mudanca`, `compativel` so diz que
+  nenhuma regra rodou, e a auditoria e a unica evidencia de que o candidato
+  resolve o que o contrato exige (lote 7 do registro de releases);
 - `FallbackLlmService.publish_validated_layout_version(...)` calcula a proxima
   versao minor disponivel em `layouts/.../vX.Y.Z/`;
 - a nova versao e montada aplicando o candidato sobre o layout base e removendo

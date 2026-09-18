@@ -242,6 +242,11 @@ sao sobrescritas.
 - Nao dispare outras DAGs (por exemplo a DAG 2 em modo normal) enquanto o
   rotulo de experimento estiver ativo nos containers: os traces entram na
   release e contaminam a comparacao (aconteceu em `exp-prereq-fase0.1`).
+- Uma release reprovada pode ter **publicado layout ruim** (a DAG 3 publica
+  quando a revalidacao aprova). Depois do veredito, confira
+  `layouts/<dominio>/<entidade>/current.json` de cada entidade e volte o
+  ponteiro para a versao da base quando necessario, guardando uma copia do
+  ponteiro substituido (precedente: lote 6, Santander e Itau v1.4.0 -> v1.3.0).
 - Para investigar um run, use a skill `diagnosticar-execucao-dag3`.
 
 ### 7. Comparar e decidir
