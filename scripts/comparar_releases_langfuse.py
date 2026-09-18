@@ -129,7 +129,15 @@ class LangfuseReader:
             return json.loads(response.read().decode() or "{}")
 
     def traces_por_release(self) -> dict[str, list[dict[str, Any]]]:
-        """Mapeia release para os traces correspondentes, com documento e etapa."""
+        """Mapeia release para os traces correspondentes, com documento e etapa.
+
+        Descarta traces ``atlas.resolucao`` de modo normal (DAG 2 disparada por
+        fora do lote, sob o mesmo rotulo por acidente): so entram os
+        ``atlas.fallback`` e as revalidacoes que o proprio fallback disparou
+        (``metadata.modo_execucao == "revalidacao_layout_candidato"``). Sem
+        isso, um run manual sob o rotulo errado infla a contagem de traces e
+        o "N traces" do resumo deixa de servir como checagem de poluicao.
+        """
         por_release: dict[str, list[dict[str, Any]]] = defaultdict(list)
         page = 1
         while True:
@@ -137,12 +145,17 @@ class LangfuseReader:
             for trace in data.get("data", []):
                 metadata = trace.get("metadata")
                 metadata = metadata if isinstance(metadata, dict) else {}
+                etapa = str(trace.get("name") or "")
+                modo_execucao = str(metadata.get("modo_execucao") or "")
+                if etapa == "atlas.resolucao" and modo_execucao != "revalidacao_layout_candidato":
+                    continue
                 por_release[str(trace.get("release") or "sem-release")].append(
                     {
                         "id": trace["id"],
                         "documento": str(trace.get("sessionId") or ""),
-                        "etapa": str(trace.get("name") or ""),
+                        "etapa": etapa,
                         "execucao": str(metadata.get("execution_id") or ""),
+                        "fallback_execucao": str(metadata.get("fallback_execution_id") or ""),
                     }
                 )
             meta = data.get("meta", {})
@@ -185,6 +198,28 @@ def agregar(
     }
 
 
+def _preferir_r2(traces: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Quando um documento tem redisparo ``__r2`` sob a mesma release, mantem so o `__r2`.
+
+    ``execucao`` (execution_id da extracao) e identico entre o run original e o
+    `__r2`: os dois casam na mesma chave de pareamento e, sem este filtro,
+    entrariam juntos na media, contando o documento em dobro. `__r2` e sempre a
+    redisparada por variancia ou falha do host — mais confiavel que a original.
+    """
+    por_chave: dict[tuple[str, str, str], list[dict[str, Any]]] = defaultdict(list)
+    for trace in traces:
+        chave = (trace["documento"], trace["etapa"], trace["execucao"])
+        por_chave[chave].append(trace)
+    resultado: list[dict[str, Any]] = []
+    for chave, grupo in por_chave.items():
+        if len(grupo) == 1:
+            resultado.extend(grupo)
+            continue
+        com_r2 = [t for t in grupo if t.get("fallback_execucao", "").endswith("__r2")]
+        resultado.extend(com_r2 or grupo)
+    return resultado
+
+
 def direcao(nome: str) -> int:
     """Retorna 1 se maior e melhor, -1 se menor e melhor, 0 se neutro."""
     if nome in MAIOR_MELHOR:
@@ -225,8 +260,8 @@ def main() -> int:
             print("\ninforme --base e --novo para comparar.")
         return 0
 
-    base_traces = por_release.get(args.base, [])
-    novo_traces = por_release.get(args.novo, [])
+    base_traces = _preferir_r2(por_release.get(args.base, []))
+    novo_traces = _preferir_r2(por_release.get(args.novo, []))
     if not base_traces:
         print(f"release base '{args.base}' nao tem traces.")
         return 1

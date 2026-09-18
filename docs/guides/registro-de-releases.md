@@ -31,79 +31,34 @@ Depois da execucao:
 python scripts/comparar_releases_langfuse.py --base base-contrato-v2 --novo exp-gramatica-seletor
 ```
 
-## Rotulos deste lote
+## Lotes 1-3 e linha de base (10-14/09): fundacoes do harness
 
-Lote de 8 correcoes derivado da analise das execucoes de 2026-09-10 sobre Itau e
-Santander 2T26. Cada rotulo isola uma hipotese; medir juntos responde "o lote
-ajudou?" mas nao "qual dos oito ajudou?".
+Antes do plano da assinatura de layout, tres lotes corrigiram a base
+metodologica e o pipeline de resolucao. Todos resolvidos, sem influencia nas
+releases atuais — resumo:
 
-| rotulo | itens | hipotese | metrica-alvo | guarda |
-| --- | --- | --- | --- | --- |
-| `base-contrato-v2` | nenhum | linha de base do codigo anterior ao lote, sob o contrato `bancos/v2.0.0` | — | — |
-| `exp-instrumentacao` | 6, 7, 8 | observabilidade nao muda decisao do pipeline | nenhuma: os deltas de pipeline devem dar 0,000 | todas |
-| `exp-gramatica-seletor` | 1 | a LLM erra o path porque recebe `arrays_que_exigem_seletor` vazio | `avaliacao_igualdade_exata` | `resolucao_cobertura_obrigatorios` |
-| `exp-mensagens-reparo` | 5 | o laco de reparo nao converge porque a mensagem nomeia o erro errado | `llm_tentativas` (menor e melhor) | `e2e_apto_para_bronze` |
-| `exp-orcamento-llm` | 2, 3 | resposta vazia e orcamento mal repartido, nao falha do modelo | `llm_etapa_sucesso` | `e2e_tokens_llm` (nao pode explodir) |
-| `exp-poda-evidencia` | 4 | evidencia superflua alonga o raciocinio e estoura a conclusao | `selecao_precisao` | `selecao_cobertura` |
-
-## Lote 2: o que a execucao de 2026-09-11 (`exp-lote-completo`) ensinou
-
-O Itau publicou layout com `regras_total: 0` e 29 campos `null`; o Santander
-gastou 4 tentativas em gramatica de path. Tres causas, um rotulo, porque as tres
-mexem no mesmo criterio de validacao e nao ha como executar uma sem as outras.
-
-| rotulo | itens | hipotese | metrica-alvo | guarda |
-| --- | --- | --- | --- | --- |
-| `exp-linha-e-valores` | 9, 10, 11 | o candidato passa na validacao mas nao resolve: falta `valor_aceito`, `valores` sem seletor e `&` no filtro | `revalidacao_regras_executadas` (deixa de ser 0) e `avaliacao_igualdade_exata` | `llm_tentativas` (a validacao ficou mais estrita; nao pode explodir) |
-
-- **9** — `celula_de_tabela` exige `seletor_linha.valor_aceito`. O resolvedor so
-  aceita a linha pelo rotulo (`_find_row_index`); o indice e dica. Zero de 49
-  instrucoes da LLM traziam o rotulo, e o proprio exemplo do prompt o omitia.
-- **10** — `valores` exige seletor proprio, `valores[periodo=...]`. Sem ele o
-  construtor de schema falha em "Caminho nao compativel com schema_saida". O
-  gabarito usava `.valores.valor` e foi corrigido; os 4 itens
-  `candidato::bancos::*` do dataset `atlas-fallback-layout-candidato` foram
-  republicados em 2026-09-12 (metadata `nota_gramatica`). Sob esse gabarito, a
-  resolucao local dos dois bancos da 23/23 e 19/19 instrucoes resolvidas, zero nulos.
-- **11** — `&` dentro de um filtro e recusado pela gramatica e nomeado pela
-  diagnose do reparo.
-
-Linha de base para este rotulo: os traces `exp-lote-completo` de 2026-09-11
-(Itau ao vivo `2646b269…`, Santander por backfill `befb9300…`).
-
-## Lote 3: contrato dirige a resolucao (ADR 0011)
-
-| rotulo | itens | hipotese | metrica-alvo | guarda |
-| --- | --- | --- | --- | --- |
-| `exp-contrato-dirige-resolucao` | 12-16 | com `chaves_de_item` e `derivacoes` no contrato v2.1.0, um layout gerado do zero resolve o `schema_saida` inteiro | `resolucao_cobertura_obrigatorios`; campos de raiz do `schema_saida_resolvido.json` deixam de ser `null` | `llm_tentativas` (validador mais estrito) e **construtoras: todos os deltas 0,000** |
-
-- **12** — celula projetada pelo tipo do contrato, sem nomes de campo (`source_mapping_resolvers.py`).
-- **13** — contexto semantico pelos seletores do path (`contract_semantic_helpers.py`).
-- **14** — `derivacoes` no lugar de `_derive_construtoras_global_periods` (`resolve_schema.py`).
-- **15** — `chaves_de_item` no plano, no validador e no prompt.
-- **16** — defaults `"construtoras"` trocados por `PIPELINE_DOMINIO`.
-
-Provas ja feitas em 2026-09-13, antes de qualquer execucao ao vivo: resolucao local
-do gabarito com o contrato v2.1.0 e o manifesto real — Itau 23/23, Santander 19/19,
-raiz preenchida (`fonte`, `instituicao`, `periodo_referencia`, `dados[].instituicao`);
-construtoras — 7 entidades com layout vigente (cury, cyre3, direcional, eztc3,
-pacaembu, plano-plano, tenda) resolvem byte a byte igual ao codigo `42fd719`.
-Correcao colateral: `Plano&Plano` voltou a ser um valor de seletor valido; so `&`
-que introduz outra `chave=` e recusado.
-
-## Linha de base
-
-A execucao de 2026-09-10T23:24Z rodou o codigo anterior a este lote sob o contrato
-`bancos/v2.0.0`. Ela ficou sob o rotulo automatico
-`dev-feat-prep_realease-42fd719-dirty`, **misturada com outras duas execucoes** do
-mesmo dia sob o contrato v1.0.0 — o rotulo nao as separa.
-
-Enquanto essa poluicao existir, a linha de base confiavel nao e a media do rotulo:
-sao os vinculos do dataset run `run-contrato-v2-2t26`, que apontam para a
-observacao exata de cada etapa daquela execucao, com `avaliacao_*` ja pontuado
-contra o gabarito.
-
-Numeros de partida, para nao precisar recalcular:
+- **Lote 1** (8 hipoteses rotuladas, 10/09): primeira tentativa de rotular
+  execucoes para separar hipoteses. Confirmou que o rotulo automatico
+  `dev-<branch>-<sha>` nao discrimina arvore suja nem contrato — motivou a
+  disciplina de "Como rotular uma execucao" (acima).
+- **Lote 2** (`exp-lote-completo`, 11/09): Itau publicou layout com
+  `regras_total: 0` e 29 campos `null`; Santander gastou 4 tentativas em
+  gramatica de path. Tres causas corrigidas: o resolvedor so aceitava linha
+  por rotulo (`seletor_linha.valor_aceito`, nao indice); `valores` exigia
+  seletor proprio ausente na maioria das instrucoes; `&` num filtro era
+  recusado sem diagnostico. Gabarito dos 4 itens `candidato::bancos::*`
+  corrigido em 12/09. **Resolvido.**
+- **Lote 3 / ADR 0011** (`exp-contrato-dirige-resolucao`, 13/09): contrato
+  passou a dirigir a resolucao (celula projetada pelo tipo do contrato,
+  contexto semantico pelos seletores do path, `chaves_de_item` no lugar de
+  nomes fixos no codigo). Provas locais bateram byte a byte com o codigo
+  anterior nas 7 entidades com layout vigente. Ver
+  [docs/adr/0011-resolucao-dirigida-pelo-contrato-e-legado-por-ausencia.md](../adr/0011-resolucao-dirigida-pelo-contrato-e-legado-por-ausencia.md)
+  para o detalhe arquitetural. **Resolvido.**
+- **Linha de base** (10/09): a execucao `dev-feat-prep_realease-42fd719-dirty`
+  ficou misturada com duas outras do mesmo dia sob contrato diferente — por
+  isso os numeros abaixo, e nao o rotulo automatico, sao a referencia de
+  partida do projeto:
 
 | unidade | precisao | revocacao | igualdade exata | desfecho |
 | --- | --- | --- | --- | --- |
@@ -112,560 +67,96 @@ Numeros de partida, para nao precisar recalcular:
 | santander / percentuais | 0,00 | 0,00 | 0 | 4 tentativas, gramatica de path |
 | santander / monetarios | — | — | — | nao executou |
 
-Selecao de artefatos na mesma execucao: precisao 0,17 (percentuais) e 0,25
-(monetarios); revocacao 0,50 e 1,00.
-
-**Antes de medir o lote, rode a linha de base limpa** com
-`ATLAS_RELEASE=base-contrato-v2` a partir do codigo anterior ao lote. Sem isso a
-comparacao herda a mistura descrita acima.
-
-## Lote 4: pre-requisitos e fase 0 do plano da assinatura de layout
-
-Linha de base: `baseline0` (2026-09-13/14), codigo `1c67bf2`, contratos
-construtoras v1.8.0 e bancos v2.1.0, 10 documentos (8 construtoras + Itau e
-Santander) em criacao inicial forcada. O trace do Itau foi reprojetado por
-backfill (a ingestao caiu enquanto o host dormia). Scores `assinatura_f*`
-calculados por `scripts/avaliar_assinatura_layout.py --release baseline0`.
-
-| rotulo | itens | hipotese | metrica-alvo | guarda |
-| --- | --- | --- | --- | --- |
-| `exp-prereq-fase0` | P1, P2, P3, F0, 3.2 (rotulo exato) | com `chaves_de_item{chave, origem_valor}`, `papeis` e `evidencia_esperada` no contrato, mais o pre-filtro de evidencia, a LLM erra menos a gramatica das chaves e escolhe menos artefatos | `assinatura_f1_filtro_chave_declarada` (= 1,0), `assinatura_f0_selecao_precisao`, `selecao_prefiltro_reducao` | `assinatura_f0_selecao_revocacao` (= 1,0), `assinatura_f1_cobertura_obrigatorios`, `llm_tentativas` (validador mais estrito nao pode explodir) |
-
-- Contratos publicados: `contratos/construtoras/v1.9.0/`, `contratos/bancos/v2.2.0/`
-  (bootstrap atualizado). Bancos v2.2.0 retira rotulos de periodo de
-  `escopo_periodo.sinonimos` — era o que fazia o Santander perder o Jun/26.
-- P2 provado antes da rodada: os 9 candidatos da baseline0 resolvidos localmente
-  com o codigo novo e os contratos novos sao identicos aos do codigo anterior
-  (so `fonte` deixa de ser nulo em construtoras).
-- Gabaritos: `eval/gabaritos/<document_id>.json` (10 documentos).
-- Operacional: rodar com `caffeinate -i`; o sleep do host mata as tasks por
-  falta de heartbeat e derruba a ingestao no Langfuse.
-- Traces `atlas.fallback` no Langfuse: `baseline0` tem exatamente 10 (um por
-  entidade — cury, cyre3, direcional, eztc3, itau, mrv, pacaembu, plano-plano,
-  santander, tenda); `exp-prereq-fase0` tem 11 (o 11o e um re-processamento
-  manual do Cury feito depois, sem periodo no execution_id, que carregou o
-  rotulo por engano — nao entrou na comparacao porque o pareamento e por
-  `execution_id`, nao so por release).
-
-### Resultado do lote 4 (comparacao em 2026-09-14)
-
-`python scripts/comparar_releases_langfuse.py --base baseline0 --novo exp-prereq-fase0`,
-18 execucoes pareadas. Desfecho e2e identico (9/10 publicados; Cyrela e
-negativo verdadeiro nas duas).
-
-| metrica | base | novo | leitura |
-| --- | --- | --- | --- |
-| `assinatura_f1_filtro_chave_declarada` (alvo) | 0,954 | 1,000 | atingido |
-| `assinatura_f0_selecao_precisao` (alvo) | 0,635 | 0,783 | atingido (eztc3 6,5 -> 2 artefatos/requisito) |
-| `selecao_prefiltro_reducao` (alvo) | - | 0,076 | reportado: pre-filtro so decidia pelo resumo do inventario (5 rotulos por tabela, nenhum por grafico); 100% das escolhas dentro dos candidatos, mas quase nenhuma exclusao |
-| `assinatura_f1_filtro_papel_literal` | 1,11 | 0 | Plano&Plano deixou de emitir `valores[periodo=1T26]` |
-| `assinatura_f0_selecao_revocacao` (guarda) | 1,0 | 1,0 | ok |
-| `assinatura_f1_cobertura_obrigatorios` (guarda) | 0,85 | 0,95 | ok |
-| `llm_tentativas` (guarda) | 1,29 | 1,21 | ok |
-| `e2e_tokens_llm` | 40,1k | 36,2k | -10% |
-| `assinatura_f3_arquivo_origem_correto` (guarda) | 1,0 | 0,926 | artefato de medicao: gabarito do Plano&Plano usava `periodo=1T26`; o candidato novo ancora as mesmas celulas por `papel_periodo` |
-| `assinatura_f3_ausencia_falso_positivo` | 0 | 1 | real: Cyrela mapeou "Numero de Lancamentos" como unidades; sem efeito no desfecho |
-| `e2e_duracao_segundos` | 130 | 175 | ambiente: mesmo numero de chamadas, throughput do provedor 146 -> 91 tok/s |
-
-Veredito: aprovada com ressalva; passa a ser a base de referencia. Santander
-recuperou o Jun/26 (5 periodos de `inadimplencia_90_dias`, conferidos no
-`chart006`). Pendencias abertas: corrigir o gabarito do Plano&Plano (seletores
-por papel) e regravar os scores `assinatura_*`; MRV segue `revisao_pendente`.
-
-## Lote 5: prompt de construtoras, contratos no Langfuse e pre-filtro completo
-
-Tres mudancas sobre `exp-prereq-fase0`, as duas primeiras ja commitadas, a
-terceira ainda em arvore de trabalho. Nao sao unidades de medida separadas —
-por estarem todas no mesmo branch, a proxima rodada de 10 documentos mede o
-efeito das tres juntas; a tabela abaixo separa a hipotese de cada uma para que
-uma regressao aponte para a causa certa. Rotulo desta release:
-`exp-prereq-fase0.1`.
-
-> **Autorizada em 2026-09-17.** O usuario liberou a execucao com os itens 2 e
-> 3 da secao "Como rodar e comparar" ainda em aberto (gabarito do Plano&Plano
-> e regravacao de `assinatura_*`) — a comparacao inicial deve ser lida com
-> essa ressalva ate esses dois itens fecharem.
-
-### 5.1 · Prompt de construtoras explica `chaves_de_item` na 1a tentativa (commit `a687994`)
-
-`candidate_artifacts_instruction()` so mencionava `papeis` numa frase curta;
-`chaves_de_item`, `origem_das_chaves` (as tres origens:
-`identidade_documento`/`seletor_observacao`/`evidencia`) e `evidencia_esperada`
-so eram explicados no prompt de reparo, depois que o validador ja tinha
-rejeitado o candidato. O fluxo de bancos (`unit_mapping_artifacts_instruction`)
-ja explicava tudo desde a 1a chamada — construtoras nao. Alinha os dois: a
-explicacao completa entra na primeira tentativa, nao so na correcao.
-126 testes passando, ruff limpo (commit isolado, antes das mudancas do 5.3).
-
-| item | hipotese | metrica-alvo | guarda |
-| --- | --- | --- | --- |
-| 5.1 | com a explicacao completa desde a 1a chamada, construtoras erra menos estrutura na 1a tentativa (o padrao que bancos ja tinha) | `assinatura_f1_estrutura_valida@primeira_tentativa` e `llm_acerto_1a_tentativa` (etapa `layout_signature_candidato`), so em construtoras | `assinatura_f1_cobertura_obrigatorios`, `fallback_tentativas_llm_total` (nao pode subir) |
-
-### 5.2 · Contratos semanticos versionados no Langfuse (commit `c4a5a42`)
-
-Nao e uma mudanca de pipeline — nao tem `ATLAS_RELEASE`, nao entra na
-comparacao de traces. E uma lacuna de observabilidade fechada: confirmado por
-inspecao (`/api/public/v2/prompts`, `/api/public/datasets`) que nenhum dos 24
-prompts do fallback, nenhum dos 4 datasets (`atlas-e2e-regressao`,
-`atlas-fallback-layout-candidato`, `atlas-fallback-selecao-artefatos`,
-`atlas-transicao-resolucao-fallback`) e nenhuma metadata de trace continha os
-contratos ou suas versoes — so os prompts do fallback e as metricas do harness
-estavam la.
-
-Novo `scripts/sincronizar_contratos_langfuse.py`, mesmo padrao de
-`sincronizar_prompts_langfuse.py`: um text prompt por dominio
-(`atlas/contratos/bancos`, `atlas/contratos/construtoras`), uma versao do
-prompt Langfuse por versao local do contrato, rotulada com a propria versao
-semantica (nao `latest`/`production` — varias versoes coexistem por design).
-`--verificar` lista divergencias sem escrever; `--publicar` publica o que
-faltar (`--dry-run` so mostra).
-
-Rodado uma vez em 17/09: `--verificar` (7 ausentes) -> `--publicar --dry-run`
-(conferencia) -> `--publicar` (real). As 7 versoes locais (bancos
-v1.0.0-v2.2.0, construtoras v1.7.0-v1.9.0) publicadas; o rotulo automatico
-`latest` do Langfuse caiu certo em v2.2.0/v1.9.0. Reverificado agora: **7
-iguais, 0 divergentes, 0 ausentes**; total de prompts distintos no projeto
-24 -> 26.
-
-A partir de agora, toda vez que um contrato novo for publicado no MinIO, basta
-rodar `python scripts/sincronizar_contratos_langfuse.py --publicar` para o
-Langfuse acompanhar — e da pra abrir `atlas/contratos/construtoras` na
-interface e navegar o historico v1.7.0 -> v1.9.0 com diff nativo.
-
-### 5.3 · Pre-filtro le o artefato inteiro (commit `3b9c5f5`)
-
-O lote 4 mostrou que o pre-filtro da fase 0 quase nao reduzia: ele so olhava o
-resumo do inventario e, sem poder decidir, empurrava o artefato para o contexto
-da LLM como `amostra_incompleta`. O artefato completo (`tables/*.json`,
-`charts/*.json`, com todas as `rows`) ja esta no MinIO no momento da selecao —
-e o mesmo objeto que a fase 3 le para ancorar a linha. Agora o pre-filtro le o
-artefato inteiro (uma leitura por artefato, cache por chamada) quando o resumo
-nao decide, e so cai em `amostra_incompleta` se a leitura falhar.
-
-- Dominio (`evidence_prefilter.py`): `run_prefilter()` em duas passadas —
-  resumo do inventario e, so quando ele nao decide, o artefato inteiro via um
-  `ArtifactTextLoader` injetado (o dominio continua sem I/O); uma leitura por
-  artefato, cache por chamada, mesmo com varios requisitos. `artifact_full_text()`
-  monta o texto de busca a partir de `name`, `section_title`, `schema` e todas
-  as celulas de `rows` — formato que tabelas e graficos compartilham
-  (confirmado em `docling_pipeline/persistence.py`). Sem termo em nenhuma
-  passada, o artefato sai; `amostra_incompleta` so sobra se a leitura falhar
-  (erro nunca exclui). O resumo passou a incluir `series_sample`/
-  `categories_sample` de graficos, que o inventario ja trazia e ninguem lia.
-  Cada candidato ganha `fonte` (`resumo` | `artefato_completo`);
-  `PrefilterResult` expoe `artefatos_lidos`, `excluidos_apos_leitura`,
-  `sem_leitura`.
-- Aplicacao (`artifact_selection.py`): `_artifact_text_loader()` resolve o
-  object key pelo manifesto e le do MinIO; `prefiltro_evidencia.json` grava o
-  bloco `leitura_completa`; `politica_candidatos` atualizada.
-- Metrica nova: `selecao_prefiltro_leitura_completa` (diagnostico: dos
-  artefatos que o resumo nao decidiu, fracao lida por inteiro — o resto ficou
-  `amostra_incompleta` sem verificacao), emitida pelo tracing existente e
-  registrada no comparador.
-- Prova offline (extracao local do Cury, 16 artefatos, contrato v1.9.0):
-  reducao 0,19 -> 0,56; candidatos por requisito 13 -> 5,5; 9 artefatos lidos,
-  6 excluidos; as fontes reais (`table001`, `table002`) seguem candidatas.
-- Testes: `test_evidence_prefilter.py` vai de 4 para 8 casos (4 novos; 1 dos
-  4 antigos foi renomeado, nao substituido); suite completa 126 -> 130
-  passed; ruff limpo.
-
-| item | hipotese | metrica-alvo | guarda | custo |
-| --- | --- | --- | --- | --- | --- |
-| 5.3 | com a busca sobre o artefato inteiro, o pre-filtro exclui de verdade, a lista de candidatos encolhe e a selecao gasta menos contexto sem perder a fonte certa | `selecao_prefiltro_reducao` (>= 0,4), `selecao_candidatos_por_requisito` (queda), `llm_tokens_total` da etapa `selecao_artefatos` (queda) | `assinatura_f0_selecao_revocacao` (= 1,0), `selecao_escolha_dentro_do_prefiltro` (= 1,0), `assinatura_f1_cobertura_obrigatorios`, `assinatura_f3_arquivo_origem_correto` | `e2e_tokens_llm` sem subir; `e2e_duracao_segundos` so conta se tokens de saida ou chamadas subirem |
-
-### Como rodar e comparar
-
-Rotulo unico para os tres itens (`5.1`+`5.3`; `5.2` nao afeta pipeline):
-`ATLAS_RELEASE=exp-prereq-fase0.1`, mesmos 10 documentos, criacao inicial
-forcada. Base de comparacao: `exp-prereq-fase0`.
-
-Pendencias antes de rodar:
-1. ~~Commitar o item 5.3~~ — feito em `3b9c5f5` (2026-09-17).
-2. Corrigir o gabarito do Plano&Plano — `eval/gabaritos/…` usa seletores
-   literais (`periodo: 1T26`/`2T25`) em vez de papel
-   (`papel_periodo: periodo_comparativo_anterior`/`mesmo_periodo_ano_anterior`),
-   o que fez `assinatura_f3_arquivo_origem_correto` e
-   `_ausencia_falso_negativo` acusarem regressao falsa na comparacao anterior.
-   **Ainda pendente.**
-3. Regravar `assinatura_*` de `baseline0` e `exp-prereq-fase0` depois da
-   correcao acima, para a proxima comparacao partir de numeros limpos.
-   **Ainda pendente.**
-4. Autorizacao explicita do usuario para disparar a execucao — **dada em
-   2026-09-17**; os itens 2 e 3 seguem em aberto, o usuario optou por rodar
-   os 10 documentos antes de fecha-los.
-
-### Resultado do lote 5 (comparacao em 2026-09-17)
-
-Rodada dos 10 documentos as 20:59-21:19 UTC (run_ids
-`exp-prereq-fase0.1__<dominio>__<entidade>`, disparados pela skill
-`skills/rodar-release-experimento`), codigo `fe95078`, contratos construtoras
-v1.9.0 e bancos v2.2.0. Harness rodado uma vez (`avaliar_assinatura_layout.py
---release exp-prereq-fase0.1`, 286 scores). Base: `exp-prereq-fase0`.
-
-**Cuidado de medicao.** O comparador cru (`comparar_releases_langfuse.py`)
-pareia 19 vs 30 traces e reprova: entre 20:34 e 20:37, antes do lote, a DAG 2
-rodou em modo normal para os 10 documentos sob o mesmo rotulo (14 traces
-`atlas.resolucao` sem LLM), o que infla `e2e_autonomia_deterministica`
-(0,47 -> 0,67), duracao e tokens. Os numeros abaixo sao da comparacao pareada
-limpa: 10 `atlas.fallback` + 9 revalidacoes de cada release. Extracao
-identica (9/9), mesmo escopo, mesmo prompt — comparaveis. Regra para as
-proximas: nao rodar outras DAGs sob um rotulo de experimento.
-
-Desfecho e2e identico: 9/10 publicados (Cyrela e verdadeiro negativo nas duas).
-Lote inteiro em ~20 min (antes ~35).
-
-| metrica | papel | base | novo | leitura |
-| --- | --- | --- | --- | --- |
-| `selecao_prefiltro_reducao` (>= 0,4) | alvo | 0,076 | **0,645** | atingido; min 0,30 (Tenda), max 0,85 (Plano&Plano); `selecao_prefiltro_leitura_completa` = 1,0 em 10/10 |
-| `selecao_candidatos_por_requisito` | alvo | 10,8 | **3,4** | atingido (Cury 12 -> 4,5; Itau 15 -> 6; Plano&Plano 11 -> 1) |
-| `llm_tokens_total` da selecao | alvo | 6.194 | **5.282** (-15 %) | atingido em construtoras; bancos/monetarios subiu 6.675 -> 10.784 por um reparo do Santander (ancora "Resultado de PDD" declarada em `table005` nao existia literalmente) |
-| `assinatura_f0_selecao_revocacao` | guarda | 1,000 | 1,000 | ok: o pre-filtro mais agressivo nao perdeu fonte |
-| `selecao_escolha_dentro_do_prefiltro` | guarda | 1,000 | 1,000 | ok |
-| `assinatura_f1_cobertura_obrigatorios` | guarda | 0,950 | 0,950 | ok (Cyrela 0,5 nas duas) |
-| `assinatura_f3_arquivo_origem_correto` | guarda | 0,926 | **0,770** | regrediu; aberto abaixo (EZTEC medicao, Santander variancia) |
-| `e2e_tokens_llm` (orcamento +20 %) | custo | 36,2k | **30,2k** (-17 %) | so Cyrela subiu (26k -> 41k, 4 tentativas); geracao 22,3k -> 19,3k |
-| `e2e_duracao_segundos` | custo | 175 | 87 | tokens cairam junto; parte e provedor |
-| `llm_acerto_1a_tentativa` | diag (5.1) | 0,75 | 0,875 | EZTEC e MRV passaram a acertar de primeira |
-| `assinatura_f1_array_sem_filtro` / `estrutura_valida` | diag (5.1) | 0,5 / 0,95 | 0 / 1,0 | efeito do prompt de construtoras |
-| `assinatura_f1_entidades_no_candidato` | diag | 0,95 | 0,80 | Direcional e Tenda deixaram de emitir Riva/Alea; explica `resolucao_campos_mapeados` 20 -> 16,4 |
-
-Regressoes por documento:
-
-- **EZTEC — artefato de medicao.** `f3_arquivo/linha/coluna` 1,0 -> 0,0 e
-  `ausencia_falso_negativo` 0 -> 5, mas o mapeamento e byte a byte igual
-  (`table001/002/003`, mesmas linhas e colunas) e o `schema_saida_resolvido`
-  identico (2022/914; 779/1982/756). Unica diferenca: filtro `empresa=EZTEC`
-  -> `empresa=eztc3`; o gabarito casa por seletores e guarda `EZTEC`
-  (conflito ja anotado na `revisao_pendente` do gabarito). Sem EZTEC a guarda
-  fica 0,916 -> 0,866.
-- **Santander — real, mas variancia; exige `__r2`.** `inadimplencia_90_dias`
-  caiu de 5 periodos (Jun/25..Jun/26, `chart006`) para so Jun/26 e `periodo`
-  virou `valor_fixo`; monetarios identicos. A entrada da LLM para o fragmento
-  e identica nas duas releases (9 mensagens, diff vazio): na base a 1a
-  resposta foi rejeitada ("fragmento parou antes do campo terminal") e o
-  reparo trouxe 5 periodos; na nova a 1a passou com 1. O pre-filtro nao tocou
-  nessa chamada. Agrava: o contrato so obriga o periodo de referencia, entao o
-  validador aceita — caso concreto do item 3.6.
-- Plano&Plano 0,33 nas duas (gabarito por literal, pendencia 2); MRV
-  `rotulo_linha` 0 nas duas (`revisao_pendente`); `assinatura_f0_selecao_precisao`
-  0,783 -> 0,769 e ruido (Tenda 0,5 -> 1,0; MRV, Santander e Itau 1 artefato a
-  mais cada).
-
-**`__r2` do Santander (2026-09-18 02:02-02:08 UTC, mesmo conf).** Recuperou
-os 5 periodos de `inadimplencia_90_dias` (Jun/25 2,6; Set/25 2,8; Dez/25 3,1;
-Mar/26 3,3; Jun/26 3,3), com as mesmas linhas/colunas do `chart006` da base;
-monetarios identicos; publicou v1.3.0. Harness local (sem gravar scores):
-`f3_arquivo/linha/coluna` = 1,0, `ausencia_falso_negativo` = 0,
-`f0_selecao_precisao` = 1,0 nas duas unidades. Com o `__r2` no lugar do run
-original, `assinatura_f3_arquivo_origem_correto` fica 0,815 no agregado e
-**0,916 = base** sem o artefato do EZTEC — a guarda nao regrediu.
-
-Padrao a registrar: nas tres rodadas do Santander (base, 0.1, 0.1 `__r2`) o
-fragmento de percentuais so trouxe os 5 periodos quando a 1a resposta foi
-rejeitada por "fragmento parou antes do campo terminal" e o reparo listou os
-paths a completar; a unica 1a resposta aceita (0.1) trouxe 1 periodo. n = 3,
-mas e uma pista para o item 3.6: sem exigencia no contrato, o resultado
-completo depende de a LLM tropecar no validador. Custo do `__r2`: 65,8k tokens
-e 331 s (fragmento de percentuais com 2 tentativas: 30,5k), contra 48,8k no
-run original — ou seja, o resultado completo custa mais porque vem do reparo.
-A selecao de monetarios repetiu o reparo por ancora nao literal em `table005`
-("Resultado de PDD" no primeiro run, "Resultado recorrente" no `__r2`; a
-linha real e "Lucro liquido recorrente"), 2 de 2 nesta release contra 0 de 1
-na base — observar na proxima.
-
-**Veredito: aprovada com ressalva.** Os tres alvos foram atingidos com folga,
-custo -17 %, estrutura dos candidatos melhor, nenhuma guarda regrediu depois
-de separar medicao (EZTEC, Plano&Plano) de variancia confirmada por `__r2`
-(Santander). `exp-prereq-fase0.1` passa a ser a base de referencia. Para a
-comparacao da proxima release, usar o `__r2` do Santander como execucao
-pareada (o comparador pareia por `execution_id` da extracao, entao os dois
-runs do Santander entram; o run original deve ser excluido a mao ou o
-comparador precisa aprender a preferir o `__r2`).
-
-Pendencias abertas ou mantidas:
-
-1. Comparador: preferir o run `__r2` quando existir para o mesmo documento e
-   release.
-2. Gabarito EZTEC: decidir `empresa=EZTEC` vs `eztc3` (item 1.5; o candidato
-   agora usa o slug do manifesto, coerente com
-   `origem_valor=identidade_documento`). Gabarito Plano&Plano: seletores por
-   papel. Depois regravar `assinatura_*` de `baseline0`, `exp-prereq-fase0` e
-   `exp-prereq-fase0.1` (apagar os scores antes; o harness nao e idempotente).
-3. Comparador: filtrar por `name`/etapa para que traces `atlas.resolucao` de
-   modo normal nao entrem na comparacao de fallback (pendencia da regua).
-4. Contrato de bancos: periodos alem do de referencia para
-   `inadimplencia_90_dias` nao sao exigidos — perde-los e invisivel ao
-   validador (item 3.6).
-5. Cyrela: 3 -> 4 tentativas e +57 % tokens para o mesmo verdadeiro negativo;
-   a ausencia comprovada ainda custa um ciclo de reparo (item 6.2).
-
-## Lote 6: colecao por evidencia aceita sem reparo (`exp-colecao-fragmento`)
-
-Linha de base: `exp-prereq-fase0.1` (Santander pelo run `__r2`), codigo
-`5d8c212`, contratos construtoras v1.9.0 e bancos v2.2.0. Origem: analise do
-Santander no lote 5 — as duas primeiras respostas rejeitadas (base e `__r2`)
-eram a mesma `linhas_de_tabela` correta e completa sobre
-`dados[indicador=inadimplencia_90_dias].valores`; o validador de fragmento so
-aceitava paths terminais e o reparo forcava a expansao em uma celula por linha.
-O reasoning gravado mostra o modelo citando a frase do prompt ("use uma unica
-linhas_de_tabela no path da colecao") e a lista `paths_mapeamento_permitidos`
-(so folhas) como sinais contraditorios; qual vencia era sorteio.
-
-| rotulo | itens | hipotese | metrica-alvo | guarda | custo |
-| --- | --- | --- | --- | --- | --- |
-| `exp-colecao-fragmento` | M1-M5 | com prompt e validador dizendo a mesma coisa, a colecao por evidencia e aceita na 1a resposta: menos tentativas, menos tokens e candidato completo sem depender do reparo | `llm_tentativas` do fragmento de percentuais (bancos) = 1; `assinatura_f3_ausencia_falso_negativo` = 0 na 1a tentativa; `llm_tokens_total` do fragmento (bancos) queda | `assinatura_f1_cobertura_obrigatorios`, `assinatura_f3_arquivo_origem_correto`, `assinatura_f0_selecao_revocacao`, `e2e_apto_para_bronze`; **construtoras: todos os deltas 0,000** (nao tem array por evidencia) | `e2e_tokens_llm` sem subir |
-
-- **M1** — validador de fragmento (`domain/fallback/candidate_validation.py`):
-  uma `linhas_de_tabela` vale pelo proprio path e pelos terminais que preenche
-  (`campos[].caminho_saida`, chaves de `valores_fixos`/`valores_por_segmento`),
-  herdando os filtros ancestrais. Celula no path do array segue "parou antes do
-  campo terminal"; campo fora da unidade segue rejeitado.
-- **M2** — cobertura de requisitos usa a mesma expansao: a colecao cobre
-  `.valor` e os `campos_contexto_obrigatorios` da observacao; sem `periodo` nos
-  `campos`, continua "nao cobre requisitos obrigatorios".
-- **M3** — `MappingPlanService` deriva `colecoes_por_evidencia` (array mais
-  interno acima do campo exigido cuja chave tem `origem_valor=evidencia`),
-  expoe no payload da unidade e inclui o path em `paths_permitidos`. Arrays
-  por papel ou identidade nao viram colecao.
-- **M4** — prompt: `unit-mapping-escopo` explica `colecoes_por_evidencia`
-  (uma `linhas_de_tabela` cobrindo todas as linhas, filtros ancestrais
-  mantidos, sem filtro no proprio array); `comum-contrato` ganha o exemplo
-  aninhado `grupo.dados[chave=valor].itens`. Publicados no Langfuse com
-  `sincronizar_prompts_langfuse.py --empurrar` (duas versoes novas, rotulo
-  `production`) antes do disparo.
-- **M5** — harness: `anchoring_metrics` projeta a colecao numa ancoragem por
-  linha do gabarito (arquivo, faixa do segmento, coluna do campo); sem isso a
-  melhoria apareceria como 5 falsos negativos.
-- **M6** — provas antes da LLM: resolucao local do candidato-colecao do
-  Santander = os mesmos 5 itens do candidato reparado (2,6 / 2,8 / 3,1 / 3,3 /
-  3,3, `instituicao` derivada); fragmento rejeitado da base aceito pelo
-  validador novo; candidato consolidado (26 entradas) aceito pela validacao
-  completa; `tests/unit/domain/test_collection_by_evidence.py` (9 casos).
-  Suite 130 -> 139 unit; ruff limpo.
-
-Fora deste lote, como release propria: cardinalidade declarada no contrato
-para arrays por evidencia (M7), para que a forma por celula com um unico
-periodo deixe de ser valida.
-
-### Resultado do lote 6 (comparacao em 2026-09-18)
-
-Rodada 02:48-03:36 UTC, codigo `dd3b3ff`, prompts `comum-contrato` v2 e
-`unit-mapping-escopo` v2. Base: `exp-prereq-fase0.1` com o `__r2` do Santander.
-Release limpa (10 fallback + 9 revalidacoes; nenhuma DAG 2 avulsa). Harness
-rodado uma vez (277 scores).
-
-**Veredito: reprovada.** Guardas `resolucao_cobertura_obrigatorios` (1,0 ->
-0,963) e `assinatura_f1_cobertura_obrigatorios` (0,944 -> 0,908) regrediram, e
-a regressao e real e causada pela release — nao e gabarito nem variancia.
-
-| metrica | papel | base | novo | leitura |
-| --- | --- | --- | --- | --- |
-| `llm_tentativas` fragmento percentuais (Santander) | alvo | 2 | **1** | atingido: a colecao `chart006` 0-4 foi aceita na 1a resposta, 5 periodos resolvidos |
-| `assinatura_f3_ausencia_falso_negativo` (Santander) | alvo | 0 | 0 | ok |
-| `fallback_tentativas_llm_total` | custo | 2,8 | **3,3** | Itau 4 -> 9, MRV 2 -> 3 |
-| `e2e_tokens_llm` | custo | 31,9k | **35,3k** (+11 %) | Itau 56k -> 80k, MRV +48 %, Tenda +24 % |
-| `e2e_duracao_segundos` | custo | 109 | 249 | ambiente: dobrou em todos, inclusive Cury com tokens iguais |
-| `resolucao_cobertura_obrigatorios` | guarda | 1,000 | **0,963** | Santander 0,67: `carteira_de_credito` e `margem_financeira` nao resolvidos |
-| `resolucao_campos_nao_resolvidos` | guarda | 0 | 0,44 | Santander 2 obrigatorios; Itau 2 opcionais (`capital_principal`, ROE) |
-| `assinatura_f0_selecao_precisao` | — | 0,746 | 0,697 | Tenda 1,0 -> 0,29 (selecionou 3 artefatos a mais) |
-| construtoras (8 docs) | guarda | — | — | valores e coberturas identicos; so custo mudou |
-
-O que aconteceu, por documento:
-
-- **Santander (regressao real, dado errado publicado).** A LLM usou
-  `linhas_de_tabela` tambem nos cinco monetarios, onde cada linha da tabela e
-  um indicador: `faixas_linhas: [{6,6}]` + `campos: [valor]` +
-  `valores_fixos: {periodo: "2T26", ...}` — uma celula por indice de linha, sem
-  `valor_aceito`, com o periodo como literal. Resultado: `margem_financeira_com_mercado`
-  leu a linha 6 (TOTAL, 15.341) em vez da 5 ("Margem com o mercado", (718));
-  `margem_financeira_com_clientes` 16.058 -> 15.115; `resultado_recorrente`
-  3.014 -> 2.667; `carteira_de_credito` e `margem_financeira` 0 linhas. O
-  validador aceitou (M1/M2 contam `valor` e os contextos por `valores_fixos`),
-  a revalidacao aprovou com 0 regras e 2 obrigatorios nao resolvidos, e a DAG 3
-  **publicou v1.4.0 como `current.json`**. Percentuais, ao contrario, sairam
-  como planejado (5 periodos na 1a tentativa).
-- **Itau (custo).** 9 tentativas: 2 respostas vazias (transporte), 2 colecoes
-  em `dados.valores` sem o filtro `[indicador=...]` (a frase nova do prompt
-  levou a LLM a tentar a colecao no array errado), 1 cobertura. Obrigatorios
-  identicos a base; perdeu os opcionais `capital_principal` (12,3) e ROE
-  (24,5) por cabecalho `"2T26.R$ 12,4 b..."`; publicou v1.4.0 pior que a v1.3.0.
-- **Construtoras.** Sem array por evidencia: valores, coberturas e ancoragens
-  identicos (delta 0,000 como previsto). MRV 3 tentativas e Tenda com 3
-  artefatos a mais na selecao: variancia; nao explicam o veredito.
-
-Causas e o que fica para a proxima release:
-
-1. **A colecao foi oferecida por tipo de array, nao por orientacao da
-   evidencia.** `origem_valor=evidencia` vale para percentuais (grafico: uma
-   linha por periodo) e monetarios (tabela: uma linha por indicador, periodos
-   nas colunas); so o primeiro e uma colecao. Regra determinista que fecha o
-   buraco: numa colecao por evidencia a **chave do item (`chaves_de_item`) tem
-   de ser lida de uma coluna em `campos`**, nunca de `valores_fixos` ou
-   `valores_por_segmento`. Com ela, as cinco entradas do Santander seriam
-   rejeitadas antes da resolucao e a LLM voltaria a `celula_de_tabela` com rotulo.
-2. **Prompt** deve dizer a mesma coisa: colecao so quando o artefato publica
-   uma linha por item com a chave numa coluna; do contrario, celula com
-   `valor_aceito`. E o exemplo aninhado precisa deixar claro que o filtro do
-   array pai e obrigatorio (Itau tentou `dados.valores` sem filtro).
-3. **Gate de publicacao**: a revalidacao aprovou com obrigatorios nao
-   resolvidos. Enquanto `regras_deteccao_mudanca` for vazio, o gate precisa
-   ao menos exigir `resolucao_cobertura_obrigatorios = 1` — e o que teria
-   impedido a v1.4.0 do Santander. Item 6.3/6.4 do plano deixa de ser
-   opcional.
-4. Resposta vazia da LLM (Itau, 2x) consome tentativa de correcao; tratar como
-   retry de transporte (item 7.3).
-
-Providencias imediatas: voltar `current.json` de Santander e Itau para v1.3.0
-(as versoes v1.4.0 permanecem no MinIO como evidencia); `exp-prereq-fase0.1`
-continua sendo a base de referencia. Codigo M1-M5 nao e revertido em bloco:
-o mecanismo funcionou onde devia (percentuais); a proxima release fecha o
-buraco (1-3) e mede de novo.
-
-## Lote 7: colecao so com a chave numa coluna + gate por obrigatorios (`exp-colecao-chave-coluna`)
-
-Correcao do lote 6. Base de comparacao: `exp-prereq-fase0.1` (Santander pelo
-`__r2`); `exp-colecao-fragmento` fica como evidencia, nao como base. Ponteiros
-`current.json` de Santander e Itau voltaram para v1.3.0 em 18/09 (copia do
-ponteiro v1.4.0 guardada em `layouts/bancos/<entidade>/current.rollback-2026-09-18.v1.4.0.json`).
-
-| rotulo | itens | hipotese | metrica-alvo | guarda | custo |
-| --- | --- | --- | --- | --- | --- |
-| `exp-colecao-chave-coluna` | C1, C2, C3 | com a colecao restrita a arrays em que a chave do item e lida de uma coluna, percentuais mantem a 1a tentativa e monetarios voltam a celula com rotulo; nenhum obrigatorio sem valor vira layout vigente | `llm_tentativas` do fragmento de percentuais (bancos) = 1 mantido; `resolucao_cobertura_obrigatorios` = 1,0 em bancos; valores monetarios do Santander iguais a base (714.769 / 15.341 / 16.058 / 718 / 3.014) | `assinatura_f1_cobertura_obrigatorios`, `assinatura_f3_arquivo_origem_correto`, `assinatura_f0_selecao_revocacao`, `e2e_apto_para_bronze`; construtoras delta 0,000 | `e2e_tokens_llm` <= base (31,9k) |
-
-- **C1** — validador (`_describe_positional_collection`): numa `linhas_de_tabela`
-  sobre array com `chaves_de_item`, a chave do item tem de vir de uma coluna em
-  `campos`; chave em `valores_fixos`/`valores_por_segmento` e rejeitada com
-  mensagem que manda para `celula_de_tabela` + `valor_aceito`. Contratos sem
-  `chaves_de_item` (colecao na raiz, ABECIP) nao mudam.
-- **C2** — prompts `unit-mapping-escopo` v3 e `comum-contrato` v3: colecao so
-  quando o artefato publica uma linha por item com a chave numa coluna; tabela
-  com o indicador na linha e periodos nas colunas nao e colecao; filtro do
-  array pai obrigatorio.
-- **C3** — gate de publicacao (`evaluate_revalidation_result`): alem de
-  `compativel`, exige que a auditoria da revalidacao nao tenha campo
-  `obrigatorio` sem `resolvido`; bloqueia com
-  `OBRIGATORIOS_NAO_RESOLVIDOS_NA_REVALIDACAO` e grava a lista no resultado.
-  Auditoria ausente vira alerta, nao bloqueio. **Nao toca em
-  `regras_deteccao_mudanca`** (continuam vazias; item 6.3 segue pendente).
-- Provas locais com os artefatos reais do lote 6: as cinco colecoes monetarias
-  do Santander rejeitadas pelo validador novo; a colecao de percentuais aceita;
-  a auditoria da v1.4.0 bloqueada pelo gate; candidato bom da base (45 entradas)
-  segue aceito. `tests/unit/domain/test_collection_by_evidence.py` (11 casos) e
-  `tests/unit/application/test_revalidation_gate.py` (3). Suite 200.
-
-### Resultado do lote 7 (comparacao em 2026-09-18)
-
-Rodada 04:07-04:37 UTC, codigo `1e50fbd`, prompts `comum-contrato` v3 e
-`unit-mapping-escopo` v3. Release limpa (10 fallback + 9 revalidacoes).
-Harness uma vez (286 scores). Base: `exp-prereq-fase0.1` (Santander `__r2`).
-
-**Veredito: reprovada, com o alvo atingido.** Bancos saiu como planejado, mas
-tres documentos mudaram de linha ou de artefato e a guarda
-`assinatura_f3_arquivo_origem_correto` regrediu (0,792 -> 0,685) por
-regressao real — a regra "construtoras delta 0,000" nao se sustentou.
-
-| metrica | papel | base | novo | leitura |
-| --- | --- | --- | --- | --- |
-| `llm_tentativas` fragmento percentuais (Santander) | alvo | 2 | **1** | colecao `chart006` aceita na 1a resposta; 5 periodos |
-| `resolucao_cobertura_obrigatorios` (bancos) | alvo | 1,0 | **1,0** | Santander monetarios voltaram a celula com rotulo: 714.769 / 15.341 / 16.058 / 718 / 3.014 = base |
-| `e2e_tokens_llm` | custo | 31,9k | **29,1k** (-9 %) | Santander 65,8k -> 59,2k; Itau 56k -> 47k; Cyrela 41k -> 19k |
-| `llm_tentativas` / `llm_acerto_1a_tentativa` | — | 1,17 / 0,83 | 1,08 / 0,88 | melhor no agregado |
-| `assinatura_f3_arquivo_origem_correto` | guarda | 0,792 | **0,685** | Direcional 1,0 -> 0; Itau 1,0 -> 0,83; Plano&Plano 0,33 -> 0,33 (mas rotulo 0,33 -> 0,17) |
-| `assinatura_f3_ausencia_falso_negativo` | guarda | 1,125 | 1,667 | Direcional +6 (filtro `empresa=identidade_documento` nao casa com o gabarito) |
-| `e2e_duracao_segundos` | custo | 109 | 143 | provedor |
-| gate C3 | — | — | 0 bloqueios | nenhum obrigatorio ficou sem valor nesta rodada |
-
-Por documento (valores resolvidos contra a base e o gabarito):
-
-- **Santander — alvo.** Percentuais: colecao aceita na 1a tentativa, 5
-  periodos. Monetarios: celula com rotulo, valores identicos a base. Mantido
-  em v1.5.0 (equivale a v1.3.0 com os 5 periodos). Persistiu o reparo na
-  selecao por ancora nao literal em `table005` ("Resultado recorrente"; 3 de
-  3 rodadas nesta linha de codigo).
-- **Direcional — regressao real, publicada e revertida.** A LLM escreveu o
-  filtro como `[empresa=identidade_documento]` (o nome da *origem* da chave no
-  lugar do valor) e, sem a entidade para procurar, ancorou a linha 6 "Unidades
-  Lancadas" (5.511, Direcional + Riva) em vez da linha 7 "Direcional" (3.896,
-  gabarito). O validador aceitou: nao ha checagem do *valor* do filtro para
-  `origem_valor=identidade_documento` (item 1.5). Revalidacao e gate passaram
-  (tudo resolvido, so que na linha errada). v1.5.0 -> v1.3.0.
-- **Plano&Plano — regressao real, publicada e revertida.** Vendas ancoradas em
-  "Vendas Liquidas 100% (Unid.)" (3.351) em vez de "Vendas Contratadas Brutas
-  (Unidades)" (3.601, gabarito). Escolha semantica da LLM entre dois rotulos
-  plausiveis; e o que o item 3.2 (linha por sinonimos do contrato, em codigo)
-  tira da LLM. v1.5.0 -> v1.3.0.
-- **Itau — regressao real, publicada e revertida.** `inadimplencia_90_dias`
-  ancorada em `chart002` col 1 (2,2) em vez de `chart004` col 2 (1,9,
-  gabarito); os dois graficos estavam no contexto (precisao da selecao 0,27
-  nas duas rodadas). Uma resposta vazia (transporte) consumiu uma tentativa.
-  v1.5.0 -> v1.3.0.
-- Cury, EZTEC, Tenda, Pacaembu, MRV: valores identicos a base. Cyrela:
-  verdadeiro negativo com 2 tentativas (era 4) e metade dos tokens.
-
-Leitura que atravessa os lotes 5, 6 e 7: a cada rodada algum documento troca
-de linha, de artefato ou de valor de filtro por decisao livre da LLM, e o
-validador so pega o que a gramatica do path e a cobertura de paths
-enxergam. Mudar prompt fecha um caminho e abre outro (`identidade_documento`
-como valor nunca tinha aparecido em 4 rodadas x 8 construtoras). As
-correcoes com mecanismo sao as da Fase 1 e 3 do plano — o codigo enumera as
-chaves (inclusive o filtro de identidade) e ancora a linha por sinonimo, e a
-LLM decide so o residuo:
-
-1. Validador (barato, determinista): recusar valor de filtro igual a um token
-   de origem (`identidade_documento`, `seletor_observacao`, `evidencia`) e,
-   para `origem_valor=identidade_documento`, exigir que o valor seja o slug ou
-   o nome do cabecalho `entidade` do candidato. Fecha o caso Direcional.
-2. Fase 1 em codigo (item 1.5): o filtro de identidade e preenchido pelo
-   codigo, nao pela LLM.
-3. Fase 3.2: linha por sinonimos do contrato com LLM so no residuo — fecha
-   Plano&Plano (brutas x liquidas) e Direcional (marca x consolidado, item 2.4).
-4. Resposta vazia como retry de transporte (item 7.3) — Itau, 3a rodada seguida.
-
-Ponteiros apos o lote: cury/eztc3/tenda/pacaembu v1.5.0 (valores = base),
-mrv v1.4.0 (= base), santander v1.5.0 (melhor que a base), direcional/
-plano-plano/itau v1.3.0 (rollback; copias dos ponteiros v1.5.0 ao lado).
-Base de referencia continua `exp-prereq-fase0.1`.
-
-## Reversao para `exp-prereq-fase0.1` (2026-09-18)
-
-Decisao: depois de duas releases reprovadas seguidas na mesma linha
-(`exp-colecao-fragmento`, lote 6; `exp-colecao-chave-coluna`, lote 7), voltar
-por inteiro ao estado de `exp-prereq-fase0.1`, sem manter nada parcial. A
-alternativa (manter gate por obrigatorios e validador de colecao como rede de
-seguranca) foi descartada em favor de uma base sem ressalva.
-
-O que foi revertido, e como:
-
-| item | estado antes | estado depois | como |
-| --- | --- | --- | --- |
-| codigo (`src/`, `tests/`, `skills/`, `docs/architecture/`) | `1e50fbd` (M1-M5 + C1-C3) | identico a `5d8c212` | `git revert` de `15668c1` e `2879aba` (commits `58d9131`, `8338a97`); registro de releases preservado como historico; suite 186 (as 14 provas dos lotes 6 e 7 sairam com os commits) |
-| prompts no Langfuse | `comum-contrato` v3, `unit-mapping-escopo` v3 em `production` | **v4 = texto da v1**, `production` (`sincronizar_prompts_langfuse.py --empurrar` publica o espelho do codigo como versao nova; confirmado byte a byte v4 == v1) | v2 e v3 permanecem no historico do Langfuse |
-| `layouts/<dominio>/<entidade>/current.json` | versoes publicadas pelos lotes 6 e 7 (v1.4.0/v1.5.0; MRV v1.4.0) | publicacao de `exp-prereq-fase0.1` de cada entidade: cury, eztc3, direcional, tenda, plano-plano, pacaembu, itau **v1.3.0**; mrv **v1.2.0**; santander **v1.3.0** (run `__r2`) | ponteiros substituidos guardados em `current.rollback-2026-09-18.<versao>.json`; as versoes v1.4.0/v1.5.0 ficam no MinIO como evidencia |
-| `ATLAS_RELEASE` nos containers | `exp-colecao-chave-coluna` | `base-fase0.1-revertido` (rotulo neutro: um run acidental nao entra em `exp-prereq-fase0.1`) | `.env` + `docker compose down && up -d`; scheduler em `8338a97` |
-| scores no Langfuse | — | mantidos (`exp-colecao-fragmento` e `exp-colecao-chave-coluna` seguem consultaveis como evidencia) | nada apagado |
-
-Base de referencia: **`exp-prereq-fase0.1`** (Santander pelo `__r2`), traces
-de 17-18/09. Nenhuma execucao nova foi disparada na reversao.
-
-O que os lotes 6 e 7 deixam para o plano (ver resultados acima):
-
-- a colecao por evidencia funciona quando e colecao (Santander percentuais,
-  1 tentativa, 5 periodos, nas duas rodadas), mas oferecer a forma a LLM sem
-  o codigo controlar onde ela cabe abriu duas classes de erro novas
-  (colecao posicional nos monetarios; `empresa=identidade_documento` como
-  valor de filtro);
-- o gate de publicacao aprova com obrigatorio nao resolvido (v1.4.0 do
-  Santander chegou a `current.json`); item 6.3/6.4 do plano;
-- a cada rodada um documento troca de linha ou artefato por escolha livre da
-  LLM (Plano&Plano brutas x liquidas, Itau `chart002` x `chart004`, Direcional
-  marca x consolidado): Fase 1 (chaves enumeradas pelo codigo, filtro de
-  identidade preenchido pelo codigo) e 3.2 (linha por sinonimo) sao a
-  correcao com mecanismo; prompt nao e;
-- resposta vazia da LLM consumiu tentativa em 3 rodadas seguidas do Itau
-  (item 7.3);
-- depois de qualquer veredito, conferir `current.json` de cada entidade: a
-  DAG 3 publica sempre que a revalidacao aprova, inclusive em release
-  reprovada.
+## Lote 4: pre-requisitos e fase 0 (`exp-prereq-fase0`, 13-14/09)
+
+Contrato ganhou `chaves_de_item{chave, origem_valor}`, `papeis` e
+`evidencia_esperada`; layout signature passou a ter um pre-filtro de
+evidencia. **Aprovada com ressalva** em 14/09: `assinatura_f1_filtro_chave_declarada`
+foi de 0,954 para 1,000, `assinatura_f0_selecao_precisao` de 0,635 para
+0,783, nenhuma guarda regrediu de verdade. Virou a base de referencia da
+epoca (depois substituida pelo lote 5). Deixou pendente: corrigir o gabarito
+do Plano&Plano (seletores por papel) e regravar `assinatura_*` — herdado
+pelo lote 5 e ainda aberto hoje (ver pendencias do lote 8, abaixo).
+
+## Lote 5: prompt de construtoras, contratos no Langfuse, pre-filtro completo (`exp-prereq-fase0.1`, 17/09)
+
+Tres mudancas no mesmo branch, medidas juntas:
+
+- **5.1** — prompt de construtoras passou a explicar `chaves_de_item`/
+  `origem_das_chaves`/`evidencia_esperada` ja na 1a tentativa (antes so
+  aparecia no reparo, depois de ja ter sido rejeitado) — igualando ao prompt
+  de bancos, que ja fazia isso.
+- **5.2** — contratos semanticos passaram a ser versionados no Langfuse
+  (`scripts/sincronizar_contratos_langfuse.py`, mesmo padrao dos prompts),
+  fechando uma lacuna de observabilidade. Nao afeta o pipeline (sem
+  `ATLAS_RELEASE`).
+- **5.3** — o pre-filtro de evidencia passou a ler o artefato completo do
+  MinIO quando o resumo do inventario nao decide, em vez de empurrar tudo
+  como `amostra_incompleta` sem verificacao.
+
+**Aprovada com ressalva** em 17/09: `selecao_prefiltro_reducao` foi de 0,076
+para 0,645, tokens da selecao -15 %, custo total -17 %, nenhuma guarda
+regrediu de verdade (as duas quedas aparentes — EZTEC e Santander — eram
+gabarito desatualizado e variancia de LLM, ambas confirmadas por `__r2`).
+Virou a base de referencia (usada pelos lotes 6, 7 e 8). Pendencias que
+deixou, ainda abertas hoje: gabarito EZTEC/Plano&Plano (filtro por slug vs.
+nome de exibicao — candidato usa slug, gabarito usa nome), regravar
+`assinatura_*` das bases depois da correcao, comparador preferir o run
+`__r2` automaticamente quando existir, contrato de bancos sem exigir
+periodos historicos de `inadimplencia_90_dias` (item 3.6).
+
+## Lotes 6 e 7: colecao por evidencia — duas tentativas reprovadas (18/09)
+
+- **Lote 6** (`exp-colecao-fragmento`): tentou fazer a colecao por evidencia
+  (uma `linhas_de_tabela` cobrindo varias linhas) ser aceita na 1a resposta,
+  sem depender do reparo. Funcionou no caso que motivou (Santander
+  percentuais: 1 tentativa, 5 periodos), mas a LLM tambem usou colecao
+  posicional nos monetarios do Santander e publicou dado errado
+  (`current.json` v1.4.0 com valores trocados) porque o gate de publicacao
+  aprovava mesmo com campo obrigatorio nao resolvido. **Reprovada**; ponteiro
+  revertido para v1.3.0.
+- **Lote 7** (`exp-colecao-chave-coluna`): corrigiu o buraco do lote 6 (a
+  colecao so e aceita quando a chave do item vem de uma coluna, nunca de um
+  valor fixo) e implementou um gate de publicacao que bloqueia quando algum
+  campo obrigatorio fica sem valor
+  (`OBRIGATORIOS_NAO_RESOLVIDOS_NA_REVALIDACAO`). O alvo de bancos foi
+  atingido (percentuais mantiveram 1 tentativa, monetarios voltaram a
+  celula com rotulo), mas 3 documentos de construtoras/bancos trocaram de
+  linha ou artefato por decisao livre da LLM: Direcional usou
+  `identidade_documento` como o proprio *valor* do filtro (em vez de um
+  nome real) e ancorou a linha errada; Plano&Plano e Itau ancoraram em
+  rotulo/grafico plausivel mas errado. Regressao real, publicada e revertida
+  nos 3 (`current.json` de volta a v1.3.0/v1.5.0 conforme o caso).
+  **Reprovada.**
+
+Licao que os dois lotes deixaram, e que motivou a Fase 1 (lote 8, abaixo):
+prompt fecha um caminho de erro e abre outro (`identidade_documento` como
+valor nunca tinha aparecido em 4 rodadas anteriores); a correcao que
+funciona e mecanismo em codigo (enumerar as chaves, travar o valor do
+filtro de identidade), nao instrucao em texto. **Nota para quem for
+reimplementar o gate por obrigatorios**: o C3 do lote 7 ja fez isso
+(`evaluate_revalidation_result` bloqueando com
+`OBRIGATORIOS_NAO_RESOLVIDOS_NA_REVALIDACAO`) mas foi revertido junto com o
+resto do lote — a logica existiu e funcionou, so nao esta mais no codigo.
+Reimplementa-la e o item 6.3/6.4 do plano, ainda pendente (ver pendencias do
+lote 8).
+
+## Reversao para `exp-prereq-fase0.1` (18/09)
+
+Depois de duas releases reprovadas seguidas (lotes 6 e 7), reversao completa
+(nao parcial) para o estado do lote 5, em vez de manter partes como rede de
+seguranca:
+
+| item | como |
+| --- | --- |
+| codigo | `git revert` dos 2 commits (M1-M5 e C1-C3); registro de releases preservado como historico |
+| prompts no Langfuse | `comum-contrato`/`unit-mapping-escopo` republicados como versao nova = texto da v1, rotulo `production` |
+| `layouts/<dominio>/<entidade>/current.json` | republicado na versao do lote 5 em cada entidade; ponteiros substituidos guardados como `current.rollback-2026-09-18.<versao>.json` |
+| `ATLAS_RELEASE` | `base-fase0.1-revertido` (rotulo neutro, para um run acidental nao entrar em `exp-prereq-fase0.1`) |
+| scores no Langfuse | mantidos (lotes 6 e 7 seguem consultaveis como evidencia); nada apagado |
+
+Base de referencia voltou a ser **`exp-prereq-fase0.1`**. Nenhuma execucao
+nova foi disparada nesta reversao.
 
 ## Lote 8: Fase 1 — entradas-alvo enumeradas pelo codigo (`exp-fase1-entradas-esperadas`)
 
@@ -869,7 +360,33 @@ Pendencias que o lote abriu ou manteve:
    reprova a escolha certa e o reparo perde o artefato.
 5. ~~Itau: decidir se o ponteiro v1.6.0 fica~~ — decidido em 18/09: fica
    (ganho liquido positivo; ver acima).
-6. EZTEC: +26 % de tokens sem reparo, causa nao investigada.
+6. ~~EZTEC: +26 % de tokens sem reparo, causa nao investigada.~~ — investigado
+   em 18/09, comparando `reasoning_content` (persistido em `output` da
+   observation `fallback.layout_signature_candidato` no Langfuse **e** em
+   `resposta_llm_layout_signature_candidato.json` no MinIO, nas duas
+   releases). `mapeamento_canonico` final tem o mesmo numero de chaves (10)
+   nas duas rodadas — nao e a lista `entradas_esperadas` inflando por chave
+   extra. Dois efeitos opostos: (a) a duvida sobre o valor do filtro
+   `empresa` sumiu (base gastava ~25 linhas de reasoning inferindo a empresa
+   a partir do `execution_id`, ja que a identidade nao vinha no payload; a
+   Fase 1 elimina isso ao preencher `identidade_documento` por codigo); (b)
+   mas surgiu uma checagem de conformidade nova, mais cara: o modelo lê e
+   reaplica em voz alta a regra "nao omita entrada obrigatorio=true / pode
+   omitir obrigatorio=false sem evidencia" pelo menos 6 vezes ao longo do
+   reasoning, contra cada uma das entradas opcionais. O consumo dominante nas
+   duas releases (60-90 linhas) segue sendo decidir de qual tabela tirar o
+   cabeçalho de período quando a tabela do valor nao tem cabeçalho de
+   período proprio — territorio de F2/3.2, que a Fase 1 nao toca. Efeito
+   liquido: o ganho (a) e menor que o custo novo (b), resultando em +5k
+   tokens de saida. **Aponta para acelerar o incremento 4** (chamada de
+   ancoragem plana): quando o codigo monta as chaves e a LLM so responde
+   ancoragens, essa checagem de conformidade deixa de existir porque a LLM
+   nao escreve mais chave nenhuma. Correcao tentada em 18/09
+   (`exp-declaracao-explicita-opcional`, regra fechada em vez de condicional)
+   **piorou o problema e foi revertida no mesmo dia** — ver secao dedicada
+   abaixo. Pendencia continua aberta; caminho agora e o incremento 4 ou
+   ajuste de orcamento, nao mais reformular a declaracao de ausencia em
+   texto.
 7. Item 3.2 (ancoragem de linha por sinonimo): proximo lote — e o unico jeito
    de a escolha Plano&Plano deixar de ser variancia e passar a ser garantida.
 
@@ -884,4 +401,127 @@ Pendencias que o lote abriu ou manteve:
 | `exp-colecao-chave-coluna` | `15668c1` — colecao so com a chave numa coluna; gate por obrigatorios (C1-C3) | rodada e comparada em 18/09: **reprovada** (alvo atingido em bancos; Direcional, Plano&Plano e Itau trocaram de linha/artefato); base segue `exp-prereq-fase0.1` |
 | (reversao) | `8338a97` — reverte `15668c1` e `2879aba`; prompts v4 = v1; ponteiros na publicacao da fase0.1 | codigo, prompts e layouts vigentes = `exp-prereq-fase0.1`; `ATLAS_RELEASE=base-fase0.1-revertido` |
 | `exp-fase1-entradas-esperadas` | `325f923` — Fase 1 do plano (entradas-alvo enumeradas pelo codigo, validador chave a chave) | rodada e comparada em 18/09; confirmada por `__r2` (Plano&Plano e Santander) tambem em 18/09: invariantes da Fase 1 100 % em 10/10, 0 regressoes reais. **Aprovada; passa a ser a base de referencia** |
+| `exp-declaracao-explicita-opcional` | nao commitado (revertido) | rodada em 18/09, comparada contra `exp-fase1-entradas-esperadas`: **reprovada e revertida no mesmo dia** — piorou o problema que tentava resolver. Ver secao abaixo |
+
+## Experimento revertido: declaracao explicita de ausencia opcional (`exp-declaracao-explicita-opcional`, 2026-09-18)
+
+Motivacao: a pendencia 6 (EZTEC, +26 % de tokens) apontou uma causa concreta
+no `reasoning_content` — a LLM reaplica em voz alta a regra condicional
+"nao omita obrigatorio=true / pode omitir obrigatorio=false sem evidencia"
+contra cada entrada opcional, repetidas vezes ao longo do reasoning. Pedido do
+usuario: nao deixar a LLM "decidindo etapas" — trocar a regra condicional por
+uma tarefa fechada de passo unico, sem ramificacao para decidir.
+
+O que mudou: prompt `comum-contrato` v5→v6 (toda `entrada_esperada` tem
+resposta, mapeada ou declarada em `campos_nao_mapeados`, obrigatoria ou nao,
+nunca omitida em silencio) + `candidate_validation.py` (validador passa a
+aceitar declaracao de ausencia para entrada opcional, antes rejeitada como
+erro) + 2 testes novos. Suite 171→173, lint limpo. Codigo nao commitado
+(experimento).
+
+Resultado medido (lote identico ao 8, mesmos 10 documentos, Docker recriado
+do zero antes do disparo):
+
+- **EZTEC** (caso que motivou a mudanca): `reasoning_content` do candidato
+  cresceu em vez de encolher — 24.804 chars/9.074 tokens de saida na base
+  original, 28.318/10.309 no lote 8, **42.347/14.252 nesta release**. A
+  hipotese (tarefa fechada = menos reasoning) foi falseada: declarar uma
+  ausencia formalmente (path + seletores + motivo + artefatos verificados)
+  custa mais texto do que simplesmente omitir a chave, e ha muitas entradas
+  opcionais sem evidencia justamente nos documentos que ja pressionavam o
+  teto de tokens.
+- **Itau, `indicadores_monetarios`**: no lote 8 essa unidade teve 2 erros de
+  `finish_reason: "length"` (`completion_tokens=15000`, batendo em
+  `FALLBACK_LLM_FRAGMENT_MAX_TOKENS`) seguidos de 1 sucesso. Nesta release,
+  **4 erros seguidos, 0 sucessos** — todas com o mesmo `finish_reason:
+  "length"` em `completion_tokens=15000`. A task `gerar_layout_candidato_llm`
+  do Airflow terminou `failed` (659,8 s), com `persistir_layout_candidato`,
+  `montar_conf_revalidacao_dag2`, `revalidar_candidato_dag2`,
+  `avaliar_revalidacao_candidato`, `publicar_nova_versao_layout` e
+  `registrar_planejamento` todos `upstream_failed` — nenhum candidato foi
+  produzido. O `dag_run` aparecia como `success` porque a task-folha
+  `observar_execucao_fallback` roda sempre; o estado real so aparece em
+  `taskInstances`, nao em `dagRuns/<id>` (achado separado, documentado aqui
+  porque quase mascarou a regressao). O `raw_response` cresceu a cada
+  tentativa de correcao (15.904 → 20.616 → 26.229 → 28.474 chars): o loop de
+  correcao estava compondo, nao convergindo. `current.json` do Itau nao foi
+  tocado (permanece v1.6.0, do lote 8) — o run apenas falhou, sem efeito
+  colateral no ponteiro publicado.
+
+Veredito: **revertido no mesmo dia (18/09)**, antes de completar a leitura
+dos outros 8 documentos — a regressao no caso motivador (Itau) e a piora
+mensuravel no proprio EZTEC ja eram suficientes. O diagnostico da pendencia 6
+continua valido (a checagem condicional realmente infla o reasoning); o
+mecanismo de correcao proposto e que estava errado — tornar a declaracao de
+ausencia mais pesada (com motivo e artefatos verificados) trocou uma
+ramificacao de decisao por uma redacao mais longa, piorando exatamente os
+documentos que ja estavam no limite do orcamento de tokens por fragmento.
+Fica registrado como aprendizado: a correcao real desse problema pertence ao
+incremento 4 (chamada de ancoragem plana, onde o codigo monta as chaves e a
+LLM so responde ancoragens curtas) ou a um ajuste de orcamento
+(`FALLBACK_LLM_FRAGMENT_MAX_TOKENS`), nao a uma reformulacao de como a
+ausencia e declarada em texto livre.
+
+O que foi revertido, e como:
+
+| item | estado antes (durante o experimento) | estado depois (revertido) | como |
+| --- | --- | --- | --- |
+| `candidate_prompts.py`, `candidate_validation.py`, `test_expected_entries_flow.py` | editados, uncommitted | identicos ao commit `325f923` | `git checkout -- <3 arquivos>` (nao havia commit do experimento a reverter) |
+| prompt `atlas/fallback/blocos/comum-contrato` no Langfuse | v6 em `production` | **v5 em `production`** (label movido de volta; v6 permanece no historico, so com `latest`) | `updatePromptLabels` (MCP Langfuse) |
+| `ATLAS_RELEASE` | `exp-declaracao-explicita-opcional` | `exp-fase1-entradas-esperadas` | edicao de `.env` (recriar containers antes do proximo disparo) |
+| `layouts/<dominio>/<entidade>/current.json` | — | inalterado em todas as entidades (nenhum run desta release publicou candidato aprovado) | nada a fazer |
+| scores no Langfuse | — | mantidos (`exp-declaracao-explicita-opcional` segue consultavel como evidencia do experimento fracassado) | nada apagado |
+
+Base de referencia continua **`exp-fase1-entradas-esperadas`** (lote 8,
+aprovada e confirmada por `__r2`). Nenhuma nova execucao foi disparada nesta
+reversao.
+
+## Lote 9: gate por obrigatorios + ancoragem de linha por sinonimo (`exp-gate-e-ancoragem-linha`)
+
+Quatro pendencias do lote 8 fechadas juntas em 18/09. Duas sao dados/tooling,
+sem efeito no pipeline (nao mudam o que a DAG 3 gera, so como ele e medido);
+duas sao mudanca real de comportamento — juntas porque cada uma e pequena e
+independente, nao porque testam a mesma hipotese. Base de comparacao:
+`exp-fase1-entradas-esperadas` (lote 8).
+
+| item | o que muda | pipeline? |
+| --- | --- | --- |
+| 7 — gabarito EZTEC/Plano&Plano | `eval/gabaritos/9661cd07….json` e `fd5cc611….json`: `empresa` passa do nome de exibicao (`EZTEC`, `Plano&Plano`) para o slug (`eztc3`, `plano-plano`); Plano&Plano tambem troca seletor literal `periodo` por `papel_periodo` | nao — so corrige o gabarito contra o qual o harness pontua |
+| 8 — gate por obrigatorios | reimplementa o C3 do lote 7 (`candidate_lifecycle.evaluate_revalidation_result`): alem de `compativel`, a auditoria da revalidacao nao pode ter campo `obrigatorio` sem `resolvido` (`OBRIGATORIOS_NAO_RESOLVIDOS_NA_REVALIDACAO`); auditoria ausente vira alerta, nao bloqueio. So a logica isolada do C3 — as mudancas de colecao (C1/C2) que causaram a reprovacao do lote 7 nao voltam | sim — muda quando a DAG 3 publica |
+| 9 — ancoragem de linha por sinonimo (item 3.2) | novo `domain/fallback/row_anchoring.py`: quando o sinonimo do indicador (ja existente no contrato) casa uma unica linha entre as tabelas carregadas para a unidade, o codigo anexa `ancoragem_resolvida` (arquivo + rotulo + indice) a entrada em `entradas_esperadas` — a LLM copia em vez de escolher. Sem match unico, nada muda (residuo continua com a LLM). Validador reforca de forma independente (recalcula, nao confia no payload): candidato que usa uma linha diferente da resolvida e recusado nomeando a linha certa. Contrato `construtoras v1.9.0 -> v1.9.1`: sinonimo `"vendas contratadas brutas"` no indicador `vendas.numero_de_unidades`, que desambigua de `"Vendas Liquidas 100%"` na mesma tabela — o caso concreto do Plano&Plano (lotes 5-8, sempre variancia entre as duas linhas) | sim — muda o payload e pode recusar candidato |
+| 10 — comparador prefere `__r2` e ignora resolucao normal | `scripts/comparar_releases_langfuse.py`: `traces_por_release` descarta traces `atlas.resolucao` sem `metadata.modo_execucao == "revalidacao_layout_candidato"` (nao entram mais runs manuais de DAG 2 sob o rotulo errado); `_preferir_r2` deduplica, por release, documentos com run original + `__r2` (mesma chave de pareamento), mantendo so o `__r2` | nao — so consertar a leitura, "N traces" do resumo passa a ser confiavel |
+
+Hipotese declarada antes de rodar: o gate (8) fecha o buraco que deixou a
+v1.4.0 errada do Santander virar `current.json` no lote 6, sem reabrir nenhum
+caso que hoje publica corretamente (nenhum dos 10 documentos do lote 8 tinha
+obrigatorio nao resolvido). A ancoragem por sinonimo (9) fecha a variancia do
+Plano&Plano (a mesma pergunta, `__r2` diferente, respostas diferentes desde
+o lote 5) sem tocar o resto do payload — as outras 7 construtoras e os 2
+bancos nao tem indicador com sinonimo especifico o bastante para disparar o
+mecanismo, entao devem sair identicos a base.
+
+| metrica | papel | meta |
+| --- | --- | --- |
+| Plano&Plano, `balancos_das_empresas.vendas.dados[...].valores[...].valor` | alvo | os 3 periodos (3.601/3.536/3.570) identicos entre duas rodadas quaisquer (fecha a variancia, nao so reproduz o gabarito) |
+| `revalidacao_gate_efetivo` | alvo/guarda (ja fixa no comparador) | passa a existir com valor real (antes nao era emitida) |
+| `assinatura_f1_*` (Fase 1) | guarda | continuam 100 % — nada em F1 foi tocado |
+| `resolucao_cobertura_obrigatorios`, `e2e_apto_para_bronze` | guarda | sem regressao; o gate so bloqueia candidato que ja estava incompleto |
+| valores resolvidos das outras 9 entidades | guarda | identicos a base (lote 8) — nenhuma mudou de indicador com sinonimo novo |
+| `e2e_tokens_llm` | custo | sem alta relevante — o payload ganha no maximo um campo pequeno (`ancoragem_resolvida`) por entrada resolvida |
+
+Testes: `tests/unit/domain/test_row_anchoring.py` (9 casos, o resolvedor
+isolado), `tests/unit/application/test_row_anchoring_flow.py` (4, o fluxo
+completo incluindo o caso Plano&Plano brutas/liquidas),
+`tests/unit/application/test_revalidation_gate.py` (3, restaurados do lote 7).
+Suite 183 -> 187 (contando tambem os 4 do lote anterior ja revertido), ruff
+limpo.
+
+**Pendencia aberta desde ja**: a metrica `rotulo_resolvido_por_sinonimo`
+prevista no incremento 5 do roteiro (fracao de linhas resolvidas por codigo,
+diagnostico) nao foi instrumentada nesta release — o mecanismo funciona e e
+validado (testes cobrem o caso real), mas nao ha score dedicado no Langfuse
+para medir a cobertura em producao; por ora a leitura e pelo relatorio local
+(valores resolvidos por documento) e pela ausencia de erro do gate/validador.
+Fica para uma release futura se a cobertura precisar ser medida com mais
+precisao do que "regrediu ou nao regrediu".
 

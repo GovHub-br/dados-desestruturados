@@ -74,6 +74,12 @@ class CandidateGenerationMixin:
                     "artefatos_contexto_llm": loaded_artifacts,
                 }
             )
+            if "entradas_esperadas" in enriched_context:
+                enriched_context["entradas_esperadas"] = attach_resolved_row_anchors(
+                    enriched_context["entradas_esperadas"],
+                    contract_context=enriched_context.get("contrato_semantico_relevante", {}),
+                    loaded_artifacts=loaded_artifacts,
+                )
         candidate_validation_context = {
             **enriched_context,
             "fallback_context": fallback_context,

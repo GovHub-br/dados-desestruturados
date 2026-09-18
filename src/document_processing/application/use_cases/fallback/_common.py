@@ -48,6 +48,10 @@ from document_processing.domain.fallback.models import (
     LayoutSignatureCandidate,
     LayoutSignatureFragment,
 )
+from document_processing.domain.fallback.row_anchoring import (
+    indicator_synonyms_for_entry,
+    resolve_row_anchor,
+)
 from document_processing.infrastructure.llm.client import (
     FALLBACK_LLM_CLIENT,
     FallbackLlmClient,
@@ -95,3 +99,46 @@ def contract_and_targets_block(payload: dict[str, Any]) -> dict[str, Any]:
         if name in payload:
             block[name] = payload[name]
     return block
+
+
+def attach_resolved_row_anchors(
+    entries: list[dict[str, Any]],
+    *,
+    contract_context: dict[str, Any],
+    loaded_artifacts: dict[str, Any] | None,
+) -> list[dict[str, Any]]:
+    """Fase 3.2: quando o sinonimo do indicador casa uma unica linha entre as
+    tabelas ja carregadas para a chamada, anexa ``ancoragem_resolvida`` na
+    entrada — a LLM copia em vez de escolher. Sem match unico, a entrada
+    volta sem alteracao e a decisao continua sendo dela (residuo).
+    """
+    semantic = contract_context.get("contrato_semantico", {})
+    metric_groups = semantic.get("metricas", {}) if isinstance(semantic, dict) else {}
+    if not isinstance(metric_groups, dict) or not metric_groups:
+        return entries
+    tables = {
+        path: artifact
+        for path, artifact in (loaded_artifacts or {}).items()
+        if isinstance(artifact, dict) and isinstance(artifact.get("rows"), list)
+    }
+    if not tables:
+        return entries
+    enriched: list[dict[str, Any]] = []
+    for entry in entries:
+        requisito = str(entry.get("requisito", ""))
+        if entry.get("papel_no_alvo") != "valor" or entry.get("modo_array") != "item" or not requisito:
+            enriched.append(entry)
+            continue
+        sinonimos = indicator_synonyms_for_entry(
+            requisito=requisito,
+            seletores=entry.get("seletores") or {},
+            metric_groups=metric_groups,
+        )
+        ancora = resolve_row_anchor(synonyms=sinonimos, tables=tables) if sinonimos else None
+        if ancora is None:
+            enriched.append(entry)
+            continue
+        novo = dict(entry)
+        novo["ancoragem_resolvida"] = ancora.payload()
+        enriched.append(novo)
+    return enriched

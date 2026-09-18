@@ -99,6 +99,7 @@ class FragmentGenerationMixin:
                     parsed,
                     unit=unit,
                     fallback_problem_context=fallback_problem_context,
+                    loaded_artifacts=fragment_payload.get("artefatos_contexto_llm"),
                 )
                 return fragment, raw_content, corrections_used, errors
             except UnmappedRequiredFieldsError as exc:

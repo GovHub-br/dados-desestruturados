@@ -23,7 +23,7 @@
     "balancos_das_empresas.lancamentos.dados.valores.valor": [
       {
         "seletores": {
-          "empresa": "EZTEC",
+          "empresa": "eztc3",
           "papel_periodo": "periodo_comparativo_anterior"
         },
         "arquivo_origem": "tables/table002.json",
@@ -38,7 +38,7 @@
       },
       {
         "seletores": {
-          "empresa": "EZTEC",
+          "empresa": "eztc3",
           "papel_periodo": "periodo_referencia"
         },
         "arquivo_origem": "tables/table002.json",
@@ -55,7 +55,7 @@
     "balancos_das_empresas.vendas.dados.valores.valor": [
       {
         "seletores": {
-          "empresa": "EZTEC",
+          "empresa": "eztc3",
           "papel_periodo": "mesmo_periodo_ano_anterior"
         },
         "arquivo_origem": "tables/table003.json",
@@ -70,7 +70,7 @@
       },
       {
         "seletores": {
-          "empresa": "EZTEC",
+          "empresa": "eztc3",
           "papel_periodo": "periodo_comparativo_anterior"
         },
         "arquivo_origem": "tables/table003.json",
@@ -85,7 +85,7 @@
       },
       {
         "seletores": {
-          "empresa": "EZTEC",
+          "empresa": "eztc3",
           "papel_periodo": "periodo_referencia"
         },
         "arquivo_origem": "tables/table003.json",
@@ -103,7 +103,6 @@
   "ausencias_esperadas": [],
   "origem": "derivado da execucao baseline0 (candidato validado + auditoria da resolucao local), valores conferidos contra atlas-e2e-regressao / gabarito curado de bancos",
   "revisao_pendente": [
-    "candidato gravou empresa='EZTEC'; identidade do manifesto e o slug 'eztc3'",
     "manifesto sem period_label: periodo da identidade curado a mao"
   ],
   "identidade_manifesto": {

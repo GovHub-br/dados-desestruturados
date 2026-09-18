@@ -329,9 +329,14 @@ class MappingUnitGenerationMixin:
             payload["identidade_documento"] = candidate_payload["identidade_documento"]
             # Cada unidade ve so as chaves dos seus requisitos; as demais pertencem
             # a outra chamada e seriam "campo fora da unidade" no validador.
-            payload["entradas_esperadas"] = [
-                entry
-                for entry in expected
-                if isinstance(entry, dict) and str(entry.get("requisito", "")).strip() in unit_paths
-            ]
+            payload["entradas_esperadas"] = attach_resolved_row_anchors(
+                [
+                    entry
+                    for entry in expected
+                    if isinstance(entry, dict)
+                    and str(entry.get("requisito", "")).strip() in unit_paths
+                ],
+                contract_context=payload.get("contrato_semantico_relevante", {}),
+                loaded_artifacts=loaded_artifacts,
+            )
         return payload

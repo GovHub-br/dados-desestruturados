@@ -23,7 +23,7 @@
     "balancos_das_empresas.lancamentos.dados.valores.valor": [
       {
         "seletores": {
-          "empresa": "Plano&Plano",
+          "empresa": "plano-plano",
           "papel_periodo": "periodo_referencia"
         },
         "arquivo_origem": "tables/table001.json",
@@ -38,8 +38,8 @@
       },
       {
         "seletores": {
-          "empresa": "Plano&Plano",
-          "periodo": "1T26"
+          "empresa": "plano-plano",
+          "papel_periodo": "periodo_comparativo_anterior"
         },
         "arquivo_origem": "tables/table001.json",
         "indice_linha": 2,
@@ -53,8 +53,8 @@
       },
       {
         "seletores": {
-          "empresa": "Plano&Plano",
-          "periodo": "2T25"
+          "empresa": "plano-plano",
+          "papel_periodo": "mesmo_periodo_ano_anterior"
         },
         "arquivo_origem": "tables/table001.json",
         "indice_linha": 2,
@@ -70,7 +70,7 @@
     "balancos_das_empresas.vendas.dados.valores.valor": [
       {
         "seletores": {
-          "empresa": "Plano&Plano",
+          "empresa": "plano-plano",
           "papel_periodo": "periodo_referencia"
         },
         "arquivo_origem": "tables/table002.json",
@@ -85,8 +85,8 @@
       },
       {
         "seletores": {
-          "empresa": "Plano&Plano",
-          "periodo": "1T26"
+          "empresa": "plano-plano",
+          "papel_periodo": "periodo_comparativo_anterior"
         },
         "arquivo_origem": "tables/table002.json",
         "indice_linha": 1,
@@ -100,8 +100,8 @@
       },
       {
         "seletores": {
-          "empresa": "Plano&Plano",
-          "periodo": "2T25"
+          "empresa": "plano-plano",
+          "papel_periodo": "mesmo_periodo_ano_anterior"
         },
         "arquivo_origem": "tables/table002.json",
         "indice_linha": 1,
@@ -117,5 +117,7 @@
   },
   "ausencias_esperadas": [],
   "origem": "derivado da execucao baseline0 (candidato validado + auditoria da resolucao local), valores conferidos contra atlas-e2e-regressao / gabarito curado de bancos",
-  "revisao_pendente": []
+  "revisao_pendente": [
+    "corrigido em 2026-09-18: empresa='Plano&Plano' -> slug 'plano-plano'; seletores literais 'periodo' -> 'papel_periodo' (item 7 do registro de releases)"
+  ]
 }

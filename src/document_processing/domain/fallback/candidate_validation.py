@@ -11,6 +11,11 @@ from document_processing.domain.contracts.mapping_requirements import (
     parsed_mapping_path,
 )
 from document_processing.domain.contracts.schema import normalize_schema_path
+from document_processing.domain.fallback.evidence_pruning import normalize_term
+from document_processing.domain.fallback.row_anchoring import (
+    indicator_synonyms_for_entry,
+    resolve_row_anchor,
+)
 from document_processing.domain.layouts.paths import (
     normalize_mapping_path,
     parse_mapping_path,
@@ -134,6 +139,10 @@ class FallbackCandidateValidationService:
             candidate_model,
             fallback_problem_context,
         )
+        self._validate_candidate_row_anchors(
+            candidate_model,
+            fallback_problem_context,
+        )
         self._validate_candidate_covers_mapping_requirements(
             candidate_model,
             fallback_problem_context,
@@ -157,6 +166,7 @@ class FallbackCandidateValidationService:
         *,
         unit: MappingUnit,
         fallback_problem_context: dict[str, Any],
+        loaded_artifacts: dict[str, Any] | None = None,
     ) -> LayoutSignatureFragment:
         """Valida um fragmento usando as mesmas regras da DAG 2 em escopo reduzido."""
         try:
@@ -215,6 +225,8 @@ class FallbackCandidateValidationService:
             **fallback_problem_context,
             "contrato_semantico_relevante": scoped_contract,
         }
+        if loaded_artifacts:
+            scoped_context["artefatos_contexto_llm"] = loaded_artifacts
         fallback_context = scoped_context.get("fallback_context", {})
         if not isinstance(fallback_context, dict):
             raise RuntimeError("fallback_context ausente para validar fragmento.")
@@ -289,6 +301,81 @@ class FallbackCandidateValidationService:
             f"entradas_esperadas do payload. {detalhes}"
             + (f"; e mais {restante} chave(s) no mesmo caso." if restante > 0 else "")
         )
+
+    def _validate_candidate_row_anchors(
+        self,
+        candidate: LayoutSignatureCandidate,
+        fallback_problem_context: dict[str, Any],
+    ) -> None:
+        """Fase 3.2: linha resolvida por sinonimo do contrato nao e escolha livre.
+
+        Refaz a resolucao aqui (contrato + artefatos carregados), a mesma
+        fonte que anexou ``ancoragem_resolvida`` ao payload — nunca confia no
+        que a LLM devolveu. Sem sinonimo unico casando uma linha, nada e
+        verificado e a escolha continua sendo da LLM.
+        """
+        identity = fallback_problem_context.get("identidade_documento")
+        contract = fallback_problem_context.get("contrato_semantico_relevante", {})
+        loaded_artifacts = fallback_problem_context.get("artefatos_contexto_llm")
+        if not isinstance(identity, dict) or not identity or not isinstance(contract, dict):
+            return
+        if not isinstance(loaded_artifacts, dict) or not loaded_artifacts:
+            return
+        semantic = contract.get("contrato_semantico", {})
+        metric_groups = semantic.get("metricas", {}) if isinstance(semantic, dict) else {}
+        if not isinstance(metric_groups, dict) or not metric_groups:
+            return
+        tables = {
+            path: artifact
+            for path, artifact in loaded_artifacts.items()
+            if isinstance(artifact, dict) and isinstance(artifact.get("rows"), list)
+        }
+        if not tables:
+            return
+        try:
+            entries = enumerate_target_entries(
+                contract_context=contract, document_identity=identity
+            )
+        except TargetEnumerationError:
+            return
+        match = match_mapping_keys(entries, list(candidate.mapeamento_canonico))
+        for mapping_path, matched_entry in match.por_chave.items():
+            if (
+                matched_entry is None
+                or matched_entry.papel_no_alvo != "valor"
+                or matched_entry.modo_array != "item"
+            ):
+                continue
+            sinonimos = indicator_synonyms_for_entry(
+                requisito=matched_entry.requisito,
+                seletores=matched_entry.seletores,
+                metric_groups=metric_groups,
+            )
+            if not sinonimos:
+                continue
+            ancora = resolve_row_anchor(synonyms=sinonimos, tables=tables)
+            if ancora is None:
+                continue
+            entry_model = candidate.mapeamento_canonico.get(mapping_path)
+            if entry_model is None or entry_model.tipo_origem != "celula_de_tabela":
+                continue
+            payload = entry_model.model_dump(mode="json", exclude_none=True)
+            row_selector = payload.get("seletor_linha")
+            accepted_label = (
+                row_selector.get("valor_aceito") if isinstance(row_selector, dict) else None
+            )
+            used_file = str(payload.get("arquivo_origem") or "").strip()
+            if normalize_term(str(accepted_label or "")) == normalize_term(
+                ancora.rotulo_linha
+            ) and (not used_file or used_file == ancora.arquivo_origem):
+                continue
+            raise RuntimeError(
+                "Layout candidato escolheu uma linha diferente da resolvida por "
+                f"sinonimo do contrato para {mapping_path}: o rotulo certo e "
+                f"'{ancora.rotulo_linha}' em '{ancora.arquivo_origem}' (indice "
+                f"{ancora.indice_linha}); a resposta trouxe '{accepted_label}' em "
+                f"'{used_file or '?'}'."
+            )
 
     @staticmethod
     def _validate_candidate_covers_mapping_requirements(
