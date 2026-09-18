@@ -447,6 +447,112 @@ Fora deste lote, como release propria: cardinalidade declarada no contrato
 para arrays por evidencia (M7), para que a forma por celula com um unico
 periodo deixe de ser valida.
 
+### Resultado do lote 6 (comparacao em 2026-09-18)
+
+Rodada 02:48-03:36 UTC, codigo `dd3b3ff`, prompts `comum-contrato` v2 e
+`unit-mapping-escopo` v2. Base: `exp-prereq-fase0.1` com o `__r2` do Santander.
+Release limpa (10 fallback + 9 revalidacoes; nenhuma DAG 2 avulsa). Harness
+rodado uma vez (277 scores).
+
+**Veredito: reprovada.** Guardas `resolucao_cobertura_obrigatorios` (1,0 ->
+0,963) e `assinatura_f1_cobertura_obrigatorios` (0,944 -> 0,908) regrediram, e
+a regressao e real e causada pela release — nao e gabarito nem variancia.
+
+| metrica | papel | base | novo | leitura |
+| --- | --- | --- | --- | --- |
+| `llm_tentativas` fragmento percentuais (Santander) | alvo | 2 | **1** | atingido: a colecao `chart006` 0-4 foi aceita na 1a resposta, 5 periodos resolvidos |
+| `assinatura_f3_ausencia_falso_negativo` (Santander) | alvo | 0 | 0 | ok |
+| `fallback_tentativas_llm_total` | custo | 2,8 | **3,3** | Itau 4 -> 9, MRV 2 -> 3 |
+| `e2e_tokens_llm` | custo | 31,9k | **35,3k** (+11 %) | Itau 56k -> 80k, MRV +48 %, Tenda +24 % |
+| `e2e_duracao_segundos` | custo | 109 | 249 | ambiente: dobrou em todos, inclusive Cury com tokens iguais |
+| `resolucao_cobertura_obrigatorios` | guarda | 1,000 | **0,963** | Santander 0,67: `carteira_de_credito` e `margem_financeira` nao resolvidos |
+| `resolucao_campos_nao_resolvidos` | guarda | 0 | 0,44 | Santander 2 obrigatorios; Itau 2 opcionais (`capital_principal`, ROE) |
+| `assinatura_f0_selecao_precisao` | — | 0,746 | 0,697 | Tenda 1,0 -> 0,29 (selecionou 3 artefatos a mais) |
+| construtoras (8 docs) | guarda | — | — | valores e coberturas identicos; so custo mudou |
+
+O que aconteceu, por documento:
+
+- **Santander (regressao real, dado errado publicado).** A LLM usou
+  `linhas_de_tabela` tambem nos cinco monetarios, onde cada linha da tabela e
+  um indicador: `faixas_linhas: [{6,6}]` + `campos: [valor]` +
+  `valores_fixos: {periodo: "2T26", ...}` — uma celula por indice de linha, sem
+  `valor_aceito`, com o periodo como literal. Resultado: `margem_financeira_com_mercado`
+  leu a linha 6 (TOTAL, 15.341) em vez da 5 ("Margem com o mercado", (718));
+  `margem_financeira_com_clientes` 16.058 -> 15.115; `resultado_recorrente`
+  3.014 -> 2.667; `carteira_de_credito` e `margem_financeira` 0 linhas. O
+  validador aceitou (M1/M2 contam `valor` e os contextos por `valores_fixos`),
+  a revalidacao aprovou com 0 regras e 2 obrigatorios nao resolvidos, e a DAG 3
+  **publicou v1.4.0 como `current.json`**. Percentuais, ao contrario, sairam
+  como planejado (5 periodos na 1a tentativa).
+- **Itau (custo).** 9 tentativas: 2 respostas vazias (transporte), 2 colecoes
+  em `dados.valores` sem o filtro `[indicador=...]` (a frase nova do prompt
+  levou a LLM a tentar a colecao no array errado), 1 cobertura. Obrigatorios
+  identicos a base; perdeu os opcionais `capital_principal` (12,3) e ROE
+  (24,5) por cabecalho `"2T26.R$ 12,4 b..."`; publicou v1.4.0 pior que a v1.3.0.
+- **Construtoras.** Sem array por evidencia: valores, coberturas e ancoragens
+  identicos (delta 0,000 como previsto). MRV 3 tentativas e Tenda com 3
+  artefatos a mais na selecao: variancia; nao explicam o veredito.
+
+Causas e o que fica para a proxima release:
+
+1. **A colecao foi oferecida por tipo de array, nao por orientacao da
+   evidencia.** `origem_valor=evidencia` vale para percentuais (grafico: uma
+   linha por periodo) e monetarios (tabela: uma linha por indicador, periodos
+   nas colunas); so o primeiro e uma colecao. Regra determinista que fecha o
+   buraco: numa colecao por evidencia a **chave do item (`chaves_de_item`) tem
+   de ser lida de uma coluna em `campos`**, nunca de `valores_fixos` ou
+   `valores_por_segmento`. Com ela, as cinco entradas do Santander seriam
+   rejeitadas antes da resolucao e a LLM voltaria a `celula_de_tabela` com rotulo.
+2. **Prompt** deve dizer a mesma coisa: colecao so quando o artefato publica
+   uma linha por item com a chave numa coluna; do contrario, celula com
+   `valor_aceito`. E o exemplo aninhado precisa deixar claro que o filtro do
+   array pai e obrigatorio (Itau tentou `dados.valores` sem filtro).
+3. **Gate de publicacao**: a revalidacao aprovou com obrigatorios nao
+   resolvidos. Enquanto `regras_deteccao_mudanca` for vazio, o gate precisa
+   ao menos exigir `resolucao_cobertura_obrigatorios = 1` — e o que teria
+   impedido a v1.4.0 do Santander. Item 6.3/6.4 do plano deixa de ser
+   opcional.
+4. Resposta vazia da LLM (Itau, 2x) consome tentativa de correcao; tratar como
+   retry de transporte (item 7.3).
+
+Providencias imediatas: voltar `current.json` de Santander e Itau para v1.3.0
+(as versoes v1.4.0 permanecem no MinIO como evidencia); `exp-prereq-fase0.1`
+continua sendo a base de referencia. Codigo M1-M5 nao e revertido em bloco:
+o mecanismo funcionou onde devia (percentuais); a proxima release fecha o
+buraco (1-3) e mede de novo.
+
+## Lote 7: colecao so com a chave numa coluna + gate por obrigatorios (`exp-colecao-chave-coluna`)
+
+Correcao do lote 6. Base de comparacao: `exp-prereq-fase0.1` (Santander pelo
+`__r2`); `exp-colecao-fragmento` fica como evidencia, nao como base. Ponteiros
+`current.json` de Santander e Itau voltaram para v1.3.0 em 18/09 (copia do
+ponteiro v1.4.0 guardada em `layouts/bancos/<entidade>/current.rollback-2026-09-18.v1.4.0.json`).
+
+| rotulo | itens | hipotese | metrica-alvo | guarda | custo |
+| --- | --- | --- | --- | --- | --- |
+| `exp-colecao-chave-coluna` | C1, C2, C3 | com a colecao restrita a arrays em que a chave do item e lida de uma coluna, percentuais mantem a 1a tentativa e monetarios voltam a celula com rotulo; nenhum obrigatorio sem valor vira layout vigente | `llm_tentativas` do fragmento de percentuais (bancos) = 1 mantido; `resolucao_cobertura_obrigatorios` = 1,0 em bancos; valores monetarios do Santander iguais a base (714.769 / 15.341 / 16.058 / 718 / 3.014) | `assinatura_f1_cobertura_obrigatorios`, `assinatura_f3_arquivo_origem_correto`, `assinatura_f0_selecao_revocacao`, `e2e_apto_para_bronze`; construtoras delta 0,000 | `e2e_tokens_llm` <= base (31,9k) |
+
+- **C1** — validador (`_describe_positional_collection`): numa `linhas_de_tabela`
+  sobre array com `chaves_de_item`, a chave do item tem de vir de uma coluna em
+  `campos`; chave em `valores_fixos`/`valores_por_segmento` e rejeitada com
+  mensagem que manda para `celula_de_tabela` + `valor_aceito`. Contratos sem
+  `chaves_de_item` (colecao na raiz, ABECIP) nao mudam.
+- **C2** — prompts `unit-mapping-escopo` v3 e `comum-contrato` v3: colecao so
+  quando o artefato publica uma linha por item com a chave numa coluna; tabela
+  com o indicador na linha e periodos nas colunas nao e colecao; filtro do
+  array pai obrigatorio.
+- **C3** — gate de publicacao (`evaluate_revalidation_result`): alem de
+  `compativel`, exige que a auditoria da revalidacao nao tenha campo
+  `obrigatorio` sem `resolvido`; bloqueia com
+  `OBRIGATORIOS_NAO_RESOLVIDOS_NA_REVALIDACAO` e grava a lista no resultado.
+  Auditoria ausente vira alerta, nao bloqueio. **Nao toca em
+  `regras_deteccao_mudanca`** (continuam vazias; item 6.3 segue pendente).
+- Provas locais com os artefatos reais do lote 6: as cinco colecoes monetarias
+  do Santander rejeitadas pelo validador novo; a colecao de percentuais aceita;
+  a auditoria da v1.4.0 bloqueada pelo gate; candidato bom da base (45 entradas)
+  segue aceito. `tests/unit/domain/test_collection_by_evidence.py` (11 casos) e
+  `tests/unit/application/test_revalidation_gate.py` (3). Suite 200.
+
 ### Ultimo commit de cada release
 
 | release | ultimo commit | estado |
@@ -454,5 +560,6 @@ periodo deixe de ser valida.
 | `baseline0` | `1c67bf2` — "feat: agora modelos retornam resoning para facilitar debug de execucoes" | rodada e comparada |
 | `exp-prereq-fase0` | `f41cbff` — "feat: pre-requisitos + fase 0 (pre-filtro de evidencia) da assinatura de layout" | rodada e comparada (Lote 4) |
 | `exp-prereq-fase0.1` | `3b9c5f5` — "feat: pre-filtro de evidencia le o artefato inteiro quando o resumo nao decide" (item 5.3; fecha os tres itens do lote 5) | rodada e comparada em 17/09, `__r2` do Santander em 18/09: aprovada com ressalva; base do lote 6 |
-| `exp-colecao-fragmento` | `2879aba` — colecao por evidencia aceita sem reparo (M1-M5) | a rodar |
+| `exp-colecao-fragmento` | `2879aba` — colecao por evidencia aceita sem reparo (M1-M5) | rodada e comparada em 18/09: **reprovada** (Santander publicou valores errados nos monetarios); base segue `exp-prereq-fase0.1` |
+| `exp-colecao-chave-coluna` | (este commit) — colecao so com a chave numa coluna; gate por obrigatorios (C1-C3) | a rodar |
 

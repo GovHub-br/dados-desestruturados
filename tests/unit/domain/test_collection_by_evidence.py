@@ -147,10 +147,69 @@ def test_colecao_sem_campo_de_contexto_obrigatorio_continua_rejeitada():
     fragmento["mapeamento_canonico"][CHAVE_COLECAO]["campos"] = [
         {"caminho_saida": "valor", "indice_coluna": 2, "tipo": "numero"}
     ]
-    with pytest.raises(RuntimeError, match="serie.dados.valores.periodo"):
+    with pytest.raises(RuntimeError, match="nao le a chave do item 'periodo'"):
         FallbackCandidateValidationService().validate_layout_fragment(
             fragmento, unit=_unidade(), fallback_problem_context=CONTEXTO_FALLBACK
         )
+
+
+def test_colecao_posicional_com_a_chave_em_valores_fixos_e_rejeitada():
+    """Caso do Santander (exp-colecao-fragmento): faixa de uma linha por indice e
+    a chave do item fixada — leu a linha TOTAL no lugar do indicador."""
+    fragmento = json.loads(json.dumps(FRAGMENTO_COLECAO))
+    fragmento["mapeamento_canonico"][CHAVE_COLECAO] = {
+        "tipo_origem": "linhas_de_tabela",
+        "arquivo_origem": "tables/table002.json",
+        "faixas_linhas": [{"linha_inicial": 6, "linha_final": 6}],
+        "campos": [{"caminho_saida": "valor", "indice_coluna": 1, "tipo": "numero"}],
+        "valores_fixos": {"periodo": "2T26", "recorte": "consolidado"},
+        "obrigatorio": True,
+    }
+    with pytest.raises(RuntimeError, match="fixa a chave do item 'periodo'"):
+        FallbackCandidateValidationService().validate_layout_fragment(
+            fragmento, unit=_unidade(), fallback_problem_context=CONTEXTO_FALLBACK
+        )
+
+
+def test_colecao_na_raiz_sem_chaves_de_item_nao_e_afetada():
+    """Contratos legados (colecao e o proprio requisito) seguem aceitos."""
+    contexto = {
+        "contrato_semantico": {
+            "requisitos_mapeamento": {"campos_obrigatorios": [{"path": "serie.observacoes"}]}
+        },
+        "estrutura_schema_saida": {
+            "campos_raiz": ["serie"],
+            "paths_permitidos": [
+                "serie",
+                "serie.observacoes",
+                "serie.observacoes.periodo",
+                "serie.observacoes.valor",
+            ],
+            "arrays_que_exigem_seletor": ["serie.observacoes"],
+        },
+    }
+    unidade = MappingPlanService().build(contexto)[0]
+    fragmento = {
+        "tipo_artefato": "fragmento_layout_signature",
+        "unidade_mapeamento": "serie",
+        "mapeamento_canonico": {
+            "serie.observacoes": {
+                "tipo_origem": "linhas_de_tabela",
+                "arquivo_origem": "tables/serie.json",
+                "linha_inicial": 0,
+                "linha_final": 3,
+                "campos": [{"caminho_saida": "valor", "indice_coluna": 1, "tipo": "numero"}],
+                "valores_fixos": {"periodo": "2026"},
+            }
+        },
+        "fontes_relevantes": {},
+        "metadados_estruturais_evidencia": {},
+    }
+    contexto_fallback = {**CONTEXTO_FALLBACK, "contrato_semantico_relevante": contexto}
+    validado = FallbackCandidateValidationService().validate_layout_fragment(
+        fragmento, unit=unidade, fallback_problem_context=contexto_fallback
+    )
+    assert "serie.observacoes" in validado.mapeamento_canonico
 
 
 def test_celula_no_path_do_array_continua_incompleta():

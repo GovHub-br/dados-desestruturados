@@ -114,6 +114,15 @@ class FallbackCandidateValidationService:
             item_key_problem = self._describe_item_key_violation(mapping_path, item_keys)
             if item_key_problem:
                 raise RuntimeError(item_key_problem)
+            collection_problem = self._describe_positional_collection(
+                mapping_path,
+                candidate_model.mapeamento_canonico[mapping_path].model_dump(
+                    mode="json", exclude_none=True
+                ),
+                item_keys,
+            )
+            if collection_problem:
+                raise RuntimeError(collection_problem)
 
         allowed_scope = str(fallback_problem_context.get("escopo_permitido", "")).strip()
         if allowed_scope and candidate_model.escopo_correcao != allowed_scope:
@@ -245,6 +254,60 @@ class FallbackCandidateValidationService:
         }
         self.validate_candidate_layout(candidate_projection, scoped_context)
         return fragment_model
+
+    @staticmethod
+    def _describe_positional_collection(
+        mapping_path: str,
+        entry: dict[str, Any],
+        item_keys: dict[str, str],
+    ) -> str | None:
+        """Recusa ``linhas_de_tabela`` que nao le a chave do item de uma coluna.
+
+        Uma colecao so e colecao quando cada linha do artefato vira um item e a
+        chave declarada em ``chaves_de_item`` (``periodo``, por exemplo) sai de
+        uma coluna. Fixar a chave em ``valores_fixos``/``valores_por_segmento``
+        com uma faixa de uma linha e uma celula escolhida por indice, sem
+        rotulo: foi o que leu a linha TOTAL no lugar do indicador. Contratos sem
+        ``chaves_de_item`` (colecao na raiz) nao passam por aqui.
+        """
+        if str(entry.get("tipo_origem", "")).strip() != "linhas_de_tabela":
+            return None
+        array_path = normalize_schema_path(mapping_path)
+        item_key = item_keys.get(array_path)
+        if not item_key:
+            return None
+        column_fields: set[str] = set()
+        for field in entry.get("campos", []) or []:
+            if isinstance(field, dict):
+                column_fields.add(str(field.get("caminho_saida", "")).strip())
+        fixed_keys: set[str] = set()
+        fixed_values = entry.get("valores_fixos")
+        if isinstance(fixed_values, dict):
+            fixed_keys.update(str(key) for key in fixed_values)
+        for segment in entry.get("segmentos", entry.get("faixas_linhas", [])) or []:
+            if isinstance(segment, dict):
+                for field in segment.get("campos", []) or []:
+                    if isinstance(field, dict):
+                        column_fields.add(str(field.get("caminho_saida", "")).strip())
+                segment_values = segment.get("valores_por_segmento")
+                if isinstance(segment_values, dict):
+                    fixed_keys.update(str(key) for key in segment_values)
+        if item_key in column_fields:
+            return None
+        if item_key in fixed_keys:
+            return (
+                f"Colecao {mapping_path} fixa a chave do item '{item_key}' em "
+                "valores_fixos/valores_por_segmento: isso e uma celula escolhida por "
+                "indice de linha, sem rotulo. Leia a chave de uma coluna em campos "
+                "(uma linha do artefato por item) ou mapeie a observacao com "
+                "celula_de_tabela e seletor_linha.valor_aceito."
+            )
+        return (
+            f"Colecao {mapping_path} nao le a chave do item '{item_key}' de nenhuma "
+            "coluna em campos. Uma colecao por evidencia precisa produzir a chave de "
+            "cada item a partir do artefato; se a evidencia publica um unico item, "
+            "use celula_de_tabela com seletor_linha.valor_aceito."
+        )
 
     @staticmethod
     def _expanded_mapping_paths(mapping_path: str, entry: dict[str, Any]) -> list[str]:
