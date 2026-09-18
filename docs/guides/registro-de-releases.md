@@ -403,6 +403,7 @@ Pendencias que o lote abriu ou manteve:
 | `exp-fase1-entradas-esperadas` | `325f923` — Fase 1 do plano (entradas-alvo enumeradas pelo codigo, validador chave a chave) | rodada e comparada em 18/09; confirmada por `__r2` (Plano&Plano e Santander) tambem em 18/09: invariantes da Fase 1 100 % em 10/10, 0 regressoes reais. **Aprovada; passa a ser a base de referencia** |
 | `exp-declaracao-explicita-opcional` | nao commitado (revertido) | rodada em 18/09, comparada contra `exp-fase1-entradas-esperadas`: **reprovada e revertida no mesmo dia** — piorou o problema que tentava resolver. Ver secao abaixo |
 | `exp-gate-e-ancoragem-linha` | `ff68638` — gate por obrigatorios (reimplementa C3 do lote 7) + ancoragem de linha por sinonimo (item 3.2) + gabarito EZTEC/Plano&Plano + comparador prefere `__r2` | rodada e comparada em 18/09: **aprovada** — `assinatura_f3_rotulo_linha_correto` 0,667 -> 0,889, Plano&Plano fecha a variancia por codigo, nenhuma guarda regrediu. Passa a ser a base de referencia |
+| `exp-fase2-estrutura-tabela` | `c0bcae8` — Fase 2 do plano (estrutura da tabela, papel por coluna derivado pelo contrato, validador de coluna) + `papeis` preservados no recorte por unidade + `comum-contrato` v8 | implementada em 18/09, **ainda nao rodada** (lote 10; base `exp-gate-e-ancoragem-linha`) |
 
 ## Experimento revertido: declaracao explicita de ausencia opcional (`exp-declaracao-explicita-opcional`, 2026-09-18)
 
