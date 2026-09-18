@@ -626,6 +626,47 @@ mrv v1.4.0 (= base), santander v1.5.0 (melhor que a base), direcional/
 plano-plano/itau v1.3.0 (rollback; copias dos ponteiros v1.5.0 ao lado).
 Base de referencia continua `exp-prereq-fase0.1`.
 
+## Reversao para `exp-prereq-fase0.1` (2026-09-18)
+
+Decisao: depois de duas releases reprovadas seguidas na mesma linha
+(`exp-colecao-fragmento`, lote 6; `exp-colecao-chave-coluna`, lote 7), voltar
+por inteiro ao estado de `exp-prereq-fase0.1`, sem manter nada parcial. A
+alternativa (manter gate por obrigatorios e validador de colecao como rede de
+seguranca) foi descartada em favor de uma base sem ressalva.
+
+O que foi revertido, e como:
+
+| item | estado antes | estado depois | como |
+| --- | --- | --- | --- |
+| codigo (`src/`, `tests/`, `skills/`, `docs/architecture/`) | `1e50fbd` (M1-M5 + C1-C3) | identico a `5d8c212` | `git revert` de `15668c1` e `2879aba` (commits `58d9131`, `8338a97`); registro de releases preservado como historico; suite 186 (as 14 provas dos lotes 6 e 7 sairam com os commits) |
+| prompts no Langfuse | `comum-contrato` v3, `unit-mapping-escopo` v3 em `production` | **v4 = texto da v1**, `production` (`sincronizar_prompts_langfuse.py --empurrar` publica o espelho do codigo como versao nova; confirmado byte a byte v4 == v1) | v2 e v3 permanecem no historico do Langfuse |
+| `layouts/<dominio>/<entidade>/current.json` | versoes publicadas pelos lotes 6 e 7 (v1.4.0/v1.5.0; MRV v1.4.0) | publicacao de `exp-prereq-fase0.1` de cada entidade: cury, eztc3, direcional, tenda, plano-plano, pacaembu, itau **v1.3.0**; mrv **v1.2.0**; santander **v1.3.0** (run `__r2`) | ponteiros substituidos guardados em `current.rollback-2026-09-18.<versao>.json`; as versoes v1.4.0/v1.5.0 ficam no MinIO como evidencia |
+| `ATLAS_RELEASE` nos containers | `exp-colecao-chave-coluna` | `base-fase0.1-revertido` (rotulo neutro: um run acidental nao entra em `exp-prereq-fase0.1`) | `.env` + `docker compose down && up -d`; scheduler em `8338a97` |
+| scores no Langfuse | — | mantidos (`exp-colecao-fragmento` e `exp-colecao-chave-coluna` seguem consultaveis como evidencia) | nada apagado |
+
+Base de referencia: **`exp-prereq-fase0.1`** (Santander pelo `__r2`), traces
+de 17-18/09. Nenhuma execucao nova foi disparada na reversao.
+
+O que os lotes 6 e 7 deixam para o plano (ver resultados acima):
+
+- a colecao por evidencia funciona quando e colecao (Santander percentuais,
+  1 tentativa, 5 periodos, nas duas rodadas), mas oferecer a forma a LLM sem
+  o codigo controlar onde ela cabe abriu duas classes de erro novas
+  (colecao posicional nos monetarios; `empresa=identidade_documento` como
+  valor de filtro);
+- o gate de publicacao aprova com obrigatorio nao resolvido (v1.4.0 do
+  Santander chegou a `current.json`); item 6.3/6.4 do plano;
+- a cada rodada um documento troca de linha ou artefato por escolha livre da
+  LLM (Plano&Plano brutas x liquidas, Itau `chart002` x `chart004`, Direcional
+  marca x consolidado): Fase 1 (chaves enumeradas pelo codigo, filtro de
+  identidade preenchido pelo codigo) e 3.2 (linha por sinonimo) sao a
+  correcao com mecanismo; prompt nao e;
+- resposta vazia da LLM consumiu tentativa em 3 rodadas seguidas do Itau
+  (item 7.3);
+- depois de qualquer veredito, conferir `current.json` de cada entidade: a
+  DAG 3 publica sempre que a revalidacao aprova, inclusive em release
+  reprovada.
+
 ### Ultimo commit de cada release
 
 | release | ultimo commit | estado |
@@ -635,4 +676,5 @@ Base de referencia continua `exp-prereq-fase0.1`.
 | `exp-prereq-fase0.1` | `3b9c5f5` — "feat: pre-filtro de evidencia le o artefato inteiro quando o resumo nao decide" (item 5.3; fecha os tres itens do lote 5) | rodada e comparada em 17/09, `__r2` do Santander em 18/09: aprovada com ressalva; base do lote 6 |
 | `exp-colecao-fragmento` | `2879aba` — colecao por evidencia aceita sem reparo (M1-M5) | rodada e comparada em 18/09: **reprovada** (Santander publicou valores errados nos monetarios); base segue `exp-prereq-fase0.1` |
 | `exp-colecao-chave-coluna` | `15668c1` — colecao so com a chave numa coluna; gate por obrigatorios (C1-C3) | rodada e comparada em 18/09: **reprovada** (alvo atingido em bancos; Direcional, Plano&Plano e Itau trocaram de linha/artefato); base segue `exp-prereq-fase0.1` |
+| (reversao) | `8338a97` — reverte `15668c1` e `2879aba`; prompts v4 = v1; ponteiros na publicacao da fase0.1 | codigo, prompts e layouts vigentes = `exp-prereq-fase0.1`; `ATLAS_RELEASE=base-fase0.1-revertido` |
 
