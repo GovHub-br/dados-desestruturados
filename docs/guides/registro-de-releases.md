@@ -757,6 +757,122 @@ montagem da chave da LLM.
    lote 5).
 5. Conferir `current.json` de cada entidade depois do veredito.
 
+### Resultado do lote 8 (comparacao em 2026-09-18)
+
+Rodada 14:53-15:25 UTC, codigo `325f923`, em fila (`max_active_runs=1`),
+prompts `comum-contrato` v5, `candidato-repair` v3, `unit-mapping-repair` v2
+(publicados com `--empurrar` antes do disparo; `--verificar` = 18 iguais).
+Release limpa: 10 `atlas.fallback` + 9 revalidacoes, nenhuma outra DAG sob o
+rotulo. Harness rodado uma vez (362 scores; e a primeira release com as
+quatro metricas novas de F1, que por isso aparecem no comparador como
+"ausente em uma das releases" e sao lidas pelo valor absoluto). Base:
+`exp-prereq-fase0.1` — cujo rotulo esta poluido (32 traces: ABECIP manual,
+Santander duas vezes e 14 `atlas.resolucao` de modo normal), entao os deltas
+de `e2e_*`, `selecao_prefiltro_*` e `resolucao_campos_obrigatorios` do
+comparador cru sao composicao, nao regressao; os numeros abaixo vem do
+relatorio local por documento (Santander da base pelo `__r2`) e dos
+`schema_saida_resolvido.json` de cada execucao.
+
+Desfecho e2e identico: 9/10 publicados (Cyrela verdadeiro negativo nas duas).
+
+**Alvos — o mecanismo da Fase 1 fez o que prometeu, por construcao:**
+
+| metrica | papel | meta | base | novo | leitura |
+| --- | --- | --- | --- | --- | --- |
+| `assinatura_f1_chaves_fora_das_esperadas` | alvo | 0 | — | **0** em 10/10, nas duas etapas | nenhuma chave fora da lista fechada, nem na 1a tentativa |
+| `assinatura_f1_filtro_valor_identidade_correto` | alvo | 1,0 | — | **1,0** em 8/8 construtoras | filtro de identidade sempre com o slug; o caso Direcional do lote 7 nao pode mais acontecer |
+| `assinatura_f1_estrutura_valida` | alvo | 1,0 | 1,0 | **1,0** em 10/10 | mantido (ja era 1,0 na base) |
+| `assinatura_f1_contexto_irmao_presente` | diag F1.3 | 1,0 | — | **1,0** em 10/10 | campo de contexto sempre acompanha o valor |
+| `assinatura_f1_entradas_obrigatorias_cobertas@primeira_tentativa` | alvo | >= 0,98 | — | **0,871** | **nao atingido**: Itau 0,21 (2 respostas vazias no fragmento de monetarios, item 7.3) e Cyrela 0,5 (teto: metade das entradas nao existe no documento). Os outros 8: 1,0 |
+| `assinatura_f1_entradas_obrigatorias_cobertas@final` | — | — | — | 0,950 | so Cyrela abaixo de 1,0 (teto) |
+| `llm_acerto_1a_tentativa` | alvo | sobe | 0,85 (limpo) | **0,90** | Santander 0,5 -> 1,0, Cyrela 0 -> 0,5; Itau 1,0 -> 0,5 (transporte) |
+| `llm_tentativas` / `fallback_tentativas_llm_total` | guarda | nao sobe | 1,18 / 3,0 | 1,17 / 2,8 | ok |
+
+**Guardas — o comparador cru reprova tres; abertas por documento:**
+
+| metrica | base | novo | rotulo | leitura |
+| --- | --- | --- | --- | --- |
+| `assinatura_f1_cobertura_obrigatorios` | 0,950 | 0,912 | **medicao + ambiente** | `@final` 0,950 = 0,950 (identico, documento a documento). A media caiu porque o comparador mistura etapas e `@primeira_tentativa` do Itau foi 0,25: duas respostas "Conteudo da LLM nao e JSON valido" no fragmento de monetarios, 4a rodada seguida com resposta vazia no Itau (item 7.3). Reparo recuperou tudo |
+| `assinatura_f3_arquivo_origem_correto` | 0,770 | 0,733 | **real (Plano&Plano), fora da Fase 1** | unico documento que mudou: Plano&Plano 0,33 -> 0. Vendas ancoradas em "Vendas Liquidas 100% (Unid.)" (3.105 / 3.136 / 3.351) em vez de "Vendas Contratadas Brutas (Unidades)" (3.570 / 3.536 / 3.601 = base = gabarito). E a mesma troca de linha do lote 7 (2 de 4 rodadas): escolha semantica da LLM entre dois rotulos, item 3.2. Lancamentos identicos a base. Parte do 0 e medicao: o gabarito guarda `empresa=Plano&Plano` e o candidato agora usa o slug (mesmo artefato do EZTEC) |
+| `e2e_apto_para_bronze` / `e2e_sucesso` | 0,969 | 0,947 | **medicao** | 14 traces `atlas.resolucao` de modo normal inflam a base; limpo e 18/19 nas duas (Cyrela) |
+| `resolucao_cobertura_obrigatorios` | 1,0 | 1,0 | ok | |
+| `assinatura_f0_selecao_revocacao` | 1,0 | 1,0 | ok | precisao 0,813 = 0,813 documento a documento |
+| construtoras: valores resolvidos | — | — | **7/8 identicos** | cury, eztc3, direcional, tenda, pacaembu, mrv byte a byte; Cyrela sem valores nas duas; Plano&Plano acima |
+| `e2e_tokens_llm` (orcamento +10 %) | 31,9k (limpo) | 33,5k (+5 %) | ok | sem o Itau (56k -> 86k, 2 vazias + 1 reparo de selecao): 28,1k -> 27,7k. A lista `entradas_esperadas` custa nada mensuravel; EZTEC +26 % (25,6k -> 32,1k) sem reparo, a olhar |
+| `e2e_duracao_segundos` | 109 | 154 | ambiente | provedor; chamadas cairam |
+
+Bancos, por `(indicador, periodo)`:
+
+- **Santander**: 5 monetarios identicos (714.769 / 15.341 / 16.058 / 718 /
+  3.014) e `inadimplencia_90_dias` Jun/26 = 3,3 identico; perdeu os 4
+  periodos historicos que o `__r2` da base tinha. Igual ao run original da
+  base: 1a resposta aceita com 1 periodo. n = 4 agora no padrao "resultado
+  completo so quando a 1a resposta e rejeitada" (item 3.6: o contrato so
+  exige o periodo de referencia). Variancia, nao Fase 1.
+- **Itau**: 5 monetarios identicos; `inadimplencia_90_dias` jun/26 = 1,9
+  identico (= gabarito, `chart004`; nao repetiu o `chart002` do lote 7) e
+  **+8 periodos historicos** (jun/24..mar/26) — a LLM instanciou uma chave por
+  rotulo lido, que e o que o marcador `<evidencia>` da Fase 1 permite. Perdeu
+  os opcionais `capital_principal` (12,3) e ROE (24,5): a selecao de
+  percentuais foi rejeitada na 1a tentativa por ancoras nao literais
+  ("ROE recorrente gerencial¹", "Capital principal (CET I)" — nota de rodape e
+  parenteses) e o reparo deixou `table001` de fora. Mecanismo pre-existente
+  da Fase 0 (ancora literal), nao Fase 1; `cobertura_opcionais` 1,0 -> 0,5.
+
+**Confirmacao por `__r2` (18/09, 17:04-17:08 UTC).** Redisparo so de
+Plano&Plano e Santander, mesmo rotulo `exp-fase1-entradas-esperadas`, mesmo
+`document_id`/`execution_id`. Harness rodado so nessas duas traces (script
+avulso, sem tocar nos scores dos outros 9 documentos ja gravados; relatorio em
+`eval/relatorios/exp-fase1-entradas-esperadas__r2.json`). Valores resolvidos
+(`schema_saida_resolvido.json`), por `(indicador, periodo)`:
+
+- **Plano&Plano**: vendas voltaram a **3.570 / 3.536 / 3.601** — identico a
+  base e ao gabarito. A troca para "Vendas Liquidas" no run original era
+  variancia pura da LLM (mesma ambiguidade do lote 7), nao uma regressao
+  causada pela Fase 1. Lancamentos ja eram identicos. **8/8 construtoras agora
+  byte a byte iguais a base.**
+- **Santander**: os 5 monetarios e os 5 periodos de `inadimplencia_90_dias`
+  (Dez/25, Jun/25, Jun/26, Mar/26, Set/25 = 3,1/2,6/3,3/3,3/2,8) saem
+  **identicos ao `__r2` da base**. A perda dos 4 periodos historicos no run
+  original tambem era variancia (1a resposta aceita sem reparo), nao efeito da
+  Fase 1.
+
+**Veredito: aprovada.** As tres invariantes da Fase 1 seguem 100 % em 10/10;
+com os `__r2`, **0 regressoes reais restam** — a unica candidata (Plano&Plano)
+se confirmou como variancia, exatamente como a regua previa. Custo dentro do
+orcamento. `exp-fase1-entradas-esperadas` passa a ser a base de referencia
+para o proximo lote.
+
+Ponteiros apos o `__r2`: a DAG 3 publica uma versao nova sempre que a
+revalidacao aprova, entao os proprios runs `__r2` ja sobrescreveram os
+ponteiros de v1.6.0 para **v1.7.0** — conferido em `current.json`, valores
+identicos a base. **Plano&Plano e Santander nao precisam de rollback**; ja
+estao corretos. Cury, eztc3, direcional, tenda, pacaembu e mrv seguem em
+v1.6.0 (identicos a base em valor). **Itau em v1.6.0** com +8 periodos
+historicos e -2 opcionais: **decisao do usuario em 18/09 — manter**. Ganho
+liquido positivo (8 periodos historicos, `<evidencia>` funcionando como
+projetado, e acertou `chart004`) contra 2 campos opcionais (nao obrigatorios)
+perdidos por um bug pre-existente da Fase 0 (ancora literal, pendencia 4),
+nao por efeito da Fase 1. Reverter nao corrigiria o bug, so esconderia o
+sintoma neste documento; a versao anterior fica no MinIO como evidencia, entao
+a decisao e reversivel se a pendencia 4 nao for resolvida logo.
+
+Pendencias que o lote abriu ou manteve:
+
+1. Gabaritos EZTEC e Plano&Plano: filtro `empresa` com o slug (o candidato
+   agora usa sempre o slug, por decisao da Fase 1); Plano&Plano tambem
+   seletores por papel. Depois regravar `assinatura_*` das bases.
+2. Comparador: filtrar por `name` (so `atlas.fallback` + revalidacoes),
+   preferir `__r2`, separar `@primeira_tentativa` de `@final`.
+3. Itau: resposta vazia como retry de transporte (item 7.3) — 4 rodadas.
+4. Ancora literal da selecao (Fase 0): rotulo com nota de rodape/parenteses
+   reprova a escolha certa e o reparo perde o artefato.
+5. ~~Itau: decidir se o ponteiro v1.6.0 fica~~ — decidido em 18/09: fica
+   (ganho liquido positivo; ver acima).
+6. EZTEC: +26 % de tokens sem reparo, causa nao investigada.
+7. Item 3.2 (ancoragem de linha por sinonimo): proximo lote — e o unico jeito
+   de a escolha Plano&Plano deixar de ser variancia e passar a ser garantida.
+
 ### Ultimo commit de cada release
 
 | release | ultimo commit | estado |
@@ -767,5 +883,5 @@ montagem da chave da LLM.
 | `exp-colecao-fragmento` | `2879aba` — colecao por evidencia aceita sem reparo (M1-M5) | rodada e comparada em 18/09: **reprovada** (Santander publicou valores errados nos monetarios); base segue `exp-prereq-fase0.1` |
 | `exp-colecao-chave-coluna` | `15668c1` — colecao so com a chave numa coluna; gate por obrigatorios (C1-C3) | rodada e comparada em 18/09: **reprovada** (alvo atingido em bancos; Direcional, Plano&Plano e Itau trocaram de linha/artefato); base segue `exp-prereq-fase0.1` |
 | (reversao) | `8338a97` — reverte `15668c1` e `2879aba`; prompts v4 = v1; ponteiros na publicacao da fase0.1 | codigo, prompts e layouts vigentes = `exp-prereq-fase0.1`; `ATLAS_RELEASE=base-fase0.1-revertido` |
-| `exp-fase1-entradas-esperadas` | a commitar — Fase 1 do plano (entradas-alvo enumeradas pelo codigo, validador chave a chave) | implementada e provada localmente em 18/09; **ainda nao rodada** |
+| `exp-fase1-entradas-esperadas` | `325f923` — Fase 1 do plano (entradas-alvo enumeradas pelo codigo, validador chave a chave) | rodada e comparada em 18/09; confirmada por `__r2` (Plano&Plano e Santander) tambem em 18/09: invariantes da Fase 1 100 % em 10/10, 0 regressoes reais. **Aprovada; passa a ser a base de referencia** |
 
