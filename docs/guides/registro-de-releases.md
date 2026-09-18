@@ -402,7 +402,7 @@ Pendencias que o lote abriu ou manteve:
 | (reversao) | `8338a97` — reverte `15668c1` e `2879aba`; prompts v4 = v1; ponteiros na publicacao da fase0.1 | codigo, prompts e layouts vigentes = `exp-prereq-fase0.1`; `ATLAS_RELEASE=base-fase0.1-revertido` |
 | `exp-fase1-entradas-esperadas` | `325f923` — Fase 1 do plano (entradas-alvo enumeradas pelo codigo, validador chave a chave) | rodada e comparada em 18/09; confirmada por `__r2` (Plano&Plano e Santander) tambem em 18/09: invariantes da Fase 1 100 % em 10/10, 0 regressoes reais. **Aprovada; passa a ser a base de referencia** |
 | `exp-declaracao-explicita-opcional` | nao commitado (revertido) | rodada em 18/09, comparada contra `exp-fase1-entradas-esperadas`: **reprovada e revertida no mesmo dia** — piorou o problema que tentava resolver. Ver secao abaixo |
-| `exp-gate-e-ancoragem-linha` | `ff68638` — gate por obrigatorios (reimplementa C3 do lote 7) + ancoragem de linha por sinonimo (item 3.2) + gabarito EZTEC/Plano&Plano + comparador prefere `__r2` | ver secao "Lote 9" abaixo; a rodar |
+| `exp-gate-e-ancoragem-linha` | `ff68638` — gate por obrigatorios (reimplementa C3 do lote 7) + ancoragem de linha por sinonimo (item 3.2) + gabarito EZTEC/Plano&Plano + comparador prefere `__r2` | rodada e comparada em 18/09: **aprovada** — `assinatura_f3_rotulo_linha_correto` 0,667 -> 0,889, Plano&Plano fecha a variancia por codigo, nenhuma guarda regrediu. Passa a ser a base de referencia |
 
 ## Experimento revertido: declaracao explicita de ausencia opcional (`exp-declaracao-explicita-opcional`, 2026-09-18)
 
@@ -525,4 +525,74 @@ para medir a cobertura em producao; por ora a leitura e pelo relatorio local
 (valores resolvidos por documento) e pela ausencia de erro do gate/validador.
 Fica para uma release futura se a cobertura precisar ser medida com mais
 precisao do que "regrediu ou nao regrediu".
+
+### Resultado do lote 9 (comparacao em 18/09)
+
+Rodada 21:49-21:54 UTC, codigo `e60bd1d`, prompt `comum-contrato` v7 (unica
+divergencia; `--verificar` deu 0 depois de publicar). Release limpa: os
+mesmos 10 documentos, `caffeinate` ativo. Harness rodado uma vez (362
+scores). Base: `exp-fase1-entradas-esperadas` (lote 8). Comparador limpo
+pela primeira vez com o filtro do item 10: **10 traces `atlas.fallback` de
+cada lado, pareamento por 10 execucoes em comum** — nenhuma poluicao de
+`atlas.resolucao` normal nem duplicata de `__r2`, "leitura limpa" deixa de
+ser um passo manual para este par de releases.
+
+**Veredito: aprovada.** Nenhuma guarda regrediu; 15 metricas melhoraram,
+1 mudou fora de guarda (ruido).
+
+| metrica | papel | base | novo | leitura |
+| --- | --- | --- | --- | --- |
+| `assinatura_f3_rotulo_linha_correto` (alvo, item 9) | alvo | 0,667 | **0,889** | atingido — unico documento errado agora e MRV (marca x consolidado, item 2.4, pendencia pre-existente e sem relacao com este lote) |
+| `assinatura_f3_arquivo_origem_correto` | — | 0,778 | **1,000** | efeito colateral do item 9: quando a linha resolve por sinonimo, o arquivo tambem resolve junto |
+| `assinatura_f3_indice_coluna_correto` | — | 0,778 | **1,000** | mesmo efeito colateral |
+| `assinatura_f3_ausencia_falso_negativo` | — | 1,222 | **0,000** | efeito do item 7 (gabarito EZTEC/Plano&Plano corrigido para o slug); as pontuacoes antigas contra o gabarito desatualizado geravam falso negativo |
+| `assinatura_f1_cobertura_obrigatorios` / `entradas_obrigatorias_cobertas` | guarda | 0,912 / 0,911 | **0,950 / 0,950** | mesmo efeito do item 7: o gabarito velho penalizava EZTEC/Plano&Plano por comparar contra `empresa=EZTEC`/`Plano&Plano` em vez do slug |
+| `assinatura_f0_selecao_artefatos_por_requisito` | — | 2,083 | 2,125 | **unica regressao, fora de guarda** (+0,042; um documento com 1 candidato a mais na selecao) — ruido, nao rastreado a nenhuma das quatro mudancas |
+| `e2e_tokens_llm` / `fallback_tokens_total` | custo | 33.419 | **31.638** (-5 %) | melhorou; `ancoragem_resolvida` custa pouco e reduz retrabalho |
+| `e2e_duracao_segundos` | custo | 147 | **79** (-46 %) | melhorou (ambiente + menos tentativas) |
+| `llm_tentativas` / `llm_acerto_1a_tentativa` | — | 1,167 / 0,875 | **1,083 / 0,917** | melhorou |
+| `resolucao_cobertura_obrigatorios`, `e2e_apto_para_bronze` | guarda | 1,000 / 0,900 | 1,000 / 0,900 | estaveis |
+| `assinatura_f1_chaves_fora_das_esperadas`, `estrutura_valida`, `filtro_valor_identidade_correto` | guarda (Fase 1) | 0 / 1,0 / 1,0 | 0 / 1,0 / 1,0 | estaveis — Fase 1 intocada |
+
+Confirmacoes diretas no MinIO (protocolo "leitura limpa"):
+
+- **Plano&Plano — o caso concreto do item 9.** `schema_saida_resolvido.json`
+  traz vendas 2T25=3.570, 1T26=3.536, 2T26=3.601 — exatamente o gabarito, e
+  agora **garantido por codigo**, nao por sorte de LLM (o sinonimo `"vendas
+  contratadas brutas"` do contrato v1.9.1 casou uma unica linha entre as
+  candidatas). Fecha a variancia que persistia desde o lote 5.
+- **Gate (item 8) — rodou, nao bloqueou nada.** `resultado_revalidacao_candidato.json`
+  dos 9 documentos publicados: `aprovado_para_publicacao=true`,
+  `obrigatorios_nao_resolvidos=[]` em todos. Confirma a hipotese declarada
+  antes de rodar: o gate existe agora, mas nenhum dos 10 documentos do lote
+  8 tinha obrigatorio sem valor — nao havia nada para ele bloquear nesta
+  rodada.
+- **Cyrela — falha esperada, nao regressao.** `gerar_layout_candidato_llm`
+  falhou de proposito (`UnmappedRequiredFieldsError`: "Não há evidência de
+  número de unidades vendidas na tabela; a tabela apresenta apenas valores
+  monetarios de vendas (VGV)"), mesmo verdadeiro negativo de todos os lotes
+  anteriores. O `dag_run` aparece `success` (a task-folha sempre roda);
+  confirmado por `taskInstances` que so essa task e as dependentes dela
+  falharam, nada relacionado ao gate ou a ancoragem de linha.
+- **Ponteiros**: todos os 9 documentos publicados receberam uma versao nova
+  de `current.json` (a DAG publica sempre que a revalidacao aprova); nenhum
+  rollback necessario — todos os valores conferem com a base ou com o
+  gabarito corrigido.
+
+Pendencias abertas ou mantidas:
+
+1. `rotulo_resolvido_por_sinonimo` (diagnostico do incremento 5) segue sem
+   score dedicado — ver nota acima.
+2. MRV: `rotulo_linha` errado (marca "MRV" vs. consolidado "TOTAL
+   INCORPORACAO") segue `revisao_pendente`; fora do alcance do item 9 (e
+   ambiguidade de entidade, nao de indicador).
+3. Item 6.3 (regras minimas de deteccao de mudanca no contrato) segue
+   pendente; o gate do item 8 cobre so a parte de "obrigatorio sem valor",
+   nao substitui `regras_deteccao_mudanca`.
+4. Proximo lote candidato: incremento 4 (chamada de ancoragem plana, tira a
+   montagem de chaves da resposta da LLM) ou instrumentar
+   `rotulo_resolvido_por_sinonimo` se a cobertura do item 9 precisar ser
+   medida com precisao antes de estender o mecanismo a bancos.
+
+`exp-gate-e-ancoragem-linha` passa a ser a **base de referencia**.
 
