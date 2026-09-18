@@ -1,0 +1,88 @@
+{
+  "_nota": "Snapshot do lote de experimento em 2026-09-17 (8 construtoras + Itau/Santander 2T26), recuperado de release exp-prereq-fase0. Fonte de verdade continua sendo o Langfuse + Airflow via listar_documentos_release.py; use este arquivo so se o Airflow local tiver perdido os dag_runs antigos.",
+  "release_base": "exp-prereq-fase0",
+  "dag_id": "dag_valida_e_fallback_llm",
+  "total": 10,
+  "documentos": [
+    {
+      "dominio": "construtoras",
+      "entidade": "cury",
+      "document_id": "598d05232cef0b662185cb12baa461ac",
+      "execution_id": "dag_detecta_pdf_e_extrai__cury__2T26__20260710T002738Z",
+      "manifest_key": "execucoes/construtoras/extracao/cury/ano=2026/periodo=2T26/document_id=598d05232cef0b662185cb12baa461ac/execution_id=dag_detecta_pdf_e_extrai__cury__2T26__20260710T002738Z/extraction/manifesto_execucao.json",
+      "run_id_origem": "exp-prereq-fase0__construtoras__cury"
+    },
+    {
+      "dominio": "construtoras",
+      "entidade": "eztc3",
+      "document_id": "9661cd074ba06b42d12e7fcb80f77260",
+      "execution_id": "dag_detecta_pdf_e_extrai__eztc3__sem_periodo__20260822T111429Z",
+      "manifest_key": "execucoes/construtoras/extracao/eztc3/ano=0/periodo=sem_periodo/document_id=9661cd074ba06b42d12e7fcb80f77260/execution_id=dag_detecta_pdf_e_extrai__eztc3__sem_periodo__20260822T111429Z/extraction/manifesto_execucao.json",
+      "run_id_origem": "exp-prereq-fase0__construtoras__eztc3"
+    },
+    {
+      "dominio": "construtoras",
+      "entidade": "cyre3",
+      "document_id": "3abeff608b9394314decf945a6591058",
+      "execution_id": "dag_detecta_pdf_e_extrai__cyre3__sem_periodo__20260822T022954Z",
+      "manifest_key": "execucoes/construtoras/extracao/cyre3/ano=0/periodo=sem_periodo/document_id=3abeff608b9394314decf945a6591058/execution_id=dag_detecta_pdf_e_extrai__cyre3__sem_periodo__20260822T022954Z/extraction/manifesto_execucao.json",
+      "run_id_origem": "exp-prereq-fase0__construtoras__cyre3"
+    },
+    {
+      "dominio": "construtoras",
+      "entidade": "direcional",
+      "document_id": "44234779d9ce3d45f262726cb6e6353e",
+      "execution_id": "dag_detecta_pdf_e_extrai__direcional__2T26__20260709T234159Z",
+      "manifest_key": "execucoes/construtoras/extracao/direcional/document_id=44234779d9ce3d45f262726cb6e6353e/execution_id=dag_detecta_pdf_e_extrai__direcional__2T26__20260709T234159Z/extraction/manifesto_execucao.json",
+      "run_id_origem": "exp-prereq-fase0__construtoras__direcional"
+    },
+    {
+      "dominio": "construtoras",
+      "entidade": "tenda",
+      "document_id": "cd576a419b93b81890ea676edd0cfedd",
+      "execution_id": "dag_detecta_pdf_e_extrai__tenda__2T26__20260709T234655Z",
+      "manifest_key": "execucoes/construtoras/extracao/tenda/document_id=cd576a419b93b81890ea676edd0cfedd/execution_id=dag_detecta_pdf_e_extrai__tenda__2T26__20260709T234655Z/extraction/manifesto_execucao.json",
+      "run_id_origem": "exp-prereq-fase0__construtoras__tenda"
+    },
+    {
+      "dominio": "construtoras",
+      "entidade": "plano-plano",
+      "document_id": "fd5cc6115dc5844bd417936fb72df0e6",
+      "execution_id": "dag_detecta_pdf_e_extrai__plano-plano__2T26__20260722T140001Z",
+      "manifest_key": "execucoes/construtoras/extracao/plano-plano/ano=2026/periodo=2T26/document_id=fd5cc6115dc5844bd417936fb72df0e6/execution_id=dag_detecta_pdf_e_extrai__plano-plano__2T26__20260722T140001Z/extraction/manifesto_execucao.json",
+      "run_id_origem": "exp-prereq-fase0__construtoras__plano-plano"
+    },
+    {
+      "dominio": "construtoras",
+      "entidade": "pacaembu",
+      "document_id": "a1303556cc944ab84f5f32234126f7b5",
+      "execution_id": "dag_detecta_pdf_e_extrai__pacaembu__2T26__20260722T135159Z",
+      "manifest_key": "execucoes/construtoras/extracao/pacaembu/ano=2026/periodo=2T26/document_id=a1303556cc944ab84f5f32234126f7b5/execution_id=dag_detecta_pdf_e_extrai__pacaembu__2T26__20260722T135159Z/extraction/manifesto_execucao.json",
+      "run_id_origem": "exp-prereq-fase0__construtoras__pacaembu"
+    },
+    {
+      "dominio": "construtoras",
+      "entidade": "mrv",
+      "document_id": "b218a350695c3642d4794f0b942bc87e",
+      "execution_id": "dag_detecta_pdf_e_extrai__mrv__1T26__20260714T233547Z",
+      "manifest_key": "execucoes/construtoras/extracao/mrv/ano=2026/periodo=1T26/document_id=b218a350695c3642d4794f0b942bc87e/execution_id=dag_detecta_pdf_e_extrai__mrv__1T26__20260714T233547Z/extraction/manifesto_execucao.json",
+      "run_id_origem": "exp-prereq-fase0__construtoras__mrv"
+    },
+    {
+      "dominio": "bancos",
+      "entidade": "santander",
+      "document_id": "2579cfdf5e0acb877f55b82e5975b9c2",
+      "execution_id": "dag_detecta_pdf_e_extrai__santander__2T26__20260910T161739Z",
+      "manifest_key": "execucoes/bancos/extracao/santander/ano=2026/periodo=2T26/document_id=2579cfdf5e0acb877f55b82e5975b9c2/execution_id=dag_detecta_pdf_e_extrai__santander__2T26__20260910T161739Z/extraction/manifesto_execucao.json",
+      "run_id_origem": "exp-prereq-fase0__bancos__santander"
+    },
+    {
+      "dominio": "bancos",
+      "entidade": "itau",
+      "document_id": "79e8245d1f611590895e892557d3123c",
+      "execution_id": "dag_detecta_pdf_e_extrai__itau__2T26__20260910T161613Z",
+      "manifest_key": "execucoes/bancos/extracao/itau/ano=2026/periodo=2T26/document_id=79e8245d1f611590895e892557d3123c/execution_id=dag_detecta_pdf_e_extrai__itau__2T26__20260910T161613Z/extraction/manifesto_execucao.json",
+      "run_id_origem": "exp-prereq-fase0__bancos__itau"
+    }
+  ]
+}

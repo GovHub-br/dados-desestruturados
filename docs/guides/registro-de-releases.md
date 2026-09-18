@@ -294,11 +294,116 @@ Pendencias antes de rodar:
    2026-09-17**; os itens 2 e 3 seguem em aberto, o usuario optou por rodar
    os 10 documentos antes de fecha-los.
 
+### Resultado do lote 5 (comparacao em 2026-09-17)
+
+Rodada dos 10 documentos as 20:59-21:19 UTC (run_ids
+`exp-prereq-fase0.1__<dominio>__<entidade>`, disparados pela skill
+`skills/rodar-release-experimento`), codigo `fe95078`, contratos construtoras
+v1.9.0 e bancos v2.2.0. Harness rodado uma vez (`avaliar_assinatura_layout.py
+--release exp-prereq-fase0.1`, 286 scores). Base: `exp-prereq-fase0`.
+
+**Cuidado de medicao.** O comparador cru (`comparar_releases_langfuse.py`)
+pareia 19 vs 30 traces e reprova: entre 20:34 e 20:37, antes do lote, a DAG 2
+rodou em modo normal para os 10 documentos sob o mesmo rotulo (14 traces
+`atlas.resolucao` sem LLM), o que infla `e2e_autonomia_deterministica`
+(0,47 -> 0,67), duracao e tokens. Os numeros abaixo sao da comparacao pareada
+limpa: 10 `atlas.fallback` + 9 revalidacoes de cada release. Extracao
+identica (9/9), mesmo escopo, mesmo prompt — comparaveis. Regra para as
+proximas: nao rodar outras DAGs sob um rotulo de experimento.
+
+Desfecho e2e identico: 9/10 publicados (Cyrela e verdadeiro negativo nas duas).
+Lote inteiro em ~20 min (antes ~35).
+
+| metrica | papel | base | novo | leitura |
+| --- | --- | --- | --- | --- |
+| `selecao_prefiltro_reducao` (>= 0,4) | alvo | 0,076 | **0,645** | atingido; min 0,30 (Tenda), max 0,85 (Plano&Plano); `selecao_prefiltro_leitura_completa` = 1,0 em 10/10 |
+| `selecao_candidatos_por_requisito` | alvo | 10,8 | **3,4** | atingido (Cury 12 -> 4,5; Itau 15 -> 6; Plano&Plano 11 -> 1) |
+| `llm_tokens_total` da selecao | alvo | 6.194 | **5.282** (-15 %) | atingido em construtoras; bancos/monetarios subiu 6.675 -> 10.784 por um reparo do Santander (ancora "Resultado de PDD" declarada em `table005` nao existia literalmente) |
+| `assinatura_f0_selecao_revocacao` | guarda | 1,000 | 1,000 | ok: o pre-filtro mais agressivo nao perdeu fonte |
+| `selecao_escolha_dentro_do_prefiltro` | guarda | 1,000 | 1,000 | ok |
+| `assinatura_f1_cobertura_obrigatorios` | guarda | 0,950 | 0,950 | ok (Cyrela 0,5 nas duas) |
+| `assinatura_f3_arquivo_origem_correto` | guarda | 0,926 | **0,770** | regrediu; aberto abaixo (EZTEC medicao, Santander variancia) |
+| `e2e_tokens_llm` (orcamento +20 %) | custo | 36,2k | **30,2k** (-17 %) | so Cyrela subiu (26k -> 41k, 4 tentativas); geracao 22,3k -> 19,3k |
+| `e2e_duracao_segundos` | custo | 175 | 87 | tokens cairam junto; parte e provedor |
+| `llm_acerto_1a_tentativa` | diag (5.1) | 0,75 | 0,875 | EZTEC e MRV passaram a acertar de primeira |
+| `assinatura_f1_array_sem_filtro` / `estrutura_valida` | diag (5.1) | 0,5 / 0,95 | 0 / 1,0 | efeito do prompt de construtoras |
+| `assinatura_f1_entidades_no_candidato` | diag | 0,95 | 0,80 | Direcional e Tenda deixaram de emitir Riva/Alea; explica `resolucao_campos_mapeados` 20 -> 16,4 |
+
+Regressoes por documento:
+
+- **EZTEC — artefato de medicao.** `f3_arquivo/linha/coluna` 1,0 -> 0,0 e
+  `ausencia_falso_negativo` 0 -> 5, mas o mapeamento e byte a byte igual
+  (`table001/002/003`, mesmas linhas e colunas) e o `schema_saida_resolvido`
+  identico (2022/914; 779/1982/756). Unica diferenca: filtro `empresa=EZTEC`
+  -> `empresa=eztc3`; o gabarito casa por seletores e guarda `EZTEC`
+  (conflito ja anotado na `revisao_pendente` do gabarito). Sem EZTEC a guarda
+  fica 0,916 -> 0,866.
+- **Santander — real, mas variancia; exige `__r2`.** `inadimplencia_90_dias`
+  caiu de 5 periodos (Jun/25..Jun/26, `chart006`) para so Jun/26 e `periodo`
+  virou `valor_fixo`; monetarios identicos. A entrada da LLM para o fragmento
+  e identica nas duas releases (9 mensagens, diff vazio): na base a 1a
+  resposta foi rejeitada ("fragmento parou antes do campo terminal") e o
+  reparo trouxe 5 periodos; na nova a 1a passou com 1. O pre-filtro nao tocou
+  nessa chamada. Agrava: o contrato so obriga o periodo de referencia, entao o
+  validador aceita — caso concreto do item 3.6.
+- Plano&Plano 0,33 nas duas (gabarito por literal, pendencia 2); MRV
+  `rotulo_linha` 0 nas duas (`revisao_pendente`); `assinatura_f0_selecao_precisao`
+  0,783 -> 0,769 e ruido (Tenda 0,5 -> 1,0; MRV, Santander e Itau 1 artefato a
+  mais cada).
+
+**`__r2` do Santander (2026-09-18 02:02-02:08 UTC, mesmo conf).** Recuperou
+os 5 periodos de `inadimplencia_90_dias` (Jun/25 2,6; Set/25 2,8; Dez/25 3,1;
+Mar/26 3,3; Jun/26 3,3), com as mesmas linhas/colunas do `chart006` da base;
+monetarios identicos; publicou v1.3.0. Harness local (sem gravar scores):
+`f3_arquivo/linha/coluna` = 1,0, `ausencia_falso_negativo` = 0,
+`f0_selecao_precisao` = 1,0 nas duas unidades. Com o `__r2` no lugar do run
+original, `assinatura_f3_arquivo_origem_correto` fica 0,815 no agregado e
+**0,916 = base** sem o artefato do EZTEC — a guarda nao regrediu.
+
+Padrao a registrar: nas tres rodadas do Santander (base, 0.1, 0.1 `__r2`) o
+fragmento de percentuais so trouxe os 5 periodos quando a 1a resposta foi
+rejeitada por "fragmento parou antes do campo terminal" e o reparo listou os
+paths a completar; a unica 1a resposta aceita (0.1) trouxe 1 periodo. n = 3,
+mas e uma pista para o item 3.6: sem exigencia no contrato, o resultado
+completo depende de a LLM tropecar no validador. Custo do `__r2`: 65,8k tokens
+e 331 s (fragmento de percentuais com 2 tentativas: 30,5k), contra 48,8k no
+run original — ou seja, o resultado completo custa mais porque vem do reparo.
+A selecao de monetarios repetiu o reparo por ancora nao literal em `table005`
+("Resultado de PDD" no primeiro run, "Resultado recorrente" no `__r2`; a
+linha real e "Lucro liquido recorrente"), 2 de 2 nesta release contra 0 de 1
+na base — observar na proxima.
+
+**Veredito: aprovada com ressalva.** Os tres alvos foram atingidos com folga,
+custo -17 %, estrutura dos candidatos melhor, nenhuma guarda regrediu depois
+de separar medicao (EZTEC, Plano&Plano) de variancia confirmada por `__r2`
+(Santander). `exp-prereq-fase0.1` passa a ser a base de referencia. Para a
+comparacao da proxima release, usar o `__r2` do Santander como execucao
+pareada (o comparador pareia por `execution_id` da extracao, entao os dois
+runs do Santander entram; o run original deve ser excluido a mao ou o
+comparador precisa aprender a preferir o `__r2`).
+
+Pendencias abertas ou mantidas:
+
+1. Comparador: preferir o run `__r2` quando existir para o mesmo documento e
+   release.
+2. Gabarito EZTEC: decidir `empresa=EZTEC` vs `eztc3` (item 1.5; o candidato
+   agora usa o slug do manifesto, coerente com
+   `origem_valor=identidade_documento`). Gabarito Plano&Plano: seletores por
+   papel. Depois regravar `assinatura_*` de `baseline0`, `exp-prereq-fase0` e
+   `exp-prereq-fase0.1` (apagar os scores antes; o harness nao e idempotente).
+3. Comparador: filtrar por `name`/etapa para que traces `atlas.resolucao` de
+   modo normal nao entrem na comparacao de fallback (pendencia da regua).
+4. Contrato de bancos: periodos alem do de referencia para
+   `inadimplencia_90_dias` nao sao exigidos — perde-los e invisivel ao
+   validador (item 3.6).
+5. Cyrela: 3 -> 4 tentativas e +57 % tokens para o mesmo verdadeiro negativo;
+   a ausencia comprovada ainda custa um ciclo de reparo (item 6.2).
+
 ### Ultimo commit de cada release
 
 | release | ultimo commit | estado |
 | --- | --- | --- |
 | `baseline0` | `1c67bf2` — "feat: agora modelos retornam resoning para facilitar debug de execucoes" | rodada e comparada |
 | `exp-prereq-fase0` | `f41cbff` — "feat: pre-requisitos + fase 0 (pre-filtro de evidencia) da assinatura de layout" | rodada e comparada (Lote 4) |
-| `exp-prereq-fase0.1` | `3b9c5f5` — "feat: pre-filtro de evidencia le o artefato inteiro quando o resumo nao decide" (item 5.3; fecha os tres itens do lote 5) | a rodar |
+| `exp-prereq-fase0.1` | `3b9c5f5` — "feat: pre-filtro de evidencia le o artefato inteiro quando o resumo nao decide" (item 5.3; fecha os tres itens do lote 5) | rodada e comparada em 17/09, `__r2` do Santander em 18/09: **aprovada com ressalva; base de referencia atual** |
 

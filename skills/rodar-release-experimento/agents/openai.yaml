@@ -1,0 +1,4 @@
+interface:
+  display_name: "Rodar release de experimento"
+  short_description: "Reenvie o mesmo lote de PDFs à DAG 3 sob uma nova release e compare"
+  default_prompt: "Use $rodar-release-experimento para rodar a release <rotulo> com o mesmo lote de documentos da release <base> e comparar as métricas."
