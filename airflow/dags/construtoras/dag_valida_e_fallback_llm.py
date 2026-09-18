@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+import os
 import re
 
 from airflow.decorators import dag, task
@@ -16,6 +17,20 @@ from dags._shared.dependencies import (
     build_execution_tracer,
     build_fallback_llm_service,
 )
+
+
+def _resolve_fallback_max_active_runs() -> int:
+    """LLM local (`ollama`) e um recurso compartilhado de 1 requisicao por vez;
+    provedor via API (`openai`/compativel) aceita documentos em paralelo.
+    `FALLBACK_LLM_MAX_ACTIVE_RUNS` ajusta o teto sem mudar o provedor.
+    """
+    if os.getenv("FALLBACK_LLM_PROVIDER", "openai").strip().lower() == "ollama":
+        return 1
+    override = os.getenv("FALLBACK_LLM_MAX_ACTIVE_RUNS", "").strip()
+    if override.isdigit() and int(override) > 0:
+        return int(override)
+    return 5
+
 
 REQUIRED_FALLBACK_CONF_FIELDS = (
     "document_id",
@@ -250,7 +265,7 @@ def observar_execucao_fallback(fallback_context: dict[str, object]) -> dict[str,
     schedule=None,
     start_date=AirflowDefaults.start_date,
     catchup=False,
-    max_active_runs=1,
+    max_active_runs=_resolve_fallback_max_active_runs(),
     default_args=AirflowDefaults.default_args(),
     tags=AirflowDefaults.tags("fallback", "llm"),
 )
