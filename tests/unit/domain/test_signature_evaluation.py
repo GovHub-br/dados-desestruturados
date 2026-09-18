@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from document_processing.domain.observability.signature_evaluation import (
     anchoring_metrics,
+    expected_entries_metrics,
     selection_metrics,
     structural_metrics,
 )
@@ -108,3 +109,50 @@ def test_ancoragem_exige_rotulo_e_indice_quando_informado() -> None:
     assert m["assinatura_f3_indice_coluna_correto"] == 0.5
     assert m["assinatura_f3_ausencia_falso_negativo"] == 0
     assert m["assinatura_f3_ausencia_falso_positivo"] == 1
+
+
+# --- Fase 1 em codigo: chaves geradas contra a lista fechada ---------------
+
+IDENTIDADE = {"entidade": "acme", "entidade_nome": "Acme"}
+
+
+def test_candidato_identico_as_entradas_esperadas_zera_intrusas_e_cobre_tudo() -> None:
+    mapping = {
+        "g.dados[empresa=acme].valores[papel=ref].valor": _entrada(),
+        "g.dados[empresa=acme].valores[papel=ref].periodo": _entrada(),
+    }
+    m = _m(expected_entries_metrics(mapping, CONTRATO, IDENTIDADE))
+    assert m["assinatura_f1_entradas_obrigatorias_cobertas"] == 1.0
+    assert m["assinatura_f1_chaves_fora_das_esperadas"] == 0
+    assert m["assinatura_f1_contexto_irmao_presente"] == 1.0
+    assert m["assinatura_f1_filtro_valor_identidade_correto"] == 1.0
+
+
+def test_nome_no_lugar_do_slug_conta_como_intrusa_e_identidade_errada() -> None:
+    """O que a estrutura da fase 1 antiga aceitava (Acme e valida) agora e medido."""
+    mapping = {
+        "g.dados[empresa=Acme].valores[papel=ref].valor": _entrada(),
+        "g.dados[empresa=Acme].valores[papel=ref].periodo": _entrada(),
+    }
+    m = _m(expected_entries_metrics(mapping, CONTRATO, IDENTIDADE))
+    assert m["assinatura_f1_chaves_fora_das_esperadas"] == 2
+    assert m["assinatura_f1_filtro_valor_identidade_correto"] == 0.0
+    assert m["assinatura_f1_entradas_obrigatorias_cobertas"] == 0.0
+
+
+def test_valor_sem_o_contexto_irmao_e_chave_de_item_extra_sao_contados() -> None:
+    mapping = {
+        "g.dados[empresa=acme].valores[papel=ref].valor": _entrada(),
+        "g.dados[empresa=acme].valores[papel=ant].valor": _entrada(coluna=2),
+        "g.dados[empresa=acme].valores[papel=ant].periodo": _entrada(coluna=2),
+        "g.dados[empresa=acme].empresa": {"tipo_origem": "valor_fixo", "valor_fixo": "Acme"},
+    }
+    m = _m(expected_entries_metrics(mapping, CONTRATO, IDENTIDADE))
+    assert m["assinatura_f1_chaves_fora_das_esperadas"] == 1
+    assert m["assinatura_f1_contexto_irmao_presente"] == 0.5
+    # ref.periodo (obrigatoria) falta: 1 de 2 obrigatorias cobertas.
+    assert m["assinatura_f1_entradas_obrigatorias_cobertas"] == 0.5
+
+
+def test_sem_identidade_para_fechar_as_chaves_nao_ha_metrica() -> None:
+    assert expected_entries_metrics({"g.dados[empresa=acme].valores[papel=ref].valor": _entrada()}, CONTRATO, {}) == []

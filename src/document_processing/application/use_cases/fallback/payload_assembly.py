@@ -88,6 +88,9 @@ class FallbackPayloadAssemblyMixin:
                 FallbackPayloadAssemblyMixin._layout_signature_structure_example(context)
             ),
         }
+        expected = FallbackPayloadAssemblyMixin._expected_entries_block(context)
+        if expected:
+            payload.update(expected)
         if include_failure:
             payload["falha"] = context.get("falha", {})
         if include_relevant_layout:
@@ -101,6 +104,28 @@ class FallbackPayloadAssemblyMixin:
                 {},
             )
         return payload
+
+
+    @staticmethod
+    def _expected_entries_block(context: dict[str, Any]) -> dict[str, Any]:
+        """Fase 1: a lista fechada de chaves que a LLM deve preencher.
+
+        So existe quando a identidade do documento foi carregada; a enumeracao
+        falha alto (antes de qualquer chamada LLM) se o contrato exigir um
+        atributo de identidade que o pipeline nao tem.
+        """
+        identity = context.get("identidade_documento")
+        contract_context = context.get("contrato_semantico_relevante", {})
+        if not isinstance(identity, dict) or not identity or not isinstance(contract_context, dict):
+            return {}
+        entries = enumerate_target_entries(
+            contract_context=contract_context,
+            document_identity=identity,
+        )
+        return {
+            "identidade_documento": dict(identity),
+            "entradas_esperadas": expected_entries_payload(entries),
+        }
 
 
     @staticmethod

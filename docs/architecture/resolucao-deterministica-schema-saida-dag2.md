@@ -151,7 +151,12 @@ antes estavam fixas no resolvedor com nomes de construtoras. **A presença de
 - `chaves_de_item`: um path de array do `schema_saida` → a chave usada nos filtros
   `[chave=valor]` daquele array. Pode ser um campo do item (`periodo`) ou um papel
   que não é campo (`papel_periodo`). O validador da DAG 3 recusa filtro com outra
-  chave e recusa path que termina no array (observação inteira).
+  chave e recusa path que termina no array (observação inteira). A forma completa
+  aceita `origem_valor` (`identidade_documento`, `seletor_observacao`,
+  `evidencia`) e, com origem `identidade_documento`, o opcional
+  `atributo_identidade` (`entidade` ou `periodo`) que diz qual atributo da
+  identidade do documento a DAG 3 copia para o filtro; sem ele, vale a chave
+  homônima da identidade e, na falta dela, a entidade.
 - No modo genérico, `celula_de_tabela` devolve só o valor do campo terminal, tipado
   pelo descritor do contrato; `.periodo` vem de `cabecalho_de_tabela` e constantes
   da observação (`escopo_periodo`, `recorte`, `escala`) de `valor_fixo`.

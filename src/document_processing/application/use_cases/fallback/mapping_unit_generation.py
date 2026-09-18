@@ -305,7 +305,7 @@ class MappingUnitGenerationMixin:
         if not isinstance(targets, list):
             targets = []
         unit_paths = set(unit.paths)
-        return {
+        payload: dict[str, Any] = {
             "tipo_payload": "geracao_fragmento_layout_signature",
             "contexto_execucao": candidate_payload.get("contexto_execucao", {}),
             "unidade_mapeamento": unit.payload(),
@@ -324,3 +324,14 @@ class MappingUnitGenerationMixin:
             ),
             "artefatos_contexto_llm": loaded_artifacts,
         }
+        expected = candidate_payload.get("entradas_esperadas")
+        if isinstance(expected, list) and "identidade_documento" in candidate_payload:
+            payload["identidade_documento"] = candidate_payload["identidade_documento"]
+            # Cada unidade ve so as chaves dos seus requisitos; as demais pertencem
+            # a outra chamada e seriam "campo fora da unidade" no validador.
+            payload["entradas_esperadas"] = [
+                entry
+                for entry in expected
+                if isinstance(entry, dict) and str(entry.get("requisito", "")).strip() in unit_paths
+            ]
+        return payload

@@ -667,6 +667,96 @@ O que os lotes 6 e 7 deixam para o plano (ver resultados acima):
   DAG 3 publica sempre que a revalidacao aprova, inclusive em release
   reprovada.
 
+## Lote 8: Fase 1 — entradas-alvo enumeradas pelo codigo (`exp-fase1-entradas-esperadas`)
+
+Incremento 3 do roteiro do plano da assinatura. Base de comparacao:
+`exp-prereq-fase0.1` (Santander pelo `__r2`), codigo `3ac2478`, contratos
+construtoras v1.9.0 e bancos v2.2.0, sem mudanca de contrato. Origem: a leitura
+que atravessa os lotes 5-7 — a cada rodada a LLM troca um filtro, um valor de
+identidade ou um modo de array por decisao livre, e prompt fecha um caminho
+abrindo outro (`empresa=identidade_documento` na Direcional, colecao posicional
+no Santander). O contrato ja declara tudo o que a chave precisa; a Fase 1 tira a
+montagem da chave da LLM.
+
+| rotulo | itens | hipotese | metrica-alvo | guarda | custo |
+| --- | --- | --- | --- | --- | --- |
+| `exp-fase1-entradas-esperadas` | F1.1-F1.7, validador chave a chave, prompt `comum-contrato` | com a lista fechada de chaves no payload (`entradas_esperadas`) e o validador exigindo exatamente essas chaves, a LLM deixa de errar estrutura e identidade; o que sobra para ela e o valor do filtro de evidencia e a ancoragem | `assinatura_f1_chaves_fora_das_esperadas` = 0; `assinatura_f1_filtro_valor_identidade_correto` = 1,0; `assinatura_f1_estrutura_valida` = 1,0; `assinatura_f1_entradas_obrigatorias_cobertas@primeira_tentativa` >= 0,98; `llm_acerto_1a_tentativa` da etapa `layout_signature_candidato` sobe | `assinatura_f1_cobertura_obrigatorios`, `assinatura_f0_selecao_revocacao`, `assinatura_f3_arquivo_origem_correto`, `resolucao_cobertura_obrigatorios`, `e2e_apto_para_bronze`; **construtoras: valores resolvidos identicos a base** (a lista fecha as mesmas 12 chaves que a base ja produzia; so o filtro de identidade pode mudar de grafia para o slug) | `e2e_tokens_llm` <= base +10 % (a lista acrescenta entrada ao prompt: 12 entradas em construtoras, 39 em bancos); `llm_tentativas` nao pode subir |
+
+- **F1.1-F1.7** — `domain/fallback/target_enumeration.py`: `TargetEntry`,
+  `enumerate_target_entries(contract_context, document_identity)`,
+  `match_mapping_keys`, `describe_unexpected_key`. Le o recorte projetado ou o
+  contrato bruto (mesmo resultado nos dois: provado nos tres contratos). Uma
+  entrada por observacao (valor) e por campo de contexto dinamico (contexto),
+  herdando `obrigatorio`; filtro de `seletor_observacao` copiado do seletor;
+  filtro de `identidade_documento` preenchido com o slug; filtro de `evidencia`
+  fica pendente com o marcador `<evidencia>` (a LLM instancia um por rotulo);
+  requisito no proprio array vira `colecao`; folhas dinamicas fora de arrays que
+  nao sao derivadas nem fixas entram como `livre`, opcionais. Enumeracao nos
+  contratos publicados: construtoras 12 chaves (as mesmas dos layouts
+  vigentes), bancos 39 modelos + 2 livres, ABECIP 5 colecoes + 7 livres.
+- **Contrato** — `chaves_de_item.<path>.atributo_identidade` (opcional, so com
+  origem `identidade_documento`) escolhe `periodo` no lugar da entidade; nenhum
+  contrato publicado precisa dele. Projecao ganha
+  `estrutura_schema_saida.paths_derivados` e `atributos_identidade`; o subesquema
+  por unidade carrega `origem_das_chaves`, `atributos_identidade` e
+  `paths_derivados`.
+- **Identidade** — `context_loading._document_identity`: `entidade` = slug da
+  conf (nunca o `entity_name` do manifesto, que a baseline0 mostrou nao ser
+  confiavel), `entidade_nome` quando houver, `periodo` = `candidate.period_label`
+  so quando publicado. Contrato que exija atributo ausente falha na enumeracao,
+  antes da LLM.
+- **Payload e mensagens** — `entradas_esperadas` + `identidade_documento` no
+  payload de geracao (candidato e fragmento; cada unidade ve so as suas), no
+  mesmo bloco `user` de `contrato_e_alvos`/`unidade_e_contrato`, logo apos
+  `comum-contrato`. A selecao de artefatos nao recebe a lista.
+- **Validador** — `_validate_candidate_matches_expected_entries`: refaz a
+  enumeracao (nao confia no payload) e recusa chave que nao seja entrada
+  esperada, dizendo a chave certa para o mesmo campo ou mandando remover
+  (chave de item, derivacao, fixo). Correcao parcial mantem as chaves do layout
+  base. Sem identidade no contexto a regra nao se aplica.
+- **Prompts** — `comum-contrato` reescrito (explica `entradas_esperadas`,
+  `papel_no_alvo`, `modo_array`, `filtros_pendentes`; mantem a instrucao antiga
+  para payload sem a lista); `candidato-repair` e `unit-mapping-repair` ganham
+  uma frase ("as chaves continuam sendo exatamente as da lista"). Os tres
+  blocos precisam ser publicados com `sincronizar_prompts_langfuse.py
+  --empurrar` antes do disparo (novas versoes; a v4 = v1 de `comum-contrato`
+  fica no historico).
+- **Harness** — `expected_entries_metrics` em `signature_evaluation.py`:
+  `assinatura_f1_entradas_obrigatorias_cobertas` (maior), `_chaves_fora_das_esperadas`
+  (menor), `_contexto_irmao_presente` (maior), `_filtro_valor_identidade_correto`
+  (maior), com a identidade vinda do gabarito (`entidade` = slug, `identidade.periodo`);
+  registradas no comparador. Podem ser recalculadas sobre as releases anteriores
+  (`avaliar_assinatura_layout.py --release exp-prereq-fase0.1`) para ter a base.
+- **Provas locais (2026-09-18)** — o candidato bom de construtoras com as 12
+  chaves exatas passa; `[empresa=identidade_documento]` (Direcional, lote 7) e
+  recusado nomeando `[empresa=cury]`; `dados[empresa=cury].empresa` (extras da
+  MRV/Tenda) e recusado com "remova a chave"; fragmento de bancos com dois
+  periodos instanciados (`valores[periodo=Mar/26]`, `valores[periodo=Jun/26]`)
+  e aceito; colecao posicional no path do array continua recusada pela regra
+  do campo terminal. Testes: `tests/unit/domain/test_target_enumeration.py`
+  (25), `tests/unit/application/test_expected_entries_flow.py` (12), 4 casos
+  novos em `test_signature_evaluation.py`; suite 130 -> 171 unit, ruff limpo.
+- **Fora deste lote** — Plano&Plano (brutas x liquidas) e Itau (`chart002` x
+  `chart004`) sao escolha de linha/artefato: Fase 3.2 e 3.1, nao Fase 1. Gate
+  por obrigatorios (6.3/6.4) e resposta vazia como retry (7.3) seguem
+  pendentes.
+
+### Como rodar e comparar
+
+1. `python scripts/sincronizar_prompts_langfuse.py --verificar` deve acusar
+   `comum-contrato`, `candidato-repair` e `unit-mapping-repair` divergentes;
+   `--empurrar` publica as tres versoes com o rotulo `production`.
+2. `ATLAS_RELEASE=exp-fase1-entradas-esperadas docker compose up -d
+   airflow-scheduler airflow-worker` e confirmar o rotulo no container.
+3. Mesmos 10 documentos, criacao inicial forcada, com `caffeinate -i`; nenhuma
+   outra DAG sob o rotulo.
+4. `python scripts/avaliar_assinatura_layout.py --release exp-fase1-entradas-esperadas`
+   e, se ainda nao existir, `--release exp-prereq-fase0.1` para os scores novos
+   da base; depois `comparar_releases_langfuse.py --base exp-prereq-fase0.1
+   --novo exp-fase1-entradas-esperadas` (Santander pelo `__r2`, pendencia 1 do
+   lote 5).
+5. Conferir `current.json` de cada entidade depois do veredito.
+
 ### Ultimo commit de cada release
 
 | release | ultimo commit | estado |
@@ -677,4 +767,5 @@ O que os lotes 6 e 7 deixam para o plano (ver resultados acima):
 | `exp-colecao-fragmento` | `2879aba` — colecao por evidencia aceita sem reparo (M1-M5) | rodada e comparada em 18/09: **reprovada** (Santander publicou valores errados nos monetarios); base segue `exp-prereq-fase0.1` |
 | `exp-colecao-chave-coluna` | `15668c1` — colecao so com a chave numa coluna; gate por obrigatorios (C1-C3) | rodada e comparada em 18/09: **reprovada** (alvo atingido em bancos; Direcional, Plano&Plano e Itau trocaram de linha/artefato); base segue `exp-prereq-fase0.1` |
 | (reversao) | `8338a97` — reverte `15668c1` e `2879aba`; prompts v4 = v1; ponteiros na publicacao da fase0.1 | codigo, prompts e layouts vigentes = `exp-prereq-fase0.1`; `ATLAS_RELEASE=base-fase0.1-revertido` |
+| `exp-fase1-entradas-esperadas` | a commitar — Fase 1 do plano (entradas-alvo enumeradas pelo codigo, validador chave a chave) | implementada e provada localmente em 18/09; **ainda nao rodada** |
 

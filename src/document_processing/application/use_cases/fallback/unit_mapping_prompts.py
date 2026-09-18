@@ -119,7 +119,9 @@ def unit_mapping_repair_instruction() -> str:
         "correcao_mapeamento.erro_validacao e correcao_mapeamento.resposta_invalida. "
         "Corrija somente o necessario, preserve instrucoes validas e responda de novo "
         "com o objeto JSON completo exigido nesta chamada. O erro nao autoriza criar "
-        "paths fora do subesquema, inventar tipos de origem ou omitir tipo_origem."
+        "paths fora do subesquema, inventar tipos de origem ou omitir tipo_origem. Quando "
+        "a chamada trouxer entradas_esperadas, as chaves continuam sendo exatamente as da "
+        "lista; so o marcador <evidencia> e substituido pelo rotulo lido."
     )
 
 
