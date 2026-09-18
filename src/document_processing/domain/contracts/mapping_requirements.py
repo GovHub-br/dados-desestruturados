@@ -121,6 +121,28 @@ def roles_payload(specs: list[RoleSpec]) -> dict[str, dict[str, Any]]:
     return payload
 
 
+def role_derivations_from_context(contract_context: Any) -> dict[str, dict[str, dict[str, Any] | None]]:
+    """``seletor -> papel -> derivacao`` declarados em ``papeis``, sem validar o resto.
+
+    Leitura tolerante para quem so precisa das derivacoes (Fase 2.3): um recorte
+    do contrato por unidade pode nao usar todos os seletores, e isso nao deve
+    impedir de derivar os papeis que ele usa.
+    """
+    raw_roles = _requirements_block(contract_context).get("papeis")
+    if not isinstance(raw_roles, dict):
+        return {}
+    derivations: dict[str, dict[str, dict[str, Any] | None]] = {}
+    for selector, roles in raw_roles.items():
+        if not isinstance(roles, dict):
+            continue
+        for role, definition in roles.items():
+            derivacao = definition.get("derivacao") if isinstance(definition, dict) else None
+            derivations.setdefault(str(selector).strip(), {})[str(role).strip()] = (
+                derivacao if isinstance(derivacao, dict) else None
+            )
+    return derivations
+
+
 def _requirements_block(contract_context: Any) -> dict[str, Any]:
     if not isinstance(contract_context, dict):
         return {}

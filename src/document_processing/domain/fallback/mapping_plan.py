@@ -91,9 +91,30 @@ class MappingPlanService:
         semantic = contract_context.get("contrato_semantico", {})
         if not isinstance(semantic, dict):
             semantic = {}
+        projected_requirements = mapping_requirements_payload(list(unit.requirements))
+        original_requirements = semantic.get("requisitos_mapeamento", {})
+        roles = (
+            original_requirements.get("papeis")
+            if isinstance(original_requirements, dict)
+            else None
+        )
+        if isinstance(roles, dict):
+            # `papeis` so faz sentido para seletores que alguma observacao da
+            # unidade usa; os demais pertencem a outra chamada.
+            used_selectors = {
+                selector
+                for requirement in unit.requirements
+                for observation in requirement.observations
+                for selector in observation.selectors
+            }
+            kept_roles = {
+                selector: spec for selector, spec in roles.items() if selector in used_selectors
+            }
+            if kept_roles:
+                projected_requirements["papeis"] = kept_roles
         projected_semantic = {
             **semantic,
-            "requisitos_mapeamento": mapping_requirements_payload(list(unit.requirements)),
+            "requisitos_mapeamento": projected_requirements,
         }
         return {
             **contract_context,

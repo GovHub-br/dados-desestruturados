@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from document_processing.domain.observability.signature_evaluation import (
     anchoring_metrics,
+    column_role_metrics,
     expected_entries_metrics,
     selection_metrics,
     structural_metrics,
@@ -156,3 +157,42 @@ def test_valor_sem_o_contexto_irmao_e_chave_de_item_extra_sao_contados() -> None
 
 def test_sem_identidade_para_fechar_as_chaves_nao_ha_metrica() -> None:
     assert expected_entries_metrics({"g.dados[empresa=acme].valores[papel=ref].valor": _entrada()}, CONTRATO, {}) == []
+
+
+# ---------------------------------------------------------------------------
+# Fase 2 — estrutura_tabelas do payload contra o gabarito
+# ---------------------------------------------------------------------------
+
+GABARITO_F2 = {
+    "artefatos_esperados_por_requisito": {"g.dados.valores.valor": ["tables/t1.json"]},
+    "ancoragens": {
+        "g.dados.valores.valor": [
+            {"seletores": {"empresa": "acme", "papel": "ref"}, "arquivo_origem": "tables/t1.json", "indice_coluna": 1},
+            {"seletores": {"empresa": "acme", "papel": "ant"}, "arquivo_origem": "tables/t1.json", "indice_coluna": 2},
+            {"seletores": {"empresa": "acme", "papel": "ano"}, "arquivo_origem": "tables/t1.json", "indice_coluna": 4},
+        ]
+    },
+}
+
+
+def test_f2_colunas_resolvidas_pelo_contrato_conferidas_com_o_gabarito() -> None:
+    estrutura = {
+        "tables/t1.json": {
+            "cabecalho_lido": True,
+            "papel_por_coluna": {"papel": {"1": "ref", "3": "ant"}},
+            "papeis_nao_resolvidos": {"papel": ["ano"]},
+        },
+        "tables/t9.json": {"cabecalho_lido": False},
+    }
+    m = _m(column_role_metrics(estrutura, GABARITO_F2))
+    assert m["assinatura_f2_estrutura_tabela_lida"] == 1.0
+    # 3 papeis do gabarito derivaveis; 2 resolvidos pelo codigo; 1 deles certo.
+    assert m["assinatura_f2_papel_coluna_origem_contrato"] == 2 / 3
+    assert m["assinatura_f2_papel_coluna_correto"] == 0.5
+
+
+def test_f2_sem_papel_derivavel_so_a_leitura_da_estrutura_e_medida() -> None:
+    estrutura = {"tables/t1.json": {"cabecalho_lido": False}}
+    m = _m(column_role_metrics(estrutura, GABARITO_F2))
+    assert m == {"assinatura_f2_estrutura_tabela_lida": 0.0}
+    assert column_role_metrics({}, GABARITO_F2) == []

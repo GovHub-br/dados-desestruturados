@@ -20,6 +20,7 @@ from .metrics import (
     layout_validation_metrics,
     prompt_set_fingerprint,
     resolution_metrics,
+    table_structure_metrics,
     transition_metrics,
 )
 
@@ -41,5 +42,6 @@ __all__ = [
     "metricas_de_conjunto",
     "prompt_set_fingerprint",
     "resolution_metrics",
+    "table_structure_metrics",
     "transition_metrics",
 ]

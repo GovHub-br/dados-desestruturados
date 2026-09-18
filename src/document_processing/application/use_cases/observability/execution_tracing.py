@@ -29,6 +29,7 @@ from document_processing.domain.observability import (
     layout_validation_metrics,
     prompt_set_fingerprint,
     resolution_metrics,
+    table_structure_metrics,
     transition_metrics,
 )
 from document_processing.infrastructure.observability import LangfuseIngestionClient, new_id
@@ -492,6 +493,17 @@ class AtlasExecutionTracer:
                     if isinstance(item, dict)
                 ]
                 for metric in evidence_prefilter_metrics(self._read_json(chave), selected_paths=chosen):
+                    client.score(
+                        trace_id=trace_id,
+                        name=metric.name,
+                        value=metric.value,
+                        data_type=metric.data_type,
+                        comment=metric.comment,
+                        metadata=metric.metadata,
+                    )
+                continue
+            if nome_artefato.endswith("estrutura_tabelas.json"):
+                for metric in table_structure_metrics(self._read_json(chave)):
                     client.score(
                         trace_id=trace_id,
                         name=metric.name,

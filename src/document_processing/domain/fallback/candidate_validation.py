@@ -11,6 +11,11 @@ from document_processing.domain.contracts.mapping_requirements import (
     parsed_mapping_path,
 )
 from document_processing.domain.contracts.schema import normalize_schema_path
+from document_processing.domain.fallback.column_roles import (
+    TableAnalysis,
+    analyze_tables,
+    label_columns,
+)
 from document_processing.domain.fallback.evidence_pruning import normalize_term
 from document_processing.domain.fallback.row_anchoring import (
     indicator_synonyms_for_entry,
@@ -140,6 +145,10 @@ class FallbackCandidateValidationService:
             fallback_problem_context,
         )
         self._validate_candidate_row_anchors(
+            candidate_model,
+            fallback_problem_context,
+        )
+        self._validate_candidate_column_roles(
             candidate_model,
             fallback_problem_context,
         )
@@ -314,31 +323,15 @@ class FallbackCandidateValidationService:
         que a LLM devolveu. Sem sinonimo unico casando uma linha, nada e
         verificado e a escolha continua sendo da LLM.
         """
-        identity = fallback_problem_context.get("identidade_documento")
-        contract = fallback_problem_context.get("contrato_semantico_relevante", {})
-        loaded_artifacts = fallback_problem_context.get("artefatos_contexto_llm")
-        if not isinstance(identity, dict) or not identity or not isinstance(contract, dict):
+        scope = self._table_scope(candidate, fallback_problem_context)
+        if scope is None:
             return
-        if not isinstance(loaded_artifacts, dict) or not loaded_artifacts:
-            return
+        contract, tables, analyses, match = scope
         semantic = contract.get("contrato_semantico", {})
         metric_groups = semantic.get("metricas", {}) if isinstance(semantic, dict) else {}
         if not isinstance(metric_groups, dict) or not metric_groups:
             return
-        tables = {
-            path: artifact
-            for path, artifact in loaded_artifacts.items()
-            if isinstance(artifact, dict) and isinstance(artifact.get("rows"), list)
-        }
-        if not tables:
-            return
-        try:
-            entries = enumerate_target_entries(
-                contract_context=contract, document_identity=identity
-            )
-        except TargetEnumerationError:
-            return
-        match = match_mapping_keys(entries, list(candidate.mapeamento_canonico))
+        colunas_de_rotulo = label_columns(analyses)
         for mapping_path, matched_entry in match.por_chave.items():
             if (
                 matched_entry is None
@@ -353,7 +346,9 @@ class FallbackCandidateValidationService:
             )
             if not sinonimos:
                 continue
-            ancora = resolve_row_anchor(synonyms=sinonimos, tables=tables)
+            ancora = resolve_row_anchor(
+                synonyms=sinonimos, tables=tables, label_columns=colunas_de_rotulo
+            )
             if ancora is None:
                 continue
             entry_model = candidate.mapeamento_canonico.get(mapping_path)
@@ -376,6 +371,91 @@ class FallbackCandidateValidationService:
                 f"{ancora.indice_linha}); a resposta trouxe '{accepted_label}' em "
                 f"'{used_file or '?'}'."
             )
+
+    def _validate_candidate_column_roles(
+        self,
+        candidate: LayoutSignatureCandidate,
+        fallback_problem_context: dict[str, Any],
+    ) -> None:
+        """Fase 2.3: coluna cujo papel o contrato deriva da identidade nao e escolha livre.
+
+        Refaz a leitura da estrutura e a derivacao dos papeis (contrato +
+        identidade + artefatos carregados), a mesma fonte que montou
+        ``estrutura_tabelas`` no payload. So verifica o que resolveu por
+        contrato, na tabela que a resposta usou; o resto continua com a LLM.
+        """
+        scope = self._table_scope(candidate, fallback_problem_context)
+        if scope is None:
+            return
+        _contract, _tables, analyses, match = scope
+        if not any(analysis.papeis for analysis in analyses.values()):
+            return
+        for mapping_path, matched_entry in match.por_chave.items():
+            if matched_entry is None or not matched_entry.seletores:
+                continue
+            entry_model = candidate.mapeamento_canonico.get(mapping_path)
+            if entry_model is None or entry_model.tipo_origem not in {
+                "celula_de_tabela",
+                "cabecalho_de_tabela",
+            }:
+                continue
+            payload = entry_model.model_dump(mode="json", exclude_none=True)
+            used_file = str(payload.get("arquivo_origem") or "").strip()
+            analysis = analyses.get(used_file)
+            if analysis is None:
+                continue
+            column_selector = payload.get("seletor_coluna")
+            used_index = (
+                column_selector.get("indice_coluna_esperado")
+                if isinstance(column_selector, dict)
+                else None
+            )
+            for seletor, papel in matched_entry.seletores.items():
+                expected_index = analysis.coluna_do_papel(str(seletor), str(papel))
+                if expected_index is None or used_index == expected_index:
+                    continue
+                cabecalho = analysis.estrutura.cabecalhos[expected_index]
+                raise RuntimeError(
+                    "Layout candidato usou uma coluna diferente da resolvida pelo "
+                    f"contrato para {mapping_path}: o papel {papel} de {seletor} e a "
+                    f"coluna {expected_index} ('{cabecalho}') em '{used_file}', derivada "
+                    "da identidade do documento pelo contrato (ver estrutura_tabelas); "
+                    f"a resposta trouxe seletor_coluna.indice_coluna_esperado={used_index}."
+                )
+
+    @staticmethod
+    def _table_scope(
+        candidate: LayoutSignatureCandidate,
+        fallback_problem_context: dict[str, Any],
+    ) -> tuple[dict[str, Any], dict[str, Any], dict[str, TableAnalysis], Any] | None:
+        """Contrato, tabelas carregadas, analise da Fase 2 e chaves casadas — ou nada.
+
+        Sem identidade, contrato ou tabela carregada nenhuma verificacao
+        posicional se aplica (contratos legados, testes antigos).
+        """
+        identity = fallback_problem_context.get("identidade_documento")
+        contract = fallback_problem_context.get("contrato_semantico_relevante", {})
+        loaded_artifacts = fallback_problem_context.get("artefatos_contexto_llm")
+        if not isinstance(identity, dict) or not identity or not isinstance(contract, dict):
+            return None
+        if not isinstance(loaded_artifacts, dict) or not loaded_artifacts:
+            return None
+        tables = {
+            path: artifact
+            for path, artifact in loaded_artifacts.items()
+            if isinstance(artifact, dict) and isinstance(artifact.get("rows"), list)
+        }
+        if not tables:
+            return None
+        try:
+            entries = enumerate_target_entries(
+                contract_context=contract, document_identity=identity
+            )
+        except TargetEnumerationError:
+            return None
+        analyses = analyze_tables(tables, contract_context=contract, document_identity=identity)
+        match = match_mapping_keys(entries, list(candidate.mapeamento_canonico))
+        return contract, tables, analyses, match
 
     @staticmethod
     def _validate_candidate_covers_mapping_requirements(

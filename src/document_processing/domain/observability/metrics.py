@@ -488,6 +488,56 @@ def evidence_prefilter_metrics(
     return metrics
 
 
+def table_structure_metrics(estrutura: dict[str, Any]) -> list[MetricValue]:
+    """Mede a Fase 2 em producao, a partir de ``estrutura_tabelas.json`` (sem gabarito).
+
+    ``estrutura_tabela_lida``: fracao das tabelas carregadas cujo cabecalho o
+    codigo conseguiu ler. ``papel_coluna_origem_contrato``: das combinacoes
+    (tabela, papel derivavel pelo contrato), fracao que o codigo resolveu para
+    uma coluna unica — o resto ficou com a LLM (``papel_coluna_origem = llm``).
+    """
+    tabelas = _as_dict(estrutura.get("tabelas"))
+    if not tabelas:
+        return []
+    unidade = str(estrutura.get("unidade_mapeamento") or "")
+    contexto = {"unidade_mapeamento": unidade} if unidade else {}
+    lidas = sum(1 for tabela in tabelas.values() if _as_dict(tabela).get("cabecalho_lido"))
+    metrics = [
+        MetricValue(
+            name="estrutura_tabela_lida",
+            value=_ratio(lidas, len(tabelas)),
+            comment=(
+                "Fracao das tabelas carregadas cujo cabecalho e coluna de rotulo o codigo "
+                f"leu sem ajuda da LLM. {lidas} de {len(tabelas)}."
+            ),
+            metadata=contexto,
+        )
+    ]
+    esperados = _as_dict(estrutura.get("papeis_esperados"))
+    total = resolvidos = 0
+    for tabela in tabelas.values():
+        por_seletor = _as_dict(_as_dict(tabela).get("papel_por_coluna"))
+        for seletor, papeis in esperados.items():
+            papeis_resolvidos = set(_as_dict(por_seletor.get(seletor)).values())
+            for papel in _as_dict(papeis):
+                total += 1
+                resolvidos += int(papel in papeis_resolvidos)
+    if total:
+        metrics.append(
+            MetricValue(
+                name="papel_coluna_origem_contrato",
+                value=_ratio(resolvidos, total),
+                comment=(
+                    "Fracao dos papeis derivaveis pelo contrato que o codigo casou com uma "
+                    f"coluna unica, por tabela carregada. {resolvidos} de {total}; o resto "
+                    "ficou com a LLM."
+                ),
+                metadata=contexto,
+            )
+        )
+    return metrics
+
+
 def fallback_execution_metrics(
     *,
     scope: str | None,

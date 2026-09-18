@@ -59,6 +59,9 @@ MAIOR_MELHOR = {
     "selecao_prefiltro_reducao",
     "selecao_prefiltro_leitura_completa",
     "selecao_escolha_dentro_do_prefiltro",
+    # Fase 2 em producao: estrutura da tabela e papel por coluna resolvidos pelo codigo.
+    "estrutura_tabela_lida",
+    "papel_coluna_origem_contrato",
     # Harness da assinatura de layout (scripts/avaliar_assinatura_layout.py).
     "assinatura_f0_selecao_precisao",
     "assinatura_f0_selecao_revocacao",
@@ -70,6 +73,9 @@ MAIOR_MELHOR = {
     "assinatura_f1_entradas_obrigatorias_cobertas",
     "assinatura_f1_contexto_irmao_presente",
     "assinatura_f1_filtro_valor_identidade_correto",
+    "assinatura_f2_estrutura_tabela_lida",
+    "assinatura_f2_papel_coluna_origem_contrato",
+    "assinatura_f2_papel_coluna_correto",
     "assinatura_f3_arquivo_origem_correto",
     "assinatura_f3_rotulo_linha_correto",
     "assinatura_f3_indice_coluna_correto",

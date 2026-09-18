@@ -1,4 +1,4 @@
-"""Metricas por fase da assinatura de layout (plano da assinatura, fases 0, 1 e 3).
+"""Metricas por fase da assinatura de layout (plano da assinatura, fases 0, 1, 2 e 3).
 
 Cada metrica e definida sobre objetos do contrato (requisito, observacao,
 seletor, array, papel) e do artefato (indice de linha/coluna, rotulo) — nunca
@@ -297,6 +297,73 @@ def selection_metrics(
         metrics.append(MetricValue("assinatura_f0_selecao_precisao", len(inter) / len(chosen_all) if chosen_all else 0.0, comment=f"Artefatos escolhidos que o gabarito espera. {len(inter)} de {len(chosen_all)}.", metadata=meta))
         metrics.append(MetricValue("assinatura_f0_selecao_revocacao", len(inter) / len(expected), comment=f"Artefatos esperados que foram escolhidos. {len(inter)} de {len(expected)}.", metadata=meta))
     metrics.append(MetricValue("assinatura_f0_selecao_artefatos_por_requisito", sum(len(chosen_by_req[r]) for r in covered_reqs) / len(covered_reqs), comment="Media de artefatos escolhidos por requisito coberto.", metadata=meta))
+    return metrics
+
+
+# ---------------------------------------------------------------------------
+# Fase 2 — estrutura da tabela e papel por coluna contra o gabarito
+# ---------------------------------------------------------------------------
+
+
+def column_role_metrics(
+    estrutura_tabelas: dict[str, Any],
+    gabarito: dict[str, Any],
+    *,
+    etapa: str = "final",
+) -> list[MetricValue]:
+    """Fase 2: o que o codigo leu/resolveu das tabelas, conferido com o gabarito.
+
+    ``estrutura_tabelas`` e o bloco que o pipeline enviou a LLM (uma entrada por
+    tabela carregada, com ``papel_por_coluna`` por seletor). Para cada
+    ancoragem do gabarito cujo seletor tem papel resolvido pelo contrato
+    naquela tabela, a coluna resolvida tem de ser a do gabarito.
+    """
+    if not isinstance(estrutura_tabelas, dict) or not estrutura_tabelas:
+        return []
+    meta = {"etapa": etapa}
+    metrics: list[MetricValue] = []
+
+    esperadas = {
+        str(path).strip("/")
+        for paths in (gabarito.get("artefatos_esperados_por_requisito") or {}).values()
+        if isinstance(paths, list)
+        for path in paths
+    }
+    tabelas_esperadas = [
+        estrutura_tabelas.get(path)
+        for path in esperadas
+        if isinstance(estrutura_tabelas.get(path), dict)
+    ]
+    if tabelas_esperadas:
+        lidas = sum(1 for tabela in tabelas_esperadas if tabela.get("cabecalho_lido"))
+        metrics.append(MetricValue("assinatura_f2_estrutura_tabela_lida", lidas / len(tabelas_esperadas), comment=f"Tabelas esperadas pelo gabarito cujo cabecalho o codigo leu. {lidas} de {len(tabelas_esperadas)}.", metadata=meta))
+
+    total = resolvidos = corretos = 0
+    for anchors in (gabarito.get("ancoragens") or {}).values():
+        for anchor in anchors or []:
+            if not isinstance(anchor, dict):
+                continue
+            tabela = estrutura_tabelas.get(str(anchor.get("arquivo_origem", "")).strip("/"))
+            if not isinstance(tabela, dict):
+                continue
+            por_seletor = tabela.get("papel_por_coluna") or {}
+            for seletor, papel in (anchor.get("seletores") or {}).items():
+                colunas = por_seletor.get(str(seletor)) if isinstance(por_seletor, dict) else None
+                if colunas is None and str(seletor) not in (tabela.get("papeis_nao_resolvidos") or {}):
+                    continue
+                total += 1
+                coluna = next(
+                    (int(indice) for indice, nome in (colunas or {}).items() if nome == papel),
+                    None,
+                )
+                if coluna is None:
+                    continue
+                resolvidos += 1
+                corretos += int(coluna == anchor.get("indice_coluna"))
+    if total:
+        metrics.append(MetricValue("assinatura_f2_papel_coluna_origem_contrato", resolvidos / total, comment=f"Papeis das ancoragens do gabarito que o codigo resolveu para uma coluna pelo contrato. {resolvidos} de {total}; o resto ficou com a LLM.", metadata=meta))
+    if resolvidos:
+        metrics.append(MetricValue("assinatura_f2_papel_coluna_correto", corretos / resolvidos, comment=f"Colunas resolvidas pelo contrato iguais ao gabarito. {corretos} de {resolvidos}.", metadata=meta))
     return metrics
 
 

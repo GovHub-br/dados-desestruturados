@@ -596,3 +596,92 @@ Pendencias abertas ou mantidas:
 
 `exp-gate-e-ancoragem-linha` passa a ser a **base de referencia**.
 
+## Lote 10: Fase 2 — estrutura da tabela e papel por coluna pelo contrato (`exp-fase2-estrutura-tabela`)
+
+Fase 2 do plano da assinatura (itens 2.1-2.4 + o 3.3 que decorre dela),
+construida sobre o formato de resposta atual — o mesmo caminho do item 3.2 no
+lote 9: o codigo resolve, a LLM copia, o validador recalcula e recusa o que
+divergir. Base de comparacao: `exp-gate-e-ancoragem-linha` (lote 9),
+contratos construtoras v1.9.1 e bancos v2.2.0, **sem mudanca de contrato**.
+
+Origem: o consumo dominante de reasoning nas duas ultimas releases (pendencia
+6 do lote 8, 60-90 linhas por documento) e decidir de qual coluna tirar o
+periodo de cada papel — uma decisao que o contrato de construtoras ja declara
+por inteiro (`papeis.papel_periodo.*.derivacao`: referencia = identidade do
+documento, anterior(1), mesmo periodo do ano anterior) e que a LLM refaz a
+cada rodada lendo cabecalhos como "2T26", "1T26 (b)" e "2T26 UDM*".
+
+| item | o que muda | pipeline? |
+| --- | --- | --- |
+| 2.1 / 2.2 — estrutura da tabela | novo `domain/fallback/table_structure.py`: `read_table_structure` le `schema`+`rows` do artefato do Docling e devolve `TableStructure` (coluna de rotulo = primeira coluna textual; cabecalho = `schema` quando legivel, senao a primeira linha textual e promovida; rotulos de linha e cabecalhos normalizados; `cabecalho_lido=False` quando nada decide, nunca adivinhado) | sim — entra no payload como `estrutura_tabelas` (uma entrada por tabela carregada) |
+| 2.3 — papel por coluna, camada (a) | novo `domain/contracts/period_grammar.py` (interpretador generico: `1T26`, `1T2026`, `2026-Q1`, `Q1 2026`, `mar/26`, `03/2026`, `1S26`, `2025`; notas de rodape `(a)`/`*`/sobrescrito removidas; `anterior(passo)` e `mesmo_periodo_ano_anterior` com virada de ano) e `domain/fallback/column_roles.py`: para cada seletor com `derivacao`, calcula o periodo esperado por papel a partir da identidade e casa com a **unica** coluna cujo cabecalho inteiro e esse periodo — "1T26 UDM*" nao e "1T26"; duas colunas "2T26" deixam o papel em `papeis_nao_resolvidos`. Payload ganha `papel_por_coluna` + `origem_papeis=contrato`; `ancoragem_resolvida` (item 3.2) ganha `indice_coluna`/`cabecalho_coluna` quando a linha e a coluna resolvem juntas | sim — muda o payload |
+| 2.4 — segmentos | linhas so com rotulo (sem valor) viram titulos de segmento (`segmentos[{titulo, inicio, fim}]`), enviados no payload; ainda nao usados para ancorar (MRV marca x consolidado continua item 2.4 do plano, decisao de contrato) | sim — so informacao no payload |
+| 3.3 — validador | `_validate_candidate_column_roles`: recalcula estrutura + papeis (nao confia no payload) e recusa `celula_de_tabela`/`cabecalho_de_tabela` cujo `seletor_coluna.indice_coluna_esperado` difere da coluna resolvida para o papel da chave na tabela usada, nomeando a coluna e o cabecalho certos. Sem periodo legivel na identidade (Cyrela `sem_periodo`), sem `papeis` no contrato (bancos) ou sem coluna unica, nada e verificado | sim — pode recusar candidato |
+| 3.2 fecha a simplificacao | `resolve_row_anchor` passa a receber a coluna de rotulo lida pela Fase 2 (antes fixa em 0) | sim (sem efeito nas tabelas atuais: todas tem rotulo na coluna 0) |
+| recorte por unidade | `scoped_contract_context` preservava `campos_obrigatorios` e **perdia `papeis`** — a LLM do caminho por unidade nunca viu descricao nem derivacao dos papeis. Corrigido: `papeis` dos seletores usados pela unidade segue no recorte | sim — o fragmento de construtoras passa a levar `papeis` |
+| prompt | `comum-contrato` v7 -> v8: explica `estrutura_tabelas`/`papel_por_coluna` e o `indice_coluna` da ancoragem (publicar com `--empurrar` antes do disparo) | sim |
+| metricas | producao (`estrutura_tabelas.json` por chamada, lido pela projecao do Langfuse): `estrutura_tabela_lida`, `papel_coluna_origem_contrato` (o "papel_coluna_origem = contrato/llm" do plano, como fracao). Harness (`assinatura_f2_*`, do bloco `estrutura_tabelas` que foi a LLM x gabarito): `_estrutura_tabela_lida`, `_papel_coluna_origem_contrato`, `_papel_coluna_correto`. Registradas no comparador | nao |
+
+Hipotese declarada antes de rodar: em construtoras, as 3 colunas de periodo
+de cada tabela de lancamentos/vendas passam a ser resolvidas pelo codigo
+(referencia, anterior, ano anterior) em toda tabela cujo cabecalho traz os
+periodos — o que vale para 7 das 8 construtoras (EZTEC `table002` tem os
+periodos nas linhas e fica com a LLM, como hoje). Como
+`assinatura_f3_indice_coluna_correto` ja e 1,0 na base, o ganho esperado nao e
+em acerto e sim em **garantia e custo**: a LLM deixa de decidir coluna onde o
+contrato decide, e o reasoning que hoje gasta com isso deve cair. Bancos
+(sem `papeis`) recebem `estrutura_tabelas` so com estrutura, sem papel — devem
+sair identicos a base. Prova de que a gramatica nao contradiz nenhum gabarito:
+teste de propriedade sobre os 8 gabaritos de construtoras (todo
+`cabecalho_coluna` que parseia como periodo e o periodo que o contrato deriva
+para o papel; >= 20 ancoragens conferidas).
+
+| metrica | papel | meta |
+| --- | --- | --- |
+| `assinatura_f2_papel_coluna_correto` | alvo | 1,0 — toda coluna que o codigo resolveu e a do gabarito |
+| `assinatura_f2_papel_coluna_origem_contrato` / `papel_coluna_origem_contrato` | alvo | >= 0,85 em construtoras (7/8 documentos com cabecalho de periodo); reportada, sem meta, em bancos |
+| `assinatura_f2_estrutura_tabela_lida` / `estrutura_tabela_lida` | alvo | 1,0 nas tabelas esperadas pelo gabarito |
+| `assinatura_f3_indice_coluna_correto` | guarda | 1,0 (ja e; agora garantido por codigo onde o contrato deriva) |
+| `assinatura_f3_rotulo_linha_correto`, `assinatura_f3_arquivo_origem_correto` | guarda | 0,889 / 1,0 — Fase 3.2 intocada (so a coluna de rotulo passou a vir da estrutura; igual a 0 em todas as tabelas atuais) |
+| `assinatura_f1_*` (Fase 1) | guarda | 100 % — nada em F1 foi tocado |
+| `resolucao_cobertura_obrigatorios`, `e2e_apto_para_bronze` | guarda | sem regressao |
+| valores resolvidos das 10 entidades | guarda | identicos a base — as colunas ja eram as certas; o mecanismo so as torna obrigatorias |
+| `llm_tentativas` / `llm_acerto_1a_tentativa` | guarda | nao pode piorar (1,083 / 0,917) — o validador novo so recusa coluna errada, que hoje nao acontece |
+| `e2e_tokens_llm` | custo | <= base +10 % de entrada (`estrutura_tabelas` e pequeno: cabecalhos + indices por tabela); saida (reasoning) deve cair em construtoras |
+
+Testes: `tests/unit/domain/test_period_grammar.py` (31: parse tolerante,
+recusa de sufixo de escopo, virada de ano, derivacoes conhecidas e
+desconhecidas, identidade ilegivel), `tests/unit/domain/test_table_structure.py`
+(13: cabecalho no schema x promovido, coluna de rotulo nao-zero, segmentos,
+ambiguidade, nota de rodape, caso EZTEC, contrato real no Cury, propriedade
+sobre os gabaritos), `tests/unit/application/test_column_roles_flow.py` (6:
+payload de unidade com `estrutura_tabelas` e `ancoragem_resolvida.indice_coluna`,
+validador aceita/recusa coluna de outro papel e coluna UDM, sem periodo na
+identidade nada e imposto), 2 casos de metricas em cada suite de metricas.
+Suite 187 -> 241, ruff limpo.
+
+**Pendencias abertas desde ja**: camada (b) do 2.3 (micro-chamada
+`classificar_colunas` para contrato sem `derivacao`) nao construida — nenhum
+contrato publicado precisa; bancos usam `periodo` por evidencia. Segmentos
+(2.4) sao lidos e enviados, mas a escolha marca x consolidado (MRV) segue
+decisao de contrato, nao de codigo. Cabecalho multi-linha (duas linhas de
+cabecalho) nao e tratado: a segunda linha vira dado.
+
+### Como rodar e comparar
+
+1. `python scripts/sincronizar_prompts_langfuse.py --verificar` deve acusar so
+   `comum-contrato` divergente; `--empurrar` publica a v8 com o rotulo
+   `production`.
+2. `ATLAS_RELEASE=exp-fase2-estrutura-tabela docker compose up -d
+   airflow-scheduler airflow-worker` e confirmar o rotulo no container.
+3. Mesmos 10 documentos, criacao inicial forcada, com `caffeinate -i`; nenhuma
+   outra DAG sob o rotulo.
+4. `python scripts/avaliar_assinatura_layout.py --release exp-fase2-estrutura-tabela`
+   (primeira release com `assinatura_f2_*`: aparecem no comparador como
+   "ausente em uma das releases", ler pelo valor absoluto) e
+   `comparar_releases_langfuse.py --base exp-gate-e-ancoragem-linha --novo
+   exp-fase2-estrutura-tabela`.
+5. Conferir `estrutura_tabelas.json` de um documento de construtoras no MinIO
+   (`papel_por_coluna` com as 3 colunas) e `current.json` de cada entidade
+   depois do veredito.
+

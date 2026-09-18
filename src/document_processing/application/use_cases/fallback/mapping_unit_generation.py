@@ -139,6 +139,18 @@ class MappingUnitGenerationMixin:
                 unit=unit,
                 loaded_artifacts=loaded_artifacts,
             )
+            if "estrutura_tabelas" in fragment_payload:
+                self._persist_llm_validated(
+                    fallback_context=fallback_context,
+                    stage=f"{unit_stage_prefix}/fragmento_layout_signature",
+                    filename=f"{unit_stage_prefix}/estrutura_tabelas.json",
+                    payload=table_structure_artifact(
+                        fragment_payload["estrutura_tabelas"],
+                        contract_context=fragment_payload.get("contrato_semantico_relevante", {}),
+                        document_identity=fragment_payload.get("identidade_documento"),
+                        unit_id=unit.id,
+                    ),
+                )
             logging.info(
                 "Unidade %s/%s (%s): iniciando geracao do fragmento de layout",
                 position,
@@ -326,7 +338,14 @@ class MappingUnitGenerationMixin:
         }
         expected = candidate_payload.get("entradas_esperadas")
         if isinstance(expected, list) and "identidade_documento" in candidate_payload:
-            payload["identidade_documento"] = candidate_payload["identidade_documento"]
+            identity = candidate_payload["identidade_documento"]
+            payload["identidade_documento"] = identity
+            scoped_contract = payload.get("contrato_semantico_relevante", {})
+            analyses = analyze_tables(
+                loaded_artifacts, contract_context=scoped_contract, document_identity=identity
+            )
+            if analyses:
+                payload["estrutura_tabelas"] = table_structures_payload(analyses)
             # Cada unidade ve so as chaves dos seus requisitos; as demais pertencem
             # a outra chamada e seriam "campo fora da unidade" no validador.
             payload["entradas_esperadas"] = attach_resolved_row_anchors(
@@ -336,7 +355,9 @@ class MappingUnitGenerationMixin:
                     if isinstance(entry, dict)
                     and str(entry.get("requisito", "")).strip() in unit_paths
                 ],
-                contract_context=payload.get("contrato_semantico_relevante", {}),
+                contract_context=scoped_contract,
                 loaded_artifacts=loaded_artifacts,
+                document_identity=identity,
+                analyses=analyses,
             )
         return payload

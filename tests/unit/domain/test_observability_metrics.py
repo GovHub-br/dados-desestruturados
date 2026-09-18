@@ -10,6 +10,7 @@ from document_processing.domain.observability import (
     fallback_stage_metrics,
     layout_validation_metrics,
     resolution_metrics,
+    table_structure_metrics,
     transition_metrics,
 )
 
@@ -202,6 +203,34 @@ class TransitionAndEndToEndMetricsTest(unittest.TestCase):
         sem_llm = _by_name(end_to_end_metrics(sucesso=True, exigiu_llm=False))
         self.assertEqual(com_llm["e2e_autonomia_deterministica"], 0.0)
         self.assertEqual(sem_llm["e2e_autonomia_deterministica"], 1.0)
+
+
+class TableStructureMetricsTest(unittest.TestCase):
+    def test_leitura_e_origem_dos_papeis_por_tabela(self) -> None:
+        estrutura = {
+            "unidade_mapeamento": "u1",
+            "tabelas": {
+                "tables/t1.json": {
+                    "cabecalho_lido": True,
+                    "papel_por_coluna": {"papel_periodo": {"1": "ref", "2": "ant"}},
+                },
+                "tables/t2.json": {"cabecalho_lido": False},
+            },
+            "papeis_esperados": {"papel_periodo": {"ref": "2T26", "ant": "1T26", "ano": "2T25"}},
+        }
+        metrics = table_structure_metrics(estrutura)
+        values = _by_name(metrics)
+        self.assertEqual(values["estrutura_tabela_lida"], 0.5)
+        # 2 tabelas x 3 papeis esperados = 6; so t1 resolveu 2.
+        self.assertAlmostEqual(values["papel_coluna_origem_contrato"], 2 / 6, places=5)
+        self.assertEqual(metrics[0].metadata, {"unidade_mapeamento": "u1"})
+
+    def test_sem_tabelas_ou_sem_papeis_esperados(self) -> None:
+        self.assertEqual(table_structure_metrics({"tabelas": {}}), [])
+        values = _by_name(
+            table_structure_metrics({"tabelas": {"tables/t1.json": {"cabecalho_lido": True}}})
+        )
+        self.assertEqual(values, {"estrutura_tabela_lida": 1.0})
 
 
 if __name__ == "__main__":

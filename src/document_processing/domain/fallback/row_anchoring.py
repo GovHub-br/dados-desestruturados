@@ -9,10 +9,10 @@ linha por codigo sempre que casarem uma unica linha, entre as tabelas ja
 carregadas para a unidade. Sem match unico, a decisao continua sendo da LLM
 (residuo) — nada muda para ela.
 
-Simplificacao assumida enquanto a Fase 2 (leitura de estrutura de tabela,
-incremento 4) nao existe: a coluna de rotulo e sempre a coluna 0 da tabela.
-E o mesmo default que o exemplo de schema do prompt ja usa
-(``seletor_linha.coluna_rotulo``); graficos (sem ``rows``) nao entram aqui.
+A coluna de rotulo vem da Fase 2 (``table_structure``) quando o chamador a
+informa em ``label_columns``; sem ela, vale a coluna 0 — o mesmo default que o
+exemplo de schema do prompt ja usa (``seletor_linha.coluna_rotulo``). Graficos
+(sem ``rows``) nao entram aqui.
 """
 
 from __future__ import annotations
@@ -97,14 +97,16 @@ def resolve_row_anchor(
     *,
     synonyms: Collection[str],
     tables: Mapping[str, Any],
+    label_columns: Mapping[str, int] | None = None,
 ) -> ResolvedRowAnchor | None:
     """Acha a linha unica, entre as tabelas ja carregadas, cujo rotulo casa um sinonimo.
 
     ``tables`` mapeia path do artefato -> conteudo JSON ja carregado para a
-    unidade (so entram os que tem ``rows``; graficos ficam de fora). Sem
-    sinonimo declarado, sem nenhuma linha casando, ou com mais de uma,
-    devolve ``None`` — ambiguidade fica com a LLM, nunca resolvida por
-    adivinhacao.
+    unidade (so entram os que tem ``rows``; graficos ficam de fora).
+    ``label_columns`` (path -> coluna de rotulo lida pela Fase 2) substitui o
+    default 0 onde existir. Sem sinonimo declarado, sem nenhuma linha casando,
+    ou com mais de uma, devolve ``None`` — ambiguidade fica com a LLM, nunca
+    resolvida por adivinhacao.
     """
     normalizados = {normalize_term(s) for s in synonyms if str(s).strip()}
     normalizados = {s for s in normalizados if len(s) >= _TAMANHO_MINIMO_SINONIMO}
@@ -118,8 +120,9 @@ def resolve_row_anchor(
         rows = artifact.get("rows")
         if not isinstance(rows, list):
             continue
+        coluna_rotulo = (label_columns or {}).get(path, COLUNA_ROTULO_PADRAO)
         for index, row in enumerate(rows):
-            label = _row_label(row)
+            label = _row_label(row, coluna_rotulo)
             if label is None:
                 continue
             normalized_label = normalize_term(label)

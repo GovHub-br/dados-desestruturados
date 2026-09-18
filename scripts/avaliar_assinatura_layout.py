@@ -32,6 +32,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 
 from document_processing.domain.observability.signature_evaluation import (  # noqa: E402
     anchoring_metrics,
+    column_role_metrics,
     expected_entries_metrics,
     selection_metrics,
     structural_metrics,
@@ -141,6 +142,23 @@ def _parsed(observation: dict[str, Any]) -> dict[str, Any]:
     return output if isinstance(output, dict) else {}
 
 
+def _estrutura_tabelas_do_input(observation: dict[str, Any]) -> dict[str, Any]:
+    """Bloco ``estrutura_tabelas`` que o pipeline enviou a LLM (mensagem ``user``)."""
+    mensagens = observation.get("input")
+    if not isinstance(mensagens, list):
+        return {}
+    for mensagem in mensagens:
+        if not isinstance(mensagem, dict) or mensagem.get("role") != "user":
+            continue
+        try:
+            conteudo = json.loads(str(mensagem.get("content") or ""))
+        except (TypeError, ValueError):
+            continue
+        if isinstance(conteudo, dict) and isinstance(conteudo.get("estrutura_tabelas"), dict):
+            return conteudo["estrutura_tabelas"]
+    return {}
+
+
 def _por_etapa(observations: list[dict[str, Any]]) -> dict[str, list[dict[str, Any]]]:
     grupos: dict[str, list[dict[str, Any]]] = defaultdict(list)
     for obs in observations:
@@ -168,6 +186,7 @@ def avaliar_trace(
     mapeamento_final: dict[str, Any] = {}
     mapeamento_primeira: dict[str, Any] = {}
     ausencias_final: list[dict[str, Any]] = []
+    estrutura_tabelas: dict[str, Any] = {}
     candidato_valido = True
     for nome, grupo in _por_etapa(observations).items():
         if nome.endswith("selecao_artefatos"):
@@ -189,6 +208,7 @@ def avaliar_trace(
             ausencias_final.extend(parsed.get("campos_nao_mapeados") or [])
             primeira = _parsed(grupo[0])
             mapeamento_primeira.update(primeira.get("mapeamento_canonico") or {})
+            estrutura_tabelas.update(_estrutura_tabelas_do_input(grupo[0]))
 
     identidade = _identidade_do_gabarito(gabarito)
     if mapeamento_primeira:
@@ -209,6 +229,9 @@ def avaliar_trace(
             for metric in anchoring_metrics(mapeamento_final, gabarito, unmapped=ausencias_final, etapa="final"):
                 metric.metadata["candidato_valido"] = candidato_valido
                 resultados.append((metric, None))
+    if gabarito and estrutura_tabelas:
+        for metric in column_role_metrics(estrutura_tabelas, gabarito):
+            resultados.append((metric, None))
     return resultados
 
 
