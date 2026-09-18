@@ -1056,6 +1056,59 @@ Validacoes:
 - Candidato invalido e rejeitado com motivo claro.
 - Nenhum layout existente no MinIO e modificado.
 
+### Entradas-alvo enumeradas pelo codigo (Fase 1 do plano da assinatura)
+
+A partir da release `exp-fase1-entradas-esperadas`, a LLM deixa de montar as
+chaves do `mapeamento_canonico`. O codigo as fecha antes da chamada, em
+`domain/fallback/target_enumeration.py`, a partir de tres fontes que ja
+existiam: os requisitos do contrato (`campos_obrigatorios`, suas
+`observacoes_obrigatorias` e `campos_contexto_obrigatorios`), `chaves_de_item`
+com `origem_valor` (ADR 0011 / P1) e a identidade do documento.
+
+Regras, uma por item do plano:
+
+| Item | Regra | Onde |
+| --- | --- | --- |
+| 1.1 | um alvo por `campos_obrigatorios[].path` | `enumerate_target_entries` |
+| 1.2 | uma entrada por `observacoes_obrigatorias[]`, herdando `obrigatorio` | idem |
+| 1.3 | uma entrada irma por campo de `campos_contexto_obrigatorios` que seja dinamico, com os mesmos filtros | idem (`papel_no_alvo = contexto`) |
+| 1.4 | filtro de array com `origem_valor = seletor_observacao` copiado dos `seletores` da observacao (o papel, nunca o literal) | `_filters_for` |
+| 1.5 | filtro com `origem_valor = identidade_documento` preenchido pelo codigo com o slug operacional (`fallback_context.entity_slug`); `chaves_de_item.<path>.atributo_identidade` escolhe `periodo` quando for o caso | `_identity_value` |
+| 1.6 | so paths de `paths_permitidos` que nao sejam derivados (`derivacoes`) nem fixos; folhas dinamicas fora de arrays que sobram entram como entradas `livre`, opcionais | `_free_leaf_paths` |
+| 1.7 | requisito cujo path e o proprio array e nao tem observacoes vira `modo_array = colecao` (uma `linhas_de_tabela` no path do array, sem filtro) | idem |
+
+O que fica com a LLM e somente o filtro cujo valor o documento decide
+(`origem_valor = evidencia`, por exemplo `valores[periodo=<evidencia>]` em
+bancos): a entrada sai com o marcador `<evidencia>` e `filtros_pendentes`, e a
+LLM cria uma instancia por rotulo lido no artefato. Marcadores e nomes de origem
+(`identidade_documento`, `evidencia`, `seletor_observacao`) nunca sao aceitos
+como valor de filtro.
+
+No payload, a lista chega como `entradas_esperadas` ao lado de
+`identidade_documento`, no mesmo bloco `user` que segue a instrucao de contrato
+(`comum-contrato`), tanto na geracao do candidato inteiro quanto no fragmento
+por unidade (cada unidade ve so as entradas dos seus requisitos). A selecao de
+artefatos nao a recebe: ela escolhe onde procurar, nao o que escrever.
+
+O validador (`_validate_candidate_matches_expected_entries`) refaz a
+enumeracao do contrato e da identidade — nao le a lista do payload — e recusa
+qualquer chave que nao seja uma entrada esperada (ou instancia de uma pendente),
+nomeando a chave certa para o mesmo campo, ou mandando remover quando o campo e
+preenchido deterministicamente pela DAG 2 (chave de item, derivacao, valor
+fixo). Em correcao parcial, chaves que ja existiam no layout base seguem
+aceitas. Sem `identidade_documento` no contexto (contratos legados, testes
+antigos) a regra nao se aplica e a validacao segue como antes.
+
+A identidade vem de fontes que a DAG ja validou: `entidade` e o slug da conf da
+DAG 3; `periodo` so entra quando o manifesto o publica. Um contrato que exija um
+atributo ausente falha na enumeracao, antes de qualquer chamada LLM, em vez de
+deixar a LLM adivinhar — e o que a baseline0 ensinou sobre a identidade do
+manifesto.
+
+Metricas correspondentes no harness (`assinatura_f1_*`):
+`entradas_obrigatorias_cobertas`, `chaves_fora_das_esperadas`,
+`contexto_irmao_presente` e `filtro_valor_identidade_correto`.
+
 ## Etapa 11: Materializar Layout Signature Candidato
 
 ### Objetivo

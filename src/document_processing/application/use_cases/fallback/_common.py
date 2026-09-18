@@ -77,3 +77,21 @@ from .prompts import (
     unit_mapping_structure_example,
     unit_mapping_structure_instruction,
 )
+
+
+def contract_and_targets_block(payload: dict[str, Any]) -> dict[str, Any]:
+    """Contrato, alvos e — quando o codigo as fechou — as entradas esperadas.
+
+    Bloco `user` que segue a instrucao de contrato nas duas etapas de geracao
+    (candidato inteiro e fragmento por unidade). A ordem e deliberada: a lista
+    de chaves prontas entra depois do contrato que a explica e antes dos
+    artefatos, para que a LLM leia o que deve preencher antes de ver onde procurar.
+    """
+    block: dict[str, Any] = {
+        "contrato_semantico_relevante": payload.get("contrato_semantico_relevante", {}),
+        "alvos_mapeaveis": payload.get("alvos_mapeaveis", []),
+    }
+    for name in ("identidade_documento", "entradas_esperadas"):
+        if name in payload:
+            block[name] = payload[name]
+    return block

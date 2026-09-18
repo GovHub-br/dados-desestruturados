@@ -45,6 +45,10 @@ class ItemKeySpec:
     path: str
     chave: str
     origem_valor: str | None = None
+    # Com origem identidade_documento, qual atributo da identidade e o valor do
+    # filtro (``entidade`` ou ``periodo``). Sem declaracao, a chave homonima da
+    # identidade e usada, e na falta dela a entidade.
+    atributo_identidade: str | None = None
 
 
 @dataclass(frozen=True)
@@ -72,7 +76,9 @@ def item_key_specs(contract: Any) -> dict[str, ItemKeySpec]:
     """Le ``chaves_de_item`` nas duas formas aceitas; vazio quando nao declarado.
 
     Forma curta: ``{"grupo.dados": "empresa"}``. Forma completa:
-    ``{"grupo.dados": {"chave": "empresa", "origem_valor": "identidade_documento"}}``.
+    ``{"grupo.dados": {"chave": "empresa", "origem_valor": "identidade_documento"}}``,
+    opcionalmente com ``atributo_identidade`` dizendo qual atributo da identidade
+    do documento preenche o filtro.
     """
     raw = _semantic(contract).get("chaves_de_item")
     if raw in (None, {}):
@@ -83,6 +89,7 @@ def item_key_specs(contract: Any) -> dict[str, ItemKeySpec]:
     for path, declared in raw.items():
         clean_path = str(path).strip()
         origem_valor: str | None = None
+        atributo_identidade: str | None = None
         if isinstance(declared, dict):
             clean_key = str(declared.get("chave", "")).strip()
             raw_origin = declared.get("origem_valor")
@@ -93,13 +100,21 @@ def item_key_specs(contract: Any) -> dict[str, ItemKeySpec]:
                         f"chaves_de_item[{clean_path!r}] usa origem_valor desconhecida "
                         f"{origem_valor!r}; aceitas: {sorted(ORIGENS_DE_CHAVE)}."
                     )
+            raw_attribute = declared.get("atributo_identidade")
+            if raw_attribute is not None:
+                atributo_identidade = str(raw_attribute).strip() or None
+                if origem_valor != "identidade_documento":
+                    raise ContractCapabilitiesError(
+                        f"chaves_de_item[{clean_path!r}] declara atributo_identidade sem "
+                        "origem_valor identidade_documento."
+                    )
         else:
             clean_key = str(declared).strip()
         if not clean_path or not clean_key:
             raise ContractCapabilitiesError(
                 f"chaves_de_item com entrada vazia: {path!r} -> {declared!r}."
             )
-        specs[clean_path] = ItemKeySpec(clean_path, clean_key, origem_valor)
+        specs[clean_path] = ItemKeySpec(clean_path, clean_key, origem_valor, atributo_identidade)
     schema_saida = contract.get("schema_saida") if isinstance(contract, dict) else None
     if schema_saida is not None:
         arrays = schema_array_paths(schema_saida)
@@ -123,6 +138,20 @@ def item_key_origins(contract: Any) -> dict[str, str]:
         for path, spec in item_key_specs(contract).items()
         if spec.origem_valor
     }
+
+
+def item_key_identity_attributes(contract: Any) -> dict[str, str]:
+    """path -> atributo_identidade, somente para os arrays que o declararam."""
+    return {
+        path: spec.atributo_identidade
+        for path, spec in item_key_specs(contract).items()
+        if spec.atributo_identidade
+    }
+
+
+def derived_paths(contract: Any) -> set[str]:
+    """Destinos de ``derivacoes`` sem o ``[*]``: campos que a DAG 2 preenche sozinha."""
+    return {derivation.destino.replace(WILDCARD, "") for derivation in derivations(contract)}
 
 
 def uses_generic_resolution(contract: Any) -> bool:

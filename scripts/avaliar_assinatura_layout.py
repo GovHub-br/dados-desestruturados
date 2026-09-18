@@ -32,6 +32,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 
 from document_processing.domain.observability.signature_evaluation import (  # noqa: E402
     anchoring_metrics,
+    expected_entries_metrics,
     selection_metrics,
     structural_metrics,
 )
@@ -189,18 +190,40 @@ def avaliar_trace(
             primeira = _parsed(grupo[0])
             mapeamento_primeira.update(primeira.get("mapeamento_canonico") or {})
 
+    identidade = _identidade_do_gabarito(gabarito)
     if mapeamento_primeira:
         for metric in structural_metrics(mapeamento_primeira, contrato, etapa="primeira_tentativa"):
             resultados.append((metric, None))
+        if identidade:
+            for metric in expected_entries_metrics(mapeamento_primeira, contrato, identidade, etapa="primeira_tentativa"):
+                resultados.append((metric, None))
     if mapeamento_final or ausencias_final:
         for metric in structural_metrics(mapeamento_final, contrato, unmapped=ausencias_final, etapa="final"):
             metric.metadata["candidato_valido"] = candidato_valido
             resultados.append((metric, None))
+        if identidade:
+            for metric in expected_entries_metrics(mapeamento_final, contrato, identidade, etapa="final"):
+                metric.metadata["candidato_valido"] = candidato_valido
+                resultados.append((metric, None))
         if gabarito:
             for metric in anchoring_metrics(mapeamento_final, gabarito, unmapped=ausencias_final, etapa="final"):
                 metric.metadata["candidato_valido"] = candidato_valido
                 resultados.append((metric, None))
     return resultados
+
+
+def _identidade_do_gabarito(gabarito: dict[str, Any] | None) -> dict[str, str]:
+    """Identidade que o pipeline teria: slug operacional e periodo publicado."""
+    if not gabarito:
+        return {}
+    identidade: dict[str, str] = {"entidade": str(gabarito.get("entidade", "")).strip()}
+    declarada = gabarito.get("identidade") or {}
+    if isinstance(declarada, dict):
+        if str(declarada.get("entidade", "")).strip():
+            identidade["entidade_nome"] = str(declarada["entidade"]).strip()
+        if str(declarada.get("periodo", "")).strip():
+            identidade["periodo"] = str(declarada["periodo"]).strip()
+    return identidade if identidade["entidade"] else {}
 
 
 def main() -> int:

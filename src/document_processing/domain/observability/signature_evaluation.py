@@ -24,6 +24,12 @@ from document_processing.domain.contracts.schema import (
     schema_paths,
 )
 from document_processing.domain.contracts.text_normalization import normalize_text
+from document_processing.domain.fallback.target_enumeration import (
+    ORIGEM_IDENTIDADE,
+    TargetEnumerationError,
+    enumerate_target_entries,
+    match_mapping_keys,
+)
 from document_processing.domain.layouts.paths import parse_mapping_path
 
 from .metrics import BOOLEAN, MetricValue
@@ -167,6 +173,83 @@ def structural_metrics(
         not declared_keys or filtros_chave_ok == filtros_total
     ) and filtros_seletor_ok == filtros_seletor_total
     metrics.append(MetricValue("assinatura_f1_estrutura_valida", estrutura_ok, data_type=BOOLEAN, comment="Nenhum erro estrutural (filtro ausente, chave errada, literal por papel, path fora do schema).", metadata=meta))
+    return metrics
+
+
+def expected_entries_metrics(
+    mapping: dict[str, Any],
+    contract: dict[str, Any],
+    document_identity: dict[str, str],
+    *,
+    etapa: str = "final",
+) -> list[MetricValue]:
+    """Fase 1 em codigo: as chaves geradas contra a lista fechada que o contrato fecha.
+
+    Precisa da identidade do documento (do gabarito: slug e periodo), porque o
+    filtro de identidade faz parte da chave esperada.
+    """
+    try:
+        entries = enumerate_target_entries(
+            contract_context=contract, document_identity=document_identity
+        )
+    except TargetEnumerationError:
+        return []
+    keys, _invalid = parse_keys(mapping)
+    match = match_mapping_keys(entries, [key.chave for key in keys])
+    meta = {"etapa": etapa}
+    metrics: list[MetricValue] = []
+
+    obrigatorias = [entry for entry in entries if entry.obrigatorio]
+    if obrigatorias:
+        cobertas = len(obrigatorias) - len(match.obrigatorias_sem_chave)
+        metrics.append(MetricValue("assinatura_f1_entradas_obrigatorias_cobertas", cobertas / len(obrigatorias), comment=f"Entradas obrigatorias enumeradas pelo codigo que o candidato preencheu com a chave exata. {cobertas} de {len(obrigatorias)}.", metadata=meta))
+    metrics.append(MetricValue("assinatura_f1_chaves_fora_das_esperadas", float(len(match.nao_esperadas)), comment="Chaves do candidato que nao correspondem a nenhuma entrada esperada (filtro, valor de identidade, path ou campo diferentes).", metadata=meta))
+
+    # 1.3 — para cada chave de valor, os irmaos de contexto com os mesmos filtros existem?
+    by_key = {key.chave: key for key in keys}
+    valor_total = valor_com_contexto = 0
+    for chave, entry in match.por_chave.items():
+        if entry is None or entry.papel_no_alvo != "valor":
+            continue
+        siblings = [
+            other
+            for other in entries
+            if other.papel_no_alvo == "contexto"
+            and other.requisito == entry.requisito
+            and other.seletores == entry.seletores
+        ]
+        if not siblings:
+            continue
+        valor_total += 1
+        filtros = by_key[chave].filtros_por_array
+        if all(
+            any(
+                match.por_chave.get(other_key) is sibling
+                and by_key[other_key].filtros_por_array == filtros
+                for other_key in match.por_chave
+            )
+            for sibling in siblings
+        ):
+            valor_com_contexto += 1
+    if valor_total:
+        metrics.append(MetricValue("assinatura_f1_contexto_irmao_presente", valor_com_contexto / valor_total, comment=f"Chaves de valor cujos campos de contexto foram mapeados com os mesmos filtros. {valor_com_contexto} de {valor_total}.", metadata=meta))
+
+    # 1.5 — filtros de identidade com o valor que o codigo teria escrito.
+    esperado_por_array = {
+        filtro.array: filtro.valor
+        for entry in entries
+        for filtro in entry.filtros
+        if filtro.origem == ORIGEM_IDENTIDADE and filtro.valor is not None
+    }
+    if esperado_por_array:
+        total = corretos = 0
+        for key in keys:
+            for array, (_chave, valor) in key.filtros_por_array.items():
+                if array in esperado_por_array:
+                    total += 1
+                    corretos += int(valor == esperado_por_array[array])
+        if total:
+            metrics.append(MetricValue("assinatura_f1_filtro_valor_identidade_correto", corretos / total, comment=f"Filtros de identidade iguais ao slug do documento. {corretos} de {total}.", metadata=meta))
     return metrics
 
 

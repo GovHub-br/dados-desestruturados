@@ -182,6 +182,12 @@ class FallbackContextProjectionMixin:
         declared_origins = item_key_origins(contract)
         if declared_origins:
             structure["origem_das_chaves"] = declared_origins
+        identity_attributes = item_key_identity_attributes(contract)
+        if identity_attributes:
+            structure["atributos_identidade"] = identity_attributes
+        declared_derivations = derived_paths(contract)
+        if declared_derivations:
+            structure["paths_derivados"] = sorted(declared_derivations)
         # Falha cedo se o contrato declarar papeis inconsistentes com as observacoes.
         role_specs_from_context(contract)
         return {

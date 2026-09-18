@@ -64,6 +64,7 @@ class FallbackContextLoadingMixin:
             classification=fallback_classification,
             inventory=inventory,
             inventory_key=inventory_key,
+            document_identity=self._document_identity(fallback_context, manifest),
         )
         fallback_problem_context["fallback_context"] = fallback_context
         fallback_problem_context["layout_signature_base_ref"] = {
@@ -164,6 +165,7 @@ class FallbackContextLoadingMixin:
             classification=fallback_classification,
             inventory=inventory,
             inventory_key=inventory_key,
+            document_identity=self._document_identity(fallback_context, manifest),
         )
         fallback_problem_context["fallback_context"] = fallback_context
         fallback_problem_context["layout_signature_base_ref"] = None
@@ -219,6 +221,36 @@ class FallbackContextLoadingMixin:
 
 
     @staticmethod
+    def _document_identity(
+        fallback_context: dict[str, str],
+        manifest: dict[str, Any],
+    ) -> dict[str, str]:
+        """Quem e o documento, a partir de fontes que a DAG ja validou.
+
+        ``entidade`` e o slug operacional recebido na conf (nunca o nome livre do
+        manifesto, que a baseline0 mostrou nao ser confiavel). ``periodo`` so entra
+        quando o manifesto o publica; um contrato que exija o atributo ausente
+        falha na enumeracao, antes da LLM, em vez de deixar a LLM adivinhar.
+        """
+        identity = {"entidade": str(fallback_context["entity_slug"]).strip()}
+        candidate = manifest.get("candidate", {}) if isinstance(manifest, dict) else {}
+        if not isinstance(candidate, dict):
+            candidate = {}
+        name = str(
+            fallback_context.get("entity_name")
+            or candidate.get("entity_name")
+            or candidate.get("company_name")
+            or ""
+        ).strip()
+        if name:
+            identity["entidade_nome"] = name
+        period = str(candidate.get("period_label", "")).strip()
+        if period:
+            identity["periodo"] = period
+        return identity
+
+
+    @staticmethod
     def _is_initial_layout_creation_context(fallback_context: dict[str, str]) -> bool:
         """Identifica o modo em que nao existe layout signature base."""
         return (
@@ -265,6 +297,7 @@ class FallbackContextLoadingMixin:
         classification: dict[str, Any],
         inventory: dict[str, Any],
         inventory_key: str | None,
+        document_identity: dict[str, str] | None = None,
     ) -> dict[str, Any]:
         """Encaminha a montagem de contexto para o builder dedicado."""
         return self.context_builder.build_fallback_problem_context(
@@ -276,4 +309,5 @@ class FallbackContextLoadingMixin:
             classification=classification,
             inventory=inventory,
             inventory_key=inventory_key,
+            document_identity=document_identity,
         )

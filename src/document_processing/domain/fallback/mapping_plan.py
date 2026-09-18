@@ -160,15 +160,20 @@ class MappingPlanService:
             "paths_permitidos": sorted(set(allowed)),
             "arrays_que_exigem_seletor": sorted(set(arrays)),
         }
-        item_keys = structure.get("chaves_de_item", {})
-        if isinstance(item_keys, dict):
-            scoped_keys = {
-                str(array_path): str(key)
-                for array_path, key in item_keys.items()
+        for block in ("chaves_de_item", "origem_das_chaves", "atributos_identidade"):
+            declared = structure.get(block, {})
+            if not isinstance(declared, dict):
+                continue
+            scoped = {
+                str(array_path): str(value)
+                for array_path, value in declared.items()
                 if str(array_path) in set(arrays)
             }
-            if scoped_keys:
-                subschema["chaves_de_item"] = scoped_keys
+            if scoped:
+                subschema[block] = scoped
+        derived = structure.get("paths_derivados", [])
+        if isinstance(derived, list) and derived:
+            subschema["paths_derivados"] = sorted(str(path) for path in derived)
         return subschema
 
 

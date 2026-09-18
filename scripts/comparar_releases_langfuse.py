@@ -67,6 +67,9 @@ MAIOR_MELHOR = {
     "assinatura_f1_cobertura_obrigatorios",
     "assinatura_f1_cobertura_opcionais",
     "assinatura_f1_estrutura_valida",
+    "assinatura_f1_entradas_obrigatorias_cobertas",
+    "assinatura_f1_contexto_irmao_presente",
+    "assinatura_f1_filtro_valor_identidade_correto",
     "assinatura_f3_arquivo_origem_correto",
     "assinatura_f3_rotulo_linha_correto",
     "assinatura_f3_indice_coluna_correto",
@@ -89,6 +92,7 @@ MENOR_MELHOR = {
     "assinatura_f1_array_sem_filtro",
     "assinatura_f1_paths_fora_do_permitido",
     "assinatura_f1_filtro_papel_literal",
+    "assinatura_f1_chaves_fora_das_esperadas",
     "assinatura_f3_ausencia_falso_negativo",
     "assinatura_f3_ausencia_falso_positivo",
 }

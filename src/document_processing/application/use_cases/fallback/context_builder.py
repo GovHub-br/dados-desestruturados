@@ -39,8 +39,14 @@ class FallbackProblemContextBuilder(
         classification: dict[str, Any],
         inventory: dict[str, Any],
         inventory_key: str | None,
+        document_identity: dict[str, str] | None = None,
     ) -> dict[str, Any]:
-        """Monta o pacote estruturado que limita o problema para a futura LLM."""
+        """Monta o pacote estruturado que limita o problema para a futura LLM.
+
+        ``document_identity`` (``entidade`` = slug operacional, ``periodo`` quando
+        conhecido) e o que permite ao codigo fechar as chaves do mapeamento antes
+        da LLM (Fase 1 do plano da assinatura); sem ela, a lista nao e enviada.
+        """
         rejected_rules = self.classification_service.rejected_rules(validation)
         unresolved_required = self.classification_service.unresolved_required_audit_items(audit)
         broken_fields = self._broken_output_fields(unresolved_required)
@@ -152,6 +158,8 @@ class FallbackProblemContextBuilder(
             },
             "_manifesto_extracao_completo": manifest,
         }
+        if document_identity:
+            context["identidade_documento"] = dict(document_identity)
         context["llm_payloads"] = self.build_llm_payloads(context)
         return context
 

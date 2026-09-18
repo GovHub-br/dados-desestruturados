@@ -23,6 +23,12 @@ from .models import (
     LayoutSignatureFragment,
     UnmappedRequiredField,
 )
+from .target_enumeration import (
+    TargetEnumerationError,
+    describe_unexpected_key,
+    enumerate_target_entries,
+    match_mapping_keys,
+)
 
 
 class UnmappedRequiredFieldsError(RuntimeError):
@@ -124,6 +130,10 @@ class FallbackCandidateValidationService:
 
         self._validate_candidate_lineage(candidate_model, fallback_problem_context)
         self._validate_candidate_allowed_scope(candidate_model, fallback_problem_context)
+        self._validate_candidate_matches_expected_entries(
+            candidate_model,
+            fallback_problem_context,
+        )
         self._validate_candidate_covers_mapping_requirements(
             candidate_model,
             fallback_problem_context,
@@ -230,6 +240,55 @@ class FallbackCandidateValidationService:
         }
         self.validate_candidate_layout(candidate_projection, scoped_context)
         return fragment_model
+
+    def _validate_candidate_matches_expected_entries(
+        self,
+        candidate: LayoutSignatureCandidate,
+        fallback_problem_context: dict[str, Any],
+    ) -> None:
+        """Fase 1: cada chave gerada tem de ser uma das entradas que o codigo enumerou.
+
+        A enumeracao e refeita aqui, do contrato e da identidade do documento, e
+        nao lida do payload: o validador prova o candidato contra a mesma fonte
+        que gerou a lista, sem depender de nada que passou pela LLM. Sem
+        identidade no contexto (contratos legados, testes antigos) a regra nao
+        se aplica e o restante da validacao segue como antes.
+        """
+        identity = fallback_problem_context.get("identidade_documento")
+        contract = fallback_problem_context.get("contrato_semantico_relevante", {})
+        if not isinstance(identity, dict) or not identity or not isinstance(contract, dict):
+            return
+        try:
+            entries = enumerate_target_entries(
+                contract_context=contract, document_identity=identity
+            )
+        except TargetEnumerationError as exc:
+            raise RuntimeError(str(exc)) from exc
+        match = match_mapping_keys(entries, list(candidate.mapeamento_canonico))
+        unexpected = list(match.nao_esperadas)
+        if candidate.escopo_correcao == self.PARTIAL_SCOPE:
+            # Correcao parcial preserva o layout base inteiro, inclusive chaves
+            # anteriores a esta regra; so o que a LLM acrescentou e comparado.
+            base_context = fallback_problem_context.get(
+                "layout_signature_base_validation_context", {}
+            )
+            base_paths = (
+                base_context.get("mapeamento_canonico_paths", [])
+                if isinstance(base_context, dict)
+                else []
+            )
+            known = {str(path) for path in base_paths} if isinstance(base_paths, list) else set()
+            unexpected = [key for key in unexpected if key not in known]
+        if not unexpected:
+            return
+        detalhes = "; ".join(describe_unexpected_key(key, entries) for key in unexpected[:6])
+        restante = len(unexpected) - 6
+        raise RuntimeError(
+            f"Layout candidato usou {len(unexpected)} chave(s) fora de entradas_esperadas. "
+            "As chaves de mapeamento_canonico devem ser copiadas exatamente da lista "
+            f"entradas_esperadas do payload. {detalhes}"
+            + (f"; e mais {restante} chave(s) no mesmo caso." if restante > 0 else "")
+        )
 
     @staticmethod
     def _validate_candidate_covers_mapping_requirements(
