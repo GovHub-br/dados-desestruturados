@@ -167,20 +167,35 @@ class FallbackCandidateValidationService:
         # ou parou antes do campo terminal (esta dentro da unidade, so incompleto),
         # ou aponta para outra unidade. Reportar os dois como "fora da unidade"
         # manda o laco de reparo procurar o erro onde ele nao esta.
+        # Uma colecao linhas_de_tabela e avaliada pelos campos terminais que ela
+        # preenche (campos, valores_fixos, valores_por_segmento): e a forma que o
+        # prompt pede para arrays cuja chave vem da evidencia, e a DAG 2 a resolve.
         incomplete_paths: list[str] = []
         foreign_paths: list[str] = []
-        for mapping_path in fragment_model.mapeamento_canonico:
-            normalized = normalize_schema_path(mapping_path)
-            if any(
+        def _allowed(candidate_path: str) -> bool:
+            normalized = normalize_schema_path(candidate_path)
+            return any(
                 normalized == required_path or normalized.startswith(f"{required_path}.")
                 for required_path in allowed_prefixes
-            ):
+            )
+
+        for mapping_path, entry in fragment_model.mapeamento_canonico.items():
+            if _allowed(mapping_path):
                 continue
-            if any(
+            expanded = self._expanded_mapping_paths(
+                mapping_path, entry.model_dump(mode="json", exclude_none=True)
+            )[1:]
+            if expanded and all(_allowed(path) for path in expanded):
+                continue
+            unresolved = [path for path in expanded if not _allowed(path)]
+            normalized = normalize_schema_path(mapping_path)
+            if not expanded and any(
                 required_path.startswith(f"{normalized}.")
                 for required_path in allowed_prefixes
             ):
                 incomplete_paths.append(mapping_path)
+            elif expanded:
+                foreign_paths.extend(unresolved)
             else:
                 foreign_paths.append(mapping_path)
         if incomplete_paths:
@@ -232,6 +247,36 @@ class FallbackCandidateValidationService:
         return fragment_model
 
     @staticmethod
+    def _expanded_mapping_paths(mapping_path: str, entry: dict[str, Any]) -> list[str]:
+        """Paths que uma entrada cobre.
+
+        Entradas comuns valem por si. Uma colecao ``linhas_de_tabela`` vale pelo
+        proprio path (requisito que e a colecao inteira) e por ``<path>.<campo>``
+        para cada ``campos[].caminho_saida`` e cada chave de ``valores_fixos`` e
+        ``valores_por_segmento``, preservando os filtros dos arrays ancestrais.
+        """
+        if str(entry.get("tipo_origem", "")).strip() != "linhas_de_tabela":
+            return [mapping_path]
+        fields: set[str] = set()
+        for field in entry.get("campos", []) or []:
+            if isinstance(field, dict):
+                output_path = str(field.get("caminho_saida", "")).strip()
+                if output_path:
+                    fields.add(output_path)
+        fixed_values = entry.get("valores_fixos")
+        if isinstance(fixed_values, dict):
+            fields.update(str(key) for key in fixed_values)
+        for segment in entry.get("segmentos", entry.get("faixas_linhas", [])) or []:
+            if not isinstance(segment, dict):
+                continue
+            segment_values = segment.get("valores_por_segmento")
+            if isinstance(segment_values, dict):
+                fields.update(str(key) for key in segment_values)
+        if not fields:
+            return [mapping_path]
+        return [mapping_path, *(f"{mapping_path}.{field}" for field in sorted(fields))]
+
+    @staticmethod
     def _validate_candidate_covers_mapping_requirements(
         candidate: LayoutSignatureCandidate,
         fallback_problem_context: dict[str, Any],
@@ -243,9 +288,14 @@ class FallbackCandidateValidationService:
         except MappingRequirementsError as exc:
             raise RuntimeError(str(exc)) from exc
 
+        # Uma colecao linhas_de_tabela cobre cada campo terminal que declara em
+        # campos/valores_fixos/valores_por_segmento, com os seletores do path.
         parsed_mappings = [
-            (mapping_path, *parsed_mapping_path(mapping_path))
-            for mapping_path in candidate.mapeamento_canonico
+            (mapping_path, *parsed_mapping_path(expanded_path))
+            for mapping_path, entry in candidate.mapeamento_canonico.items()
+            for expanded_path in FallbackCandidateValidationService._expanded_mapping_paths(
+                mapping_path, entry.model_dump(mode="json", exclude_none=True)
+            )
         ]
         missing: list[tuple[str, dict[str, str]]] = []
         for requirement in requirements:
@@ -328,9 +378,14 @@ class FallbackCandidateValidationService:
         except MappingRequirementsError as exc:
             raise RuntimeError(str(exc)) from exc
 
+        # Uma colecao linhas_de_tabela cobre cada campo terminal que declara em
+        # campos/valores_fixos/valores_por_segmento, com os seletores do path.
         parsed_mappings = [
-            (mapping_path, *parsed_mapping_path(mapping_path))
-            for mapping_path in candidate.mapeamento_canonico
+            (mapping_path, *parsed_mapping_path(expanded_path))
+            for mapping_path, entry in candidate.mapeamento_canonico.items()
+            for expanded_path in FallbackCandidateValidationService._expanded_mapping_paths(
+                mapping_path, entry.model_dump(mode="json", exclude_none=True)
+            )
         ]
         missing: list[tuple[str, dict[str, str]]] = []
         for requirement in requirements:

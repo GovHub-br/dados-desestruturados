@@ -399,11 +399,60 @@ Pendencias abertas ou mantidas:
 5. Cyrela: 3 -> 4 tentativas e +57 % tokens para o mesmo verdadeiro negativo;
    a ausencia comprovada ainda custa um ciclo de reparo (item 6.2).
 
+## Lote 6: colecao por evidencia aceita sem reparo (`exp-colecao-fragmento`)
+
+Linha de base: `exp-prereq-fase0.1` (Santander pelo run `__r2`), codigo
+`5d8c212`, contratos construtoras v1.9.0 e bancos v2.2.0. Origem: analise do
+Santander no lote 5 — as duas primeiras respostas rejeitadas (base e `__r2`)
+eram a mesma `linhas_de_tabela` correta e completa sobre
+`dados[indicador=inadimplencia_90_dias].valores`; o validador de fragmento so
+aceitava paths terminais e o reparo forcava a expansao em uma celula por linha.
+O reasoning gravado mostra o modelo citando a frase do prompt ("use uma unica
+linhas_de_tabela no path da colecao") e a lista `paths_mapeamento_permitidos`
+(so folhas) como sinais contraditorios; qual vencia era sorteio.
+
+| rotulo | itens | hipotese | metrica-alvo | guarda | custo |
+| --- | --- | --- | --- | --- | --- |
+| `exp-colecao-fragmento` | M1-M5 | com prompt e validador dizendo a mesma coisa, a colecao por evidencia e aceita na 1a resposta: menos tentativas, menos tokens e candidato completo sem depender do reparo | `llm_tentativas` do fragmento de percentuais (bancos) = 1; `assinatura_f3_ausencia_falso_negativo` = 0 na 1a tentativa; `llm_tokens_total` do fragmento (bancos) queda | `assinatura_f1_cobertura_obrigatorios`, `assinatura_f3_arquivo_origem_correto`, `assinatura_f0_selecao_revocacao`, `e2e_apto_para_bronze`; **construtoras: todos os deltas 0,000** (nao tem array por evidencia) | `e2e_tokens_llm` sem subir |
+
+- **M1** — validador de fragmento (`domain/fallback/candidate_validation.py`):
+  uma `linhas_de_tabela` vale pelo proprio path e pelos terminais que preenche
+  (`campos[].caminho_saida`, chaves de `valores_fixos`/`valores_por_segmento`),
+  herdando os filtros ancestrais. Celula no path do array segue "parou antes do
+  campo terminal"; campo fora da unidade segue rejeitado.
+- **M2** — cobertura de requisitos usa a mesma expansao: a colecao cobre
+  `.valor` e os `campos_contexto_obrigatorios` da observacao; sem `periodo` nos
+  `campos`, continua "nao cobre requisitos obrigatorios".
+- **M3** — `MappingPlanService` deriva `colecoes_por_evidencia` (array mais
+  interno acima do campo exigido cuja chave tem `origem_valor=evidencia`),
+  expoe no payload da unidade e inclui o path em `paths_permitidos`. Arrays
+  por papel ou identidade nao viram colecao.
+- **M4** — prompt: `unit-mapping-escopo` explica `colecoes_por_evidencia`
+  (uma `linhas_de_tabela` cobrindo todas as linhas, filtros ancestrais
+  mantidos, sem filtro no proprio array); `comum-contrato` ganha o exemplo
+  aninhado `grupo.dados[chave=valor].itens`. Publicados no Langfuse com
+  `sincronizar_prompts_langfuse.py --empurrar` (duas versoes novas, rotulo
+  `production`) antes do disparo.
+- **M5** — harness: `anchoring_metrics` projeta a colecao numa ancoragem por
+  linha do gabarito (arquivo, faixa do segmento, coluna do campo); sem isso a
+  melhoria apareceria como 5 falsos negativos.
+- **M6** — provas antes da LLM: resolucao local do candidato-colecao do
+  Santander = os mesmos 5 itens do candidato reparado (2,6 / 2,8 / 3,1 / 3,3 /
+  3,3, `instituicao` derivada); fragmento rejeitado da base aceito pelo
+  validador novo; candidato consolidado (26 entradas) aceito pela validacao
+  completa; `tests/unit/domain/test_collection_by_evidence.py` (9 casos).
+  Suite 130 -> 139 unit; ruff limpo.
+
+Fora deste lote, como release propria: cardinalidade declarada no contrato
+para arrays por evidencia (M7), para que a forma por celula com um unico
+periodo deixe de ser valida.
+
 ### Ultimo commit de cada release
 
 | release | ultimo commit | estado |
 | --- | --- | --- |
 | `baseline0` | `1c67bf2` — "feat: agora modelos retornam resoning para facilitar debug de execucoes" | rodada e comparada |
 | `exp-prereq-fase0` | `f41cbff` — "feat: pre-requisitos + fase 0 (pre-filtro de evidencia) da assinatura de layout" | rodada e comparada (Lote 4) |
-| `exp-prereq-fase0.1` | `3b9c5f5` — "feat: pre-filtro de evidencia le o artefato inteiro quando o resumo nao decide" (item 5.3; fecha os tres itens do lote 5) | rodada e comparada em 17/09, `__r2` do Santander em 18/09: **aprovada com ressalva; base de referencia atual** |
+| `exp-prereq-fase0.1` | `3b9c5f5` — "feat: pre-filtro de evidencia le o artefato inteiro quando o resumo nao decide" (item 5.3; fecha os tres itens do lote 5) | rodada e comparada em 17/09, `__r2` do Santander em 18/09: aprovada com ressalva; base do lote 6 |
+| `exp-colecao-fragmento` | (este commit) — colecao por evidencia aceita sem reparo (M1-M5) | a rodar |
 
