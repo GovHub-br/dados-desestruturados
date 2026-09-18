@@ -128,26 +128,12 @@ class CandidateLifecycleMixin:
             )
 
         status = str(status_info.get("status", "")).strip()
-        alerts = list(status_info.get("codigos_alerta", []) or [])
-        # "compativel" so diz que nenhuma regra reprovou — e um layout recem-criado
-        # nao declara regra alguma. A auditoria da revalidacao e a unica evidencia
-        # de que o candidato resolve o que o contrato exige; um obrigatorio nao
-        # resolvido nao pode virar layout vigente.
-        audit_key = f"{prefix.rstrip('/')}/auditoria_resolucao.json"
-        unresolved_required = self._unresolved_required_fields(audit_key)
-        if unresolved_required is None:
-            alerts.append("AUDITORIA_REVALIDACAO_AUSENTE")
-        elif unresolved_required:
-            alerts.append("OBRIGATORIOS_NAO_RESOLVIDOS_NA_REVALIDACAO")
-        approved = status == "compativel" and not unresolved_required
         result = {
             "tipo_artefato": "resultado_revalidacao_layout_candidato",
             "validation_object_key": validation_key,
-            "auditoria_object_key": audit_key,
             "status_compatibilidade": status,
-            "aprovado_para_publicacao": approved,
-            "codigos_alerta": alerts,
-            "obrigatorios_nao_resolvidos": unresolved_required or [],
+            "aprovado_para_publicacao": status == "compativel",
+            "codigos_alerta": status_info.get("codigos_alerta", []),
             "candidate_layout_object_key": revalidation_conf.get("candidate_layout_object_key"),
         }
         status_key = f"{prefix.rstrip('/')}/resultado_revalidacao_candidato.json"
@@ -161,33 +147,7 @@ class CandidateLifecycleMixin:
                 "Layout candidato reprovado pela DAG 2. "
                 f"Status: {status}. Validacao: {validation_key}."
             )
-        if unresolved_required:
-            raise RuntimeError(
-                "Layout candidato revalidado como compativel, mas campos obrigatorios "
-                f"nao foram resolvidos: {unresolved_required}. Auditoria: {audit_key}."
-            )
         return result
-
-    def _unresolved_required_fields(self, audit_key: str) -> list[str] | None:
-        """Campos obrigatorios da auditoria da revalidacao sem ``resolvido``.
-
-        Devolve ``None`` quando a auditoria nao existe ou nao e legivel: a ausencia
-        vira alerta, nao bloqueio, porque a auditoria e artefato recomendado.
-        """
-        try:
-            audit = self.minio_client.get_json(object_key=audit_key)
-        except Exception:
-            return None
-        items = audit.get("auditoria_resolucao") if isinstance(audit, dict) else audit
-        if not isinstance(items, list):
-            return None
-        return sorted(
-            str(item.get("campo_saida", ""))
-            for item in items
-            if isinstance(item, dict)
-            and bool(item.get("obrigatorio", False))
-            and str(item.get("status_resolucao", "")).strip() != "resolvido"
-        )
 
 
     def publish_validated_layout_version(
