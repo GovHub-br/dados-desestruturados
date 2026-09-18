@@ -454,5 +454,5 @@ periodo deixe de ser valida.
 | `baseline0` | `1c67bf2` — "feat: agora modelos retornam resoning para facilitar debug de execucoes" | rodada e comparada |
 | `exp-prereq-fase0` | `f41cbff` — "feat: pre-requisitos + fase 0 (pre-filtro de evidencia) da assinatura de layout" | rodada e comparada (Lote 4) |
 | `exp-prereq-fase0.1` | `3b9c5f5` — "feat: pre-filtro de evidencia le o artefato inteiro quando o resumo nao decide" (item 5.3; fecha os tres itens do lote 5) | rodada e comparada em 17/09, `__r2` do Santander em 18/09: aprovada com ressalva; base do lote 6 |
-| `exp-colecao-fragmento` | (este commit) — colecao por evidencia aceita sem reparo (M1-M5) | a rodar |
+| `exp-colecao-fragmento` | `2879aba` — colecao por evidencia aceita sem reparo (M1-M5) | a rodar |
 
