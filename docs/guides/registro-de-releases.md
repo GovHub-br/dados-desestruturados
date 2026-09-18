@@ -402,6 +402,7 @@ Pendencias que o lote abriu ou manteve:
 | (reversao) | `8338a97` — reverte `15668c1` e `2879aba`; prompts v4 = v1; ponteiros na publicacao da fase0.1 | codigo, prompts e layouts vigentes = `exp-prereq-fase0.1`; `ATLAS_RELEASE=base-fase0.1-revertido` |
 | `exp-fase1-entradas-esperadas` | `325f923` — Fase 1 do plano (entradas-alvo enumeradas pelo codigo, validador chave a chave) | rodada e comparada em 18/09; confirmada por `__r2` (Plano&Plano e Santander) tambem em 18/09: invariantes da Fase 1 100 % em 10/10, 0 regressoes reais. **Aprovada; passa a ser a base de referencia** |
 | `exp-declaracao-explicita-opcional` | nao commitado (revertido) | rodada em 18/09, comparada contra `exp-fase1-entradas-esperadas`: **reprovada e revertida no mesmo dia** — piorou o problema que tentava resolver. Ver secao abaixo |
+| `exp-gate-e-ancoragem-linha` | `ff68638` — gate por obrigatorios (reimplementa C3 do lote 7) + ancoragem de linha por sinonimo (item 3.2) + gabarito EZTEC/Plano&Plano + comparador prefere `__r2` | ver secao "Lote 9" abaixo; a rodar |
 
 ## Experimento revertido: declaracao explicita de ausencia opcional (`exp-declaracao-explicita-opcional`, 2026-09-18)
 
@@ -478,11 +479,11 @@ reversao.
 
 ## Lote 9: gate por obrigatorios + ancoragem de linha por sinonimo (`exp-gate-e-ancoragem-linha`)
 
-Quatro pendencias do lote 8 fechadas juntas em 18/09. Duas sao dados/tooling,
-sem efeito no pipeline (nao mudam o que a DAG 3 gera, so como ele e medido);
-duas sao mudanca real de comportamento — juntas porque cada uma e pequena e
-independente, nao porque testam a mesma hipotese. Base de comparacao:
-`exp-fase1-entradas-esperadas` (lote 8).
+Quatro pendencias do lote 8 fechadas juntas em 18/09, commit `ff68638`. Duas
+sao dados/tooling, sem efeito no pipeline (nao mudam o que a DAG 3 gera, so
+como ele e medido); duas sao mudanca real de comportamento — juntas porque
+cada uma e pequena e independente, nao porque testam a mesma hipotese. Base
+de comparacao: `exp-fase1-entradas-esperadas` (lote 8).
 
 | item | o que muda | pipeline? |
 | --- | --- | --- |
