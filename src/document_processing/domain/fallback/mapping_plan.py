@@ -25,18 +25,13 @@ class MappingUnit:
     requirements: tuple[MappingRequirement, ...]
     mapping_paths: tuple[str, ...]
     subschema: dict[str, Any]
-    # Arrays cuja chave de item vem da evidencia (``origem_valor=evidencia``) e que
-    # contem diretamente os campos terminais exigidos. Quantos itens existem so o
-    # artefato sabe, entao a forma esperada e uma unica ``linhas_de_tabela`` no
-    # path do array, que vale pelos campos terminais que preenche.
-    collection_paths: tuple[str, ...] = ()
 
     @property
     def paths(self) -> tuple[str, ...]:
         return tuple(requirement.path for requirement in self.requirements)
 
     def payload(self) -> dict[str, Any]:
-        payload = {
+        return {
             "id": self.id,
             "raiz_semantica": self.root_path,
             "campos_saida": list(self.paths),
@@ -44,9 +39,6 @@ class MappingUnit:
             "subesquema": self.subschema,
             "status": "pendente",
         }
-        if self.collection_paths:
-            payload["colecoes_por_evidencia"] = list(self.collection_paths)
-        return payload
 
 
 class MappingPlanService:
@@ -65,10 +57,6 @@ class MappingPlanService:
 
         units: list[MappingUnit] = []
         for root_path, grouped_requirements in grouped.items():
-            collection_paths = self._collection_paths(
-                contract_context=contract_context,
-                requirements=grouped_requirements,
-            )
             units.append(
                 MappingUnit(
                     id=self._unit_id(root_path),
@@ -79,9 +67,7 @@ class MappingPlanService:
                         contract_context=contract_context,
                         root_path=root_path,
                         requirements=grouped_requirements,
-                        collection_paths=collection_paths,
                     ),
-                    collection_paths=tuple(collection_paths),
                 )
             )
         return units
@@ -130,47 +116,6 @@ class MappingPlanService:
         return sorted(paths)
 
     @staticmethod
-    def _collection_paths(
-        *,
-        contract_context: dict[str, Any],
-        requirements: list[MappingRequirement],
-    ) -> list[str]:
-        """Arrays com chave vinda da evidencia que contem os campos exigidos.
-
-        So o array mais interno acima de cada campo terminal conta: e nele que
-        uma ``linhas_de_tabela`` produz um item por linha do artefato. Arrays
-        cuja chave e um seletor do contrato (papel) ou a identidade do documento
-        ficam de fora, porque uma colecao nao sabe atribuir esses valores.
-        """
-        structure = contract_context.get("estrutura_schema_saida", {})
-        if not isinstance(structure, dict):
-            return []
-        origins = structure.get("origem_das_chaves", {})
-        array_paths = structure.get("arrays_que_exigem_seletor", [])
-        if not isinstance(origins, dict) or not isinstance(array_paths, list):
-            return []
-        evidence_arrays = {
-            str(path)
-            for path in array_paths
-            if isinstance(path, str) and str(origins.get(path, "")).strip() == "evidencia"
-        }
-        if not evidence_arrays:
-            return []
-        collections: set[str] = set()
-        for required_path in MappingPlanService._mapping_paths(requirements):
-            ancestors = [
-                str(path)
-                for path in array_paths
-                if isinstance(path, str) and required_path.startswith(f"{path}.")
-            ]
-            if not ancestors:
-                continue
-            innermost = max(ancestors, key=len)
-            if innermost in evidence_arrays:
-                collections.add(innermost)
-        return sorted(collections)
-
-    @staticmethod
     def _unit_id(root_path: str) -> str:
         normalized = re.sub(r"[^a-z0-9]+", "_", root_path.casefold()).strip("_")
         return normalized or "unidade_mapeamento"
@@ -181,7 +126,6 @@ class MappingPlanService:
         contract_context: dict[str, Any],
         root_path: str,
         requirements: list[MappingRequirement],
-        collection_paths: list[str] | None = None,
     ) -> dict[str, Any]:
         structure = contract_context.get("estrutura_schema_saida", {})
         if not isinstance(structure, dict):
@@ -189,19 +133,13 @@ class MappingPlanService:
         required_paths = MappingPlanService._mapping_paths(requirements)
         all_paths = structure.get("paths_permitidos", [])
         array_paths = structure.get("arrays_que_exigem_seletor", [])
-        collections = set(collection_paths or [])
-        # O path de uma colecao por evidencia entra em paths_permitidos para que a
-        # unidade e o validador aceitem a mesma forma que o prompt pede.
         allowed = [
             str(path)
             for path in all_paths
             if isinstance(path, str)
-            and (
-                path in collections
-                or any(
-                    path == required_path or path.startswith(f"{required_path}.")
-                    for required_path in required_paths
-                )
+            and any(
+                path == required_path or path.startswith(f"{required_path}.")
+                for required_path in required_paths
             )
         ]
         # Um array e sempre ancestral do campo terminal exigido, nunca descendente:

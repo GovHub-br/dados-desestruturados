@@ -222,59 +222,6 @@ def selection_metrics(
 # ---------------------------------------------------------------------------
 
 
-def _collection_entry_for_anchor(
-    collections: list[tuple[ParsedKey, dict[str, Any]]],
-    requisito: str,
-    selectors: frozenset[tuple[str, str]],
-    anchor: dict[str, Any],
-) -> dict[str, Any] | None:
-    """Projeta uma colecao ``linhas_de_tabela`` na ancoragem de uma linha do gabarito.
-
-    A colecao cobre a observacao quando seu path e o pai do requisito, seus filtros
-    estao contidos nos seletores da ancoragem e o campo terminal do requisito e um
-    dos ``campos`` lidos por coluna. A linha vale pelo indice: a colecao le a faixa
-    inteira, entao a ancoragem esta certa se o indice do gabarito cai num segmento.
-    """
-    parent, _, terminal = requisito.rpartition(".")
-    for key, entry in collections:
-        if key.path != parent:
-            continue
-        own = {(k, normalize_text(v)) for k, v in key.filtros_por_array.values()}
-        if not own <= set(selectors):
-            continue
-        column = next(
-            (
-                field.get("indice_coluna")
-                for field in entry.get("campos", []) or []
-                if isinstance(field, dict) and str(field.get("caminho_saida", "")).strip() == terminal
-            ),
-            None,
-        )
-        if column is None:
-            continue
-        segments = entry.get("segmentos", entry.get("faixas_linhas")) or []
-        if not segments and "linha_inicial" in entry:
-            segments = [entry]
-        index = anchor.get("indice_linha")
-        in_range = isinstance(index, int) and any(
-            isinstance(segment, dict)
-            and isinstance(segment.get("linha_inicial"), int)
-            and isinstance(segment.get("linha_final"), int)
-            and segment["linha_inicial"] <= index <= segment["linha_final"]
-            for segment in segments
-        )
-        return {
-            "arquivo_origem": entry.get("arquivo_origem"),
-            "seletor_linha": (
-                {"valor_aceito": anchor.get("rotulo_linha"), "indice_linha_esperado": index}
-                if in_range
-                else {"valor_aceito": None, "indice_linha_esperado": None}
-            ),
-            "seletor_coluna": {"indice_coluna_esperado": column},
-        }
-    return None
-
-
 def anchoring_metrics(
     mapping: dict[str, Any],
     gabarito: dict[str, Any],
@@ -285,13 +232,9 @@ def anchoring_metrics(
     """Fase 3: arquivo, linha e coluna de cada observacao esperada pelo gabarito."""
     keys, _invalid = parse_keys(mapping)
     by_path_and_selectors: dict[tuple[str, frozenset[tuple[str, str]]], dict[str, Any]] = {}
-    collections: list[tuple[ParsedKey, dict[str, Any]]] = []
     for key in keys:
-        entry = mapping[key.chave]
-        if isinstance(entry, dict) and str(entry.get("tipo_origem", "")).strip() == "linhas_de_tabela":
-            collections.append((key, entry))
         selectors = frozenset((k, normalize_text(v)) for k, v in key.filtros_por_array.values())
-        by_path_and_selectors[(key.path, selectors)] = entry
+        by_path_and_selectors[(key.path, selectors)] = mapping[key.chave]
 
     meta = {"etapa": etapa}
     total = arquivo_ok = linha_ok = coluna_ok = ausentes = 0
@@ -302,8 +245,6 @@ def anchoring_metrics(
             total += 1
             selectors = frozenset((str(k), normalize_text(v)) for k, v in (anchor.get("seletores") or {}).items())
             entry = by_path_and_selectors.get((str(requisito), selectors))
-            if not isinstance(entry, dict):
-                entry = _collection_entry_for_anchor(collections, str(requisito), selectors, anchor)
             if not isinstance(entry, dict):
                 ausentes += 1
                 continue
