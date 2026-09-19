@@ -402,8 +402,9 @@ Pendencias que o lote abriu ou manteve:
 | (reversao) | `8338a97` — reverte `15668c1` e `2879aba`; prompts v4 = v1; ponteiros na publicacao da fase0.1 | codigo, prompts e layouts vigentes = `exp-prereq-fase0.1`; `ATLAS_RELEASE=base-fase0.1-revertido` |
 | `exp-fase1-entradas-esperadas` | `325f923` — Fase 1 do plano (entradas-alvo enumeradas pelo codigo, validador chave a chave) | rodada e comparada em 18/09; confirmada por `__r2` (Plano&Plano e Santander) tambem em 18/09: invariantes da Fase 1 100 % em 10/10, 0 regressoes reais. **Aprovada; passa a ser a base de referencia** |
 | `exp-declaracao-explicita-opcional` | nao commitado (revertido) | rodada em 18/09, comparada contra `exp-fase1-entradas-esperadas`: **reprovada e revertida no mesmo dia** — piorou o problema que tentava resolver. Ver secao abaixo |
-| `exp-gate-e-ancoragem-linha` | `ff68638` — gate por obrigatorios (reimplementa C3 do lote 7) + ancoragem de linha por sinonimo (item 3.2) + gabarito EZTEC/Plano&Plano + comparador prefere `__r2` | rodada e comparada em 18/09: **aprovada** — `assinatura_f3_rotulo_linha_correto` 0,667 -> 0,889, Plano&Plano fecha a variancia por codigo, nenhuma guarda regrediu. Passa a ser a base de referencia |
+| `exp-gate-e-ancoragem-linha` | `ff68638` — gate por obrigatorios (reimplementa C3 do lote 7) + ancoragem de linha por sinonimo (item 3.2) + gabarito EZTEC/Plano&Plano + comparador prefere `__r2` | rodada e comparada em 18/09: **aprovada** — `assinatura_f3_rotulo_linha_correto` 0,667 -> 0,889, nenhuma guarda regrediu. Passa a ser a base de referencia. *Correcao (19/09): a atribuicao "Plano&Plano fecha a variancia por codigo" estava errada — o mecanismo nunca rodou nesta release (mesmo bug de desembrulho do lote 10); o acerto foi da LLM lendo o sinonimo do contrato. Ver nota no resultado do lote 9* |
 | `exp-fase2-estrutura-tabela` | `ea028e6` (codigo da Fase 2: `c0bcae8`) | rodada em 18/09 (lote 10; base `exp-gate-e-ancoragem-linha`): **bloqueada por bug de integracao** — `loaded_artifacts` real vem embrulhado em `{object_key, formato, sample}` e `analyze_tables`/`attach_resolved_row_anchors`/`_table_scope` leem `rows` no nivel errado; mecanismo nunca ativou em nenhum dos 10 documentos, 0 metricas `assinatura_f2_*` gravadas. Mesmo bug ja existia em `ff68638` (lote 9) — reabre a atribuicao de causa do item 3.2 (ver pendencia 3 do lote 10) |
+| `exp-fase2-bugfix-desembrulho` | `741806a` — corrige o desembrulho de `loaded_artifacts` nos 3 pontos afetados | rodada e comparada em 19/09 (base `exp-gate-e-ancoragem-linha`): **reprovada** — `assinatura_f2_*` bateram a meta pela primeira vez (mecanismo confirmado ativo em producao), mas o item 3.2 forcou uma ancora errada em `itau` (`resolve_row_anchor` nao escopa por tabela/secao nem valida celula numerica) e derrubou 2 guardas (`assinatura_f3_arquivo_origem_correto`, `e2e_apto_para_bronze`). Ver resultado detalhado no lote 10 |
 
 ## Experimento revertido: declaracao explicita de ausencia opcional (`exp-declaracao-explicita-opcional`, 2026-09-18)
 
@@ -562,6 +563,21 @@ Confirmacoes diretas no MinIO (protocolo "leitura limpa"):
   agora **garantido por codigo**, nao por sorte de LLM (o sinonimo `"vendas
   contratadas brutas"` do contrato v1.9.1 casou uma unica linha entre as
   candidatas). Fecha a variancia que persistia desde o lote 5.
+
+  > **Correcao (registrada no lote 10, confirmada no reprocessamento pos-fix
+  > de 19/09 — ver secao abaixo):** essa afirmacao estava errada. O bug de
+  > desembrulho de `loaded_artifacts` (`.get("rows")` no nivel errado) ja
+  > existia neste commit; `attach_resolved_row_anchors` nunca recebeu uma
+  > tabela com `rows` de verdade e nunca anexou `ancoragem_resolvida` a
+  > nenhuma entrada, em nenhum documento desta release. O valor do
+  > Plano&Plano bateu o gabarito porque a LLM leu o sinonimo diretamente do
+  > texto do contrato e escolheu certo sozinha — nao por enforcement de
+  > codigo. O veredito "aprovada" nao muda (nenhum valor errado foi
+  > publicado), mas a causa era outra. Depois do fix (commit `741806a`), o
+  > mecanismo passou a rodar de fato — e revelou uma falha de escopo
+  > propria (ver `itau` no reprocessamento abaixo), entao "garantido por
+  > codigo" segue nao sendo uma descricao segura ate essa falha ser
+  > corrigida e reconfirmada.
 - **Gate (item 8) — rodou, nao bloqueou nada.** `resultado_revalidacao_candidato.json`
   dos 9 documentos publicados: `aprovado_para_publicacao=true`,
   `obrigatorios_nao_resolvidos=[]` em todos. Confirma a hipotese declarada
@@ -822,4 +838,103 @@ Pendencias que este lote abriu:
 5. `rotulo_resolvido_por_sinonimo` (pendencia do lote 9) segue sem score — e
    agora ainda mais necessaria, ja que e a unica forma de medir se o item 3.2
    funciona de fato depois do fix.
+
+### Resultado do reprocessamento pos-fix (`exp-fase2-bugfix-desembrulho`, 19/09) — mecanismo confirmado ativo, nova falha de escopo encontrada
+
+Correcao do desembrulho aplicada (`table_artifact_content` em
+`table_structure.py`, usada por `read_table_structure`,
+`attach_resolved_row_anchors` e `_table_scope` — os 3 pontos que liam
+`loaded_artifacts` errado; o quarto ponto, `resolve_row_anchor`, nao precisou
+mudar porque seus chamadores agora entregam o conteudo ja desembrulhado).
+Testes: fixtures de `test_column_roles_flow.py` e `test_row_anchoring_flow.py`
+trocadas para a forma real embrulhada; confirmado via `git stash` que 7 de 10
+casos falhavam sem a correcao. 6 casos novos dedicados em
+`test_table_structure.py`. Suite 241→247, `ruff` limpo. Commit `741806a`.
+
+Rodada 00:36-00:43 UTC (10 documentos, mesmo lote de `/tmp/lote-fase2.json`),
+prompt `comum-contrato` v8 inalterado (`--verificar` deu 0 divergentes).
+Harness gravou 383 scores (vs. 362 do lote 10 buggy — a diferenca sao as
+`assinatura_f2_*`, que agora existem). Comparador contra
+`exp-gate-e-ancoragem-linha` (mesma base do lote 10):
+
+| metrica | papel | base | novo | leitura |
+| --- | --- | --- | --- | --- |
+| `assinatura_f2_estrutura_tabela_lida` | alvo | ausente | **1,000** (n=9) | primeira medicao real — meta atingida |
+| `assinatura_f2_papel_coluna_correto` | alvo | ausente | **1,000** (n=6) | primeira medicao real — meta atingida |
+| `assinatura_f2_papel_coluna_origem_contrato` | alvo | ausente | **1,000** (n=6) | primeira medicao real — meta atingida |
+| `assinatura_f1_cobertura_opcionais` | — | 0,875 | 0,900 | melhorou |
+| `assinatura_f3_arquivo_origem_correto` | **guarda** | 1,000 | 0,926 | **REGREDIU** — causa raiz identificada, ver abaixo |
+| `assinatura_f3_rotulo_linha_correto` | — | 0,889 | 0,759 | regrediu, mesma causa |
+| `assinatura_f3_indice_coluna_correto` | — | 1,000 | 0,956 | regrediu, mesma causa |
+| `e2e_apto_para_bronze` | **guarda** | 0,900 | 0,800 | **REGREDIU** — 1 documento a mais falhou (ver `itau` abaixo) |
+| `e2e_sucesso` / `revalidacao_aprovada` / `publicacao_realizada` | — | 0,900 | 0,800 | mesmo efeito |
+| `e2e_tokens_llm` / `fallback_tokens_total` | custo | 31.638 | 32.812 (+3,7%) | regrediu — mais uma unidade sem publicar custa retrabalho |
+| demais (`assinatura_f0_*`, `assinatura_f1_*` restantes, `resolucao_*`, `selecao_*`, `llm_*`) | guarda/diag | — | — | estaveis, identicas ao lote 10 |
+
+**Confirmacoes estruturais diretas no MinIO (protocolo "leitura limpa"):**
+
+- `estrutura_tabelas.json` agora existe para os 10 documentos (Cury:
+  `papel_por_coluna` com `origem_papeis: "contrato"` nas duas tabelas,
+  colunas `periodo_referencia`/`periodo_comparativo_anterior`/`mesmo_periodo_ano_anterior`
+  resolvidas certas) — a Fase 2 esta lendo e resolvendo de verdade, nao mais
+  um no-op.
+- `ancoragem_resolvida` foi anexada pela primeira vez em producao: 3 entradas
+  em `direcional` (com `indice_coluna`) e 6 em `eztc3` (sem `indice_coluna` —
+  Fase 2 nao fechou o papel da coluna para essas, o residuo de linha ainda
+  funcionou). Nos demais documentos nao houve match unico de sinonimo — o
+  mecanismo ficou como residuo, do jeito que o design preve.
+
+**Causa raiz da regressao (`itau`, unico documento que passou a falhar; `cyre3`
+falhava do mesmo jeito na base — LLM ja recusava por evidencia insuficiente de
+unidades vendidas, nao e regressao nova):** o campo obrigatorio
+`carteira_de_credito.valores[jun/26].valor` resolvia certo na base
+(`tables/table002.json`, secao "Carteira de credito", linha rotulada
+`"Total¹"`, valor `1.522,4`). Na release nova, `resolve_row_anchor`
+(`row_anchoring.py`) procurou o sinonimo `"carteira de credito"` entre
+**todas** as tabelas carregadas para a unidade `indicadores_monetarios` — nao
+so a tabela certa — e achou "match unico" em `tables/table006.json`, secao
+"Guidance 2026", linha 0, cujo rotulo (`"Carteiradecréditototal¹ Carteira de
+crédito - Brasil"`) contem a frase literalmente, ainda que seja um texto de
+rodapé, nao um dado tabular real; a linha certa em `table002` chama-se
+`"Total¹"` e nunca entra na disputa porque nao contem o sinonimo no proprio
+rotulo. Por design (`attach_resolved_row_anchors`: "a LLM copia em vez de
+escolher"), a entrada levou essa ancora forcada, a LLM copiou o texto de
+guidance ("Crescimento entre 5,5% e 9,5%...") no lugar de um numero, a
+normalizacao falhou (`valor_normalizado: null`), o campo obrigatorio ficou
+`nao_resolvido` e o documento nao foi publicado
+(`OBRIGATORIOS_NAO_RESOLVIDOS_NA_REVALIDACAO`).
+
+**O bug do desembrulho nao causou isso — ele so permitiu que este mecanismo
+rodasse pela primeira vez, e ao rodar, expos uma falha de design propria que
+sempre existiu em `resolve_row_anchor` e nunca tinha sido exercitada com dado
+real:** a busca por sinonimo nao escopa por tabela/secao compativel com o
+indicador, nem valida se a celula candidata parece um valor de fato (numerico)
+antes de aceitar o match como "unico".
+
+**Veredito: reprovada — regressao real, causa raiz confirmada, nao e ruido.**
+As duas guardas que regrediram (`assinatura_f3_arquivo_origem_correto`,
+`e2e_apto_para_bronze`) tem uma explicacao mecanica unica e reproduzivel, nao
+uma variancia difusa. Ao mesmo tempo, os tres alvos declarados da Fase 2
+(`assinatura_f2_*`) bateram a meta pela primeira vez, e o item 3.2 provou
+engatar de verdade quando tem dado real — o objetivo do lote foi alcancado
+tecnicamente, mas o efeito colateral bloqueia aprovacao nesta forma.
+
+Pendencias que este reprocessamento abriu:
+
+1. **Corrigir o escopo de `resolve_row_anchor`**: antes de aceitar uma linha
+   candidata, exigir que ela tenha pelo menos uma celula fora da coluna de
+   rotulo que passe pela mesma checagem de "parece numero" que a Fase 2 ja
+   usa (`_CELULA_NUMERICA` em `table_structure.py` — exportar em vez de
+   duplicar). Teria descartado a linha de "Guidance 2026" (celula e uma frase
+   inteira, nao um numero isolado) sem afetar o match certo em `table002`
+   (celula `1.522,4` bate a regex). Reavaliar tambem se a busca deveria
+   preferir tabelas cujo `title_canonical`/secao bate o nome do indicador,
+   quando existir mais de uma candidata.
+2. **Re-rodar depois do fix** antes de declarar o item 3.2 pronto para
+   estender a outras entidades de bancos.
+3. `rotulo_resolvido_por_sinonimo` segue sem score dedicado (pendencia
+   repetida do lote 9 e do lote 10).
+
+`exp-gate-e-ancoragem-linha` segue como base de referencia — este
+reprocessamento nao a substitui.
 
