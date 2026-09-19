@@ -13,6 +13,7 @@ from document_processing.domain.fallback.row_anchoring import (
 
 METRICAS_CONSTRUTORAS = {
     "vendas": {
+        "tipo_operacao": "venda",
         "indicadores": {
             "numero_de_unidades": {
                 "sinonimos": [
@@ -21,12 +22,13 @@ METRICAS_CONSTRUTORAS = {
                     "vendas contratadas brutas",
                 ]
             }
-        }
+        },
     },
     "lancamentos": {
+        "tipo_operacao": "lancamento",
         "indicadores": {
             "numero_de_unidades": {"sinonimos": ["Número de Unidades", "unidades lançadas"]}
-        }
+        },
     },
 }
 
@@ -225,6 +227,97 @@ def test_grupo_generico_compartilhado_nao_vaza_para_tabela_do_outro_grupo():
     ancora = resolve_row_anchor(
         synonyms=sinonimos_lancamentos,
         tables={"tables/table003.json": TABELA_VENDAS},
+        table_groups=grupo_tabela,
+        entry_group=indicator_group_for_entry(
+            requisito="balancos_das_empresas.lancamentos.dados.valores.valor",
+            seletores={},
+            metric_groups=METRICAS_CONSTRUTORAS,
+        ),
+    )
+    assert ancora is None
+
+
+def test_vocabulario_de_linha_nao_decide_sozinho_sem_o_nome_da_tabela():
+    # Reproduz o achado real (eztc3, exp-fase2-item24-escopo antes do fix do
+    # nome): a tabela de vendas tem so UMA linha com vocabulario de indicador
+    # ("Numero de unidades"), e esse sinonimo e compartilhado com lancamentos
+    # — as demais linhas ("VSO", "Distratos", "Preco Medio") nao aparecem em
+    # nenhum sinonimo do contrato. Contagem de linha sozinha empata 1 a 1 e
+    # nao decide; so o titulo da tabela ("name") resolve.
+    tabela_vendas_real = {
+        "rows": [
+            ["Vendas Brutas", "675,1"],
+            ["Preço Médio", "815"],
+            ["VSO Bruta (%)", "16,9%"],
+            ["Distratos", "97,5"],
+            ["Número de unidades (#)", "756"],
+        ]
+    }
+    grupo_sem_nome = table_metric_groups(
+        {"tables/table003.json": tabela_vendas_real},
+        label_columns=None,
+        metric_groups=METRICAS_CONSTRUTORAS,
+    )
+    assert grupo_sem_nome == {}
+
+    tabela_vendas_com_nome = {**tabela_vendas_real, "name": "Vendas"}
+    grupo_com_nome = table_metric_groups(
+        {"tables/table003.json": tabela_vendas_com_nome},
+        label_columns=None,
+        metric_groups=METRICAS_CONSTRUTORAS,
+    )
+    assert grupo_com_nome == {"tables/table003.json": "vendas"}
+
+
+def test_titulo_da_tabela_de_lancamentos_tambem_classifica():
+    tabela_lancamentos = {"name": "Lançamentos", "rows": [["1T", "2.022"], ["2T", "914"]]}
+    grupo = table_metric_groups(
+        {"tables/table002.json": tabela_lancamentos},
+        label_columns=None,
+        metric_groups=METRICAS_CONSTRUTORAS,
+    )
+    assert grupo == {"tables/table002.json": "lancamentos"}
+
+
+def test_nome_generico_de_tabela_nao_classifica_nada():
+    tabela = {"name": "Table 3", "rows": [["Numero de Unidades", "100"]]}
+    grupo = classify_table_metric_group(
+        tabela["rows"],
+        0,
+        {"vendas": {"numero de unidades"}, "lancamentos": {"numero de unidades"}},
+        nome_tabela=tabela["name"],
+        group_title_terms={"vendas": {"vendas", "venda"}, "lancamentos": {"lancamentos", "lancamento"}},
+    )
+    assert grupo is None
+
+
+def test_nome_da_tabela_impede_vazamento_mesmo_sem_linha_distintiva():
+    # Versao completa do achado eztc3, com o `name` que o Docling sempre
+    # preenche: a tabela de vendas (so com o sinonimo generico compartilhado)
+    # deixa de contaminar o indicador de lancamentos.
+    tabela_vendas_real = {
+        "name": "Vendas",
+        "rows": [
+            ["Vendas Brutas", "675,1"],
+            ["Preço Médio", "815"],
+            ["VSO Bruta (%)", "16,9%"],
+            ["Distratos", "97,5"],
+            ["Número de unidades (#)", "756"],
+        ],
+    }
+    sinonimos_lancamentos = indicator_synonyms_for_entry(
+        requisito="balancos_das_empresas.lancamentos.dados.valores.valor",
+        seletores={},
+        metric_groups=METRICAS_CONSTRUTORAS,
+    )
+    grupo_tabela = table_metric_groups(
+        {"tables/table003.json": tabela_vendas_real},
+        label_columns=None,
+        metric_groups=METRICAS_CONSTRUTORAS,
+    )
+    ancora = resolve_row_anchor(
+        synonyms=sinonimos_lancamentos,
+        tables={"tables/table003.json": tabela_vendas_real},
         table_groups=grupo_tabela,
         entry_group=indicator_group_for_entry(
             requisito="balancos_das_empresas.lancamentos.dados.valores.valor",

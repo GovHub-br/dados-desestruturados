@@ -27,11 +27,17 @@ sozinho nao resolve:
 
 - **Grupo de metrica compartilhado**: dois grupos (ex.: "vendas" e
   "lancamentos") podem declarar um sinonimo generico em comum (ex.: "Numero
-  de Unidades"). Se so a tabela do outro grupo estiver carregada, esse
-  sinonimo genérico "casa" a linha errada. ``classify_table_metric_group``
-  classifica cada tabela pelo vocabulario majoritario dos seus proprios
-  rotulos contra os sinonimos de cada grupo; ``resolve_row_anchor`` descarta
-  tabelas cujo grupo classificado diverge do grupo desta entrada.
+  de Unidades"), e a tabela do grupo errado costuma ter poucas (ou nenhuma)
+  linha com vocabulario de indicador — a maioria das suas linhas e sobre
+  metricas que o contrato nem declara (ex.: "VSO", "Distratos", "Preco
+  Medio"), entao contar so linhas nao distingue os grupos.
+  ``classify_table_metric_group`` usa primeiro o nome/titulo da propria
+  tabela (``name``, que o Docling preenche com o titulo ou a secao do
+  documento — ex.: "Vendas", "Lancamentos" — sempre presente, generico
+  quando o documento nao da titulo) contra o nome de cada grupo e seu
+  ``tipo_operacao`` (ambos ja no contrato); so cai para o vocabulario
+  majoritario dos rotulos de linha quando o nome nao decide. ``resolve_row_anchor``
+  descarta tabelas cujo grupo classificado diverge do grupo desta entrada.
 - **Categoria consolidada vs. linha da marca**: uma tabela pode repetir uma
   linha-categoria com dado (ex.: "Unidades Lancadas" = 5511) seguida de
   linhas por marca (ex.: "Direcional" = 3896, "Riva" = 1615). Quando a
@@ -164,17 +170,58 @@ def _group_synonyms(metric_groups: Mapping[str, Any]) -> dict[str, set[str]]:
     return resultado
 
 
-def classify_table_metric_group(
-    rows: Any, coluna_rotulo: int, group_synonyms: Mapping[str, set[str]]
-) -> str | None:
-    """Grupo de metrica majoritario entre os rotulos da tabela; ``None`` sem maioria clara.
-
-    Usa o mesmo vocabulario de sinonimos de indicador que resolve a linha
-    para decidir a que assunto a tabela pertence — sem isso, um sinonimo
-    generico compartilhado por dois grupos (ex.: "Numero de Unidades" em
-    vendas e lancamentos) casa a unica tabela carregada mesmo quando ela e
-    inteira sobre o outro assunto.
+def _group_title_terms(metric_groups: Mapping[str, Any]) -> dict[str, set[str]]:
+    """Termos que identificam o assunto do grupo (nao do indicador), para bater com o
+    titulo/secao da tabela: o proprio nome do grupo e o ``tipo_operacao`` que ele
+    declara (ex.: grupo "vendas" com ``tipo_operacao: "venda"``). Titulos reais de
+    tabela costumam ser a palavra do assunto ("Vendas", "Lancamentos"), nao o nome
+    do indicador — o vocabulario de ``_group_synonyms`` quase nunca bate neles.
     """
+    resultado: dict[str, set[str]] = {}
+    for group_name, group in metric_groups.items():
+        termos = {str(group_name), str(group_name).replace("_", " ")}
+        if isinstance(group, Mapping):
+            tipo_operacao = group.get("tipo_operacao")
+            if tipo_operacao:
+                termos.add(str(tipo_operacao))
+        normalizados = {normalize_term(t) for t in termos}
+        normalizados = {t for t in normalizados if len(t) >= _TAMANHO_MINIMO_SINONIMO}
+        if normalizados:
+            resultado[str(group_name)] = normalizados
+    return resultado
+
+
+def classify_table_metric_group(
+    rows: Any,
+    coluna_rotulo: int,
+    group_synonyms: Mapping[str, set[str]],
+    *,
+    nome_tabela: str | None = None,
+    group_title_terms: Mapping[str, set[str]] | None = None,
+) -> str | None:
+    """Grupo de metrica da tabela; ``None`` sem sinal claro o bastante para decidir.
+
+    Primeiro tenta o titulo/secao da propria tabela (``nome_tabela``, o campo
+    ``name`` que o Docling preenche sempre — titulo real quando o documento
+    da um, generico como "Table 3" quando nao) contra ``group_title_terms``
+    (nome do grupo + ``tipo_operacao``): titulos reais de tabela dizem o
+    assunto ("Vendas", "Lancamentos"), nao o nome do indicador. So cai para o
+    vocabulario de sinonimos de indicador nos rotulos de linha
+    (``group_synonyms``) quando o titulo nao decide — tabelas reais tem
+    muitas linhas de metricas que o contrato nem declara (ex.: "VSO",
+    "Distratos"), entao contar linhas sozinho quase nunca acha maioria clara.
+    """
+    if nome_tabela and group_title_terms:
+        normalizado = normalize_term(nome_tabela)
+        if normalizado:
+            candidatos = [
+                nome
+                for nome, termos in group_title_terms.items()
+                if any(termo in normalizado for termo in termos)
+            ]
+            if len(candidatos) == 1:
+                return candidatos[0]
+
     if not isinstance(rows, list) or not group_synonyms:
         return None
     contagem: dict[str, int] = {}
@@ -199,9 +246,10 @@ def table_metric_groups(
     label_columns: Mapping[str, int] | None,
     metric_groups: Mapping[str, Any],
 ) -> dict[str, str]:
-    """Grupo classificado para cada tabela carregada; so entram as com maioria clara."""
+    """Grupo classificado para cada tabela carregada; so entram as com sinal claro."""
     sinonimos_por_grupo = _group_synonyms(metric_groups)
-    if not sinonimos_por_grupo:
+    termos_de_titulo = _group_title_terms(metric_groups)
+    if not sinonimos_por_grupo and not termos_de_titulo:
         return {}
     grupos: dict[str, str] = {}
     for path, artifact in tables.items():
@@ -209,7 +257,11 @@ def table_metric_groups(
             continue
         coluna_rotulo = (label_columns or {}).get(path, COLUNA_ROTULO_PADRAO)
         grupo = classify_table_metric_group(
-            artifact.get("rows"), coluna_rotulo, sinonimos_por_grupo
+            artifact.get("rows"),
+            coluna_rotulo,
+            sinonimos_por_grupo,
+            nome_tabela=artifact.get("name"),
+            group_title_terms=termos_de_titulo,
         )
         if grupo is not None:
             grupos[path] = grupo
