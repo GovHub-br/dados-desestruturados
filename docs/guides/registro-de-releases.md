@@ -405,6 +405,7 @@ Pendencias que o lote abriu ou manteve:
 | `exp-gate-e-ancoragem-linha` | `ff68638` — gate por obrigatorios (reimplementa C3 do lote 7) + ancoragem de linha por sinonimo (item 3.2) + gabarito EZTEC/Plano&Plano + comparador prefere `__r2` | rodada e comparada em 18/09: **aprovada** — `assinatura_f3_rotulo_linha_correto` 0,667 -> 0,889, nenhuma guarda regrediu. Passa a ser a base de referencia. *Correcao (19/09): a atribuicao "Plano&Plano fecha a variancia por codigo" estava errada — o mecanismo nunca rodou nesta release (mesmo bug de desembrulho do lote 10); o acerto foi da LLM lendo o sinonimo do contrato. Ver nota no resultado do lote 9* |
 | `exp-fase2-estrutura-tabela` | `ea028e6` (codigo da Fase 2: `c0bcae8`) | rodada em 18/09 (lote 10; base `exp-gate-e-ancoragem-linha`): **bloqueada por bug de integracao** — `loaded_artifacts` real vem embrulhado em `{object_key, formato, sample}` e `analyze_tables`/`attach_resolved_row_anchors`/`_table_scope` leem `rows` no nivel errado; mecanismo nunca ativou em nenhum dos 10 documentos, 0 metricas `assinatura_f2_*` gravadas. Mesmo bug ja existia em `ff68638` (lote 9) — reabre a atribuicao de causa do item 3.2 (ver pendencia 3 do lote 10) |
 | `exp-fase2-bugfix-desembrulho` | `741806a` — corrige o desembrulho de `loaded_artifacts` nos 3 pontos afetados | rodada e comparada em 19/09 (base `exp-gate-e-ancoragem-linha`): **reprovada** — `assinatura_f2_*` bateram a meta pela primeira vez (mecanismo confirmado ativo em producao), mas o item 3.2 forcou uma ancora errada em `itau` (`resolve_row_anchor` nao escopa por tabela/secao nem valida celula numerica) e derrubou 2 guardas (`assinatura_f3_arquivo_origem_correto`, `e2e_apto_para_bronze`). Ver resultado detalhado no lote 10 |
+| `exp-fase2-ancoragem-numerica` | `37a5d26` — exige celula numerica na linha candidata de `resolve_row_anchor` | rodada e comparada em 19/09 (base `exp-gate-e-ancoragem-linha`): **reprovada** — `itau` confirmado corrigido, mas achado novo em `eztc3`/`direcional`: ambiguidade de grupo de metricas/entidade dentro da mesma tabela, gap ja mapeado como item 2.4 (nao construido). `cyre3` teve variancia de LLM nao relacionada. Ver resultado detalhado no lote 10 |
 
 ## Experimento revertido: declaracao explicita de ausencia opcional (`exp-declaracao-explicita-opcional`, 2026-09-18)
 
@@ -937,4 +938,105 @@ Pendencias que este reprocessamento abriu:
 
 `exp-gate-e-ancoragem-linha` segue como base de referencia — este
 reprocessamento nao a substitui.
+
+### Resultado do reteste com escopo numerico (`exp-fase2-ancoragem-numerica`, 19/09) — fix do itau confirmado; achado novo aponta para o item 2.4
+
+Fix aplicado: `resolve_row_anchor` passa a exigir, na linha candidata, pelo
+menos uma celula fora da coluna de rotulo que passe em `celula_parece_numerica`
+(exportada de `table_structure.py`, antes `_e_numerica` privada). Commit
+`37a5d26`. Testes novos reproduzem o caso do itau isolado (`test_row_anchoring.py`);
+confirmado via `git stash` que os dois casos falham sem o fix. Suite 247→250,
+`ruff` limpo.
+
+Rodada 01:10-01:17 UTC (10/10 sucesso), mesmo lote, mesmo prompt (0
+divergentes). Harness (383 scores) + comparador contra `exp-gate-e-ancoragem-linha`:
+
+**Itau — corrigido, confirmado por leitura direta no MinIO.**
+`carteira_de_credito.valores[jun/26].valor` volta a resolver
+`tables/table002.json`, linha `"Total¹"`, valor `1.522,4` — identico a base.
+`aprovado_para_publicacao=true`, `obrigatorios_nao_resolvidos=[]`. O fix
+funcionou exatamente para o caso que o motivou.
+
+**Comparador ainda reprova — por um motivo diferente e mais especifico:**
+
+```
+REPROVADO: metrica de guarda regrediu: assinatura_f3_arquivo_origem_correto (1,000 -> 0,944)
+```
+
+Por documento (`assinatura_f3_arquivo_origem_correto` / `_rotulo_linha_correto` / `_indice_coluna_correto`, base -> novo):
+
+| documento | base | novo | leitura |
+| --- | --- | --- | --- |
+| itau | 1,0/1,0/1,0 | 1,0/1,0/1,0 | corrigido (era o alvo do fix) |
+| eztc3 | 1,0/1,0/1,0 | 0,6/0,6/0,6 | **regressao nova** — ver achado 1 abaixo |
+| direcional | 1,0/1,0/1,0 | 1,0/0,5/1,0 | **regressao nova** — ver achado 2 abaixo |
+| santander | 1,0/1,0/1,0 | 0,9/0,9/1,0 | leve regressao, mesma classe (nao investigada a fundo) |
+| mrv | 1,0/0,0/1,0 | 1,0/0,0/1,0 | inalterado — pendencia pre-existente (marca x consolidado) |
+| demais (cury, tenda, pacaembu, plano-plano) | 1,0/1,0/1,0 | 1,0/1,0/1,0 | inalterados |
+| cyre3 | sem score (recusa valida) | `ausencia_falso_positivo` 1,0->2,0, `ausencia_declarada` 1,0->0,0 | **nao relacionado a nenhum dos dois fixes** — ver nota abaixo |
+
+**Achado 1 (`eztc3`): a mesma linha ancorada para dois indicadores diferentes.**
+`lancamentos.valor` e `vendas.valor` foram ambos ancorados em
+`tables/table003.json`, linha 10, `"Número de unidades (#)"`. Inspecionando as
+14 linhas cruas dessa tabela: ela e inteiramente uma tabela de **Vendas**
+(`Vendas Brutas`, `VSO Bruta`, `Distratos`, `Vendas Líquidas`, `Número de
+unidades (#)`) — nao ha nenhuma linha de lançamentos nela. O indicador
+`numero_de_unidades` existe em dois grupos do contrato (`lancamentos` e
+`vendas`) e ambos declaram o sinonimo generico `"Número de Unidades"`,
+propositalmente (e ambiguo sem contexto). Como a tabela certa de lançamentos
+nao esta entre as candidatas com esse rotulo exato, `resolve_row_anchor`
+degrada para o sinonimo generico compartilhado e encontra essa unica linha —
+que pertence so a vendas — para os dois indicadores. Nao ha checagem de que a
+tabela/linha realmente pertence ao grupo de metricas do requisito.
+
+**Achado 2 (`direcional`): ancorou o total consolidado em vez da linha da marca.**
+`table001.json` e uma sequencia de blocos repetidos: uma linha-categoria com
+dado (`"Unidades Lançadas"`, linha 6, valor 5.511) seguida de duas linhas por
+marca (`"Direcional"`, linha 7, valor 3.896; `"Riva"`, linha 8, valor 1.615 —
+3.896+1.615=5.511, confirmando que a linha 6 e o consolidado das duas
+marcas). O gabarito espera a linha `"Direcional"` (a mesma ambiguidade
+marca-x-consolidado ja conhecida do MRV). `resolve_row_anchor` achou match
+unico do sinonimo `"unidades lançadas"` na linha-categoria (que tem essa
+frase literal e celulas numericas — passa no fix de celula numerica) e nunca
+considerou as linhas 7/8, cujos rotulos sao nomes de marca, nao termos de
+metrica.
+
+**Os dois achados sao o mesmo tipo de lacuna, ja mapeado no plano e ainda nao
+construido: item 2.4 ("Segmentar tabela com varias entidades/medidas usando
+sinonimos de entidade e de grupo de metricas", status "em andamento"),
+proximo de 3.2b. `resolve_row_anchor` hoje busca em todas as linhas de todas
+as tabelas carregadas, sem saber a qual grupo de metricas ou entidade uma
+tabela/linha pertence — os dois achados sao evidencia concreta de producao
+para essa lacuna, nao um bug novo introduzido por este fix.** Solucao proposta
+em detalhe, pendente de aprovacao, antes de qualquer implementacao.
+
+**`cyre3` (nao relacionado): variancia de LLM conhecida.** O mesmo payload que
+antes recusava por evidencia insuficiente (correto — o documento so publica
+VGV em R$ e contagem de empreendimentos, nao unidades) desta vez mapeou
+`"Número de Lançamentos"` (contagem de empreendimentos) e `"Vendas ex-permuta
+- R$ milhões (%CBR)"` (VGV) como se fossem os valores de unidades pedidos.
+Confirmado que `ancoragem_resolvida` e `None` em todas as entradas desse
+documento nesta rodada — nenhum dos dois fixes tocou nele. E a variancia ja
+documentada no proprio `row_anchoring.py` ("a LLM erra sem padrao, `__r2`
+reproduz o mesmo payload e devolve respostas diferentes"), nao uma
+regressao desta rodada.
+
+**Veredito: ainda reprovada**, mas a causa mudou de "bug de desembrulho" para
+"ambiguidade de escopo estrutural (grupo de metricas / entidade) dentro da
+mesma tabela" — exatamente o gap que o item 2.4 do plano existe para fechar.
+O fix do escopo numerico (`37a5d26`) fica: e necessario (resolve o caso itau)
+mas nao suficiente.
+
+Pendencias que este reteste abriu:
+
+1. **Implementar o item 2.4** (segmentacao por entidade/grupo de metricas) e
+   conecta-lo a `resolve_row_anchor`, para os dois achados acima. Solucao
+   detalhada apresentada ao usuario, aguardando aprovacao antes de
+   implementar.
+2. `cyre3`: nao e pendencia de codigo, mas reforca a necessidade de
+   `rotulo_resolvido_por_sinonimo` como score dedicado para medir a fracao de
+   casos que dependem so da LLM.
+3. `santander` (leve regressao, mesma classe do achado 1/2) e `mrv`
+   (pre-existente) devem ser reavaliados depois que o item 2.4 estiver
+   implementado, no mesmo rerun.
 
