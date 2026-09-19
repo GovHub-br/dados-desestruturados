@@ -18,8 +18,10 @@ from document_processing.domain.fallback.column_roles import (
 )
 from document_processing.domain.fallback.evidence_pruning import normalize_term
 from document_processing.domain.fallback.row_anchoring import (
+    indicator_group_for_entry,
     indicator_synonyms_for_entry,
     resolve_row_anchor,
+    table_metric_groups,
 )
 from document_processing.domain.fallback.table_structure import table_artifact_content
 from document_processing.domain.layouts.paths import (
@@ -333,6 +335,11 @@ class FallbackCandidateValidationService:
         if not isinstance(metric_groups, dict) or not metric_groups:
             return
         colunas_de_rotulo = label_columns(analyses)
+        grupos_de_tabela = table_metric_groups(
+            tables, label_columns=colunas_de_rotulo, metric_groups=metric_groups
+        )
+        identity = fallback_problem_context.get("identidade_documento")
+        entidade_documento = identity.get("entidade") if isinstance(identity, dict) else None
         for mapping_path, matched_entry in match.por_chave.items():
             if (
                 matched_entry is None
@@ -348,7 +355,16 @@ class FallbackCandidateValidationService:
             if not sinonimos:
                 continue
             ancora = resolve_row_anchor(
-                synonyms=sinonimos, tables=tables, label_columns=colunas_de_rotulo
+                synonyms=sinonimos,
+                tables=tables,
+                label_columns=colunas_de_rotulo,
+                table_groups=grupos_de_tabela,
+                entry_group=indicator_group_for_entry(
+                    requisito=matched_entry.requisito,
+                    seletores=matched_entry.seletores,
+                    metric_groups=metric_groups,
+                ),
+                document_entity=entidade_documento,
             )
             if ancora is None:
                 continue

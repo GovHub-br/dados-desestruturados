@@ -4,8 +4,11 @@ from __future__ import annotations
 
 from document_processing.domain.fallback.row_anchoring import (
     ResolvedRowAnchor,
+    classify_table_metric_group,
+    indicator_group_for_entry,
     indicator_synonyms_for_entry,
     resolve_row_anchor,
+    table_metric_groups,
 )
 
 METRICAS_CONSTRUTORAS = {
@@ -183,3 +186,133 @@ def test_celula_percentual_conta_como_valor_numerico():
     assert ancora == ResolvedRowAnchor(
         arquivo_origem="tables/table002.json", rotulo_linha="Margem financeira", indice_linha=0
     )
+
+
+def test_classifica_tabela_pelo_vocabulario_majoritario_dos_rotulos():
+    grupos = table_metric_groups(
+        {"tables/table003.json": TABELA_VENDAS},
+        label_columns=None,
+        metric_groups=METRICAS_CONSTRUTORAS,
+    )
+    assert grupos == {"tables/table003.json": "vendas"}
+
+
+def test_sem_maioria_clara_tabela_fica_sem_grupo_classificado():
+    tabela_ambigua = {"rows": [["Numero de Unidades", "100"]]}
+    grupo = classify_table_metric_group(
+        tabela_ambigua["rows"],
+        0,
+        {"vendas": {"numero de unidades"}, "lancamentos": {"numero de unidades"}},
+    )
+    assert grupo is None
+
+
+def test_grupo_generico_compartilhado_nao_vaza_para_tabela_do_outro_grupo():
+    # Caso real (eztc3, exp-fase2-ancoragem-numerica): so a tabela de vendas foi
+    # carregada; "Numero de Unidades" e sinonimo generico tanto de vendas quanto
+    # de lancamentos, e sem a classificacao por grupo essa tabela de vendas
+    # tambem virava a ancora (errada) do indicador de lancamentos.
+    sinonimos_lancamentos = indicator_synonyms_for_entry(
+        requisito="balancos_das_empresas.lancamentos.dados.valores.valor",
+        seletores={},
+        metric_groups=METRICAS_CONSTRUTORAS,
+    )
+    grupo_tabela = table_metric_groups(
+        {"tables/table003.json": TABELA_VENDAS},
+        label_columns=None,
+        metric_groups=METRICAS_CONSTRUTORAS,
+    )
+    ancora = resolve_row_anchor(
+        synonyms=sinonimos_lancamentos,
+        tables={"tables/table003.json": TABELA_VENDAS},
+        table_groups=grupo_tabela,
+        entry_group=indicator_group_for_entry(
+            requisito="balancos_das_empresas.lancamentos.dados.valores.valor",
+            seletores={},
+            metric_groups=METRICAS_CONSTRUTORAS,
+        ),
+    )
+    assert ancora is None
+
+
+def test_grupo_certo_continua_resolvendo_normalmente():
+    sinonimos_vendas = indicator_synonyms_for_entry(
+        requisito="balancos_das_empresas.vendas.dados.valores.valor",
+        seletores={},
+        metric_groups=METRICAS_CONSTRUTORAS,
+    )
+    grupo_tabela = table_metric_groups(
+        {"tables/table002.json": TABELA_VENDAS},
+        label_columns=None,
+        metric_groups=METRICAS_CONSTRUTORAS,
+    )
+    ancora = resolve_row_anchor(
+        synonyms=sinonimos_vendas,
+        tables={"tables/table002.json": TABELA_VENDAS},
+        table_groups=grupo_tabela,
+        entry_group=indicator_group_for_entry(
+            requisito="balancos_das_empresas.vendas.dados.valores.valor",
+            seletores={},
+            metric_groups=METRICAS_CONSTRUTORAS,
+        ),
+    )
+    assert ancora == ResolvedRowAnchor(
+        arquivo_origem="tables/table002.json",
+        rotulo_linha="Vendas Contratadas Brutas (Unidades)",
+        indice_linha=0,
+    )
+
+
+def test_linha_da_marca_prevalece_sobre_categoria_consolidada():
+    # Caso real (direcional, exp-fase2-ancoragem-numerica): a linha-categoria
+    # "Unidades Lancadas" (consolidado = 5511) e seguida das linhas por marca
+    # "Direcional" (3896) e "Riva" (1615). O gabarito quer o valor da marca do
+    # proprio documento, nao o consolidado.
+    tabela_direcional = {
+        "rows": [
+            ["Unidades Lancadas", "5511"],
+            ["Direcional", "3896"],
+            ["Riva", "1615"],
+        ]
+    }
+    ancora = resolve_row_anchor(
+        synonyms={"unidades lancadas"},
+        tables={"tables/table001.json": tabela_direcional},
+        document_entity="direcional",
+    )
+    assert ancora == ResolvedRowAnchor(
+        arquivo_origem="tables/table001.json", rotulo_linha="Direcional", indice_linha=1
+    )
+
+
+def test_sem_entidade_do_documento_mantem_a_linha_consolidada():
+    tabela_direcional = {
+        "rows": [
+            ["Unidades Lancadas", "5511"],
+            ["Direcional", "3896"],
+            ["Riva", "1615"],
+        ]
+    }
+    ancora = resolve_row_anchor(
+        synonyms={"unidades lancadas"},
+        tables={"tables/table001.json": tabela_direcional},
+    )
+    assert ancora == ResolvedRowAnchor(
+        arquivo_origem="tables/table001.json", rotulo_linha="Unidades Lancadas", indice_linha=0
+    )
+
+
+def test_duas_marcas_batendo_a_mesma_entidade_no_bloco_fica_ambiguo():
+    tabela = {
+        "rows": [
+            ["Unidades Lancadas", "5511"],
+            ["Direcional Engenharia", "2000"],
+            ["Direcional Riva", "1896"],
+        ]
+    }
+    ancora = resolve_row_anchor(
+        synonyms={"unidades lancadas"},
+        tables={"tables/table001.json": tabela},
+        document_entity="direcional",
+    )
+    assert ancora is None

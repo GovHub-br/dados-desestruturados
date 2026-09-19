@@ -55,8 +55,10 @@ from document_processing.domain.fallback.models import (
     LayoutSignatureFragment,
 )
 from document_processing.domain.fallback.row_anchoring import (
+    indicator_group_for_entry,
     indicator_synonyms_for_entry,
     resolve_row_anchor,
+    table_metric_groups,
 )
 from document_processing.domain.fallback.table_structure import table_artifact_content
 from document_processing.infrastructure.llm.client import (
@@ -166,6 +168,12 @@ def attach_resolved_row_anchors(
             loaded_artifacts, contract_context=contract_context, document_identity=document_identity
         )
     colunas_de_rotulo = label_columns(analyses)
+    grupos_de_tabela = table_metric_groups(
+        tables, label_columns=colunas_de_rotulo, metric_groups=metric_groups
+    )
+    entidade_documento = (
+        document_identity.get("entidade") if isinstance(document_identity, dict) else None
+    )
     enriched: list[dict[str, Any]] = []
     for entry in entries:
         requisito = str(entry.get("requisito", ""))
@@ -179,7 +187,16 @@ def attach_resolved_row_anchors(
             metric_groups=metric_groups,
         )
         ancora = (
-            resolve_row_anchor(synonyms=sinonimos, tables=tables, label_columns=colunas_de_rotulo)
+            resolve_row_anchor(
+                synonyms=sinonimos,
+                tables=tables,
+                label_columns=colunas_de_rotulo,
+                table_groups=grupos_de_tabela,
+                entry_group=indicator_group_for_entry(
+                    requisito=requisito, seletores=seletores, metric_groups=metric_groups
+                ),
+                document_entity=entidade_documento,
+            )
             if sinonimos
             else None
         )
