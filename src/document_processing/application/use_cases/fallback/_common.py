@@ -58,6 +58,7 @@ from document_processing.domain.fallback.row_anchoring import (
     indicator_synonyms_for_entry,
     resolve_row_anchor,
 )
+from document_processing.domain.fallback.table_structure import table_artifact_content
 from document_processing.infrastructure.llm.client import (
     FALLBACK_LLM_CLIENT,
     FallbackLlmClient,
@@ -154,9 +155,9 @@ def attach_resolved_row_anchors(
     if not isinstance(metric_groups, dict) or not metric_groups:
         return entries
     tables = {
-        path: artifact
+        path: content
         for path, artifact in (loaded_artifacts or {}).items()
-        if isinstance(artifact, dict) and isinstance(artifact.get("rows"), list)
+        if (content := table_artifact_content(artifact)) is not None
     }
     if not tables:
         return entries

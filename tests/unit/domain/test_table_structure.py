@@ -15,7 +15,11 @@ from document_processing.domain.fallback.column_roles import (
     label_columns,
     resolve_column_roles,
 )
-from document_processing.domain.fallback.table_structure import Segment, read_table_structure
+from document_processing.domain.fallback.table_structure import (
+    Segment,
+    read_table_structure,
+    table_artifact_content,
+)
 
 CONTRATOS = Path("infra/minio-bootstrap/contracts")
 GABARITOS = Path("eval/gabaritos")
@@ -118,6 +122,55 @@ def test_linhas_so_com_rotulo_viram_titulos_de_segmento() -> None:
 def test_artefato_sem_rows_nao_tem_estrutura() -> None:
     assert read_table_structure("charts/c.json", {"schema": ["a"], "series": []}) is None
     assert read_table_structure("tables/t.json", {"rows": []}) is None
+
+
+class TestTableArtifactContent:
+    """Fase 2, bug do lote 10: ``loaded_artifacts`` em producao nao e a tabela crua.
+
+    ``inventory_loading.load_artifact_for_llm`` embrulha todo artefato que cabe
+    inteiro no contexto em ``{object_key, formato, sample}`` — a tabela do
+    Docling fica em ``sample``, nunca na raiz. O bug leu ``rows`` na raiz e
+    nunca viu tabela nenhuma, em producao, em nenhum documento (lote 9 e 10).
+    """
+
+    def test_forma_crua_passa_direto(self) -> None:
+        bruto = {"schema": ["a"], "rows": [["1"]]}
+        assert table_artifact_content(bruto) is bruto
+
+    def test_forma_embrulhada_devolve_o_sample(self) -> None:
+        sample = {"kind": "table", "schema": ["a"], "rows": [["1"]]}
+        embrulhado = {"object_key": "tables/t.json", "formato": "json", "sample": sample}
+        assert table_artifact_content(embrulhado) is sample
+
+    def test_grafico_ou_texto_embrulhado_nao_tem_rows(self) -> None:
+        # `_table_evidence` so entra quando o artefato e reconhecido como tabela;
+        # qualquer outro json vira `truncate_json(parsed)`, sem garantia de `rows`.
+        assert table_artifact_content(
+            {"object_key": "charts/c.json", "formato": "json", "sample": {"series": []}}
+        ) is None
+
+    def test_artefato_truncado_ou_em_chunks_nao_tem_sample(self) -> None:
+        assert table_artifact_content(
+            {"object_key": "t.jsonl", "formato": "jsonl", "modo": "chunked", "chunks": []}
+        ) is None
+        assert table_artifact_content(
+            {"object_key": "t.json", "formato": "texto", "modo": "truncated", "sample": "..."}
+        ) is None
+
+    def test_erro_de_leitura_nao_tem_sample(self) -> None:
+        assert table_artifact_content(
+            {"object_key": "t.json", "status": "erro_ao_carregar", "erro": "boom"}
+        ) is None
+
+    def test_read_table_structure_le_a_forma_embrulhada(self) -> None:
+        embrulhado = {
+            "object_key": "tables/table001.json",
+            "formato": "json",
+            "sample": {"kind": "table", **TABELA_CURY},
+        }
+        estrutura = read_table_structure("tables/table001.json", embrulhado)
+        assert estrutura is not None
+        assert estrutura.cabecalhos[1] == "1T26"
 
 
 def test_papel_por_coluna_ignora_sufixo_de_outro_escopo() -> None:

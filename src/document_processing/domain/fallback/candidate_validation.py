@@ -21,6 +21,7 @@ from document_processing.domain.fallback.row_anchoring import (
     indicator_synonyms_for_entry,
     resolve_row_anchor,
 )
+from document_processing.domain.fallback.table_structure import table_artifact_content
 from document_processing.domain.layouts.paths import (
     normalize_mapping_path,
     parse_mapping_path,
@@ -441,9 +442,9 @@ class FallbackCandidateValidationService:
         if not isinstance(loaded_artifacts, dict) or not loaded_artifacts:
             return None
         tables = {
-            path: artifact
+            path: content
             for path, artifact in loaded_artifacts.items()
-            if isinstance(artifact, dict) and isinstance(artifact.get("rows"), list)
+            if (content := table_artifact_content(artifact)) is not None
         }
         if not tables:
             return None

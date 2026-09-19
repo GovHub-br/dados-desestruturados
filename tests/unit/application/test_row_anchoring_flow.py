@@ -40,7 +40,17 @@ TABELA_VENDAS = {
         ["Vendas Líquidas 100% (Unid.)", "3351", "3105", "3136"],
     ]
 }
-ARTEFATOS_CARREGADOS = {"tables/table002.json": TABELA_VENDAS}
+# Forma real de `loaded_artifacts` em producao: `inventory_loading.load_artifact_for_llm`
+# embrulha todo artefato que cabe inteiro em {object_key, formato, sample}, com a tabela
+# dentro de `sample` — nunca `rows` na raiz. Um bug real (lote 10, corrigido em seguida)
+# leu `rows` na raiz e nunca viu tabela nenhuma; o fixture usa a forma embrulhada de proposito.
+ARTEFATOS_CARREGADOS = {
+    "tables/table002.json": {
+        "object_key": "tables/table002.json",
+        "formato": "json",
+        "sample": {"kind": "table", **TABELA_VENDAS},
+    }
+}
 
 
 @pytest.fixture(scope="module")

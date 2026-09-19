@@ -50,9 +50,21 @@ TABELA_VENDAS = {
         ["Vendas Líquidas 100% (Unid.)", "3351", "3105", "8%", "3136", "7%", "8000"],
     ],
 }
+def _envelope(object_key: str, tabela: dict[str, Any]) -> dict[str, Any]:
+    """Forma real de ``loaded_artifacts`` em producao (nao a tabela crua).
+
+    ``inventory_loading.load_artifact_for_llm`` embrulha todo artefato que
+    cabe inteiro no contexto em ``{object_key, formato, sample}`` — o
+    ``schema``/``rows`` fica dentro de ``sample``, nunca na raiz. Um bug real
+    (achado no lote 10, corrigido em seguida) leu ``rows`` na raiz e nunca viu
+    tabela nenhuma; por isso os fixtures usam a forma embrulhada, nao a crua.
+    """
+    return {"object_key": object_key, "formato": "json", "sample": {"kind": "table", **tabela}}
+
+
 ARTEFATOS_CARREGADOS = {
-    "tables/table001.json": TABELA_LANCAMENTOS,
-    "tables/table002.json": TABELA_VENDAS,
+    "tables/table001.json": _envelope("tables/table001.json", TABELA_LANCAMENTOS),
+    "tables/table002.json": _envelope("tables/table002.json", TABELA_VENDAS),
 }
 COLUNA_CERTA = {"periodo_referencia": 1, "periodo_comparativo_anterior": 2, "mesmo_periodo_ano_anterior": 4}
 

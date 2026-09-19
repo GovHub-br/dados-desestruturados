@@ -129,6 +129,28 @@ def _segmentos(
     return tuple(segmentos)
 
 
+def table_artifact_content(artifact: Any) -> Mapping[str, Any] | None:
+    """Conteudo real de um artefato de tabela carregado para a LLM.
+
+    ``loaded_artifacts`` chega em duas formas: o artefato bruto do Docling
+    (``{"schema": [...], "rows": [...]}``, a forma usada nos testes) ou o
+    envelope que ``inventory_loading.load_artifact_for_llm`` produz sempre que
+    o artefato cabe inteiro no contexto — o caso normal em producao —
+    (``{"object_key", "formato", "sample": {"schema": [...], "rows": [...]}}}``).
+    Devolve o dict que tem ``rows``, de onde vier; ``None`` quando o artefato
+    nao e uma tabela completa (grafico, bloco de texto, artefato truncado ou
+    em chunks, erro de leitura) — nunca adivinha uma tabela vazia.
+    """
+    if not isinstance(artifact, Mapping):
+        return None
+    if isinstance(artifact.get("rows"), list):
+        return artifact
+    sample = artifact.get("sample")
+    if isinstance(sample, Mapping) and isinstance(sample.get("rows"), list):
+        return sample
+    return None
+
+
 def read_table_structure(
     arquivo: str,
     table_artifact: Mapping[str, Any],
@@ -142,11 +164,14 @@ def read_table_structure(
     ``metadata`` e aceito para o dia em que o extrator marcar cabecalhos
     explicitamente; hoje nao traz nada alem do que ``schema`` ja diz.
     """
-    rows = table_artifact.get("rows")
+    conteudo = table_artifact_content(table_artifact)
+    if conteudo is None:
+        return None
+    rows = conteudo.get("rows")
     if not isinstance(rows, list):
         return None
     linhas = [[_celula(c) for c in row] if isinstance(row, (list, tuple)) else [] for row in rows]
-    schema = table_artifact.get("schema")
+    schema = conteudo.get("schema")
     cabecalhos = [_celula(c) for c in schema] if isinstance(schema, list) else []
     largura = max([len(cabecalhos), *(len(linha) for linha in linhas)] or [0])
     if largura == 0:

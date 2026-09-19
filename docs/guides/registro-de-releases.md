@@ -403,7 +403,7 @@ Pendencias que o lote abriu ou manteve:
 | `exp-fase1-entradas-esperadas` | `325f923` — Fase 1 do plano (entradas-alvo enumeradas pelo codigo, validador chave a chave) | rodada e comparada em 18/09; confirmada por `__r2` (Plano&Plano e Santander) tambem em 18/09: invariantes da Fase 1 100 % em 10/10, 0 regressoes reais. **Aprovada; passa a ser a base de referencia** |
 | `exp-declaracao-explicita-opcional` | nao commitado (revertido) | rodada em 18/09, comparada contra `exp-fase1-entradas-esperadas`: **reprovada e revertida no mesmo dia** — piorou o problema que tentava resolver. Ver secao abaixo |
 | `exp-gate-e-ancoragem-linha` | `ff68638` — gate por obrigatorios (reimplementa C3 do lote 7) + ancoragem de linha por sinonimo (item 3.2) + gabarito EZTEC/Plano&Plano + comparador prefere `__r2` | rodada e comparada em 18/09: **aprovada** — `assinatura_f3_rotulo_linha_correto` 0,667 -> 0,889, Plano&Plano fecha a variancia por codigo, nenhuma guarda regrediu. Passa a ser a base de referencia |
-| `exp-fase2-estrutura-tabela` | `c0bcae8` — Fase 2 do plano (estrutura da tabela, papel por coluna derivado pelo contrato, validador de coluna) + `papeis` preservados no recorte por unidade + `comum-contrato` v8 | implementada em 18/09, **ainda nao rodada** (lote 10; base `exp-gate-e-ancoragem-linha`) |
+| `exp-fase2-estrutura-tabela` | `ea028e6` (codigo da Fase 2: `c0bcae8`) | rodada em 18/09 (lote 10; base `exp-gate-e-ancoragem-linha`): **bloqueada por bug de integracao** — `loaded_artifacts` real vem embrulhado em `{object_key, formato, sample}` e `analyze_tables`/`attach_resolved_row_anchors`/`_table_scope` leem `rows` no nivel errado; mecanismo nunca ativou em nenhum dos 10 documentos, 0 metricas `assinatura_f2_*` gravadas. Mesmo bug ja existia em `ff68638` (lote 9) — reabre a atribuicao de causa do item 3.2 (ver pendencia 3 do lote 10) |
 
 ## Experimento revertido: declaracao explicita de ausencia opcional (`exp-declaracao-explicita-opcional`, 2026-09-18)
 
@@ -685,4 +685,141 @@ cabecalho) nao e tratado: a segunda linha vira dado.
 5. Conferir `estrutura_tabelas.json` de um documento de construtoras no MinIO
    (`papel_por_coluna` com as 3 colunas) e `current.json` de cada entidade
    depois do veredito.
+
+### Resultado do lote 10 (comparacao em 18/09) — bug de integracao, mecanismo nunca ativou
+
+Rodada 23:26-23:33 UTC (10 documentos) + redisparo `__r2` de Santander e Itau
+23:56-23:59 UTC (suspeita de problema de conexao no run original: os dois
+traces originais de bancos nao apareceram no Langfuse, nem como poluicao —
+simplesmente nao foram ingeridos). Codigo `ea028e6`, prompt `comum-contrato`
+v8 (`--verificar` deu 0 divergentes antes do disparo). Comparador saiu limpo
+por construcao: `base 10 traces · novo 10 traces` (os 2 originais de bancos
+nunca existiram como trace `atlas.fallback`, entao o `__r2` e o unico
+registro — nao ha duplicata para o comparador preferir).
+
+**Achado critico: nenhuma das metricas da Fase 2 foi produzida, em nenhum dos
+10 documentos.** Investigacao (nao estava nos alvos declarados; motivou
+verificar arquivo por arquivo):
+
+1. Harness (`avaliar_assinatura_layout.py`) gravou 362 scores — o mesmo total
+   do lote 9 — e **nenhuma linha `assinatura_f2_*`** no relatorio agregado.
+   Nao "baixo": ausente.
+2. MinIO: `fallback/construtoras/cury/document_id=.../execution_id=.../`
+   (13 objetos persistidos) **nao tem `estrutura_tabelas.json`** — o artefato
+   que a Fase 2 persiste sempre que `analyses` nao e vazio.
+3. Langfuse: a mensagem `user` de `fallback.layout_signature_candidato` (Cury)
+   tem `contrato_semantico_relevante`, `alvos_mapeaveis`, `identidade_documento`,
+   `entradas_esperadas` — **sem a chave `estrutura_tabelas`**. O texto do
+   prompt `comum-contrato` v8 explica o conceito (mensagem `system` anterior),
+   mas o dado nunca chega.
+
+**Causa raiz, confirmada lendo o payload real enviado a LLM:** `loaded_artifacts`
+(o dict que `select_relevant_artifacts`/`inventory_loading.load_artifact_for_llm`
+devolve para qualquer tabela pequena o bastante para carregar inteira — o caso
+normal) tem a forma `{"object_key": ..., "formato": "json", "sample": {"schema":
+[...], "rows": [...], ...}}`. `analyze_tables`/`read_table_structure`
+(`domain/fallback/table_structure.py`) fazem `table_artifact.get("rows")` **no
+nivel errado** — o `rows` esta em `artifact["sample"]["rows"]`, nao em
+`artifact["rows"]`. `.get("rows")` devolve `None` para toda tabela real, `if
+estrutura is None: continue` descarta todas, `analyze_tables` devolve `{}`
+sempre. Confirmado ao vivo: `artefatos_contexto_llm["tables/table001.json"]` do
+Cury tem exatamente essa forma (`sample.schema`/`sample.rows` presentes,
+`rows` ausente no nivel raiz).
+
+**A mesma checagem (`isinstance(artifact.get("rows"), list)`) existe em mais
+tres lugares, todos com o mesmo bug:**
+
+- `domain/fallback/column_roles.py::analyze_tables` (Fase 2, este lote);
+- `application/use_cases/fallback/_common.py::attach_resolved_row_anchors`
+  (monta `tables` antes de chamar o resolvedor — Fase 2 e item 3.2);
+- `domain/fallback/candidate_validation.py::_table_scope` (usado por
+  `_validate_candidate_row_anchors` **e** `_validate_candidate_column_roles`).
+
+Como resultado: **nenhuma das quatro pecas engatou** — nem a leitura de
+estrutura (2.1/2.2), nem o papel por coluna (2.3), nem os dois validadores
+novos (`_validate_candidate_column_roles` do lote 10 e o `_validate_candidate_row_anchors`
+do lote 9). Nenhum candidato foi recusado por coluna ou linha erradas em
+nenhuma das duas releases, porque `_table_scope` sempre devolve `None`
+(`tables` vazio) e ambos os validadores retornam sem checar nada.
+
+**Implicacao retroativa para o lote 9 (`exp-gate-e-ancoragem-linha`, aprovado):**
+`git show ff68638:.../row_anchoring.py` e `.../_common.py` mostram a mesma
+linha `artifact.get("rows")` sem desembrulhar `sample` — **o bug e anterior a
+este lote**, ja estava no commit que o lote 9 aprovou. Isso significa que o
+"fecha a variancia do Plano&Plano, agora garantido por codigo" do lote 9 nao
+e uma garantia de codigo: `attach_resolved_row_anchors` nunca anexou
+`ancoragem_resolvida` a nenhuma entrada, em nenhum documento, nas duas
+releases. O valor do Plano&Plano continua correto nesta rodada (vendas
+2T25=3.570/1T26=3.536/2T26=3.601, igual ao gabarito — conferido no
+`schema_saida_resolvido.json` desta release), mas a explicacao mais provavel e
+que o sinonimo `"vendas contratadas brutas"` (contrato v1.9.1), que a LLM ve
+diretamente no texto de `contrato_semantico_relevante.metricas.vendas...sinonimos`,
+e suficiente para ela escolher a linha certa sozinha — nao o mecanismo de
+codigo que o lote 9 descreveu. **O veredito "aprovada" do lote 9 nao muda**
+(nenhum valor errado foi publicado, a metrica-alvo realmente subiu), mas a
+causa atribuida a fase 3.2 precisa ser revista: e decisao da LLM apoiada por
+um sinonimo bem escolhido no contrato, nao enforcement por codigo. Pendencia
+nova, ver abaixo.
+
+**Comparador (`--base exp-gate-e-ancoragem-linha --novo exp-fase2-estrutura-tabela`),
+consistente com "o mecanismo nao mudou nada":**
+
+| metrica | papel | base | novo | leitura |
+| --- | --- | --- | --- | --- |
+| `assinatura_f2_*` (as tres) | alvo | — | **ausente** | nunca gravada — ver achado critico acima |
+| `assinatura_f3_indice_coluna_correto` | guarda | 1,000 | 1,000 | estavel — mas por decisao da LLM, nao pelo validador novo (que nunca verificou nada) |
+| `assinatura_f3_rotulo_linha_correto` | guarda | 0,889 | 0,889 | estavel, mesma leitura |
+| `assinatura_f3_arquivo_origem_correto` | guarda | 1,000 | 1,000 | estavel |
+| `assinatura_f1_*` (Fase 1) | guarda | — | — | todas identicas (0/1,0 conforme o caso) |
+| `resolucao_cobertura_obrigatorios`, `e2e_apto_para_bronze` | guarda | 1,000 / 0,900 | 1,000 / 0,900 | estaveis |
+| `assinatura_f0_selecao_artefatos_por_requisito` | diag | 2,125 | 2,208 | regrediu (+0,042 na escala do comparador, mas absoluta 2,083→2,125 no relatorio local); nao rastreada a nenhuma mudanca deste lote — ruido de selecao, mesma leitura do lote 9 |
+| `assinatura_f0_selecao_precisao` | alvo (Fase 0) | 0,792 | 0,769 | regrediu, fora do escopo deste lote; mesma causa provavel (variancia de selecao) |
+| `e2e_duracao_segundos` | custo | 78,97 | 79,99 | regrediu marginalmente — ambiente |
+| `e2e_tokens_llm` / `fallback_tokens_total` | custo | 31.638 | 31.213 (−1,3 %) | leve melhora, mas nao pela `estrutura_tabelas` prometida (que nunca foi enviada) — variancia normal de rodada |
+| `llm_tentativas` / `llm_acerto_1a_tentativa` | — | 1,083 / 0,917 | 1,000 / 0,958 | melhorou — nao atribuivel ao mecanismo (que nao ativou); provavel variancia |
+
+Nenhuma guarda fixa regrediu. As duas regressoes fora de guarda (`selecao_artefatos_por_requisito`,
+`selecao_precisao`) sao da Fase 0, que este lote nao tocou — mesmo padrao de
+ruido ja visto no lote 9.
+
+**Veredito: nem aprovada nem reprovada — bloqueada por bug de integracao.** A
+hipotese declarada (colunas passam a ser resolvidas pelo codigo; reasoning
+cai; `assinatura_f2_*` bate a meta) **nao foi testada**: o mecanismo nunca
+recebeu os dados que precisava para rodar. Os numeros identicos a base nao
+confirmam "sem regressao por design" — confirmam que o codigo novo foi, na
+pratica, morto (nunca executado com dados reais) nesta rodada. Nao ha decisao
+de manter ou reverter a fazer sobre o *comportamento*: o comportamento nao
+mudou. A decisao pendente e sobre o *codigo*: corrigir o desembrulho de
+`loaded_artifacts` e rodar de novo antes de dar a Fase 2 como testada.
+
+Pendencias que este lote abriu:
+
+1. **Corrigir o desembrulho de `loaded_artifacts`** nos quatro pontos listados
+   acima (`analyze_tables`/`read_table_structure`, `attach_resolved_row_anchors`,
+   `_table_scope` — usado pelos dois validadores). A forma real e
+   `{"object_key", "formato", "sample": {...}}` para JSON pequeno o bastante
+   para carregar inteiro; artefatos truncados/chunked (`modo: "chunked"` ou
+   `"truncated"`) nao tem `rows` nenhum e devem continuar sendo ignorados,
+   nao tratados como erro.
+2. **Re-rodar `exp-fase2-estrutura-tabela` depois do fix** — os alvos
+   declarados (`assinatura_f2_papel_coluna_correto`, `_origem_contrato`,
+   `_estrutura_tabela_lida`) continuam sem nenhuma medicao real.
+3. **Reavaliar a atribuicao de causa do lote 9** (item 3.2): registrar que
+   `attach_resolved_row_anchors`/`_validate_candidate_row_anchors` nunca
+   executaram de fato; o resultado observado (Plano&Plano correto) e
+   compativel com a LLM decidindo bem a partir do sinonimo do contrato, nao
+   com o enforcement por codigo descrito na epoca. Nao invalida o veredito
+   "aprovada" (nenhum valor errado foi publicado), mas o mecanismo de garantia
+   precisa ser corrigido e reconfirmado antes de se apoiar nele para estender
+   a bancos.
+4. Testes unitarios de ambas as fases (`test_column_roles_flow.py`,
+   `test_row_anchoring_flow.py`) passam porque usam fixtures com a forma
+   simplificada `{"schema": [...], "rows": [...]}` diretamente — nao cobrem a
+   forma real `{"object_key", "formato", "sample": {...}}` que
+   `select_relevant_artifacts` produz. Precisa de um teste (unitario ou de
+   integracao) que exercite o formato real, para este tipo de divergencia nao
+   se repetir.
+5. `rotulo_resolvido_por_sinonimo` (pendencia do lote 9) segue sem score — e
+   agora ainda mais necessaria, ja que e a unica forma de medir se o item 3.2
+   funciona de fato depois do fix.
 
