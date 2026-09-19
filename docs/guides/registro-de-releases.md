@@ -406,6 +406,7 @@ Pendencias que o lote abriu ou manteve:
 | `exp-fase2-estrutura-tabela` | `ea028e6` (codigo da Fase 2: `c0bcae8`) | rodada em 18/09 (lote 10; base `exp-gate-e-ancoragem-linha`): **bloqueada por bug de integracao** — `loaded_artifacts` real vem embrulhado em `{object_key, formato, sample}` e `analyze_tables`/`attach_resolved_row_anchors`/`_table_scope` leem `rows` no nivel errado; mecanismo nunca ativou em nenhum dos 10 documentos, 0 metricas `assinatura_f2_*` gravadas. Mesmo bug ja existia em `ff68638` (lote 9) — reabre a atribuicao de causa do item 3.2 (ver pendencia 3 do lote 10) |
 | `exp-fase2-bugfix-desembrulho` | `741806a` — corrige o desembrulho de `loaded_artifacts` nos 3 pontos afetados | rodada e comparada em 19/09 (base `exp-gate-e-ancoragem-linha`): **reprovada** — `assinatura_f2_*` bateram a meta pela primeira vez (mecanismo confirmado ativo em producao), mas o item 3.2 forcou uma ancora errada em `itau` (`resolve_row_anchor` nao escopa por tabela/secao nem valida celula numerica) e derrubou 2 guardas (`assinatura_f3_arquivo_origem_correto`, `e2e_apto_para_bronze`). Ver resultado detalhado no lote 10 |
 | `exp-fase2-ancoragem-numerica` | `37a5d26` — exige celula numerica na linha candidata de `resolve_row_anchor` | rodada e comparada em 19/09 (base `exp-gate-e-ancoragem-linha`): **reprovada** — `itau` confirmado corrigido, mas achado novo em `eztc3`/`direcional`: ambiguidade de grupo de metricas/entidade dentro da mesma tabela, gap ja mapeado como item 2.4 (nao construido). `cyre3` teve variancia de LLM nao relacionada. Ver resultado detalhado no lote 10 |
+| `exp-fase2-item24-escopo` | `a5eb677` — item 2.4: escopo de `resolve_row_anchor` por grupo de metrica (`classify_table_metric_group`) e por entidade do documento (`_entity_child_row`) | codigo aprovado e commitado em 19/09; rerun do lote 10 pendente |
 
 ## Experimento revertido: declaracao explicita de ausencia opcional (`exp-declaracao-explicita-opcional`, 2026-09-18)
 
@@ -1039,4 +1040,46 @@ Pendencias que este reteste abriu:
 3. `santander` (leve regressao, mesma classe do achado 1/2) e `mrv`
    (pre-existente) devem ser reavaliados depois que o item 2.4 estiver
    implementado, no mesmo rerun.
+
+### Implementacao do item 2.4 (`a5eb677`) — escopo por grupo de metrica e por entidade
+
+Usuario aprovou a solucao detalhada (registrada acima) sem alteracoes. Duas
+extensoes em `row_anchoring.py`, mantendo o residuo com a LLM sempre que a
+classificacao nao for clara:
+
+- **`classify_table_metric_group`** classifica cada tabela pelo vocabulario
+  majoritario dos seus proprios rotulos contra os sinonimos de indicador de
+  cada grupo do contrato (o mesmo vocabulario que ja resolve a linha, sem
+  nada hardcoded por dominio). So classifica quando ha um grupo vencedor
+  claro (sem empate); `table_metric_groups` aplica isso a todas as tabelas
+  carregadas. `resolve_row_anchor` ganhou `table_groups`/`entry_group`:
+  descarta uma tabela candidata so quando ambos existem e o grupo da tabela
+  diverge do grupo da entrada — tabela sem grupo classificado nunca e
+  excluida. Resolve o achado 1 (`eztc3`): a tabela de vendas agora e
+  reconhecida como "vendas" e sai da disputa quando o requisito e de
+  lancamentos, mesmo compartilhando o sinonimo generico "Numero de Unidades".
+- **`_entity_child_row`** cobre o padrao de bloco categoria+marca: quando uma
+  linha-categoria (que ja bateu o sinonimo do indicador e tem valor
+  numerico) e seguida de linhas irmas tambem numericas, e uma delas leva o
+  nome da propria entidade do documento (`identidade_documento.entidade`,
+  mesmo atributo que ja alimenta `chaves_de_item.origem_valor` no resto do
+  pipeline), essa linha da marca substitui a categoria como ancora.
+  Ambiguidade dentro do bloco (mais de uma linha batendo a entidade) descarta
+  o candidato inteiro em vez de cair de volta no consolidado — o codigo ja
+  sabe que o consolidado esta errado, so nao sabe escolher entre as marcas.
+  Resolve o achado 2 (`direcional`): a linha "Direcional" (3.896) prevalece
+  sobre a linha-categoria "Unidades Lancadas" (5.511, consolidado com a
+  Riva).
+- Os dois pontos de chamada (`_common.attach_resolved_row_anchors`, usado na
+  geracao, e `candidate_validation._validate_candidate_row_anchors`, usado na
+  validacao do candidato) foram atualizados juntos — a mesma classificacao de
+  grupo/entidade em ambos, senao a validacao rejeitaria um candidato que
+  copiou corretamente a ancora nova.
+
+7 testes novos em `test_row_anchoring.py` (classificacao de grupo, vazamento
+de sinonimo generico entre grupos, grupo certo continua resolvendo, linha da
+marca prevalece, sem entidade mantem o consolidado, ambiguidade dentro do
+bloco). Suite completa 257/257, ruff limpo. Pendente: redisparar o lote de 10
+documentos contra este commit e confirmar via leitura direta do MinIO que
+`eztc3` e `direcional` ancoram certo e nenhuma guarda regride.
 
