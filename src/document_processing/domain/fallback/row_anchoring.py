@@ -13,6 +13,14 @@ A coluna de rotulo vem da Fase 2 (``table_structure``) quando o chamador a
 informa em ``label_columns``; sem ela, vale a coluna 0 — o mesmo default que o
 exemplo de schema do prompt ja usa (``seletor_linha.coluna_rotulo``). Graficos
 (sem ``rows``) nao entram aqui.
+
+Uma linha so conta como candidata se, alem do rotulo bater o sinonimo, tiver
+pelo menos uma celula fora da coluna de rotulo que pareca um valor de fato
+(numerico/percentual). Sem essa checagem, um texto corrido que cita o nome do
+indicador de passagem (ex.: um paragrafo de guidance que menciona "Carteira de
+credito" sem ser a tabela de carteira de credito) tambem "casa" o sinonimo e
+vira um falso match unico — a ancora forcada faz a LLM copiar um texto onde
+deveria copiar um numero.
 """
 
 from __future__ import annotations
@@ -22,6 +30,7 @@ from dataclasses import dataclass
 from typing import Any
 
 from document_processing.domain.fallback.evidence_pruning import normalize_term
+from document_processing.domain.fallback.table_structure import celula_parece_numerica
 
 COLUNA_ROTULO_PADRAO = 0
 _TAMANHO_MINIMO_SINONIMO = 3
@@ -93,6 +102,16 @@ def _row_label(row: Any, coluna_rotulo: int = COLUNA_ROTULO_PADRAO) -> str | Non
     return label or None
 
 
+def _linha_tem_valor_numerico(row: Any, coluna_rotulo: int) -> bool:
+    if not isinstance(row, (list, tuple)):
+        return False
+    return any(
+        celula_parece_numerica(str(celula).strip())
+        for indice, celula in enumerate(row)
+        if indice != coluna_rotulo and celula is not None and str(celula).strip()
+    )
+
+
 def resolve_row_anchor(
     *,
     synonyms: Collection[str],
@@ -104,9 +123,13 @@ def resolve_row_anchor(
     ``tables`` mapeia path do artefato -> conteudo JSON ja carregado para a
     unidade (so entram os que tem ``rows``; graficos ficam de fora).
     ``label_columns`` (path -> coluna de rotulo lida pela Fase 2) substitui o
-    default 0 onde existir. Sem sinonimo declarado, sem nenhuma linha casando,
-    ou com mais de uma, devolve ``None`` — ambiguidade fica com a LLM, nunca
-    resolvida por adivinhacao.
+    default 0 onde existir. Uma linha cujo rotulo bate o sinonimo so vira
+    candidata se tambem tiver, fora da coluna de rotulo, pelo menos uma celula
+    que pareca um valor de fato (``celula_parece_numerica``) — descarta texto
+    corrido que so cita o indicador de passagem, sem ser a tabela dele. Sem
+    sinonimo declarado, sem nenhuma linha candidata, ou com mais de uma,
+    devolve ``None`` — ambiguidade fica com a LLM, nunca resolvida por
+    adivinhacao.
     """
     normalizados = {normalize_term(s) for s in synonyms if str(s).strip()}
     normalizados = {s for s in normalizados if len(s) >= _TAMANHO_MINIMO_SINONIMO}
@@ -126,10 +149,13 @@ def resolve_row_anchor(
             if label is None:
                 continue
             normalized_label = normalize_term(label)
-            if any(sinonimo in normalized_label for sinonimo in normalizados):
-                encontrados.append(
-                    ResolvedRowAnchor(arquivo_origem=path, rotulo_linha=label, indice_linha=index)
-                )
+            if not any(sinonimo in normalized_label for sinonimo in normalizados):
+                continue
+            if not _linha_tem_valor_numerico(row, coluna_rotulo):
+                continue
+            encontrados.append(
+                ResolvedRowAnchor(arquivo_origem=path, rotulo_linha=label, indice_linha=index)
+            )
     if len(encontrados) == 1:
         return encontrados[0]
     return None

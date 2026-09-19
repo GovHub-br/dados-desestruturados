@@ -137,3 +137,49 @@ def test_sinonimo_curto_demais_e_descartado():
         tables={"tables/table002.json": TABELA_VENDAS},
     )
     assert ancora is None
+
+
+def test_linha_de_texto_corrido_que_cita_o_indicador_de_passagem_nao_conta():
+    # Caso real (itau, exp-fase2-bugfix-desembrulho): uma tabela de "Guidance"
+    # cita o nome do indicador num paragrafo, mas a celula ao lado e uma frase
+    # ("Crescimento entre..."), nao um valor. Sem checagem de celula numerica,
+    # isso virava o unico match e forcava uma ancora errada.
+    tabela_guidance = {
+        "rows": [
+            ["Carteira de crédito total¹ Carteira de crédito - Brasil", "Crescimento entre 5,5% e 9,5%"],
+        ]
+    }
+    ancora = resolve_row_anchor(
+        synonyms={"carteira de credito"},
+        tables={"tables/table006.json": tabela_guidance},
+    )
+    assert ancora is None
+
+
+def test_ambiguidade_falsa_eliminada_quando_so_a_tabela_errada_bate_o_rotulo():
+    # A tabela certa ("Total¹") nao contem o sinonimo no proprio rotulo; so a
+    # tabela de guidance bate o texto. Antes da checagem numerica isso virava
+    # um match unico (errado); agora nenhuma linha sobrevive e a decisao volta
+    # pra LLM (residuo), em vez de uma ancora forcada e incorreta.
+    tabela_carteira = {"rows": [["Total¹", "1.522,4"]]}
+    tabela_guidance = {
+        "rows": [
+            ["Carteira de crédito total¹ Carteira de crédito - Brasil", "Crescimento entre 5,5% e 9,5%"],
+        ]
+    }
+    ancora = resolve_row_anchor(
+        synonyms={"carteira de credito"},
+        tables={
+            "tables/table002.json": tabela_carteira,
+            "tables/table006.json": tabela_guidance,
+        },
+    )
+    assert ancora is None
+
+
+def test_celula_percentual_conta_como_valor_numerico():
+    tabela = {"rows": [["Margem financeira", "12,3%"]]}
+    ancora = resolve_row_anchor(synonyms={"margem financeira"}, tables={"tables/table002.json": tabela})
+    assert ancora == ResolvedRowAnchor(
+        arquivo_origem="tables/table002.json", rotulo_linha="Margem financeira", indice_linha=0
+    )

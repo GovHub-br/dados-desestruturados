@@ -78,7 +78,8 @@ def _celula(valor: Any) -> str:
     return str(valor).strip() if valor is not None else ""
 
 
-def _e_numerica(valor: str) -> bool:
+def celula_parece_numerica(valor: str) -> bool:
+    """Celula e so um numero/percentual (`"1.522,4"`, `"-3%"`), nao uma frase que contem digitos."""
     return bool(_CELULA_NUMERICA.match(valor.replace(" ", "")))
 
 
@@ -90,7 +91,7 @@ def _linha_parece_cabecalho(linha: Sequence[str], coluna_rotulo: int) -> bool:
     outras = [c for i, c in enumerate(linha) if i != coluna_rotulo and c]
     if len(outras) < 2:
         return False
-    numericas = sum(1 for c in outras if _e_numerica(c))
+    numericas = sum(1 for c in outras if celula_parece_numerica(c))
     return numericas <= 1 and all(any(ch.isalnum() for ch in c) for c in outras)
 
 
@@ -99,7 +100,7 @@ def _coluna_de_rotulo(linhas: Sequence[Sequence[str]], largura: int) -> int:
         celulas = [linha[coluna] for linha in linhas if coluna < len(linha) and linha[coluna]]
         if not celulas:
             continue
-        texto = sum(1 for c in celulas if not _e_numerica(c))
+        texto = sum(1 for c in celulas if not celula_parece_numerica(c))
         if texto / len(celulas) >= _FRACAO_MINIMA_TEXTO_NA_COLUNA_DE_ROTULO:
             return coluna
     return 0
