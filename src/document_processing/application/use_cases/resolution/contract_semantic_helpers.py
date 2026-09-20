@@ -30,6 +30,28 @@ class ContractSemanticHelpersMixin:
         for entity_name, entity_spec in dict(semantic.get("entidades", {})).items():
             if not isinstance(entity_spec, dict):
                 continue
+            sinonimos_por_valor = entity_spec.get("sinonimos")
+            if isinstance(sinonimos_por_valor, dict):
+                # Entidade com varios valores de dominio (ex.: "recorte" com
+                # consolidado/brasil/pessoa_fisica, "escala" com milhoes/bilhoes):
+                # os sinonimos sao agrupados por valor. So o(s) grupo(s) cujo
+                # valor ou algum rotulo dele ja bate um dos ``values`` pedidos
+                # entra em ``accepted`` — nunca o rotulo de um valor diferente
+                # do mesmo dominio, mesmo que a entidade como um todo seja
+                # relevante ao contexto. Sem esse escopo, resolver
+                # ``recorte=consolidado`` tambem aceitaria uma linha "Brasil".
+                for valor, rotulos_do_valor in sinonimos_por_valor.items():
+                    candidatos_do_valor = {self._normalize_text(valor)}
+                    if isinstance(rotulos_do_valor, list):
+                        candidatos_do_valor.update(
+                            self._normalize_text(item) for item in rotulos_do_valor
+                        )
+                    if source_values.intersection(candidatos_do_valor):
+                        accepted.update(candidatos_do_valor)
+                continue
+            # Legado: lista plana — todo candidato e nome alternativo do mesmo
+            # conceito (ex.: "instituicao"/"banco"/"holding"), nunca valores
+            # diferentes de um dominio; floodar a lista inteira e seguro.
             candidates = self._semantic_candidates(entity_name, entity_spec)
             if source_values.intersection({self._normalize_text(item) for item in candidates}):
                 accepted.update(self._normalize_text(item) for item in candidates)

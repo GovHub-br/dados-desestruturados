@@ -224,6 +224,18 @@ def _terms_for_requirement(
     def add(values: Any, origin: str) -> None:
         if isinstance(values, str):
             values = [values]
+        if isinstance(values, dict):
+            # Entidade com varios valores de dominio (ex.: "recorte", "escala"):
+            # ``sinonimos`` e um objeto valor -> lista de rotulos, nao uma lista
+            # unica. Aqui (selecao de evidencia) o termo so amplia a busca, sem
+            # decidir nada por si so — juntar todos os valores e seguro.
+            achatados: list[Any] = []
+            for grupo in values.values():
+                if isinstance(grupo, list):
+                    achatados.extend(grupo)
+                elif isinstance(grupo, str):
+                    achatados.append(grupo)
+            values = achatados
         if not isinstance(values, list):
             return
         for value in values:

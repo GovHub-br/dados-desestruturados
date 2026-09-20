@@ -256,6 +256,36 @@ def resolution_metrics(
                 metadata={"campos_dinamicos_no_contrato": dynamic_paths},
             )
         )
+
+    celulas_com_linha_resolvida = [
+        e for e in entries if "linha_resolvida_por_sinonimo" in _as_dict(e.get("evidencia"))
+    ]
+    if celulas_com_linha_resolvida:
+        resolvidas_por_sinonimo = len(
+            [
+                e
+                for e in celulas_com_linha_resolvida
+                if _as_dict(e.get("evidencia")).get("linha_resolvida_por_sinonimo") is True
+            ]
+        )
+        metrics.append(
+            MetricValue(
+                name="resolucao_linha_por_sinonimo",
+                value=_ratio(resolvidas_por_sinonimo, len(celulas_com_linha_resolvida)),
+                comment=(
+                    "Fracao de celulas de tabela cujo rotulo real difere do valor literal "
+                    "declarado no layout (``valor_aceito``) — prova, execucao a execucao, "
+                    "que o mecanismo de sinonimo (entidade ou indicador) esta ativo em "
+                    "producao. Sinal de producao equivalente a ``papel_coluna_origem_contrato`` "
+                    "da Fase 2: sem ele, um bug de integracao pode deixar o mecanismo silenciosamente "
+                    "sem executar por releases inteiras (ver registro de releases, licao do lote 10)."
+                ),
+                metadata={
+                    "celulas_com_linha_resolvida": len(celulas_com_linha_resolvida),
+                    "resolvidas_por_sinonimo": resolvidas_por_sinonimo,
+                },
+            )
+        )
     return metrics
 
 

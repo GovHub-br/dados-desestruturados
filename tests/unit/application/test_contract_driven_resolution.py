@@ -35,6 +35,19 @@ GENERICO = {
     "schema_saida": SCHEMA,
     "contrato_semantico": {
         "chaves_de_item": {"serie.dados": "indicador", "serie.dados.valores": "periodo"},
+        "entidades": {
+            "instituicao": {
+                "sinonimos": ["instituicao", "banco", "holding"],
+            },
+            "recorte": {
+                "dominio": ["consolidado", "brasil", "pessoa_fisica"],
+                "sinonimos": {
+                    "consolidado": ["Consolidado", "Total", "TOTAL"],
+                    "brasil": ["Brasil"],
+                    "pessoa_fisica": ["Pessoa fisica", "Pessoas fisicas"],
+                },
+            },
+        },
         "metricas": {
             "grupo": {
                 "tipo": "grupo_metricas_brutas",
@@ -114,6 +127,89 @@ def test_legado_nao_le_seletores_do_path():
         resolved_by_path={},
     )
     assert aceitos == {"lucro líquido recorrente"}
+
+
+def test_entidade_com_sinonimos_por_valor_nao_mistura_valores_diferentes():
+    """``recorte`` tem varios valores de dominio (consolidado/brasil/pessoa_fisica);
+    resolver "consolidado" so pode aceitar sinonimos do PROPRIO consolidado
+    ("Total"/"TOTAL"), nunca o rotulo de outro valor do mesmo dominio."""
+    aceitos = _Helper()._expand_accepted_labels_from_contract(
+        contrato=GENERICO,
+        values=["consolidado"],
+        mapping_path="serie.dados[indicador=x].valores[periodo=2T26].valor",
+        resolved_by_path={},
+    )
+    assert "total" in aceitos
+    assert "consolidado" in aceitos
+    assert "brasil" not in aceitos
+    assert "pessoa fisica" not in aceitos
+
+
+def test_entidade_legado_lista_plana_continua_floodando_o_mesmo_conceito():
+    """``instituicao`` e mono-conceito (nomes alternativos do mesmo campo);
+    lista plana continua floodando tudo, comportamento preservado."""
+    aceitos = _Helper()._expand_accepted_labels_from_contract(
+        contrato=GENERICO,
+        values=["instituicao"],
+        mapping_path="serie.dados[indicador=x].valores[periodo=2T26].valor",
+        resolved_by_path={},
+    )
+    assert "banco" in aceitos
+    assert "holding" in aceitos
+
+
+def test_lista_plana_misturando_valores_diferentes_reproduz_o_bug_do_jun26_mar26():
+    """Documenta a classe de bug original (``escopo_periodo`` do contrato bancos
+    antes da v2.2.0): lista plana e segura so para sinonimos do MESMO conceito
+    (ex.: ``instituicao``). Misturar valores diferentes de um dominio na mesma
+    lista faz floodar todos juntos quando qualquer um bate — por isso entidades
+    com varios valores devem usar o formato agrupado (dict valor -> sinonimos),
+    nao lista plana. Este teste prova o cenario direto contra o codigo, nao
+    contra o contrato: mesmo que o contrato de producao seja corrigido de
+    novo no futuro, o bug reaparece se alguem voltar a declarar assim.
+    """
+    contrato_com_lista_plana_perigosa = {
+        "schema_saida": SCHEMA,
+        "contrato_semantico": {
+            "chaves_de_item": {"serie.dados": "indicador", "serie.dados.valores": "periodo"},
+            "entidades": {
+                "escopo_periodo": {"dominio": ["jun/26", "mar/26"], "sinonimos": ["jun/26", "mar/26"]}
+            },
+        },
+    }
+    aceitos = _Helper()._expand_accepted_labels_from_contract(
+        contrato=contrato_com_lista_plana_perigosa,
+        values=["jun/26"],
+        mapping_path="serie.dados[indicador=x].valores[periodo=jun/26].valor",
+        resolved_by_path={},
+    )
+    assert "mar/26" in aceitos  # bug reproduzido: vaza o valor errado
+
+
+def test_dict_por_valor_fecha_o_mesmo_cenario_do_jun26_mar26():
+    """Mesmo cenario do teste acima, mas com o formato corrigido (dict valor ->
+    sinonimos): resolver jun/26 nunca aceita mar/26, mesmo entidade, mesmo
+    dominio."""
+    contrato_corrigido = {
+        "schema_saida": SCHEMA,
+        "contrato_semantico": {
+            "chaves_de_item": {"serie.dados": "indicador", "serie.dados.valores": "periodo"},
+            "entidades": {
+                "escopo_periodo": {
+                    "dominio": ["jun/26", "mar/26"],
+                    "sinonimos": {"jun/26": ["jun/26"], "mar/26": ["mar/26"]},
+                }
+            },
+        },
+    }
+    aceitos = _Helper()._expand_accepted_labels_from_contract(
+        contrato=contrato_corrigido,
+        values=["jun/26"],
+        mapping_path="serie.dados[indicador=x].valores[periodo=jun/26].valor",
+        resolved_by_path={},
+    )
+    assert "jun/26" in aceitos
+    assert "mar/26" not in aceitos
 
 
 # --- chave de item no validador ---------------------------------------------

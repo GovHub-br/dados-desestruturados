@@ -106,6 +106,34 @@ class ResolutionMetricsTest(unittest.TestCase):
         values = _by_name(resolution_metrics(audit, contract=contract))
         self.assertEqual(values["resolucao_cobertura_do_contrato"], round(1 / 3, 6))
 
+    def test_sem_celula_de_tabela_metrica_de_sinonimo_fica_ausente(self) -> None:
+        """Sem nenhuma evidencia de celula de tabela, a metrica nao aparece (nao e 0)."""
+        audit = [{"obrigatorio": False, "status_resolucao": "resolvido", "evidencia": {}}]
+        values = _by_name(resolution_metrics(audit))
+        self.assertNotIn("resolucao_linha_por_sinonimo", values)
+
+    def test_metrica_de_sinonimo_conta_so_celulas_que_precisaram_dele(self) -> None:
+        """Prova de producao: linha achada == valor literal declarado nao conta como sinonimo."""
+        audit = [
+            {
+                "obrigatorio": True,
+                "status_resolucao": "resolvido",
+                "evidencia": {"linha_resolvida_por_sinonimo": True},
+            },
+            {
+                "obrigatorio": True,
+                "status_resolucao": "resolvido",
+                "evidencia": {"linha_resolvida_por_sinonimo": False},
+            },
+            {
+                "obrigatorio": True,
+                "status_resolucao": "resolvido",
+                "evidencia": {"linha_resolvida_por_sinonimo": False},
+            },
+        ]
+        values = _by_name(resolution_metrics(audit))
+        self.assertEqual(values["resolucao_linha_por_sinonimo"], round(1 / 3, 6))
+
 
 class FallbackMetricsTest(unittest.TestCase):
     def test_acerto_de_primeira_exige_sucesso_e_uma_tentativa(self) -> None:

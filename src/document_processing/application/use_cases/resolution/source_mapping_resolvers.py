@@ -196,11 +196,28 @@ class SourceMappingResolversMixin:
 
         raw_value = None
         normalized_value = None
+        linha_rotulo_encontrado = None
         if row_index is not None and row_index < len(rows):
             row = list(rows[row_index])
+            if label_col < len(row):
+                linha_rotulo_encontrado = str(row[label_col]).strip()
             if col_idx >= 0 and col_idx < len(row):
                 raw_value = row[col_idx]
                 normalized_value = parse_flexible_number(raw_value)
+
+        # Se o rotulo da linha achada difere do valor literal que o layout
+        # declara (``valor_aceito``), a resolucao so bateu por sinonimo — do
+        # contrato (entidade/indicador) ou do proprio conjunto ``accepted``
+        # expandido acima. Sinal de producao para confirmar que o mecanismo de
+        # sinonimo esta de fato ativo, nao codigo morto (ver registro de
+        # releases, licao do lote 10: um mecanismo pode parecer aprovado por
+        # varias releases sem nunca ter executado).
+        linha_resolvida_por_sinonimo = bool(
+            row_index is not None
+            and linha_rotulo_encontrado is not None
+            and self._normalize_text(linha_rotulo_encontrado)
+            != self._normalize_text(str(row_selector.get("valor_aceito", "")))
+        )
 
         value = {
             "periodo": str(header) if header is not None else None,
@@ -214,6 +231,8 @@ class SourceMappingResolversMixin:
             "column_index": col_idx,
             "linha_rotulo_aceita": row_selector.get("valor_aceito"),
             "linha_rotulo_sinonimos_aceitos": sorted(accepted),
+            "linha_rotulo_encontrado": linha_rotulo_encontrado,
+            "linha_resolvida_por_sinonimo": linha_resolvida_por_sinonimo,
             "cabecalho_encontrado": header,
             "papel_periodo": mapping_entry.get("papel_periodo"),
             "valor_bruto": raw_value,
