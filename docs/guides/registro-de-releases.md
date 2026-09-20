@@ -406,7 +406,9 @@ Pendencias que o lote abriu ou manteve:
 | `exp-fase2-estrutura-tabela` | `ea028e6` (codigo da Fase 2: `c0bcae8`) | rodada em 18/09 (lote 10; base `exp-gate-e-ancoragem-linha`): **bloqueada por bug de integracao** — `loaded_artifacts` real vem embrulhado em `{object_key, formato, sample}` e `analyze_tables`/`attach_resolved_row_anchors`/`_table_scope` leem `rows` no nivel errado; mecanismo nunca ativou em nenhum dos 10 documentos, 0 metricas `assinatura_f2_*` gravadas. Mesmo bug ja existia em `ff68638` (lote 9) — reabre a atribuicao de causa do item 3.2 (ver pendencia 3 do lote 10) |
 | `exp-fase2-bugfix-desembrulho` | `741806a` — corrige o desembrulho de `loaded_artifacts` nos 3 pontos afetados | rodada e comparada em 19/09 (base `exp-gate-e-ancoragem-linha`): **reprovada** — `assinatura_f2_*` bateram a meta pela primeira vez (mecanismo confirmado ativo em producao), mas o item 3.2 forcou uma ancora errada em `itau` (`resolve_row_anchor` nao escopa por tabela/secao nem valida celula numerica) e derrubou 2 guardas (`assinatura_f3_arquivo_origem_correto`, `e2e_apto_para_bronze`). Ver resultado detalhado no lote 10 |
 | `exp-fase2-ancoragem-numerica` | `37a5d26` — exige celula numerica na linha candidata de `resolve_row_anchor` | rodada e comparada em 19/09 (base `exp-gate-e-ancoragem-linha`): **reprovada** — `itau` confirmado corrigido, mas achado novo em `eztc3`/`direcional`: ambiguidade de grupo de metricas/entidade dentro da mesma tabela, gap ja mapeado como item 2.4 (nao construido). `cyre3` teve variancia de LLM nao relacionada. Ver resultado detalhado no lote 10 |
-| `exp-fase2-item24-escopo` | `a5eb677` — item 2.4: escopo de `resolve_row_anchor` por grupo de metrica (`classify_table_metric_group`) e por entidade do documento (`_entity_child_row`) | codigo aprovado e commitado em 19/09; rerun do lote 10 pendente |
+| `exp-fase2-item24-escopo` | `a5eb677` — item 2.4: escopo de `resolve_row_anchor` por grupo de metrica (`classify_table_metric_group`) e por entidade do documento (`_entity_child_row`) | codigo aprovado e commitado em 19/09; rerun do lote 10 revelou que o voto de vocabulario nao classificava a tabela real do `eztc3` (ver lote 11) |
+| `exp-fase2-item24-titulo` | `079b7ad` — corrige `classify_table_metric_group` para decidir pelo `name`/titulo da tabela antes do voto de rotulos | rodada e comparada em 19/09 (base `exp-gate-e-ancoragem-linha`, lote de 10): **eztc3 e direcional confirmados corretos (1,0/1,0/1,0) via leitura direta do MinIO**; comparador cru **REPROVADO** por regressoes nao relacionadas (santander, pre-existente desde `exp-fase2-ancoragem-numerica`; itau, variancia de LLM confirmada por rerun limpo). Ver lote 11 |
+| `exp-item32b-sinonimo-por-valor` | `9d9b7b1` — item 3.2b: sinonimos de entidade com varios valores de dominio (`escopo_periodo`, `recorte`, `escala`) passam a ser um dict valor->rotulos, escopado por valor; contrato bancos v2.3.0; score de producao `resolucao_linha_por_sinonimo` | rodada e comparada em 20/09 (santander + itau, lote parcial): comparador cru REPROVADO, mas a causa (Itau escolheu `chart002` em vez de `chart004` para inadimplencia) e alheia ao fix — item 3.1 (L), ja documentado desde o lote 7. Mecanismo nao ativou em nenhuma das duas execucoes (`resolucao_linha_por_sinonimo=0`); correcao provada pelos testes unitarios. **Aprovado com ressalva: cenario original nao re-exercitado em producao**. Ver lote 12 |
 
 ## Experimento revertido: declaracao explicita de ausencia opcional (`exp-declaracao-explicita-opcional`, 2026-09-18)
 
@@ -1082,4 +1084,200 @@ marca prevalece, sem entidade mantem o consolidado, ambiguidade dentro do
 bloco). Suite completa 257/257, ruff limpo. Pendente: redisparar o lote de 10
 documentos contra este commit e confirmar via leitura direta do MinIO que
 `eztc3` e `direcional` ancoram certo e nenhuma guarda regride.
+
+## Lote 11: rerun do item 2.4 e correcao do classificador de grupo (`exp-fase2-item24-titulo`, 19/09)
+
+O rerun do lote 10 contra `exp-fase2-item24-escopo` (`a5eb677`) revelou que o
+`classify_table_metric_group` por voto de vocabulario nao decidia a tabela
+real do `eztc3`: das linhas reais ("VSO Bruta", "Distratos", "Preco Medio",
+"Numero de unidades (#)"...), so uma batia QUALQUER sinonimo declarado no
+contrato — o generico compartilhado entre `vendas` e `lancamentos` — e o
+voto empatava 1-1, devolvendo `None` (sem grupo classificado). A tabela nunca
+era excluida e as duas entradas (`vendas`/`lancamentos`) ancoravam na mesma
+linha, reproduzindo o bug original que o item 2.4 deveria fechar. Confirmado
+reproduzindo os dados reais da linha em teste local antes de corrigir.
+
+**Fix (`079b7ad`):** `classify_table_metric_group` passa a checar primeiro o
+`name`/titulo da propria tabela (campo que o Docling sempre preenche —
+titulo real do documento, ou generico tipo "Table 3" quando o documento nao
+da titulo) contra o nome do grupo + `tipo_operacao` (`_group_title_terms`,
+ambos ja no contrato); so cai para o voto de vocabulario de linha quando o
+titulo nao decide. Titulos reais de tabela dizem o assunto ("Vendas",
+"Lancamentos"), nao o nome do indicador — sinal muito mais forte que contar
+linhas cujo vocabulario o contrato quase nunca declara por completo. 4 testes
+novos com as linhas reais do eztc3, provados via git-stash (falham sem o
+fix). Suite 261/261, ruff limpo.
+
+### Resultado (19/09, comparacao contra `exp-gate-e-ancoragem-linha`, lote de 10)
+
+**Confirmado corrigido, leitura direta do MinIO:**
+
+- **eztc3**: `arquivo_origem`, `indice_coluna` e `rotulo_linha` corretos
+  (1,0/1,0/1,0) nas duas entradas (`vendas` e `lancamentos`), cada uma na
+  tabela certa.
+- **direcional**: a linha da marca (`Direcional` = 3.896) prevalece sobre a
+  categoria consolidada (`Unidades Lancadas` = 5.511) — `_entity_child_row`
+  funcionando como desenhado, estavel nas duas rodadas do lote.
+
+**Comparador cru: REPROVADO** — mas as duas guardas que regrediram sao
+regressao pre-existente, nao efeito deste lote:
+
+- `assinatura_f3_arquivo_origem_correto` (1,000 -> 0,989) e
+  `assinatura_f1_cobertura_obrigatorios` (0,950 -> 0,938): rastreadas ao
+  **santander**, que ja regride desde `exp-fase2-ancoragem-numerica` (dois
+  lotes atras) por um motivo sem relacao com o item 2.4 (nao investigado a
+  fundo neste lote; ver pendencia abaixo).
+- `assinatura_f3_rotulo_linha_correto` (0,889 -> 0,878): **itau**. Investigado
+  a pedido do usuario, lendo o `reasoning_content` real da chamada
+  (22.221 chars, `FALLBACK_LLM_FRAGMENT_THINKING_MODE=enabled`): deliberacao
+  legitima (casamento de rotulo, decisao de `escopo_periodo`/`recorte`/`escala`
+  por indicador/tabela), nao o padrao patologico de repetir regra em voz alta
+  do experimento revertido `exp-declaracao-explicita-opcional`. A unidade
+  `indicadores_monetarios` (~100+ chaves de saida) e grande o bastante para
+  reasoning + content ultrapassarem `FALLBACK_LLM_FRAGMENT_MAX_TOKENS=15000`
+  juntos, cortando a resposta (`finish_reason: "length"`) em uma tentativa.
+  Confirmado como variancia pura: um redisparo limpo sob o mesmo codigo e
+  rotulo teve a unidade resolvida sem erro, sem retry, resposta unica.
+- `cyre3` (`cobertura_obrigatorios` baixa): identico entre base e novo,
+  limitacao pre-existente e conhecida do documento (publica contagem de
+  empreendimentos e VGV, sem unidades) — nao e regressao.
+
+**Nao fechado — terceiro subcaso de ambiguidade do item 2.4, ainda aberto:**
+`mrv` continua com `rotulo_linha_correto=0,0`. Causa: a tabela usa **segmentos
+com titulo** (o padrao `Segment` ja existente em `table_structure.py`) — cada
+segmento titulado por marca ("MRV", "SENSIA", "TOTAL INCORPORACAO") repete o
+mesmo indicador. `resolve_row_anchor` corretamente acha mais de uma linha com
+o mesmo rotulo entre segmentos e devolve `None` (residuo seguro para a LLM,
+nao uma ancora forcada errada), mas nao resolve para o segmento certo. Nao
+construido nesta release — ficou registrado como decisao explicita do
+usuario de nao perseguir este terceiro subcaso agora (retorno decrescente:
+caca de ambiguidade especifica de documento, nao classe sistemica de erro).
+
+Pendencias abertas:
+
+1. Causa da regressao do `santander` (desde `exp-fase2-ancoragem-numerica`)
+   nao investigada a fundo — recorrente ha dois lotes, nao bloqueia, mas seguia
+   aberta ate o lote 12 (ver abaixo — descoberta relacionada, mesma raiz mais
+   provavel: sinonimo de entidade sem escopo por valor).
+2. MRV (segmento por marca) — terceiro subcaso do item 2.4, nao construido.
+3. `segmento_correto`, a metrica-chave declarada pelo proprio item 2.4 no
+   plano, segue sem instrumentacao dedicada — medido so por proxy via as
+   metricas `assinatura_f3_*` da Fase 3.
+
+## Lote 12: item 3.2b — sinonimo de entidade escopado por valor de dominio (`exp-item32b-sinonimo-por-valor`, 19-20/09)
+
+Investigando a pendencia 1 do lote 11 (regressao recorrente do `santander`) a
+pedido do usuario, achado mais profundo do que o esperado: o bug documentado
+na baseline0 (`inadimplencia_90_dias @ Jun/26` some porque
+`escopo_periodo.sinonimos` continha `"jun/26"` e `"mar/26"` juntos, e a
+expansao por entidade aceitava a primeira linha que casasse) nunca foi
+corrigido no **codigo** — so no **dado**: o contrato bancos v2.2.0 removeu os
+tokens literais de periodo de `escopo_periodo.sinonimos`, mas o mecanismo que
+causou o bug (`_expand_accepted_labels_from_contract`, ramo `entidades` em
+`contract_semantic_helpers.py`) continuou floodando **toda** a lista de
+sinonimos de uma entidade sempre que qualquer um deles batesse — sem
+distinguir "sinonimos do mesmo valor" (seguro) de "rotulos de valores
+diferentes do mesmo dominio" (perigoso). Lendo o contrato v2.2.0 completo,
+duas outras entidades tem exatamente essa forma perigosa, nunca incidentada:
+`recorte` (`dominio` consolidado/brasil/pessoa_fisica/...; `sinonimos` numa
+lista so, ex.: `"Total"`, `"Brasil"`, `"Pessoa fisica"`) e `escala`
+(`milhoes`/`bilhoes` na mesma lista). O ramo `metricas` da mesma funcao ja
+tinha uma guarda de contexto (`_metric_matches_context`) para o problema
+equivalente entre indicadores; o ramo `entidades` nunca teve o equivalente.
+
+**Fix (`9d9b7b1`):** `sinonimos` de uma entidade agora pode ser um `dict`
+valor -> lista de rotulos (alem da lista plana legada, mantida e segura para
+entidades mono-conceito como `instituicao`). No formato novo, so o(s)
+grupo(s) cujo **valor** (a chave do dict) ou um rotulo dele ja bateu um dos
+valores pedidos entram em `accepted` — nunca o rotulo de outro valor do
+mesmo dominio, mesmo que a entidade como um todo seja relevante ao contexto.
+Contrato bancos `v2.2.0 -> v2.3.0`: `escopo_periodo`, `recorte` e `escala`
+migram para o formato por valor (`instituicao`/`indicador`/`periodo` ficam
+como estavam — mono-conceito ou sem sinonimos). `evidence_prefilter.py`
+ganhou suporte ao mesmo formato dict (a funcao `add()` que amplia termos de
+busca da Fase 0 ja assumia lista; sem o ajuste, o dict seria silenciosamente
+ignorado ali — sem efeito pratico hoje porque nenhuma observacao de bancos
+seleciona por `recorte`/`escala`, mas corrigido por seguranca).
+
+**Instrumentacao de producao, pedido explicito do usuario apos a licao do
+lote 10** (mecanismo construido e dado como aprovado por releases inteiras
+sem nunca ter executado, por um bug de integracao nao detectado): nova
+evidencia `linha_resolvida_por_sinonimo` por celula de tabela resolvida
+(`source_mapping_resolvers.py`: compara o rotulo real da linha achada, ja em
+maos, contra o `valor_aceito` literal declarado no layout — diferente
+significa que algum mecanismo de sinonimo foi necessario) e novo score de
+producao **`resolucao_linha_por_sinonimo`** (`domain/observability/metrics.py
+::resolution_metrics`, emitido a cada execucao real da DAG 2 via
+`_emit_resolution_trace`, o mesmo caminho que ja emite `resolucao_*` hoje —
+nao e metrica so de harness, e visivel em toda execucao de producao).
+
+Testes: 4 novos em `test_contract_driven_resolution.py` (reproduzem o cenario
+jun/26-vs-mar/26 **direto contra o codigo**, com um contrato de teste
+minimo — nao dependem do contrato de producao continuar limpo — mais o caso
+`recorte` real), 2 novos em `test_observability_metrics.py` (score ausente
+sem celula de tabela, contagem correta com o fix). Todos provados via
+git-stash (falham sem o fix). Suite 267/267, ruff limpo.
+
+### Resultado (20/09, comparacao contra `exp-fase2-item24-titulo`, lote parcial santander+itau)
+
+**Instrumentacao confirmada viva em producao** — o proprio objetivo da
+pendencia pedida pelo usuario: `resolucao_linha_por_sinonimo` foi emitido em
+toda execucao real (2 traces `dag_resolve_schema_saida` + 2 traces de
+revalidacao dentro do fallback, 4 no total), com `celulas_com_linha_resolvida`
+> 0 nos quatro (8 e 15 celulas). Nao e mais possivel este mecanismo silenciar
+por releases inteiras sem ninguem perceber, como aconteceu no lote 10.
+
+**Resultado do proprio mecanismo neste lote: nulo, nao negativo.**
+`resolucao_linha_por_sinonimo = 0,000` nos quatro — nenhuma celula precisou
+do fallback por sinonimo em nenhum dos dois documentos; todo `valor_aceito`
+literal do layout ja bate o rotulo real da tabela (o layout ativo de
+santander/itau ja foi calibrado por rodadas anteriores). Ou seja: **este
+lote nao re-exercita o cenario original do bug** (`escopo_periodo`
+jun/26-vs-mar/26) porque o layout ativo nao precisa de sinonimo para
+resolver nenhuma linha agora — a prova de correcao do mecanismo em si
+continua sendo os testes unitarios (git-stash), nao esta rodada. O que esta
+rodada prova e (a) a instrumentacao esta ativa e visivel, e (b) nada
+quebrou.
+
+**Leitura direta do MinIO, documento a documento:**
+
+- **Santander**: `schema_saida_resolvido.json` **integralmente correto** —
+  5 monetarios identicos ao gabarito (714.769/15.341/16.058/718/3.014) e os
+  **5 periodos de `inadimplencia_90_dias` presentes e distintos**
+  (Dez/25=3,1, Jun/25=2,6, **Jun/26=3,3**, **Mar/26=3,3**, Set/25=2,8) — a
+  distincao Jun/26 vs Mar/26 que motivou o item 3.2b nao colapsou. A melhora
+  de `assinatura_f1_cobertura_obrigatorios`/`entradas_obrigatorias_cobertas`
+  (0,938/0,947 -> 1,000/1,000) e real no resultado, mas **nao pode ser
+  atribuida ao fix** (o mecanismo nao ativou nesta execucao); mais provavel
+  ser variancia de rodada, mesmo padrao ja visto varias vezes nesta cadeia de
+  lotes.
+- **Itau**: a regressao de `assinatura_f3_arquivo_origem_correto`/
+  `rotulo_linha_correto` e real, mas **rastreada a uma causa sem relacao com
+  este fix**: `inadimplencia_90_dias @ jun/26` resolveu para **4,1**
+  (gabarito: **1,9**, `charts/chart004.json`). A selecao de artefatos incluiu
+  corretamente `chart002`, `chart003` e `chart004` como candidatos (todos com
+  a ancora "Qualidade do credito"), mas a LLM escolheu `chart002` na geracao
+  do fragmento — escolha semantica entre artefatos plausiveis, item 3.1 do
+  plano (`arquivo_origem`, categoria `L`, nunca foi escopo deste fix). E o
+  mesmo padrao de ambiguidade chart002-vs-chart004 do Itau ja registrado
+  desde o lote 7. `capital_principal` (12,0) e ROE (24,5) resolveram desta
+  vez (opcionais que o lote 8 tinha perdido).
+
+**Veredito:** comparador cru diz REPROVADO (guarda
+`assinatura_f3_arquivo_origem_correto` regrediu), mas a leitura documento a
+documento mostra que a causa e alheia ao item 3.2b (escolha de grafico do
+Itau, categoria L, ja documentada antes) — nao um efeito do fix. O fix em si
+segue provado pelos testes unitarios (git-stash, cenario jun/26-vs-mar/26
+reproduzido direto contra o codigo) e pela ausencia de qualquer regressao
+correlacionada ao mecanismo que ele muda. **Aprovado com a ressalva de que
+este lote nao re-exercitou o cenario original** — a pendencia genuina que
+resta e observar, em producao, uma execucao futura onde
+`resolucao_linha_por_sinonimo > 0` e conferir que o valor escolhido bate o
+esperado; ate la, a garantia e so a dos testes.
+
+Pendencia que este lote NAO resolveu (falsamente atribuida a ele antes de
+investigar): a regressao recorrente do santander desde
+`exp-fase2-ancoragem-numerica` (pendencia 1 do lote 11) parece ter sumido
+neste lote, mas por variancia de rodada, nao por este fix — **segue aberta**,
+so nao reproduzida desta vez.
 
