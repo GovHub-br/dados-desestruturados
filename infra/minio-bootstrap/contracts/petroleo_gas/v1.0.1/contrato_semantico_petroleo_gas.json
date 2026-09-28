@@ -1,0 +1,339 @@
+{
+  "nome": "Releases trimestrais de resultados de petroleo e gas",
+  "dominio": "petroleo_gas",
+  "entidade": null,
+  "fonte": "Releases de resultados/desempenho financeiro trimestrais divulgados publicamente por companhias de petroleo e gas",
+  "tipo_documento": "contrato_semantico",
+  "versao": "1.0.1",
+  "descricao": "Contrato semantico v1.0.1 para padronizar a extracao de indicadores brutos consolidados publicados nos releases trimestrais de companhias de petroleo e gas (Petrobras e PRIO na criacao). 'receita_total' mira deliberadamente a receita total/de vendas consolidada, e nao a 'receita liquida' que a PRIO tambem publica separadamente no mesmo documento (valor diferente, menor) -- confundir as duas reproduziria o mesmo tipo de erro ja corrigido no item 3.2b do dominio bancos (sinonimo que mistura dois valores diferentes do mesmo documento). Petrobras publica a maior parte da tabela em R$ mas a divida liquida especificamente em US$ no mesmo documento -- moeda e escala sao por isso sempre dinamicas, por observacao, nunca fixas no contrato. Margem EBITDA nao entrou no contrato: nenhuma das duas companhias publica esse percentual pronto na tabela de destaques. v1.0.1 corrige os sinonimos de lucro_liquido apos conferir a extracao real da PRIO: o destaque textual 'Lucro liquido (ex-IFRS 16) de US$ 413 milhoes' nao aparece como celula numerica isolada em nenhuma tabela extraida -- so a linha padrao da demonstracao de resultado ('Lucro(Prejuizo) doPeriodo', US$ 392,7 milhoes no 2T26, incluindo efeitos de IFRS 16) e mapeavel de forma deterministica; o indicador passa a mirar essa linha.",
+  "contrato_semantico": {
+    "principios": {
+      "chaves_estaveis": "As chaves da saida devem ser genericas, reutilizaveis e independentes da empresa e do periodo do documento.",
+      "layout_independente": "A estrutura final deve permanecer igual mesmo que a apresentacao altere titulos, ordem das secoes, nomes das colunas ou formato visual.",
+      "periodos_como_valores": "Periodos especificos do documento nao devem aparecer nos nomes das chaves. Eles ficam como valores dentro das observacoes.",
+      "valores_brutos_primeiro": "O pipeline extrai o valor publicado, no nivel consolidado da companhia. Variacoes, margens derivadas nao publicadas e reconciliacoes ficam fora da extracao.",
+      "escala_e_moeda_explicitas": "Empresas do mesmo setor podem publicar em moedas diferentes (BRL/USD) e em escalas diferentes (milhoes/bilhoes). Moeda e escala lidas acompanham cada observacao monetaria e nunca sao convertidas na resolucao.",
+      "consolidado_nao_segmento": "Todo indicador deste contrato mira o valor consolidado da companhia. Quando o mesmo documento publica tambem uma abertura por segmento/unidade de negocio com rotulo parecido, o rotulo do segmento nao e sinonimo do indicador consolidado."
+    },
+    "entidades": {
+      "empresa": {
+        "descricao": "Companhia que divulgou a apresentacao/release de resultados.",
+        "obrigatorio": true,
+        "tipo": "string"
+      },
+      "indicador": {
+        "descricao": "Indicador bruto observado no release de resultados.",
+        "obrigatorio": true,
+        "tipo": "string",
+        "dominio": [
+          "receita_total",
+          "ebitda_ajustado",
+          "lucro_liquido",
+          "divida_liquida",
+          "alavancagem_divida_liquida_ebitda"
+        ]
+      },
+      "moeda": {
+        "descricao": "Moeda em que o valor monetario foi publicado no ponto lido do documento.",
+        "obrigatorio": true,
+        "tipo": "string",
+        "dominio": [
+          "BRL",
+          "USD"
+        ]
+      },
+      "escala": {
+        "descricao": "Escala em que o valor monetario foi publicado no ponto lido do documento.",
+        "obrigatorio": true,
+        "tipo": "string",
+        "dominio": [
+          "unidades",
+          "milhares",
+          "milhoes",
+          "bilhoes"
+        ],
+        "sinonimos": [
+          "R$ milhoes",
+          "em R$ milhoes",
+          "US$ milhoes",
+          "em US$ milhoes",
+          "R$ bilhoes",
+          "US$ bilhoes",
+          "milhoes",
+          "bilhoes"
+        ]
+      }
+    },
+    "metricas": {
+      "indicadores_monetarios": {
+        "descricao": "Indicadores publicados como valor monetario, com moeda e escala declaradas na propria observacao.",
+        "tipo": "grupo_metricas_brutas",
+        "indicadores": {
+          "receita_total": {
+            "descricao": "Receita total/de vendas consolidada da companhia no trimestre (nao confundir com uma eventual 'receita liquida' publicada separadamente no mesmo documento).",
+            "tipo": "number",
+            "obrigatorio": true,
+            "sinonimos": [
+              "Receita de vendas",
+              "Receita total"
+            ]
+          },
+          "ebitda_ajustado": {
+            "descricao": "EBITDA ajustado consolidado da companhia no trimestre.",
+            "tipo": "number",
+            "obrigatorio": true,
+            "sinonimos": [
+              "EBITDA ajustado",
+              "EBITDA ajustado (ex-IFRS 16)"
+            ]
+          },
+          "lucro_liquido": {
+            "descricao": "Lucro/(prejuizo) liquido consolidado da companhia no trimestre, na demonstracao de resultado padrao (incluindo efeitos de IFRS 16 quando a companhia os segrega). Quando a companhia tambem destaca uma cifra 'ex-IFRS 16' apenas em texto corrido (sem celula de tabela propria), o alvo deste indicador continua sendo a linha da demonstracao de resultado, nao o destaque textual -- que pode nao ser mapeavel de forma deterministica.",
+            "tipo": "number",
+            "obrigatorio": true,
+            "sinonimos": [
+              "Lucro liquido - Acionistas Petrobras",
+              "Lucro liquido sem eventos exclusivos- Acionistas Petrobras",
+              "Lucro liquido (ex-IFRS 16)",
+              "Lucro(Prejuizo) doPeriodo",
+              "Lucro (Prejuizo) do Periodo"
+            ]
+          },
+          "divida_liquida": {
+            "descricao": "Saldo da divida liquida consolidada ao final do trimestre.",
+            "tipo": "number",
+            "obrigatorio": false,
+            "sinonimos": [
+              "Divida liquida (US$ milhoes)",
+              "Divida Liquida"
+            ]
+          }
+        }
+      },
+      "indicadores_razao": {
+        "descricao": "Indicadores publicados como razao (numero de vezes), sem unidade monetaria ou percentual.",
+        "tipo": "grupo_metricas_brutas",
+        "unidade": "vezes",
+        "indicadores": {
+          "alavancagem_divida_liquida_ebitda": {
+            "descricao": "Alavancagem consolidada: divida liquida sobre EBITDA ajustado (LTM), em numero de vezes.",
+            "tipo": "number",
+            "unidade": "vezes",
+            "obrigatorio": true,
+            "sinonimos": [
+              "Divida liquida/LTM EBITDA Ajustado (x)",
+              "Divida Liquida/EBITDA",
+              "Alavancagem"
+            ]
+          }
+        }
+      }
+    },
+    "requisitos_mapeamento": {
+      "papeis": {
+        "papel_periodo": {
+          "periodo_referencia": {
+            "descricao": "Periodo a que o documento se refere (trimestre corrente).",
+            "derivacao": {
+              "origem": "identidade_documento.periodo"
+            }
+          },
+          "periodo_comparativo_anterior": {
+            "descricao": "Trimestre imediatamente anterior (comparacao t/t).",
+            "derivacao": {
+              "relacao": "anterior",
+              "passo": 1
+            }
+          },
+          "mesmo_periodo_ano_anterior": {
+            "descricao": "Mesmo trimestre do ano anterior (comparacao a/a).",
+            "derivacao": {
+              "relacao": "mesmo_periodo_ano_anterior"
+            }
+          }
+        }
+      },
+      "campos_obrigatorios": [
+        {
+          "path": "indicadores_monetarios.dados.valores.valor",
+          "descricao": "Indicadores monetarios brutos, com moeda e escala lidas no ponto do documento (empresas do mesmo setor podem publicar em moedas diferentes).",
+          "evidencia_esperada": {
+            "valor": "celula_de_tabela"
+          },
+          "observacoes_obrigatorias": [
+            {
+              "seletores": {
+                "indicador": "receita_total",
+                "papel_periodo": "periodo_referencia"
+              },
+              "campos_contexto_obrigatorios": [
+                "periodo",
+                "moeda",
+                "escala"
+              ]
+            },
+            {
+              "seletores": {
+                "indicador": "ebitda_ajustado",
+                "papel_periodo": "periodo_referencia"
+              },
+              "campos_contexto_obrigatorios": [
+                "periodo",
+                "moeda",
+                "escala"
+              ]
+            },
+            {
+              "seletores": {
+                "indicador": "lucro_liquido",
+                "papel_periodo": "periodo_referencia"
+              },
+              "campos_contexto_obrigatorios": [
+                "periodo",
+                "moeda",
+                "escala"
+              ]
+            },
+            {
+              "seletores": {
+                "indicador": "divida_liquida",
+                "papel_periodo": "periodo_referencia"
+              },
+              "campos_contexto_obrigatorios": [
+                "periodo",
+                "moeda",
+                "escala"
+              ],
+              "obrigatorio": false
+            }
+          ]
+        },
+        {
+          "path": "indicadores_razao.dados.valores.valor",
+          "descricao": "Indicadores de razao/alavancagem brutos (ex.: divida liquida sobre EBITDA, em numero de vezes).",
+          "evidencia_esperada": {
+            "valor": "celula_de_tabela"
+          },
+          "observacoes_obrigatorias": [
+            {
+              "seletores": {
+                "indicador": "alavancagem_divida_liquida_ebitda",
+                "papel_periodo": "periodo_referencia"
+              },
+              "campos_contexto_obrigatorios": [
+                "periodo"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "chaves_de_item": {
+      "indicadores_monetarios.dados": {
+        "chave": "indicador",
+        "origem_valor": "seletor_observacao"
+      },
+      "indicadores_monetarios.dados.valores": {
+        "chave": "papel_periodo",
+        "origem_valor": "seletor_observacao"
+      },
+      "indicadores_razao.dados": {
+        "chave": "indicador",
+        "origem_valor": "seletor_observacao"
+      },
+      "indicadores_razao.dados.valores": {
+        "chave": "papel_periodo",
+        "origem_valor": "seletor_observacao"
+      }
+    },
+    "derivacoes": [
+      {
+        "destino": "fonte",
+        "origem": {
+          "tipo": "contrato",
+          "campo": "fonte"
+        }
+      },
+      {
+        "destino": "empresa",
+        "origem": {
+          "tipo": "manifesto",
+          "campo": "candidate.entity_name"
+        }
+      },
+      {
+        "destino": "periodo_referencia",
+        "origem": {
+          "tipo": "manifesto",
+          "campo": "candidate.period_label"
+        }
+      },
+      {
+        "destino": "periodos_disponiveis.periodo_referencia",
+        "origem": {
+          "tipo": "manifesto",
+          "campo": "candidate.period_label"
+        }
+      },
+      {
+        "destino": "indicadores_monetarios.dados[*].empresa",
+        "origem": {
+          "tipo": "manifesto",
+          "campo": "candidate.entity_name"
+        }
+      },
+      {
+        "destino": "indicadores_razao.dados[*].empresa",
+        "origem": {
+          "tipo": "manifesto",
+          "campo": "candidate.entity_name"
+        }
+      }
+    ]
+  },
+  "schema_saida": {
+    "fonte": "string",
+    "empresa": "string",
+    "periodo_referencia": "string",
+    "periodos_disponiveis": {
+      "periodo_referencia": "string",
+      "periodo_comparativo_anterior": "string | null",
+      "mesmo_periodo_ano_anterior": "string | null"
+    },
+    "indicadores_monetarios": {
+      "tipo": "valor_bruto",
+      "dados": [
+        {
+          "empresa": "string",
+          "indicador": "string",
+          "valores": [
+            {
+              "periodo": "string",
+              "papel_periodo": "string",
+              "moeda": "string",
+              "escala": "string",
+              "valor": "number | null"
+            }
+          ]
+        }
+      ]
+    },
+    "indicadores_razao": {
+      "tipo": "valor_bruto",
+      "unidade": "vezes",
+      "dados": [
+        {
+          "empresa": "string",
+          "indicador": "string",
+          "valores": [
+            {
+              "periodo": "string",
+              "papel_periodo": "string",
+              "valor": "number | null"
+            }
+          ]
+        }
+      ]
+    }
+  }
+}
