@@ -1,5 +1,12 @@
 # Registro de releases de experimento
 
+Este registro cobre o "Plano da Assinatura de Layout" nos dominios calibrados
+(bancos, construtoras): mudanca de codigo/contrato/prompt medida contra a
+release anterior, **nos mesmos documentos**. Para a exploracao de dominios
+novos fora desse plano (siderurgia_mineracao, petroleo_gas, varejo — sem
+release anterior para comparar, ainda em criacao inicial de layout), ver
+[registro-de-releases-setores-novos.md](registro-de-releases-setores-novos.md).
+
 O campo `release` de cada trace no Langfuse e a **chave de agrupamento** usada por
 `scripts/comparar_releases_langfuse.py` para separar duas condicoes experimentais.
 Ele nao guarda o estado do codigo: e apenas um rotulo. Quem garante que o rotulo

@@ -47,6 +47,10 @@ novo tipo de PDF sem criar lógica específica na aplicação. O guia de
 define como toda mudança de comportamento deve ser medida antes de permanecer, e
 [Langfuse do zero](guides/langfuse-guia-do-zero.md) ensina a navegar a ferramenta
 e a ler cada métrica para quem nunca a usou.
+[Registro de releases](guides/registro-de-releases.md) rastreia o Plano da
+Assinatura de Layout em bancos/construtoras; a exploração de generalização
+para setores fora desses dois domínios tem seu próprio
+[registro de releases — setores novos](guides/registro-de-releases-setores-novos.md).
 
 ### [Referência](reference/)
 
