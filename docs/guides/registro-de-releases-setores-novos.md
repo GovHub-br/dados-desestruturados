@@ -39,6 +39,7 @@ expuseram.
 | --- | --- | --- |
 | `exp-setores-novos-criacao-inicial` | `e962c23` — gabaritos dos 7 documentos e medicao da rodada (lote 2). Antes: `6d28038` — contratos v1.0.0/v1.0.1 de siderurgia_mineracao, petroleo_gas e varejo + PDFs de teste 2T26 | rodada em 21/09 (criacao inicial de layout, sem release anterior para comparar): **5/7 entidades publicaram layout** (vale, gerdau, petrobras, renner, mglu); csn e prio reprovados (lote 1). Medida com gabarito em 30/09 sem rerodar: **prio e a unica falha de ancoragem real** (f3 arquivo 0.500); csn e gerdau em 0.833, os outros 4 em 1.000 (lote 2) |
 | `exp-correcoes-numero-e-contrato` | `483498e` — commit que os traces gravaram (`arvore_suja: sim`); o codigo da release esta em `f5442da`: sinal contabil e sufixo de razao no normalizador, contratos petroleo_gas v1.0.2 e varejo v1.0.1. `483498e` so acrescenta a declaracao de hipotese | rodada em 30/09 sobre os mesmos 7 documentos: **6/7 publicaram** (csn entra, prio segue fora). Alvo atingido (sinal da MGLU corrigido para `-50,4`; razao resolve em todos); nenhuma guarda caiu (f3 arquivo 0.881 → 0.952). A correcao da `escala` do varejo **nao funcionou** — causa reidentificada. Ver lote 3 |
+| `exp-correcoes-contexto-opcional-e-escala` | `740746d` — contratos (varejo v1.0.2, siderurgia_mineracao v1.0.2) e gabarito da Gerdau; codigo em `493559c`: remove campos de contexto orfaos de observacao opcional ausente | rodada em 30/09 sobre os mesmos 7 documentos, mais redisparo `__r2` de csn e prio (variancia de selecao de artefatos): **7/7 publicaram pela primeira vez**, incluindo a **PRIO** (alvo do lote). `e2e_apto_para_bronze` 0.857 → 1.000. A queda aparente da guarda `assinatura_f3_arquivo_origem_correto` (0.952 → 0.931) e explicada documento a documento: nenhuma e regressao real. `escala` do varejo **continua nao corrigida** (segunda tentativa falhou). Ver lote 4 |
 
 ## Lote 1: contratos novos + criacao inicial de layout (`exp-setores-novos-criacao-inicial`, 21/09)
 
@@ -553,3 +554,221 @@ renner e mglu publicaram `v1.1.0` ainda carregando `escala = "2T26"`, igual a
    (`traces_por_release()` e `scores()`) da `TimeoutError` contra este
    Langfuse. Consultas filtradas por release funcionam. Vale filtrar a
    paginacao por release no script.
+
+## Lote 4: contexto orfao de observacao opcional + tentativas de escala/CSN (`exp-correcoes-contexto-opcional-e-escala`, 30/09)
+
+### Hipotese
+
+Investigando por que a PRIO nunca publicava (pendencia 2 do lote 3):
+`alavancagem_divida_liquida_ebitda` e opcional (`obrigatorio: false`) e a
+PRIO genuinamente nao publica o valor do trimestre corrente como celula
+isolada — so em texto corrido de destaques (`tables/table002.json`, linha
+"Alavancagem de 1,5x Dívida Líquida/EBITDA"). A LLM declarava essa ausencia
+corretamente em `campos_nao_mapeados`, mas o campo de contexto `periodo` da
+mesma observacao continuava exigido (`campos_contexto_obrigatorios` nao olha
+se a observacao-mae esta ausente). Para cumprir essa exigencia impossivel, a
+LLM inventava uma origem para `periodo` (`campo_derivado` com a chave errada,
+`origem` em vez de `campo_origem`, apontando para um path inexistente) — e
+essa entrada fabricada, com `obrigatorio: true`, e o que a revalidacao via
+como `OBRIGATORIOS_NAO_RESOLVIDOS_NA_REVALIDACAO`.
+
+Hipotese: se o codigo parar de exigir o contexto de uma observacao opcional
+que ficou ausente — em vez de tentar ensinar a LLM a nao inventar —, a PRIO
+publica, e o mesmo vale para qualquer outro dominio/observacao no mesmo
+formato, nao so a PRIO.
+
+Aproveitado o lote para tratar tambem duas pendencias menores aprovadas
+antes de rodar: sinonimo de `divida_liquida` da CSN e o gabarito da Gerdau
+(a LLM ancora "Lucro liquido ajustado", nao "Lucro liquido" — o gabarito
+estava desatualizado em relacao a regra de preferir a versao ajustada, ja
+declarada no contrato). E uma segunda tentativa de corrigir a `escala` do
+varejo, desta vez explicando no proprio requisito do contrato que `escala` e
+`periodo` sao cabecalhos de colunas diferentes (coluna de rotulo vs. coluna
+do periodo).
+
+### O que foi feito
+
+| item | arquivo | mudanca |
+| --- | --- | --- |
+| fix de codigo | `domain/fallback/candidate_validation.py` | `optional_mapping_observations_not_mapped` tambem reporta os campos de contexto de uma observacao opcional quando o `.valor` dela nao foi mapeado |
+| fix de codigo | `application/use_cases/fallback/trace_persistence.py` | `_persist_unmapped_optional_observations` devolve as chaves de `mapeamento_canonico` que sao esses campos de contexto orfaos |
+| fix de codigo | `application/use_cases/fallback/mapping_unit_generation.py` | remove essas chaves do candidato antes de persistir o consolidado e antes da revalidacao |
+| testes novos | `tests/unit/domain/test_optional_observation_context_orphans.py`, `tests/unit/application/test_orphan_context_mapping_keys.py` | deteccao e remocao da entrada orfa |
+| contrato `varejo` v1.0.2 | requisito de `indicadores_monetarios.dados.valores.valor` | descricao explica que `escala` e `periodo` sao cabecalhos de colunas diferentes na mesma linha (coluna 0 vs. coluna 1) |
+| contrato `siderurgia_mineracao` v1.0.2 | `divida_liquida` | sinonimos "Divida Liquida Ajustada" e "Divida Liquida Ajustada?" |
+| gabarito da Gerdau | `lucro_liquido` | ancora movida para "Lucro líquido ajustado 2 (R$ milhões)" (`tables/table001.json` L4), mesmo valor (1.466) |
+
+Sem mudanca de prompt (`sincronizar_prompts_langfuse.py --verificar`: 18
+iguais, 0 divergentes).
+
+### Metrica-alvo e guardas
+
+- **Alvo:** a PRIO publica (`publicacao_realizada` e `e2e_apto_para_bronze`
+  de 6/7 para 7/7).
+- **Guardas:** `resolucao_cobertura_obrigatorios`, `revalidacao_gate_efetivo`,
+  `validacao_cobertura_de_regras`, mais `assinatura_f3_arquivo_origem_correto`
+  (nao pode cair de 0.952) e `assinatura_f0_selecao_revocacao` (1.000).
+
+### Nota de procedimento: dois redisparos `__r2`
+
+Depois do lote de 7, duas metricas de guarda vieram com queda sem explicacao
+mecanica no que a release mudou — exatamente o gatilho que a skill manda
+tratar com redisparo antes de decidir:
+
+1. **CSN**: a unidade `indicadores_razao` teve uma tentativa (attempt 0) com
+   `mapeamento_canonico: {}` que reprovou a validacao Pydantic
+   (`fragmento deve conter pelo menos um mapeamento`); a correcao (attempt 1)
+   selecionou artefatos diferentes da base (`table004`/`table010`/`table012`
+   em vez de `table001`) e nao achou evidencia para `alavancagem` — o
+   resolvedor a tinha achado na base (`3,49x`). Redisparado com
+   `--sufixo __r2`.
+2. **PRIO**: `divida_liquida` ancorou em `charts/chart015.json` linha 12
+   (rotulo `"2T26"`) em vez de `charts/chart014.json` linha 7 (rotulo
+   `"Dívida Líquida 2T26"`, usado na base). Redisparado com `--sufixo __r2`
+   para checar se era variancia.
+
+Os dois redisparos rodaram como runs adicionais sob o mesmo rotulo
+(`exp-correcoes-contexto-opcional-e-escala__..._r2`), preservando
+`document_id`/`execution_id` da base. O harness ja tinha rodado (e gravado
+311 scores no Langfuse) sobre o lote de 7 antes dos redisparos serem
+necessarios; os scores do Langfuse desta release **refletem as tentativas
+anteriores aos `__r2`** — rodar o harness de novo duplicaria os 5 documentos
+que nao mudaram, entao os dois documentos redisparados foram conferidos
+direto no MinIO (candidato + auditoria de revalidacao), nao via o harness.
+Isso e uma pendencia nova (ver pendencia 8).
+
+### Resultado
+
+7/7 runs em `success` (mais os dois `__r2`); **7/7 publicaram layout pela
+primeira vez** — a PRIO publicou `v1.1.0`, seu primeiro ponteiro.
+
+#### Alvo: atingido
+
+`e2e_apto_para_bronze` e `e2e_sucesso` foram de 0.857 (6/7) para 1.000 (7/7).
+A revalidacao da PRIO aprovou sem alertas
+(`codigos_alerta: []`, `obrigatorios_nao_resolvidos: []`), confirmado tanto
+na tentativa original quanto no `__r2`.
+
+Curiosidade: a PRIO desta vez tambem tentou mapear o `.valor` da alavancagem
+(`tables/table002.json`, a linha de destaque "Alavancagem de 1,5x Dívida
+Líquida/EBITDA", `obrigatorio: false`) — o resolvedor corretamente nao
+conseguiu parsear a frase inteira como numero (`valor_normalizado: null`,
+`status_resolucao: nao_resolvido`), e por ser opcional isso nao bloqueia
+nada. Nao ha como afirmar que o fix desta release causou essa tentativa
+especifica da LLM (pode ser variancia de execucao); o que se prova e que o
+resultado e inofensivo nos dois casos (com ou sem essa tentativa) porque o
+campo e opcional.
+
+#### Guardas: nenhuma queda real, apos conferencia documento a documento
+
+O comparador cru devolve **REPROVADO** (`assinatura_f3_arquivo_origem_correto`
+0.952 → 0.931), mas isso reflete as tentativas anteriores aos `__r2`. Lendo o
+MinIO de cada documento redisparado:
+
+| documento | achado antes do `__r2` | achado depois do `__r2` | rotulo |
+| --- | --- | --- | --- |
+| csn | `alavancagem` sem evidencia (selecao de artefatos variou); `divida_liquida` seguiu sem mapear | `alavancagem` = `3,49x`, `table001.json` L13 — **identico a base** | variancia de selecao de artefatos, corrigida |
+| prio | `divida_liquida` ancorada em `chart015.json` L12 (`"2T26"`) em vez de `chart014.json` L7 | mesmo resultado no `__r2` (reproduzido, nao e ruido) — mas **`valor_resolvido: 4046.0`, identico ao publicado na base** | ancora alternativa com o mesmo valor final; gabarito nao reconhece o caminho alternativo |
+
+Nenhum dos dois e regressao de dado: a CSN volta a bater com a base depois do
+`__r2`, e a PRIO publica o mesmo numero (`4046`) por um caminho diferente —
+o `chart015.json` e um artefato que a propria curadoria do gabarito ja
+descreve como "repete a serie de `chart015.json` com os trimestres lidos
+como anos" (nota pre-existente no gabarito da PRIO), ou seja, uma serie
+paralela e as vezes redundante a `chart014.json`.
+
+Outras variacoes sem explicacao mecanica das mudancas desta release,
+atribuidas a variancia de selecao de artefatos da PRIO/CSN (mais artefatos
+selecionados neste lote: `chart005`/`chart015`/`table002`/`table006`/
+`table007` entraram na evidencia onde a base so tinha `table010`+`chart014`
+ou `table004`+`table010`+`table012`):
+
+- `assinatura_f3_ausencia_falso_positivo` 0.000 → 1.000 (n=1, PRIO): o
+  candidato mapeou `.valor` da alavancagem apesar do gabarito declarar
+  ausencia esperada — mas resolve para `null` (nao publica dado errado).
+- `assinatura_f2_papel_coluna_origem_contrato` e `papel_coluna_origem_contrato`
+  cairam levemente — mais colunas na evidencia selecionada, mais casos que o
+  codigo deterministico nao resolveu sozinho e delegou a LLM.
+- `selecao_evidencia_descartada` subiu (0.118 → 0.176) — consistente com mais
+  artefatos selecionados e depois descartados na poda.
+- `assinatura_f0_selecao_precisao`: renner caiu (0.333 → 0.2), vale melhorou
+  (0.125 → 0.25) — ja rotulado ruido no lote 3, nao e guarda.
+
+**Nenhuma guarda caiu por uma razao real. Decisao: mantem.**
+
+#### `escala` do varejo: segunda tentativa, tambem sem efeito
+
+Renner e MGLU continuam publicando `escala = "2T26"`. Desta vez o requisito
+do contrato dizia explicitamente que `escala` e `periodo` sao cabecalhos de
+colunas diferentes (coluna de rotulo vs. coluna do periodo) — a LLM ignorou
+a instrucao e mapeou os dois para `indice_coluna_esperado: 1`, identico ao
+lote 3. Orientacao textual na descricao do requisito **nao e suficiente**
+para mudar esse comportamento. As duas opcoes que restam sao mais diretas:
+fixar `escala` como literal no `schema_saida` do varejo (como `moeda` ja e),
+ou alguma restricao estrutural que impeca duas chaves de contexto
+apontarem para o mesmo indice de coluna. Nao aplicado; decisao do usuario.
+
+#### CSN `divida_liquida`: sinonimo nao testado, causa real e outra
+
+O sinonimo "Divida Liquida Ajustada?" chegou corretamente ao prompt da LLM
+(confirmado lendo `entrada_llm_fragmento_layout_signature.json` do `__r2`),
+mas **`table001.json` — o unico artefato com essa linha — e descartado antes
+da geracao do fragmento** por `_prune_unit_evidence`
+(`mapping_unit_generation.py`): a evidencia "generica" e descartada quando a
+evidencia "especifica" ja cobre todos os indicadores **obrigatorios**
+(`ebitda_ajustado`, `lucro_liquido`, `receita_liquida`). Isso aconteceu tanto
+na base quanto nas duas tentativas deste lote — `divida_liquida` nunca teve
+chance de casar com o sinonimo porque a LLM nunca chegou a ver a linha. A
+pendencia 4 do lote 3 estava com o diagnostico errado (achava que faltava
+sinonimo); a causa real e a poda de evidencia nao considerar indicadores
+opcionais. Nao corrigido; decisao do usuario sobre se vale abrir excecao na
+poda para indicadores opcionais do mesmo grupo.
+
+### Ponteiros apos o lote
+
+| entidade | antes | depois |
+| --- | --- | --- |
+| csn, gerdau, vale, petrobras, renner, mglu | `v1.0.0`/`v1.1.0` (lote 3) | `v1.2.0` |
+| prio | (nenhum) | **`v1.1.0`** (primeiro ponteiro) |
+
+Nada a reverter: todo documento publicado bate com a base onde a base tinha
+valor (csn e prio conferidos direto no MinIO apos o `__r2`, ver acima).
+
+### Pendencias abertas depois deste lote
+
+1. **`escala` do varejo**: duas tentativas de correcao por contrato/prompt
+   falharam. Os caminhos que restam sao fixar `escala` como literal no
+   schema (como `moeda`) ou uma restricao estrutural que impeca dois campos
+   de contexto apontarem para o mesmo indice de coluna. Decisao do usuario.
+2. **CSN `divida_liquida`**: causa recaracterizada — nao e sinonimo faltando,
+   e poda de evidencia (`_prune_unit_evidence`) descartando a unica tabela
+   com o rotulo, porque so considera indicadores obrigatorios ao decidir o
+   que e "coberto". Vale para qualquer indicador opcional que more numa
+   tabela "generica" descartavel.
+3. **Selecao de artefatos da PRIO**: segue variavel (mais artefatos
+   selecionados neste lote que na base); deixada de lado por decisao do
+   usuario desde o lote 3.
+4. **Base contabil do `lucro_liquido` em `varejo`**: sem mudanca desde o
+   lote 3.
+5. **Precisao da fase 0**: sem mudanca de fundo (variacao dentro do ja
+   observado).
+6. **`comparar_releases_langfuse.py` nao completa sem consulta dirigida**:
+   sem mudanca desde o lote 3.
+7. **Chave errada em `campo_derivado`**: a LLM as vezes escreve `origem` em
+   vez de `campo_origem` (formato documentado em
+   `docs/reference/examples/cury-deterministic-layout.md`) — o modelo
+   Pydantic do candidato aceita a chave errada (`extra="allow"`) sem avisar.
+   Neste lote isso ficou inofensivo porque a entrada orfa e removida antes da
+   revalidacao (item novo desta release), mas o mesmo erro num campo
+   *nao* orfao passaria batido. Vale considerar validar as chaves esperadas
+   por `tipo_origem`.
+8. **Harness/relatorio local nao distingue `__r2` do mesmo documento**:
+   `avaliar_assinatura_layout.py` chaveia por entidade, nao por
+   `execution_id`/`run_id`; ao reprocessar um documento com dois runs sob o
+   mesmo rotulo, o relatorio local guarda so o ultimo lido (nao
+   necessariamente o `__r2` mais recente), e o Langfuse ja tinha os scores da
+   tentativa anterior gravados (o POST so roda uma vez por release). Um
+   redisparo `__r2` no meio de uma release fica so documentado no registro e
+   conferido a mao no MinIO, nao refletido nos scores agregados. Vale o
+   harness aceitar um `document_id`/`execution_id`/`run_id` especifico para
+   regravar so um documento.
