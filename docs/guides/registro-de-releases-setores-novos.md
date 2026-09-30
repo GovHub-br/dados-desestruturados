@@ -155,3 +155,163 @@ valor. **Nao corrigido neste lote.**
 Nao ha comparador Langfuse pareado para este lote (nenhuma release anterior
 sobre estes documentos). Avaliacao inteira por leitura direta dos artefatos
 no MinIO.
+
+> Este lote foi avaliado a mao porque ainda nao existiam gabaritos para estes
+> 7 documentos. O lote 2 criou os gabaritos e mediu a mesma rodada com o
+> harness, sem rerodar nada — as pendencias acima foram revisadas la, e duas
+> delas mudaram de diagnostico.
+
+## Lote 2: gabaritos dos 7 documentos + medicao da rodada inicial (30/09)
+
+Nenhuma execucao nova. Este lote nao mexeu em codigo, contrato nem prompt: ele
+criou o dado que faltava (`eval/gabaritos/`) e rodou
+`scripts/avaliar_assinatura_layout.py` sobre os traces que a rodada de 21/09
+ja tinha deixado no Langfuse. O objetivo era sair da avaliacao manual e passar
+a ter numero.
+
+### Por que era necessario
+
+O harness le os traces do Langfuse mas carrega o gabarito do disco
+(`eval/gabaritos/<document_id>.json`). Sem gabarito, as fases 0, 2 e 3 sao
+puladas em silencio pelos `if gabarito:` de `avaliar_trace()` — nao da erro,
+simplesmente nao produz metrica. Conferido no Langfuse antes de comecar: os 7
+traces `atlas.fallback` da release tinham ~400 scores, todos de runtime
+(`estrutura_tabela_lida`, `llm_acerto_1a_tentativa`, `e2e_sucesso`…) e
+**nenhum** `assinatura_f*`. Os 4 datasets (`atlas-e2e-regressao`,
+`atlas-fallback-selecao-artefatos`, `atlas-fallback-layout-candidato`,
+`atlas-transicao-resolucao-fallback`) tambem nao tinham nenhum item destes
+dominios — so bancos e construtoras, sem execucao depois de 10/09.
+
+Vale registrar a distincao, porque os nomes colidem: `papel_coluna_origem_contrato`
+(runtime) mede quantos papeis o codigo resolveu sozinho; `assinatura_f2_papel_coluna_correto`
+(harness) mede se a coluna resolvida e a **certa**. Da para tirar 1.0 no
+primeiro e 0.0 no segundo. Foi o que aconteceu com a `escala` de renner/mglu no
+lote 1: o runtime aprovou e publicou, e so a leitura humana pegou o erro.
+
+### Os gabaritos
+
+35 ancoragens e 1 ausencia esperada, em 7 arquivos. Cada ancoragem foi
+conferida celula a celula contra os `tables/*.json` e `charts/*.json` reais no
+MinIO — o gerador aborta se o rotulo da linha ou o cabecalho da coluna nao
+baterem com o artefato. Todas com `conferido_e2e: false`: nenhum valor foi
+validado contra uma resolucao aprovada ponta a ponta.
+
+| entidade | ancoragens | ausencias |
+| --- | --- | --- |
+| csn, gerdau, vale | 6 cada | — |
+| petrobras | 5 | — |
+| prio | 4 | 1 |
+| renner, mglu | 4 cada | — |
+
+Coerencia interna conferida onde o proprio documento permite (margem =
+EBITDA/receita): Gerdau 19,2%, Renner 22,9%, MGLU 8,0% batem. CSN (23,4%) e
+Vale (39%) divergem porque publicam a margem sobre base proforma, e nao sobre
+a receita e o EBITDA que o contrato exige nos outros indicadores — registrado
+em `revisao_pendente` nos dois gabaritos.
+
+### Linha de base medida (`exp-setores-novos-criacao-inicial`, rodada de 21/09)
+
+| entidade | f0 revocacao | f0 precisao | f3 arquivo | f3 rotulo linha | f3 indice coluna | f1 cobertura obrig. |
+| --- | --- | --- | --- | --- | --- | --- |
+| vale | 1.000 | 0.250 | 1.000 | 1.000 | 1.000 | 1.000 |
+| petrobras | 1.000 | 0.500 | 1.000 | 1.000 | 1.000 | 1.000 |
+| renner | 1.000 | 0.250 | 1.000 | 1.000 | 1.000 | 1.000 |
+| mglu | 1.000 | 1.000 | 1.000 | 1.000 | 1.000 | 1.000 |
+| csn | 1.000 | 0.125 | 0.833 | 0.833 | 0.833 | 1.000 |
+| gerdau | 1.000 | 1.000 | 0.833 | 0.833 | 0.833 | 1.000 |
+| **prio** | **0.500** | 0.333 | **0.500** | **0.500** | 0.750 | **0.500** |
+
+Leitura:
+
+- **PRIO e o unico caso de falha de ancoragem de verdade.** Revocacao 0.500 na
+  fase 0 confirma por numero o que o lote 1 descreveu: metade dos artefatos
+  necessarios nunca entrou no conjunto considerado (o `charts/chart014.json`,
+  que tem o EBITDA).
+- **CSN e Gerdau em 0.833** perdem a mesma observacao: `divida_liquida`
+  (opcional), que nenhum dos dois mapeou embora o dado exista e esteja
+  ancorado no gabarito. E oportunidade de cobertura, nao erro.
+- **Precisao da fase 0 baixa em quase todos** (0.125 a 0.500, so gerdau e mglu
+  em 1.000): a selecao traz 4 a 8 vezes mais artefatos do que precisa. Nao
+  produz erro, mas enche o contexto da LLM de ruido — candidato a melhoria
+  independente.
+- **Limite do que este gabarito mede:** renner e mglu marcam 1.000 em toda a
+  fase 3 apesar do bug da `escala`. A fase 3 mede ancoragem (arquivo, linha,
+  coluna) e a `escala` e campo de contexto, fora do alcance dela. O bug do
+  varejo continua invisivel para esta metrica.
+
+### Causa raiz do bug do varejo, refinada
+
+Comparando os candidatos dos 7, a diferenca esta em como a `escala` foi
+declarada:
+
+| dominio | `escala` no candidato |
+| --- | --- |
+| siderurgia_mineracao, petroleo_gas | `tipo_origem: valor_fixo` (ex.: `milhoes`) |
+| varejo (renner, mglu) | `tipo_origem: cabecalho_de_tabela` |
+
+Nos dois documentos de varejo a LLM tentou **ler** a escala de um cabecalho em
+vez de declara-la, e o cabecalho que ela alcancou foi o da coluna do periodo —
+daí `escala = "2T26"`. Isso e consequencia da contradicao ja identificada no
+lote 1 (`moeda` e literal fixo no schema e ao mesmo tempo esta em
+`campos_contexto_obrigatorios`), mas o mecanismo do erro e mais especifico do
+que "bagunçou a extracao de contexto".
+
+Ponto a favor do modelo por observacao: a CSN declarou `escala` diferente por
+indicador (`milhares` para receita e lucro, vindos da DRE; `milhoes` para
+EBITDA, vindo do quadro de destaques) e acertou as duas. O mesmo vale para a
+moeda mista da Petrobras (`USD` so na divida liquida, `BRL` no resto).
+
+### Achados novos (nao existiam no lote 1)
+
+1. **Contrato `petroleo_gas` torna a PRIO impossivel de aprovar.**
+   `alavancagem_divida_liquida_ebitda` esta como `obrigatorio: true`, mas a
+   PRIO nao publica esse dado do 2T26 em forma mapeavel: a serie de
+   `charts/chart015.json` termina no 1T26 (2.0x) e o unico registro do
+   trimestre e a frase "Alavancagem de 1,5x Divida Liquida/EBITDA" dentro de
+   uma celula de texto corrido de DESTAQUES. Isso fere o principio de so
+   marcar como obrigatorio o que **todas** as empresas do dominio publicam —
+   foi erro na construcao do contrato, nao da LLM. Registrado como
+   `ausencia_esperada` no gabarito da PRIO.
+2. **Descricao do `receita_liquida` no contrato `varejo` esta errada para a
+   Renner.** Ela manda evitar "o recorte por segmento, ex.: varejo ou
+   vestuario", mas a Renner nao publica nenhuma receita acima de "Receita
+   liquida de varejo" (3.689,2): "Receita liquida de vestuario" (3.345,1) e um
+   recorte dentro dela, e servicos financeiros aparece como resultado (53,5),
+   nao como receita. Prova de que e a linha de topo: a propria "Margem EBITDA
+   total" da Renner (22,9%) e 844,6 / 3.689,2. A palavra "varejo" tem escopo
+   diferente por linha no mesmo documento — em EBITDA e recorte ("EBITDA de
+   varejo" 791,2 vs "EBITDA Total Ajustado" 844,6), em receita e o total.
+3. **A ma atribuicao de titulo do Docling atinge duas tabelas da PRIO, nao
+   uma.** `tables/table006.json` e `tables/table007.json` levam ambas o titulo
+   "Divida Liquida / EBITDA ajustado" e as duas contem dados de ativos de
+   arrendamento. Alem disso, `charts/chart005.json` repete a serie de
+   `charts/chart015.json` com os trimestres lidos como anos (2023..2034).
+4. **Base contabil inconsistente entre as duas empresas de `varejo`.** O
+   contrato manda mirar a visao ajustada quando existem as duas, entao a MGLU
+   ancora em "Lucro Liquido - Ajustado" (-50,4) e nao em "Lucro Liquido"
+   (-72,5). A Renner so publica a visao nao ajustada. As duas empresas do
+   dominio ficam em bases diferentes.
+
+### Pendencias abertas depois deste lote
+
+Consolidando as do lote 1 com o que mudou:
+
+1. Contrato `varejo`: tirar `"moeda"` de `campos_contexto_obrigatorios` nos 3
+   indicadores monetarios e refazer o layout de renner/mglu. **Mantida**,
+   agora com a causa raiz refinada (`escala` como `cabecalho_de_tabela`).
+2. Bug de codigo: normalizador nao parseia sufixo "x" ("3,49x", "0,69x" →
+   `valor_normalizado: null`). **Mantida**, ainda nao localizada no fonte.
+3. CSN — variancia da LLM no campo `obrigatorio`. **Mantida**, sem decisao.
+4. Sinonimo do rotulo do `chart014` para a PRIO. **Rebaixada**: o gabarito
+   mostra que o problema da PRIO e de selecao de artefato (revocacao 0.500),
+   nao de sinonimo; o sinonimo nao ataca a causa.
+5. **Nova** — contrato `petroleo_gas`: `alavancagem_divida_liquida_ebitda`
+   precisa virar `obrigatorio: false`, senao a PRIO nunca aprova (achado 1).
+6. **Nova** — contrato `varejo`: corrigir a descricao de `receita_liquida` e
+   incluir "Receita liquida de varejo" nos sinonimos (achado 2).
+7. **Nova** — decidir a base contabil do `lucro_liquido` em `varejo`, hoje
+   ajustada na MGLU e nao ajustada na Renner (achado 4).
+8. **Nova** — precisao da fase 0 entre 0.125 e 0.500 em 5 dos 7 documentos.
+
+Continua sem comparacao pareada no Langfuse: esta e a primeira medicao destes
+documentos, e agora serve de linha de base para a proxima rodada.

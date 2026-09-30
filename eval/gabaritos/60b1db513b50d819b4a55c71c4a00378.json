@@ -1,0 +1,97 @@
+{
+  "document_id": "60b1db513b50d819b4a55c71c4a00378",
+  "entidade": "renner",
+  "dominio": "varejo",
+  "execution_id": "dag_detecta_pdf_e_extrai__renner__2T26__20260921T160258Z",
+  "contrato": {
+    "tipo_documento": "varejo",
+    "versao": "1.0.0"
+  },
+  "identidade": {
+    "entidade": "Lojas Renner",
+    "periodo": "2T26"
+  },
+  "artefatos_esperados_por_requisito": {
+    "indicadores_monetarios.dados.valores.valor": [
+      "tables/table001.json"
+    ],
+    "indicadores_percentuais.dados.valores.valor": [
+      "tables/table001.json"
+    ]
+  },
+  "ancoragens": {
+    "indicadores_monetarios.dados.valores.valor": [
+      {
+        "seletores": {
+          "indicador": "receita_liquida",
+          "papel_periodo": "periodo_referencia"
+        },
+        "arquivo_origem": "tables/table001.json",
+        "indice_linha": 0,
+        "rotulo_linha": "Receita líquida de varejo",
+        "indice_coluna": 1,
+        "cabecalho_coluna": "2T26",
+        "valor": 3689.2,
+        "valor_bruto": "3.689,2",
+        "obrigatorio": true,
+        "periodo": "2T26",
+        "conferido_e2e": false
+      },
+      {
+        "seletores": {
+          "indicador": "ebitda_ajustado",
+          "papel_periodo": "periodo_referencia"
+        },
+        "arquivo_origem": "tables/table001.json",
+        "indice_linha": 15,
+        "rotulo_linha": "EBITDA Total Ajustado",
+        "indice_coluna": 1,
+        "cabecalho_coluna": "2T26",
+        "valor": 844.6,
+        "valor_bruto": "844,6",
+        "obrigatorio": true,
+        "periodo": "2T26",
+        "conferido_e2e": false
+      },
+      {
+        "seletores": {
+          "indicador": "lucro_liquido",
+          "papel_periodo": "periodo_referencia"
+        },
+        "arquivo_origem": "tables/table001.json",
+        "indice_linha": 18,
+        "rotulo_linha": "Lucro líquido",
+        "indice_coluna": 1,
+        "cabecalho_coluna": "2T26",
+        "valor": 404.6,
+        "valor_bruto": "404,6",
+        "obrigatorio": true,
+        "periodo": "2T26",
+        "conferido_e2e": false
+      }
+    ],
+    "indicadores_percentuais.dados.valores.valor": [
+      {
+        "seletores": {
+          "indicador": "margem_ebitda",
+          "papel_periodo": "periodo_referencia"
+        },
+        "arquivo_origem": "tables/table001.json",
+        "indice_linha": 16,
+        "rotulo_linha": "Margem EBITDA total",
+        "indice_coluna": 1,
+        "cabecalho_coluna": "2T26",
+        "valor": 22.9,
+        "valor_bruto": "22,9%",
+        "obrigatorio": true,
+        "periodo": "2T26",
+        "conferido_e2e": false
+      }
+    ]
+  },
+  "ausencias_esperadas": [],
+  "origem": "Curadoria manual sobre os artefatos de extracao da execucao de 21/09/2026 (release exp-setores-novos-criacao-inicial). Cada ancoragem foi conferida celula a celula contra tables/*.json e charts/*.json no MinIO. Nenhum valor foi conferido ponta a ponta contra uma resolucao aprovada, por isso conferido_e2e=false em todas.",
+  "revisao_pendente": [
+    "receita_liquida ancorada em 'Receita liquida de varejo' (3.689,2), embora a descricao do contrato varejo v1.0.0 mande evitar 'o recorte por segmento, ex.: varejo ou vestuario'. A Renner nao publica nenhuma receita consolidada acima dessa: 'Receita liquida de vestuario' (3.345,1) e um recorte DENTRO dela, e servicos financeiros aparece como resultado (53,5), nao como receita. Prova de que esta e a linha de topo: a propria 'Margem EBITDA total' (22,9%) e EBITDA Total Ajustado / receita liquida de varejo (844,6 / 3.689,2 = 22,89%). A palavra 'varejo' tem escopo diferente por linha no mesmo documento: em EBITDA ela e recorte ('EBITDA de varejo' 791,2 vs 'EBITDA Total Ajustado' 844,6), em receita ela e o total. A descricao do contrato precisa ser corrigida."
+  ]
+}
