@@ -5,7 +5,7 @@
   "execution_id": "dag_detecta_pdf_e_extrai__prio__2T26__20260921T153320Z",
   "contrato": {
     "tipo_documento": "petroleo_gas",
-    "versao": "1.0.1"
+    "versao": "1.0.2"
   },
   "identidade": {
     "entidade": "PRIO",
@@ -92,7 +92,7 @@
         "indicador": "alavancagem_divida_liquida_ebitda",
         "papel_periodo": "periodo_referencia"
       },
-      "motivo": "A PRIO nao publica a alavancagem do 2T26 como celula numerica isolada. A serie historica (charts/chart015.json) termina no 1T26 (2.0x) e nao cobre o trimestre de referencia; o unico registro do 2T26 e a frase 'Alavancagem de 1,5x Divida Liquida/EBITDA' dentro de uma celula de texto corrido de DESTAQUES (tables/table002.json linha 6), nao mapeavel de forma deterministica. O contrato petroleo_gas v1.0.1 marca este indicador como obrigatorio=true, o que torna a PRIO impossivel de aprovar — ver pendencias do registro de releases."
+      "motivo": "A PRIO nao publica a alavancagem do 2T26 como celula numerica isolada. A serie historica (charts/chart015.json) termina no 1T26 (2.0x) e nao cobre o trimestre de referencia; o unico registro do 2T26 e a frase 'Alavancagem de 1,5x Divida Liquida/EBITDA' dentro de uma celula de texto corrido de DESTAQUES (tables/table002.json linha 6), nao mapeavel de forma deterministica. O contrato petroleo_gas passou a marcar este indicador como obrigatorio=false na v1.0.2, justamente porque a PRIO nao o publica de forma mapeavel: declarar a ausencia e a resposta correta."
     }
   ],
   "origem": "Curadoria manual sobre os artefatos de extracao da execucao de 21/09/2026 (release exp-setores-novos-criacao-inicial). Cada ancoragem foi conferida celula a celula contra tables/*.json e charts/*.json no MinIO. Nenhum valor foi conferido ponta a ponta contra uma resolucao aprovada, por isso conferido_e2e=false em todas.",
