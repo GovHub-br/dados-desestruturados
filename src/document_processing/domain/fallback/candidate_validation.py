@@ -564,7 +564,14 @@ class FallbackCandidateValidationService:
         candidate: LayoutSignatureCandidate,
         fallback_problem_context: dict[str, Any],
     ) -> list[tuple[str, dict[str, str]]]:
-        """Lista ausencias opcionais para auditoria, sem bloquear o candidato."""
+        """Lista ausencias opcionais para auditoria, sem bloquear o candidato.
+
+        Quando o proprio valor da observacao opcional nao foi comprovado, os
+        campos de contexto dela (periodo, moeda, escala) entram na lista mesmo
+        que o candidato os tenha mapeado: sem valor nao existe observacao, e
+        exigir o contexto de uma observacao ausente e o que forcava a LLM a
+        inventar uma origem so para passar da etapa.
+        """
         contract = fallback_problem_context.get("contrato_semantico_relevante", {})
         try:
             requirements = mapping_requirements_from_context(contract)
@@ -590,11 +597,15 @@ class FallbackCandidateValidationService:
                         for key, value in observation.selectors.items()
                     )
                 ]
+                parent_path = requirement.path.rsplit(".", maxsplit=1)[0]
                 if not matching_values:
                     missing.append((requirement.path, observation.selectors))
+                    missing.extend(
+                        (f"{parent_path}.{context_field}", observation.selectors)
+                        for context_field in observation.context_fields
+                    )
                     continue
 
-                parent_path = requirement.path.rsplit(".", maxsplit=1)[0]
                 for context_field in observation.context_fields:
                     context_path = f"{parent_path}.{context_field}"
                     if not any(

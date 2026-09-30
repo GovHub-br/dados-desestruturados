@@ -203,7 +203,7 @@ class MappingUnitGenerationMixin:
             len(generated_units),
             len(candidate.get("mapeamento_canonico", {})),
         )
-        self._persist_unmapped_optional_observations(
+        orphan_context_keys = self._persist_unmapped_optional_observations(
             fallback_context=fallback_context,
             candidate=LayoutSignatureCandidate.model_validate(candidate),
             candidate_validation_context=fallback_problem_context,
@@ -213,6 +213,16 @@ class MappingUnitGenerationMixin:
                 for artifact in item["artifact_selection"].artifact_paths
             ],
         )
+        if orphan_context_keys:
+            mapeamento_canonico = candidate.get("mapeamento_canonico", {})
+            for key in orphan_context_keys:
+                mapeamento_canonico.pop(key, None)
+            logging.info(
+                "Removidas %s entrada(s) de contexto orfas (observacao opcional sem "
+                "valor comprovado): %s.",
+                len(orphan_context_keys),
+                sorted(orphan_context_keys),
+            )
         self._persist_llm_validated(
             fallback_context=fallback_context,
             stage="layout_signature_candidato_consolidado",
