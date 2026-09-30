@@ -38,6 +38,7 @@ expuseram.
 | release | ultimo commit | estado |
 | --- | --- | --- |
 | `exp-setores-novos-criacao-inicial` | `e962c23` — gabaritos dos 7 documentos e medicao da rodada (lote 2). Antes: `6d28038` — contratos v1.0.0/v1.0.1 de siderurgia_mineracao, petroleo_gas e varejo + PDFs de teste 2T26 | rodada em 21/09 (criacao inicial de layout, sem release anterior para comparar): **5/7 entidades publicaram layout** (vale, gerdau, petrobras, renner, mglu); csn e prio reprovados (lote 1). Medida com gabarito em 30/09 sem rerodar: **prio e a unica falha de ancoragem real** (f3 arquivo 0.500); csn e gerdau em 0.833, os outros 4 em 1.000 (lote 2) |
+| `exp-correcoes-numero-e-contrato` | `f5442da` — sinal contabil e sufixo de razao no normalizador; contratos petroleo_gas v1.0.2 e varejo v1.0.1 | rodada em 30/09 sobre os mesmos 7 documentos: **6/7 publicaram** (csn entra, prio segue fora). Alvo atingido (sinal da MGLU corrigido para `-50,4`; razao resolve em todos); nenhuma guarda caiu (f3 arquivo 0.881 → 0.952). A correcao da `escala` do varejo **nao funcionou** — causa reidentificada. Ver lote 3 |
 
 ## Lote 1: contratos novos + criacao inicial de layout (`exp-setores-novos-criacao-inicial`, 21/09)
 
@@ -369,4 +370,133 @@ pareamento do comparador se mantem.
 
 ### Resultado
 
-_(a preencher apos a rodada)_
+7/7 runs em `success` na DAG 3; **6/7 publicaram layout** (5/7 na base). A CSN
+publicou o primeiro layout dela (`v1.0.0`); gerdau, vale, petrobras, renner e
+mglu foram para `v1.1.0`; a PRIO continua sem ponteiro.
+
+#### Alvo: atingido
+
+O sinal contabil esta correto de ponta a ponta, lido no
+`schema_saida_resolvido.json` de cada entidade:
+
+| | base | agora |
+| --- | --- | --- |
+| MGLU `lucro_liquido` | `+50.4` | **`-50.4`** |
+| CSN `lucro_liquido` | (nao publicava) | **`-794123.0`** |
+
+E o grupo `indicadores_razao` passou a resolver em todos: CSN `3.49`, Gerdau
+`0.69`, Vale `0.8`, Petrobras `1.14` — nenhum `valor_normalizado: null`.
+
+#### Guardas: nenhuma caiu
+
+| metrica | base | novo |
+| --- | --- | --- |
+| `assinatura_f3_arquivo_origem_correto` | 0.881 | **0.952** |
+| `assinatura_f3_rotulo_linha_correto` | 0.881 | **0.952** |
+| `assinatura_f3_indice_coluna_correto` | 0.917 | **0.976** |
+| `assinatura_f3_ausencia_falso_negativo` (menor e melhor) | 0.429 | **0.143** |
+| `assinatura_f0_selecao_revocacao` | 0.948 | **1.000** |
+
+Por documento, o que se moveu:
+
+- **PRIO**: f0 revocacao 0.500 → 1.000, f0 precisao 0.333 → 1.000, f3 arquivo
+  e rotulo 0.500 → 1.000, f3 coluna 0.750 → 1.000, falso negativo 1.000 →
+  0.000. As 4 ancoragens dela batem com o gabarito, **incluindo o EBITDA vindo
+  de `charts/chart014.json`** — o artefato que ela nunca considerava. Nada foi
+  mexido em selecao de artefatos nesta release. A explicacao que os numeros
+  sustentam e indireta: ao deixar de ser obrigada a achar a alavancagem, a LLM
+  parou de caçar a tabela de divida (as duas com titulo trocado pelo Docling) e
+  passou a selecionar bem o que importa. E hipotese compativel com os dados,
+  nao algo demonstrado.
+- **Gerdau**: passou a mapear `divida_liquida` (falso negativo 1.000 → 0.000,
+  f3 coluna 0.833 → 1.000).
+- **CSN**: inalterada em 0.833; continua sem mapear `divida_liquida`, cujo
+  rotulo publicado e "Divida Liquida Ajustada?".
+- **Vale**: unica queda do lote, f0 precisao 0.250 → 0.125. Nao era guarda e
+  significa trazer mais artefato do que o necessario, sem errar ancoragem
+  (f3 segue 1.000).
+- `assinatura_f3_ausencia_declarada` foi de 1.000 para 0.000 (amostra de 1, a
+  PRIO): a ausencia da alavancagem agora esta em
+  `campos_nao_mapeados_layout_signature_candidato.json`, com
+  `bloqueia_publicacao: false`, mas nao na resposta que o harness le. Falso
+  positivo segue 0.
+
+#### Hipotese que se provou errada
+
+**A `escala` do varejo nao foi corrigida.** Renner e MGLU continuam
+publicando `escala = "2T26"`. Tirar `"moeda"` de
+`campos_contexto_obrigatorios` — o item 5 desta release — nao teve efeito
+nenhum sobre isso.
+
+A causa real so ficou visivel comparando os candidatos novos: a LLM mapeia
+`escala` e `periodo` de forma **identica**, ambos com
+`tipo_origem: cabecalho_de_tabela` e `indice_coluna_esperado: 1`. A coluna 1 e
+a do periodo ("2T26"), entao `periodo` acerta e `escala` herda o mesmo valor.
+A escala real esta no cabecalho da coluna de rotulo (`schema[0]`:
+"R$ milhoes" na Renner, "R$ milhoes (exceto quando indicado)" na MGLU) —
+coluna **0**.
+
+O diagnostico do lote 2 (contradicao do `moeda`) explicava por que o varejo se
+comportava diferente dos outros dominios, mas nao era a causa. A mudanca fica
+(a contradicao era real e valia corrigir), porem sem credito pelo alvo.
+
+Vale registrar que a fase 3 do harness marca renner e mglu em 1.000 mesmo
+assim: ela mede ancoragem (arquivo, linha, coluna), e `escala` e campo de
+contexto. O bug continua invisivel para a metrica, como o lote 2 ja antecipava.
+
+#### PRIO: falha nova, mais especifica
+
+A revalidacao reprovou por `OBRIGATORIOS_NAO_RESOLVIDOS_NA_REVALIDACAO` em:
+
+```
+indicadores_razao.dados[indicador=alavancagem_divida_liquida_ebitda].valores[papel_periodo=periodo_referencia].periodo
+```
+
+O `.valor` ficou corretamente opcional e o candidato declarou a ausencia com
+`bloqueia_publicacao: false`. O que barrou foi o campo de **contexto**
+`periodo` da mesma observacao, que segue sendo exigido:
+`campos_contexto_obrigatorios` e avaliado sem olhar o `obrigatorio` da
+observacao a que pertence. Uma observacao opcional e legitimamente ausente nao
+deveria ter os campos de contexto dela cobrados. E defeito de modelagem, so
+visivel depois que o item 4 tirou a obrigatoriedade do `.valor`.
+
+#### Nota de leitura do comparador
+
+A base tem 13 traces `atlas.resolucao` e esta release tem 7, porque o lote 1
+rodou como cascata DAG 2 → DAG 3 → revalidacao e este rodou DAG 3 direto
+(`fallback_mode=criacao_inicial_layout`). Qualquer media sobre traces de
+resolucao muda por composicao de amostra, nao por regressao — e o caso que a
+skill manda ler pelo relatorio por documento. Os traces `atlas.fallback` sao 7
+nas duas, sem contaminacao de rotulo.
+
+### Ponteiros apos o lote
+
+| entidade | antes | depois |
+| --- | --- | --- |
+| csn | (nenhum) | `v1.0.0` |
+| gerdau, vale, petrobras, renner, mglu | `v1.0.0` | `v1.1.0` |
+| prio | (nenhum) | (nenhum) |
+
+Nada a reverter: nenhuma regressao real de valor publicado. A ressalva e que
+renner e mglu publicaram `v1.1.0` ainda carregando `escala = "2T26"`, igual a
+`v1.0.0` — nao pioraram, mas o defeito seguiu para a versao nova.
+
+### Pendencias abertas depois deste lote
+
+1. **`escala` do varejo** (nao resolvida, causa reidentificada): decidir entre
+   fixar `escala` como literal `"milhoes"` no `schema_saida` do varejo, do
+   mesmo jeito que `moeda` ja e, ou ensinar contrato/prompt que escala lida de
+   cabecalho vem da coluna de rotulo e nao da coluna do periodo. A segunda
+   ataca a causa e serviria a outros dominios.
+2. **Campo de contexto de observacao opcional** (nova): `periodo` exigido para
+   uma observacao declarada opcional e ausente, o que impede a PRIO de
+   publicar.
+3. **Selecao de artefatos da PRIO**: deixada de lado por decisao, e a f0 dela
+   foi a 1.000 por efeito colateral. O titulo trocado pelo Docling em
+   `table006`/`table007` continua la.
+4. **CSN `divida_liquida`** nao mapeada; rotulo publicado e
+   "Divida Liquida Ajustada?", fora dos sinonimos do contrato.
+5. **Base contabil do `lucro_liquido` em `varejo`**: regra agora explicita no
+   contrato (preferir ajustada, usar a unica quando so houver uma), mas as duas
+   empresas seguem em bases diferentes.
+6. **Precisao da fase 0**: vale caiu para 0.125; csn segue em 0.125.
