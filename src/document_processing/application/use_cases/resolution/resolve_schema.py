@@ -1,11 +1,14 @@
 from __future__ import annotations
 
 import logging
-import re
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
+from document_processing.domain.contracts.capabilities import (
+    apply_derivations,
+    derivations,
+)
 from document_processing.domain.contracts.schema import (
     apply_contract_literals,
     contract_literal_paths,
@@ -302,9 +305,14 @@ class ResolveSchemaUseCase(
             schema_saida,
             contrato.get("schema_saida", {}),
         )
-        self._derive_construtoras_global_periods(
-            contrato=contrato,
-            schema_saida=schema_saida,
+        # Campos de raiz (fonte, periodo de referencia, resumo de periodos) so sao
+        # preenchidos pelo que o contrato declarar em ``derivacoes``; um contrato
+        # sem o bloco deixa esses campos nulos em vez de cair numa regra de dominio.
+        derivation_audit = apply_derivations(
+            schema_saida,
+            derivations(contrato),
+            contract=contrato,
+            manifest=self._manifest_for_derivations(loaded),
             resolved_by_path=resolved_by_path,
         )
         schema_saida = self._strip_internal_schema_metadata(schema_saida)
@@ -313,62 +321,21 @@ class ResolveSchemaUseCase(
             "schema_saida": schema_saida,
             "validation_status": validation["status_compatibilidade"]["status"],
             "auditoria_resolucao": audit,
+            "derivacoes": derivation_audit,
         }
 
-    @staticmethod
-    def _derive_construtoras_global_periods(
-        *,
-        contrato: dict[str, Any],
-        schema_saida: dict[str, Any],
-        resolved_by_path: dict[str, Any],
-    ) -> None:
-        """Preenche o resumo de periodos exclusivo do contrato de construtoras.
-
-        Os papeis de periodo sao resolvidos junto aos valores de lancamentos e
-        vendas. O contrato de construtoras tambem expoe um resumo global desses
-        mesmos papeis; ele e derivado aqui para nao duplicar seletores no layout.
-        """
-        contract_schema = contrato.get("schema_saida")
-        if not isinstance(contract_schema, dict) or not isinstance(
-            contract_schema.get("balancos_das_empresas"), dict
-        ):
-            return
-
-        roles = (
-            "periodo_referencia",
-            "periodo_comparativo_anterior",
-            "mesmo_periodo_ano_anterior",
-        )
-        values_by_role: dict[str, set[str]] = {role: set() for role in roles}
-        for mapping_path, value in resolved_by_path.items():
-            match = re.fullmatch(
-                r"balancos_das_empresas\.(?:lancamentos|vendas)\.dados"
-                r"\[empresa=[^\]]+\]\.valores\[papel_periodo=([^\]]+)\](?:\.periodo)?",
-                mapping_path,
-            )
-            if not match or match.group(1) not in values_by_role:
-                continue
-            period = value.get("periodo") if isinstance(value, dict) else value
-            if isinstance(period, str) and period.strip():
-                values_by_role[match.group(1)].add(period.strip())
-
-        periodos_disponiveis = schema_saida.get("periodos_disponiveis")
-        if not isinstance(periodos_disponiveis, dict):
-            return
-
-        for role, values in values_by_role.items():
-            if len(values) != 1:
-                if len(values) > 1:
-                    logging.warning(
-                        "Periodos divergentes para %s no contrato de construtoras: %s",
-                        role,
-                        sorted(values),
-                    )
-                continue
-            value = next(iter(values))
-            periodos_disponiveis[role] = value
-            if role == "periodo_referencia":
-                schema_saida["periodo_referencia"] = value
+    def _manifest_for_derivations(self, loaded: dict[str, Any]) -> dict[str, Any]:
+        """Manifesto de extracao: do carregamento ou da copia gravada junto aos artefatos."""
+        manifest = loaded.get("manifest")
+        if isinstance(manifest, dict):
+            return manifest
+        local_copy = Path(loaded["extraction_root"]) / "manifesto_execucao.json"
+        if local_copy.exists():
+            try:
+                return self._read_json(local_copy)
+            except RuntimeError:
+                logging.warning("Manifesto local ilegivel para derivacoes: %s", local_copy)
+        return {}
 
     def build_execution_log(
         self,

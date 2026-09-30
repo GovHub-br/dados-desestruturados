@@ -5,7 +5,12 @@ import re
 from pathlib import Path
 from typing import Any
 
-from document_processing.domain.layouts.paths import parse_mapping_path, set_nested_value
+from document_processing.domain.contracts.capabilities import field_type, uses_generic_resolution
+from document_processing.domain.layouts.paths import (
+    normalize_mapping_path,
+    parse_mapping_path,
+    set_nested_value,
+)
 from document_processing.domain.resolution.numbers import parse_flexible_number
 
 
@@ -184,17 +189,35 @@ class SourceMappingResolversMixin:
             preferred_row_index=self._optional_int(
                 row_selector.get("indice_linha_esperado")
             ),
+            exact={self._normalize_text(str(row_selector.get("valor_aceito", "")))},
         )
         col_idx = int(column_selector.get("indice_coluna_esperado", -1))
         header = schema[col_idx] if col_idx >= 0 and col_idx < len(schema) else None
 
         raw_value = None
         normalized_value = None
+        linha_rotulo_encontrado = None
         if row_index is not None and row_index < len(rows):
             row = list(rows[row_index])
+            if label_col < len(row):
+                linha_rotulo_encontrado = str(row[label_col]).strip()
             if col_idx >= 0 and col_idx < len(row):
                 raw_value = row[col_idx]
                 normalized_value = parse_flexible_number(raw_value)
+
+        # Se o rotulo da linha achada difere do valor literal que o layout
+        # declara (``valor_aceito``), a resolucao so bateu por sinonimo — do
+        # contrato (entidade/indicador) ou do proprio conjunto ``accepted``
+        # expandido acima. Sinal de producao para confirmar que o mecanismo de
+        # sinonimo esta de fato ativo, nao codigo morto (ver registro de
+        # releases, licao do lote 10: um mecanismo pode parecer aprovado por
+        # varias releases sem nunca ter executado).
+        linha_resolvida_por_sinonimo = bool(
+            row_index is not None
+            and linha_rotulo_encontrado is not None
+            and self._normalize_text(linha_rotulo_encontrado)
+            != self._normalize_text(str(row_selector.get("valor_aceito", "")))
+        )
 
         value = {
             "periodo": str(header) if header is not None else None,
@@ -208,6 +231,8 @@ class SourceMappingResolversMixin:
             "column_index": col_idx,
             "linha_rotulo_aceita": row_selector.get("valor_aceito"),
             "linha_rotulo_sinonimos_aceitos": sorted(accepted),
+            "linha_rotulo_encontrado": linha_rotulo_encontrado,
+            "linha_resolvida_por_sinonimo": linha_resolvida_por_sinonimo,
             "cabecalho_encontrado": header,
             "papel_periodo": mapping_entry.get("papel_periodo"),
             "valor_bruto": raw_value,
@@ -221,18 +246,36 @@ class SourceMappingResolversMixin:
         mapping_path: str,
         resolved_cell: dict[str, Any],
         raw_value: Any,
+        contrato: dict[str, Any] | None = None,
     ) -> Any:
-        """Compatibiliza celulas mapeadas como registro ou como campo terminal.
+        """Projeta a celula no campo terminal do path.
 
-        Um mapeamento que termina em ``valores[papel=...]`` representa toda a
-        observacao e recebe o registro ``periodo``, ``escopo_periodo`` e ``valor``.
-        Quando o contrato pede explicitamente um campo terminal, como
-        ``...valores[papel=...].valor``, o resolvedor insere apenas esse campo.
-        Outros campos de tabela, como ``empresa``, recebem o texto bruto da celula.
+        Modo generico (contrato com ``chaves_de_item``): o path precisa terminar em
+        um campo escalar e o tipo desse campo no ``schema_saida`` decide a
+        projecao — numero normalizado para ``number``, texto bruto para o resto.
+        Cabecalho de coluna e constantes da observacao sao mapeados por
+        ``cabecalho_de_tabela`` e ``valor_fixo``, nunca inferidos aqui.
+
+        Modo legado (sem ``chaves_de_item``): mantem a forma de construtoras, em
+        que ``valores[papel_periodo=...]`` recebe a observacao inteira
+        ``{periodo, escopo_periodo, valor}`` e ``.periodo`` recebe o cabecalho.
         """
         tokens = parse_mapping_path(mapping_path)
         if not tokens:
             return resolved_cell
+        if contrato is not None and uses_generic_resolution(contrato):
+            if tokens[-1].get("selector") is not None:
+                raise RuntimeError(
+                    "Mapeamento celula_de_tabela termina no array em vez de num campo do "
+                    "item; mapeie cada campo separadamente (valor por celula_de_tabela, "
+                    f"cabecalho por cabecalho_de_tabela, constantes por valor_fixo): {mapping_path}."
+                )
+            descriptor = field_type(
+                contrato.get("schema_saida"), normalize_mapping_path(mapping_path)
+            ) or ""
+            if "number" in descriptor or "integer" in descriptor:
+                return resolved_cell.get("valor")
+            return None if raw_value is None else str(raw_value)
         terminal_field = str(tokens[-1]["field"])
         if terminal_field == "valores":
             return resolved_cell

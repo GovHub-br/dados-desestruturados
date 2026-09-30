@@ -41,4 +41,5 @@ class ResolutionAuditBuilder:
                 "campos_mapeamento_com_falha": len(audit_items) - resolved_count,
             },
             "auditoria_resolucao": audit_items,
+            **({"derivacoes": resolved["derivacoes"]} if resolved.get("derivacoes") else {}),
         }

@@ -1,0 +1,113 @@
+{
+  "document_id": "00a0f0ac25e379946039abf66a0a04c9",
+  "entidade": "petrobras",
+  "dominio": "petroleo_gas",
+  "execution_id": "dag_detecta_pdf_e_extrai__petrobras__2T26__20260921T153151Z",
+  "contrato": {
+    "tipo_documento": "petroleo_gas",
+    "versao": "1.0.2"
+  },
+  "identidade": {
+    "entidade": "Petrobras",
+    "periodo": "2T26"
+  },
+  "artefatos_esperados_por_requisito": {
+    "indicadores_monetarios.dados.valores.valor": [
+      "tables/table002.json"
+    ],
+    "indicadores_razao.dados.valores.valor": [
+      "tables/table002.json"
+    ]
+  },
+  "ancoragens": {
+    "indicadores_monetarios.dados.valores.valor": [
+      {
+        "seletores": {
+          "indicador": "receita_total",
+          "papel_periodo": "periodo_referencia"
+        },
+        "arquivo_origem": "tables/table002.json",
+        "indice_linha": 0,
+        "rotulo_linha": "Receita de vendas",
+        "indice_coluna": 1,
+        "cabecalho_coluna": "2T26",
+        "valor": 169530.0,
+        "valor_bruto": "169.530",
+        "obrigatorio": true,
+        "periodo": "2T26",
+        "conferido_e2e": false
+      },
+      {
+        "seletores": {
+          "indicador": "ebitda_ajustado",
+          "papel_periodo": "periodo_referencia"
+        },
+        "arquivo_origem": "tables/table002.json",
+        "indice_linha": 7,
+        "rotulo_linha": "EBITDA ajustado",
+        "indice_coluna": 1,
+        "cabecalho_coluna": "2T26",
+        "valor": 93843.0,
+        "valor_bruto": "93.843",
+        "obrigatorio": true,
+        "periodo": "2T26",
+        "conferido_e2e": false
+      },
+      {
+        "seletores": {
+          "indicador": "lucro_liquido",
+          "papel_periodo": "periodo_referencia"
+        },
+        "arquivo_origem": "tables/table002.json",
+        "indice_linha": 3,
+        "rotulo_linha": "Lucro líquido - Acionistas Petrobras",
+        "indice_coluna": 1,
+        "cabecalho_coluna": "2T26",
+        "valor": 52445.0,
+        "valor_bruto": "52.445",
+        "obrigatorio": true,
+        "periodo": "2T26",
+        "conferido_e2e": false
+      },
+      {
+        "seletores": {
+          "indicador": "divida_liquida",
+          "papel_periodo": "periodo_referencia"
+        },
+        "arquivo_origem": "tables/table002.json",
+        "indice_linha": 10,
+        "rotulo_linha": "Dívida líquida (US$ milhões)",
+        "indice_coluna": 1,
+        "cabecalho_coluna": "2T26",
+        "valor": 60388.0,
+        "valor_bruto": "60.388",
+        "obrigatorio": false,
+        "periodo": "2T26",
+        "conferido_e2e": false
+      }
+    ],
+    "indicadores_razao.dados.valores.valor": [
+      {
+        "seletores": {
+          "indicador": "alavancagem_divida_liquida_ebitda",
+          "papel_periodo": "periodo_referencia"
+        },
+        "arquivo_origem": "tables/table002.json",
+        "indice_linha": 11,
+        "rotulo_linha": "Dívida líquida/LTM EBITDA Ajustado (x) (**)",
+        "indice_coluna": 1,
+        "cabecalho_coluna": "2T26",
+        "valor": 1.14,
+        "valor_bruto": "1,14",
+        "obrigatorio": true,
+        "periodo": "2T26",
+        "conferido_e2e": false
+      }
+    ]
+  },
+  "ausencias_esperadas": [],
+  "origem": "Curadoria manual sobre os artefatos de extracao da execucao de 21/09/2026 (release exp-setores-novos-criacao-inicial). Cada ancoragem foi conferida celula a celula contra tables/*.json e charts/*.json no MinIO. Nenhum valor foi conferido ponta a ponta contra uma resolucao aprovada, por isso conferido_e2e=false em todas.",
+  "revisao_pendente": [
+    "tables/table002.json mistura moedas: o cabecalho diz 'R$ milhoes', mas as linhas de divida bruta/liquida trazem '(US$ milhoes)' no proprio rotulo. divida_liquida e USD; receita, EBITDA e lucro sao BRL."
+  ]
+}

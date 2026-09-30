@@ -26,3 +26,4 @@ marque a ADR anterior como `Substituído`, sem reescrever seu histórico.
 | [0008](0008-nucleo-independente-e-airflow-adaptador.md) | 2026-08-23 | Aceito | O núcleo deve ser independente; Airflow é adaptador de orquestração. |
 | [0009](0009-observabilidade-por-projecao-de-artefatos.md) | 2026-09-05 | Aceito | Observabilidade é feita projetando artefatos persistidos para o Langfuse. |
 | [0010](0010-prompts-versionados-no-langfuse.md) | 2026-09-05 | Aceito | Os prompts do fallback são versionados no Langfuse, por bloco e por conjunto. |
+| [0011](0011-resolucao-dirigida-pelo-contrato-e-legado-por-ausencia.md) | 2026-09-13 | Aceito | O contrato declara `chaves_de_item` e `derivacoes`; sem declaração, vale o caminho legado de construtoras. |

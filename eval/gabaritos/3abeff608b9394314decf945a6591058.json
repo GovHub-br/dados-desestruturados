@@ -1,0 +1,43 @@
+{
+  "document_id": "3abeff608b9394314decf945a6591058",
+  "entidade": "cyre3",
+  "dominio": "construtoras",
+  "execution_id": "dag_detecta_pdf_e_extrai__cyre3__sem_periodo__20260822T022954Z",
+  "contrato": {
+    "tipo_documento": "construtoras",
+    "versao": "1.9.0"
+  },
+  "identidade": {
+    "entidade": "Cyrela",
+    "periodo": "2T26"
+  },
+  "artefatos_esperados_por_requisito": {
+    "balancos_das_empresas.lancamentos.dados.valores.valor": [],
+    "balancos_das_empresas.vendas.dados.valores.valor": []
+  },
+  "ancoragens": {},
+  "ausencias_esperadas": [
+    {
+      "requisito": "balancos_das_empresas.lancamentos.dados.valores.valor",
+      "seletores": {
+        "papel_periodo": "periodo_referencia"
+      },
+      "motivo": "o documento publica numero de empreendimentos lancados e VGV em R$, nao unidades (tables/table001.json linhas 1, 2 e 7)"
+    },
+    {
+      "requisito": "balancos_das_empresas.vendas.dados.valores.valor",
+      "seletores": {
+        "papel_periodo": "periodo_referencia"
+      },
+      "motivo": "o documento publica numero de empreendimentos lancados e VGV em R$, nao unidades (tables/table001.json linhas 1, 2 e 7)"
+    }
+  ],
+  "origem": "derivado da execucao baseline0 (candidato validado + auditoria da resolucao local), valores conferidos contra atlas-e2e-regressao / gabarito curado de bancos",
+  "revisao_pendente": [
+    "manifesto com entity_name='Cereal' e period_label='sem_periodo': identidade do documento nao confiavel para derivacao"
+  ],
+  "identidade_manifesto": {
+    "entidade": "Cereal",
+    "periodo": "sem_periodo"
+  }
+}

@@ -9,6 +9,7 @@ from document_processing.domain.contracts.mapping_requirements import (
     mapping_requirements_from_context,
 )
 
+from .evidence_prefilter import candidate_paths_by_requirement
 from .models import LayoutArtifactSelection
 
 
@@ -66,6 +67,9 @@ class ArtifactSelectionValidationService:
         contract_paths = self._contract_output_paths(contract)
         required_fields = self._required_coverage_fields(contract, contract_paths)
         allowed_fields = contract_paths or set(required_fields)
+        candidates_by_field = candidate_paths_by_requirement(
+            selection_payload.get("candidatos_por_requisito")
+        )
         covered_fields: set[str] = set()
 
         for item in artifact_selection.artifact_paths:
@@ -86,6 +90,12 @@ class ArtifactSelectionValidationService:
                 if allowed_fields and field not in allowed_fields:
                     raise ArtifactSelectionValidationError(
                         f"cobertura aponta para path fora do contrato: {field}"
+                    )
+                candidates = candidates_by_field.get(field, set())
+                if candidates and path not in candidates:
+                    raise ArtifactSelectionValidationError(
+                        f"artefato {path} nao esta entre os candidatos do pre-filtro para "
+                        f"{field}; escolha entre {sorted(candidates)}"
                     )
                 missing_anchors = [
                     anchor

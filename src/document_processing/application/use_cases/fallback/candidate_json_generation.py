@@ -83,12 +83,7 @@ class CandidateJsonGenerationMixin:
                 "instrucao_escopo": escopo.texto,
                 "contexto_execucao": json_block("contexto_execucao"),
                 "contrato_e_alvos": json.dumps(
-                    {
-                        "contrato_semantico_relevante": enriched_context.get(
-                            "contrato_semantico_relevante", {}
-                        ),
-                        "alvos_mapeaveis": enriched_context.get("alvos_mapeaveis", []),
-                    },
+                    contract_and_targets_block(enriched_context),
                     ensure_ascii=False,
                     indent=2,
                 ),

@@ -22,12 +22,14 @@ from typing import Any
 from document_processing.domain.observability import (
     artifact_selection_quality_metrics,
     end_to_end_metrics,
+    evidence_prefilter_metrics,
     extraction_metrics,
     fallback_execution_metrics,
     fallback_stage_metrics,
     layout_validation_metrics,
     prompt_set_fingerprint,
     resolution_metrics,
+    table_structure_metrics,
     transition_metrics,
 )
 from document_processing.infrastructure.observability import LangfuseIngestionClient, new_id
@@ -175,6 +177,28 @@ class AtlasExecutionTracer:
                 stage = f"{unit}/{remainder}" if unit else remainder
                 index.setdefault(stage, {}).setdefault(attempt, {})[kind] = key
         return index
+
+    @staticmethod
+    def _generation_output(
+        *,
+        response: dict[str, Any],
+        error: dict[str, Any],
+    ) -> dict[str, Any] | None:
+        """Mantem o JSON final e o reasoning no mesmo output da generation.
+
+        O conteudo completo vem dos artefatos de resposta/erro persistidos no
+        MinIO. Esta projecao deliberadamente nao tenta chamar o provedor de novo:
+        abrir o trace no Langfuse nunca gera custo nem altera a execucao.
+        """
+        artifact = response or error
+        parsed_response = artifact.get("parsed_response")
+        reasoning_content = artifact.get("reasoning_content")
+        if parsed_response is None and not reasoning_content:
+            return None
+        output: dict[str, Any] = {"parsed_response": parsed_response}
+        if isinstance(reasoning_content, str) and reasoning_content:
+            output["reasoning_content"] = reasoning_content
+        return output
 
     # -- projecao do fallback (DAG 3) --------------------------------------
 
@@ -355,8 +379,10 @@ class AtlasExecutionTracer:
                         "system_prompt": request.get("system_prompt"),
                         "user_payload": request.get("user_payload"),
                     },
-                    output_payload=response.get("parsed_response")
-                    or error.get("parsed_response"),
+                    output_payload=self._generation_output(
+                        response=response,
+                        error=error,
+                    ),
                     usage=usage if isinstance(usage, dict) else None,
                     level="ERROR" if failed else "DEFAULT",
                     status_message=error.get("error_message") if failed else None,
@@ -365,6 +391,9 @@ class AtlasExecutionTracer:
                         "tentativa": attempt,
                         "provider": request.get("provider"),
                         "error_type": error.get("error_type"),
+                        "reasoning_content_presente": bool(
+                            (response or error).get("reasoning_content")
+                        ),
                         "prompts_utilizados": prompts_usados or None,
                     },
                     prompt_name=(
@@ -455,6 +484,35 @@ class AtlasExecutionTracer:
         published = str(publication.get("status") or "") == "publicado"
 
         for nome_artefato, chave in sorted(by_name.items()):
+            if nome_artefato.endswith("/prefiltro_evidencia.json") or nome_artefato == "prefiltro_evidencia.json":
+                selection_name = nome_artefato.replace("prefiltro_evidencia.json", "selecao_artefatos_layout.json")
+                selection = self._read_json(by_name[selection_name]) if selection_name in by_name else {}
+                chosen = [
+                    str(item.get("path") or "")
+                    for item in (selection.get("artifact_paths") or [])
+                    if isinstance(item, dict)
+                ]
+                for metric in evidence_prefilter_metrics(self._read_json(chave), selected_paths=chosen):
+                    client.score(
+                        trace_id=trace_id,
+                        name=metric.name,
+                        value=metric.value,
+                        data_type=metric.data_type,
+                        comment=metric.comment,
+                        metadata=metric.metadata,
+                    )
+                continue
+            if nome_artefato.endswith("estrutura_tabelas.json"):
+                for metric in table_structure_metrics(self._read_json(chave)):
+                    client.score(
+                        trace_id=trace_id,
+                        name=metric.name,
+                        value=metric.value,
+                        data_type=metric.data_type,
+                        comment=metric.comment,
+                        metadata=metric.metadata,
+                    )
+                continue
             if not nome_artefato.endswith("/poda_evidencia.json"):
                 continue
             for metric in artifact_selection_quality_metrics(self._read_json(chave)):

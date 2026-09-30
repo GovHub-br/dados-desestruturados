@@ -256,6 +256,36 @@ def resolution_metrics(
                 metadata={"campos_dinamicos_no_contrato": dynamic_paths},
             )
         )
+
+    celulas_com_linha_resolvida = [
+        e for e in entries if "linha_resolvida_por_sinonimo" in _as_dict(e.get("evidencia"))
+    ]
+    if celulas_com_linha_resolvida:
+        resolvidas_por_sinonimo = len(
+            [
+                e
+                for e in celulas_com_linha_resolvida
+                if _as_dict(e.get("evidencia")).get("linha_resolvida_por_sinonimo") is True
+            ]
+        )
+        metrics.append(
+            MetricValue(
+                name="resolucao_linha_por_sinonimo",
+                value=_ratio(resolvidas_por_sinonimo, len(celulas_com_linha_resolvida)),
+                comment=(
+                    "Fracao de celulas de tabela cujo rotulo real difere do valor literal "
+                    "declarado no layout (``valor_aceito``) — prova, execucao a execucao, "
+                    "que o mecanismo de sinonimo (entidade ou indicador) esta ativo em "
+                    "producao. Sinal de producao equivalente a ``papel_coluna_origem_contrato`` "
+                    "da Fase 2: sem ele, um bug de integracao pode deixar o mecanismo silenciosamente "
+                    "sem executar por releases inteiras (ver registro de releases, licao do lote 10)."
+                ),
+                metadata={
+                    "celulas_com_linha_resolvida": len(celulas_com_linha_resolvida),
+                    "resolvidas_por_sinonimo": resolvidas_por_sinonimo,
+                },
+            )
+        )
     return metrics
 
 
@@ -400,6 +430,142 @@ def artifact_selection_quality_metrics(
             metadata=contexto,
         ),
     ]
+
+
+def evidence_prefilter_metrics(
+    prefilter: dict[str, Any],
+    *,
+    selected_paths: list[str] | None = None,
+) -> list[MetricValue]:
+    """Mede o pre-filtro deterministico da fase 0 (sem gabarito).
+
+    ``selecao_candidatos_por_requisito``: media de candidatos por requisito —
+    quanto menor, mais o contrato explica a evidencia. ``selecao_prefiltro_reducao``:
+    fracao do inventario que o pre-filtro dispensou. ``selecao_escolha_dentro_do_prefiltro``:
+    fracao dos artefatos escolhidos pela LLM que estavam entre os candidatos por termo
+    (nao apenas por amostra incompleta). ``selecao_prefiltro_leitura_completa``:
+    dos artefatos que o resumo nao decidiu, fracao lida por inteiro — o resto
+    entrou como ``amostra_incompleta`` sem verificacao.
+    """
+    candidates = _as_dict(prefilter.get("candidatos_por_requisito"))
+    total_items = int(prefilter.get("total_artefatos_inventario") or 0)
+    if not candidates or not total_items:
+        return []
+    unidade = str(prefilter.get("unidade_mapeamento") or "")
+    contexto = {"unidade_mapeamento": unidade} if unidade else {}
+    counts = [len(_as_list(items)) for items in candidates.values()]
+    union: set[str] = set()
+    by_term: set[str] = set()
+    for items in candidates.values():
+        for item in _as_list(items):
+            entry = _as_dict(item)
+            path = str(entry.get("path") or "").strip("/")
+            if not path:
+                continue
+            union.add(path)
+            if str(entry.get("motivo") or "") == "termo_casado":
+                by_term.add(path)
+    metrics = [
+        MetricValue(
+            name="selecao_candidatos_por_requisito",
+            value=float(sum(counts)) / len(counts),
+            comment=(
+                "Media de artefatos candidatos por requisito apos o pre-filtro por "
+                f"sinonimos do contrato; inventario com {total_items} artefatos."
+            ),
+            metadata=contexto,
+        ),
+        MetricValue(
+            name="selecao_prefiltro_reducao",
+            value=_ratio(total_items - len(union), total_items),
+            comment=(
+                "Fracao do inventario dispensada pelo pre-filtro deterministico. "
+                f"{len(union)} de {total_items} artefatos seguiram como candidatos."
+            ),
+            metadata=contexto,
+        ),
+    ]
+    leitura = _as_dict(prefilter.get("leitura_completa"))
+    lidos = len(_as_list(leitura.get("artefatos_lidos")))
+    sem_leitura = len(_as_list(leitura.get("sem_leitura")))
+    if leitura and (lidos or sem_leitura):
+        excluidos = len(_as_list(leitura.get("excluidos_apos_leitura")))
+        metrics.append(
+            MetricValue(
+                name="selecao_prefiltro_leitura_completa",
+                value=_ratio(lidos, lidos + sem_leitura),
+                comment=(
+                    "Dos artefatos que o resumo do inventario nao decidiu, fracao lida por "
+                    f"inteiro. {lidos} lidos, {excluidos} excluidos apos a leitura, "
+                    f"{sem_leitura} sem leitura."
+                ),
+                metadata=contexto,
+            )
+        )
+    chosen = [str(path).strip("/") for path in (selected_paths or []) if str(path).strip()]
+    if chosen:
+        metrics.append(
+            MetricValue(
+                name="selecao_escolha_dentro_do_prefiltro",
+                value=_ratio(sum(1 for path in chosen if path in by_term), len(chosen)),
+                comment=(
+                    "Fracao dos artefatos escolhidos que o pre-filtro ja apontava por "
+                    f"termo do contrato. {len(chosen)} escolhidos."
+                ),
+                metadata=contexto,
+            )
+        )
+    return metrics
+
+
+def table_structure_metrics(estrutura: dict[str, Any]) -> list[MetricValue]:
+    """Mede a Fase 2 em producao, a partir de ``estrutura_tabelas.json`` (sem gabarito).
+
+    ``estrutura_tabela_lida``: fracao das tabelas carregadas cujo cabecalho o
+    codigo conseguiu ler. ``papel_coluna_origem_contrato``: das combinacoes
+    (tabela, papel derivavel pelo contrato), fracao que o codigo resolveu para
+    uma coluna unica — o resto ficou com a LLM (``papel_coluna_origem = llm``).
+    """
+    tabelas = _as_dict(estrutura.get("tabelas"))
+    if not tabelas:
+        return []
+    unidade = str(estrutura.get("unidade_mapeamento") or "")
+    contexto = {"unidade_mapeamento": unidade} if unidade else {}
+    lidas = sum(1 for tabela in tabelas.values() if _as_dict(tabela).get("cabecalho_lido"))
+    metrics = [
+        MetricValue(
+            name="estrutura_tabela_lida",
+            value=_ratio(lidas, len(tabelas)),
+            comment=(
+                "Fracao das tabelas carregadas cujo cabecalho e coluna de rotulo o codigo "
+                f"leu sem ajuda da LLM. {lidas} de {len(tabelas)}."
+            ),
+            metadata=contexto,
+        )
+    ]
+    esperados = _as_dict(estrutura.get("papeis_esperados"))
+    total = resolvidos = 0
+    for tabela in tabelas.values():
+        por_seletor = _as_dict(_as_dict(tabela).get("papel_por_coluna"))
+        for seletor, papeis in esperados.items():
+            papeis_resolvidos = set(_as_dict(por_seletor.get(seletor)).values())
+            for papel in _as_dict(papeis):
+                total += 1
+                resolvidos += int(papel in papeis_resolvidos)
+    if total:
+        metrics.append(
+            MetricValue(
+                name="papel_coluna_origem_contrato",
+                value=_ratio(resolvidos, total),
+                comment=(
+                    "Fracao dos papeis derivaveis pelo contrato que o codigo casou com uma "
+                    f"coluna unica, por tabela carregada. {resolvidos} de {total}; o resto "
+                    "ficou com a LLM."
+                ),
+                metadata=contexto,
+            )
+        )
+    return metrics
 
 
 def fallback_execution_metrics(

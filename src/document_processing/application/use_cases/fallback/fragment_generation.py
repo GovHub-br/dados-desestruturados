@@ -99,6 +99,7 @@ class FragmentGenerationMixin:
                     parsed,
                     unit=unit,
                     fallback_problem_context=fallback_problem_context,
+                    loaded_artifacts=fragment_payload.get("artefatos_contexto_llm"),
                 )
                 return fragment, raw_content, corrections_used, errors
             except UnmappedRequiredFieldsError as exc:
@@ -283,10 +284,7 @@ class FragmentGenerationMixin:
             "unidade_e_contrato": json.dumps(
                 {
                     "unidade_mapeamento": fragment_payload.get("unidade_mapeamento", {}),
-                    "contrato_semantico_relevante": fragment_payload.get(
-                        "contrato_semantico_relevante", {}
-                    ),
-                    "alvos_mapeaveis": fragment_payload.get("alvos_mapeaveis", []),
+                    **contract_and_targets_block(fragment_payload),
                 },
                 ensure_ascii=False,
                 indent=2,

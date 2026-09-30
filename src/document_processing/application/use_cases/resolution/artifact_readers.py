@@ -84,21 +84,34 @@ class ArtifactReaderMixin:
         label_col: int,
         *,
         preferred_row_index: int | None = None,
+        exact: set[str] | None = None,
     ) -> int | None:
-        rows = list(table.get("rows", []))
-        if preferred_row_index is not None and 0 <= preferred_row_index < len(rows):
-            row = rows[preferred_row_index]
-            if label_col < len(row):
-                normalized = self._normalize_text(str(row[label_col]))
-                if normalized in accepted:
-                    return preferred_row_index
+        """Linha cujo rotulo casa com o pedido.
 
-        for idx, row in enumerate(rows):
+        Ordem: indice sugerido (se o rotulo confere) > rotulo exato do layout >
+        sinonimo do contrato. Sem essa precedencia, um sinonimo herdado do
+        contrato pode casar uma linha vizinha antes da linha realmente pedida.
+        """
+        rows = list(table.get("rows", []))
+        exact_labels = exact or set()
+
+        def label_of(row: Any) -> str | None:
             if label_col >= len(row):
+                return None
+            return self._normalize_text(str(row[label_col]))
+
+        if preferred_row_index is not None and 0 <= preferred_row_index < len(rows):
+            normalized = label_of(rows[preferred_row_index])
+            if normalized is not None and normalized in accepted:
+                return preferred_row_index
+
+        for candidates in (exact_labels, accepted):
+            if not candidates:
                 continue
-            normalized = self._normalize_text(str(row[label_col]))
-            if normalized in accepted:
-                return idx
+            for idx, row in enumerate(rows):
+                normalized = label_of(row)
+                if normalized is not None and normalized in candidates:
+                    return idx
         return None
 
     @staticmethod

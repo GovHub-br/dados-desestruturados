@@ -139,6 +139,18 @@ class MappingUnitGenerationMixin:
                 unit=unit,
                 loaded_artifacts=loaded_artifacts,
             )
+            if "estrutura_tabelas" in fragment_payload:
+                self._persist_llm_validated(
+                    fallback_context=fallback_context,
+                    stage=f"{unit_stage_prefix}/fragmento_layout_signature",
+                    filename=f"{unit_stage_prefix}/estrutura_tabelas.json",
+                    payload=table_structure_artifact(
+                        fragment_payload["estrutura_tabelas"],
+                        contract_context=fragment_payload.get("contrato_semantico_relevante", {}),
+                        document_identity=fragment_payload.get("identidade_documento"),
+                        unit_id=unit.id,
+                    ),
+                )
             logging.info(
                 "Unidade %s/%s (%s): iniciando geracao do fragmento de layout",
                 position,
@@ -191,7 +203,7 @@ class MappingUnitGenerationMixin:
             len(generated_units),
             len(candidate.get("mapeamento_canonico", {})),
         )
-        self._persist_unmapped_optional_observations(
+        orphan_context_keys = self._persist_unmapped_optional_observations(
             fallback_context=fallback_context,
             candidate=LayoutSignatureCandidate.model_validate(candidate),
             candidate_validation_context=fallback_problem_context,
@@ -201,6 +213,16 @@ class MappingUnitGenerationMixin:
                 for artifact in item["artifact_selection"].artifact_paths
             ],
         )
+        if orphan_context_keys:
+            mapeamento_canonico = candidate.get("mapeamento_canonico", {})
+            for key in orphan_context_keys:
+                mapeamento_canonico.pop(key, None)
+            logging.info(
+                "Removidas %s entrada(s) de contexto orfas (observacao opcional sem "
+                "valor comprovado): %s.",
+                len(orphan_context_keys),
+                sorted(orphan_context_keys),
+            )
         self._persist_llm_validated(
             fallback_context=fallback_context,
             stage="layout_signature_candidato_consolidado",
@@ -305,7 +327,7 @@ class MappingUnitGenerationMixin:
         if not isinstance(targets, list):
             targets = []
         unit_paths = set(unit.paths)
-        return {
+        payload: dict[str, Any] = {
             "tipo_payload": "geracao_fragmento_layout_signature",
             "contexto_execucao": candidate_payload.get("contexto_execucao", {}),
             "unidade_mapeamento": unit.payload(),
@@ -324,3 +346,28 @@ class MappingUnitGenerationMixin:
             ),
             "artefatos_contexto_llm": loaded_artifacts,
         }
+        expected = candidate_payload.get("entradas_esperadas")
+        if isinstance(expected, list) and "identidade_documento" in candidate_payload:
+            identity = candidate_payload["identidade_documento"]
+            payload["identidade_documento"] = identity
+            scoped_contract = payload.get("contrato_semantico_relevante", {})
+            analyses = analyze_tables(
+                loaded_artifacts, contract_context=scoped_contract, document_identity=identity
+            )
+            if analyses:
+                payload["estrutura_tabelas"] = table_structures_payload(analyses)
+            # Cada unidade ve so as chaves dos seus requisitos; as demais pertencem
+            # a outra chamada e seriam "campo fora da unidade" no validador.
+            payload["entradas_esperadas"] = attach_resolved_row_anchors(
+                [
+                    entry
+                    for entry in expected
+                    if isinstance(entry, dict)
+                    and str(entry.get("requisito", "")).strip() in unit_paths
+                ],
+                contract_context=scoped_contract,
+                loaded_artifacts=loaded_artifacts,
+                document_identity=identity,
+                analyses=analyses,
+            )
+        return payload

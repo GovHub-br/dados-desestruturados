@@ -27,5 +27,17 @@ publicar_contrato() {
 }
 
 publicar_contrato "construtoras/v1.8.0/contrato_semantico_construtora.json"
+publicar_contrato "construtoras/v1.9.0/contrato_semantico_construtora.json"
+publicar_contrato "construtoras/v1.9.1/contrato_semantico_construtora.json"
 publicar_contrato "bancos/v1.0.0/contrato_semantico_bancos.json"
 publicar_contrato "bancos/v2.0.0/contrato_semantico_bancos.json"
+publicar_contrato "bancos/v2.1.0/contrato_semantico_bancos.json"
+publicar_contrato "bancos/v2.2.0/contrato_semantico_bancos.json"
+publicar_contrato "bancos/v2.3.0/contrato_semantico_bancos.json"
+publicar_contrato "siderurgia_mineracao/v1.0.1/contrato_semantico_siderurgia_mineracao.json"
+publicar_contrato "siderurgia_mineracao/v1.0.2/contrato_semantico_siderurgia_mineracao.json"
+publicar_contrato "petroleo_gas/v1.0.1/contrato_semantico_petroleo_gas.json"
+publicar_contrato "petroleo_gas/v1.0.2/contrato_semantico_petroleo_gas.json"
+publicar_contrato "varejo/v1.0.0/contrato_semantico_varejo.json"
+publicar_contrato "varejo/v1.0.1/contrato_semantico_varejo.json"
+publicar_contrato "varejo/v1.0.2/contrato_semantico_varejo.json"

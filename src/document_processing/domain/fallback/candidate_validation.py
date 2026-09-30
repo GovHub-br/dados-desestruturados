@@ -11,8 +11,22 @@ from document_processing.domain.contracts.mapping_requirements import (
     parsed_mapping_path,
 )
 from document_processing.domain.contracts.schema import normalize_schema_path
+from document_processing.domain.fallback.column_roles import (
+    TableAnalysis,
+    analyze_tables,
+    label_columns,
+)
+from document_processing.domain.fallback.evidence_pruning import normalize_term
+from document_processing.domain.fallback.row_anchoring import (
+    indicator_group_for_entry,
+    indicator_synonyms_for_entry,
+    resolve_row_anchor,
+    table_metric_groups,
+)
+from document_processing.domain.fallback.table_structure import table_artifact_content
 from document_processing.domain.layouts.paths import (
     normalize_mapping_path,
+    parse_mapping_path,
     split_mapping_path,
 )
 
@@ -21,6 +35,12 @@ from .models import (
     LayoutSignatureCandidate,
     LayoutSignatureFragment,
     UnmappedRequiredField,
+)
+from .target_enumeration import (
+    TargetEnumerationError,
+    describe_unexpected_key,
+    enumerate_target_entries,
+    match_mapping_keys,
 )
 
 
@@ -75,6 +95,7 @@ class FallbackCandidateValidationService:
         array_paths = self._contract_schema_array_paths_from_context(
             fallback_problem_context
         )
+        item_keys = self._contract_item_keys_from_context(fallback_problem_context)
         fixed_paths = {
             str(path).strip()
             for path in fallback_problem_context.get("_paths_fixos_do_contrato", [])
@@ -86,6 +107,9 @@ class FallbackCandidateValidationService:
                     "Resposta da LLM tentou mapear valor fixo do contrato semantico: "
                     f"{mapping_path}. Esse valor e preenchido deterministicamente pela DAG 2."
                 )
+            concatenated = self._describe_concatenated_selector(mapping_path)
+            if concatenated:
+                raise RuntimeError(concatenated)
             if not self._mapping_path_is_in_contract(
                 mapping_path,
                 schema_roots,
@@ -106,6 +130,9 @@ class FallbackCandidateValidationService:
                     "Resposta da LLM criou mapeamento que atravessa array sem "
                     f"seletor explicito: {mapping_path}."
                 )
+            item_key_problem = self._describe_item_key_violation(mapping_path, item_keys)
+            if item_key_problem:
+                raise RuntimeError(item_key_problem)
 
         allowed_scope = str(fallback_problem_context.get("escopo_permitido", "")).strip()
         if allowed_scope and candidate_model.escopo_correcao != allowed_scope:
@@ -116,6 +143,18 @@ class FallbackCandidateValidationService:
 
         self._validate_candidate_lineage(candidate_model, fallback_problem_context)
         self._validate_candidate_allowed_scope(candidate_model, fallback_problem_context)
+        self._validate_candidate_matches_expected_entries(
+            candidate_model,
+            fallback_problem_context,
+        )
+        self._validate_candidate_row_anchors(
+            candidate_model,
+            fallback_problem_context,
+        )
+        self._validate_candidate_column_roles(
+            candidate_model,
+            fallback_problem_context,
+        )
         self._validate_candidate_covers_mapping_requirements(
             candidate_model,
             fallback_problem_context,
@@ -139,6 +178,7 @@ class FallbackCandidateValidationService:
         *,
         unit: MappingUnit,
         fallback_problem_context: dict[str, Any],
+        loaded_artifacts: dict[str, Any] | None = None,
     ) -> LayoutSignatureFragment:
         """Valida um fragmento usando as mesmas regras da DAG 2 em escopo reduzido."""
         try:
@@ -197,6 +237,8 @@ class FallbackCandidateValidationService:
             **fallback_problem_context,
             "contrato_semantico_relevante": scoped_contract,
         }
+        if loaded_artifacts:
+            scoped_context["artefatos_contexto_llm"] = loaded_artifacts
         fallback_context = scoped_context.get("fallback_context", {})
         if not isinstance(fallback_context, dict):
             raise RuntimeError("fallback_context ausente para validar fragmento.")
@@ -222,6 +264,215 @@ class FallbackCandidateValidationService:
         }
         self.validate_candidate_layout(candidate_projection, scoped_context)
         return fragment_model
+
+    def _validate_candidate_matches_expected_entries(
+        self,
+        candidate: LayoutSignatureCandidate,
+        fallback_problem_context: dict[str, Any],
+    ) -> None:
+        """Fase 1: cada chave gerada tem de ser uma das entradas que o codigo enumerou.
+
+        A enumeracao e refeita aqui, do contrato e da identidade do documento, e
+        nao lida do payload: o validador prova o candidato contra a mesma fonte
+        que gerou a lista, sem depender de nada que passou pela LLM. Sem
+        identidade no contexto (contratos legados, testes antigos) a regra nao
+        se aplica e o restante da validacao segue como antes.
+        """
+        identity = fallback_problem_context.get("identidade_documento")
+        contract = fallback_problem_context.get("contrato_semantico_relevante", {})
+        if not isinstance(identity, dict) or not identity or not isinstance(contract, dict):
+            return
+        try:
+            entries = enumerate_target_entries(
+                contract_context=contract, document_identity=identity
+            )
+        except TargetEnumerationError as exc:
+            raise RuntimeError(str(exc)) from exc
+        match = match_mapping_keys(entries, list(candidate.mapeamento_canonico))
+        unexpected = list(match.nao_esperadas)
+        if candidate.escopo_correcao == self.PARTIAL_SCOPE:
+            # Correcao parcial preserva o layout base inteiro, inclusive chaves
+            # anteriores a esta regra; so o que a LLM acrescentou e comparado.
+            base_context = fallback_problem_context.get(
+                "layout_signature_base_validation_context", {}
+            )
+            base_paths = (
+                base_context.get("mapeamento_canonico_paths", [])
+                if isinstance(base_context, dict)
+                else []
+            )
+            known = {str(path) for path in base_paths} if isinstance(base_paths, list) else set()
+            unexpected = [key for key in unexpected if key not in known]
+        if not unexpected:
+            return
+        detalhes = "; ".join(describe_unexpected_key(key, entries) for key in unexpected[:6])
+        restante = len(unexpected) - 6
+        raise RuntimeError(
+            f"Layout candidato usou {len(unexpected)} chave(s) fora de entradas_esperadas. "
+            "As chaves de mapeamento_canonico devem ser copiadas exatamente da lista "
+            f"entradas_esperadas do payload. {detalhes}"
+            + (f"; e mais {restante} chave(s) no mesmo caso." if restante > 0 else "")
+        )
+
+    def _validate_candidate_row_anchors(
+        self,
+        candidate: LayoutSignatureCandidate,
+        fallback_problem_context: dict[str, Any],
+    ) -> None:
+        """Fase 3.2: linha resolvida por sinonimo do contrato nao e escolha livre.
+
+        Refaz a resolucao aqui (contrato + artefatos carregados), a mesma
+        fonte que anexou ``ancoragem_resolvida`` ao payload — nunca confia no
+        que a LLM devolveu. Sem sinonimo unico casando uma linha, nada e
+        verificado e a escolha continua sendo da LLM.
+        """
+        scope = self._table_scope(candidate, fallback_problem_context)
+        if scope is None:
+            return
+        contract, tables, analyses, match = scope
+        semantic = contract.get("contrato_semantico", {})
+        metric_groups = semantic.get("metricas", {}) if isinstance(semantic, dict) else {}
+        if not isinstance(metric_groups, dict) or not metric_groups:
+            return
+        colunas_de_rotulo = label_columns(analyses)
+        grupos_de_tabela = table_metric_groups(
+            tables, label_columns=colunas_de_rotulo, metric_groups=metric_groups
+        )
+        identity = fallback_problem_context.get("identidade_documento")
+        entidade_documento = identity.get("entidade") if isinstance(identity, dict) else None
+        for mapping_path, matched_entry in match.por_chave.items():
+            if (
+                matched_entry is None
+                or matched_entry.papel_no_alvo != "valor"
+                or matched_entry.modo_array != "item"
+            ):
+                continue
+            sinonimos = indicator_synonyms_for_entry(
+                requisito=matched_entry.requisito,
+                seletores=matched_entry.seletores,
+                metric_groups=metric_groups,
+            )
+            if not sinonimos:
+                continue
+            ancora = resolve_row_anchor(
+                synonyms=sinonimos,
+                tables=tables,
+                label_columns=colunas_de_rotulo,
+                table_groups=grupos_de_tabela,
+                entry_group=indicator_group_for_entry(
+                    requisito=matched_entry.requisito,
+                    seletores=matched_entry.seletores,
+                    metric_groups=metric_groups,
+                ),
+                document_entity=entidade_documento,
+            )
+            if ancora is None:
+                continue
+            entry_model = candidate.mapeamento_canonico.get(mapping_path)
+            if entry_model is None or entry_model.tipo_origem != "celula_de_tabela":
+                continue
+            payload = entry_model.model_dump(mode="json", exclude_none=True)
+            row_selector = payload.get("seletor_linha")
+            accepted_label = (
+                row_selector.get("valor_aceito") if isinstance(row_selector, dict) else None
+            )
+            used_file = str(payload.get("arquivo_origem") or "").strip()
+            if normalize_term(str(accepted_label or "")) == normalize_term(
+                ancora.rotulo_linha
+            ) and (not used_file or used_file == ancora.arquivo_origem):
+                continue
+            raise RuntimeError(
+                "Layout candidato escolheu uma linha diferente da resolvida por "
+                f"sinonimo do contrato para {mapping_path}: o rotulo certo e "
+                f"'{ancora.rotulo_linha}' em '{ancora.arquivo_origem}' (indice "
+                f"{ancora.indice_linha}); a resposta trouxe '{accepted_label}' em "
+                f"'{used_file or '?'}'."
+            )
+
+    def _validate_candidate_column_roles(
+        self,
+        candidate: LayoutSignatureCandidate,
+        fallback_problem_context: dict[str, Any],
+    ) -> None:
+        """Fase 2.3: coluna cujo papel o contrato deriva da identidade nao e escolha livre.
+
+        Refaz a leitura da estrutura e a derivacao dos papeis (contrato +
+        identidade + artefatos carregados), a mesma fonte que montou
+        ``estrutura_tabelas`` no payload. So verifica o que resolveu por
+        contrato, na tabela que a resposta usou; o resto continua com a LLM.
+        """
+        scope = self._table_scope(candidate, fallback_problem_context)
+        if scope is None:
+            return
+        _contract, _tables, analyses, match = scope
+        if not any(analysis.papeis for analysis in analyses.values()):
+            return
+        for mapping_path, matched_entry in match.por_chave.items():
+            if matched_entry is None or not matched_entry.seletores:
+                continue
+            entry_model = candidate.mapeamento_canonico.get(mapping_path)
+            if entry_model is None or entry_model.tipo_origem not in {
+                "celula_de_tabela",
+                "cabecalho_de_tabela",
+            }:
+                continue
+            payload = entry_model.model_dump(mode="json", exclude_none=True)
+            used_file = str(payload.get("arquivo_origem") or "").strip()
+            analysis = analyses.get(used_file)
+            if analysis is None:
+                continue
+            column_selector = payload.get("seletor_coluna")
+            used_index = (
+                column_selector.get("indice_coluna_esperado")
+                if isinstance(column_selector, dict)
+                else None
+            )
+            for seletor, papel in matched_entry.seletores.items():
+                expected_index = analysis.coluna_do_papel(str(seletor), str(papel))
+                if expected_index is None or used_index == expected_index:
+                    continue
+                cabecalho = analysis.estrutura.cabecalhos[expected_index]
+                raise RuntimeError(
+                    "Layout candidato usou uma coluna diferente da resolvida pelo "
+                    f"contrato para {mapping_path}: o papel {papel} de {seletor} e a "
+                    f"coluna {expected_index} ('{cabecalho}') em '{used_file}', derivada "
+                    "da identidade do documento pelo contrato (ver estrutura_tabelas); "
+                    f"a resposta trouxe seletor_coluna.indice_coluna_esperado={used_index}."
+                )
+
+    @staticmethod
+    def _table_scope(
+        candidate: LayoutSignatureCandidate,
+        fallback_problem_context: dict[str, Any],
+    ) -> tuple[dict[str, Any], dict[str, Any], dict[str, TableAnalysis], Any] | None:
+        """Contrato, tabelas carregadas, analise da Fase 2 e chaves casadas — ou nada.
+
+        Sem identidade, contrato ou tabela carregada nenhuma verificacao
+        posicional se aplica (contratos legados, testes antigos).
+        """
+        identity = fallback_problem_context.get("identidade_documento")
+        contract = fallback_problem_context.get("contrato_semantico_relevante", {})
+        loaded_artifacts = fallback_problem_context.get("artefatos_contexto_llm")
+        if not isinstance(identity, dict) or not identity or not isinstance(contract, dict):
+            return None
+        if not isinstance(loaded_artifacts, dict) or not loaded_artifacts:
+            return None
+        tables = {
+            path: content
+            for path, artifact in loaded_artifacts.items()
+            if (content := table_artifact_content(artifact)) is not None
+        }
+        if not tables:
+            return None
+        try:
+            entries = enumerate_target_entries(
+                contract_context=contract, document_identity=identity
+            )
+        except TargetEnumerationError:
+            return None
+        analyses = analyze_tables(tables, contract_context=contract, document_identity=identity)
+        match = match_mapping_keys(entries, list(candidate.mapeamento_canonico))
+        return contract, tables, analyses, match
 
     @staticmethod
     def _validate_candidate_covers_mapping_requirements(
@@ -313,7 +564,14 @@ class FallbackCandidateValidationService:
         candidate: LayoutSignatureCandidate,
         fallback_problem_context: dict[str, Any],
     ) -> list[tuple[str, dict[str, str]]]:
-        """Lista ausencias opcionais para auditoria, sem bloquear o candidato."""
+        """Lista ausencias opcionais para auditoria, sem bloquear o candidato.
+
+        Quando o proprio valor da observacao opcional nao foi comprovado, os
+        campos de contexto dela (periodo, moeda, escala) entram na lista mesmo
+        que o candidato os tenha mapeado: sem valor nao existe observacao, e
+        exigir o contexto de uma observacao ausente e o que forcava a LLM a
+        inventar uma origem so para passar da etapa.
+        """
         contract = fallback_problem_context.get("contrato_semantico_relevante", {})
         try:
             requirements = mapping_requirements_from_context(contract)
@@ -339,11 +597,15 @@ class FallbackCandidateValidationService:
                         for key, value in observation.selectors.items()
                     )
                 ]
+                parent_path = requirement.path.rsplit(".", maxsplit=1)[0]
                 if not matching_values:
                     missing.append((requirement.path, observation.selectors))
+                    missing.extend(
+                        (f"{parent_path}.{context_field}", observation.selectors)
+                        for context_field in observation.context_fields
+                    )
                     continue
 
-                parent_path = requirement.path.rsplit(".", maxsplit=1)[0]
                 for context_field in observation.context_fields:
                     context_path = f"{parent_path}.{context_field}"
                     if not any(
@@ -681,6 +943,71 @@ class FallbackCandidateValidationService:
         return {str(path).strip() for path in paths if str(path).strip()}
 
     @staticmethod
+    def _contract_item_keys_from_context(
+        fallback_problem_context: dict[str, Any],
+    ) -> dict[str, str]:
+        """Le ``chaves_de_item`` do recorte; vazio significa contrato legado."""
+        contract = fallback_problem_context.get("contrato_semantico_relevante", {})
+        if not isinstance(contract, dict):
+            return {}
+        structure = contract.get("estrutura_schema_saida", {})
+        raw = structure.get("chaves_de_item", {}) if isinstance(structure, dict) else {}
+        if not isinstance(raw, dict):
+            return {}
+        return {
+            str(path).strip(): str(key).strip()
+            for path, key in raw.items()
+            if str(path).strip() and str(key).strip()
+        }
+
+    @staticmethod
+    def _describe_item_key_violation(path: str, item_keys: dict[str, str]) -> str | None:
+        """Com ``chaves_de_item`` declarado, cada filtro usa a chave do seu array.
+
+        Foi assim que ``valores[indicador=...]`` passou: ``indicador`` identifica
+        ``dados``, nao ``valores``. E um path que termina no array com seletor
+        (observacao inteira) e forma legada; no modo generico cada campo do item
+        e mapeado separadamente.
+        """
+        if not item_keys:
+            return None
+        try:
+            tokens = parse_mapping_path(path)
+        except ValueError:
+            return None
+        cumulative: list[str] = []
+        arrays_by_key: dict[str, list[str]] = {}
+        for array_path, key in item_keys.items():
+            arrays_by_key.setdefault(key, []).append(array_path)
+        for index, token in enumerate(tokens):
+            cumulative.append(str(token["field"]))
+            selector = token.get("selector")
+            if selector is None:
+                continue
+            array_path = ".".join(cumulative)
+            expected = item_keys.get(array_path)
+            used_key = str(selector[0])
+            if expected and used_key != expected:
+                owner = arrays_by_key.get(used_key)
+                hint = (
+                    f" '{used_key}' identifica {owner[0]}, nao {array_path}."
+                    if owner
+                    else f" '{used_key}' nao identifica nenhum array declarado."
+                )
+                return (
+                    f"Caminho de mapeamento canonico invalido: o array {array_path} e "
+                    f"identificado por '{expected}' (chaves_de_item), mas o filtro usou "
+                    f"'{used_key}'.{hint} Path: {path}."
+                )
+            if index == len(tokens) - 1 and expected:
+                return (
+                    "Caminho de mapeamento canonico termina no array "
+                    f"{array_path}[{used_key}=...] em vez de num campo do item. Mapeie "
+                    f"cada campo separadamente ({array_path}[...].<campo>): {path}."
+                )
+        return None
+
+    @staticmethod
     def _mapping_path_has_required_array_selectors(
         path: str,
         array_paths: set[str],
@@ -730,6 +1057,37 @@ class FallbackCandidateValidationService:
         root = normalized.split(".", maxsplit=1)[0]
         return root in schema_roots
 
+    _CONDICAO_CONCATENADA = re.compile(r"&\s*[A-Za-z_][A-Za-z0-9_.]*\s*=")
+
+    @staticmethod
+    def _describe_concatenated_selector(
+        path: str, *, segment: str | None = None, filtro: str | None = None
+    ) -> str | None:
+        """Nomeia ``[periodo=x&recorte=y]`` sem recusar um '&' literal como Plano&Plano.
+
+        So conta como concatenacao quando o '&' introduz outra ``chave=``; um '&'
+        dentro de um valor legitimo passa.
+        """
+        alvos = (
+            [(segment, filtro)]
+            if segment is not None and filtro is not None
+            else [
+                (seg, f)
+                for seg in str(path).split(".")
+                for f in re.findall(r"\[([^\]]*)\]", seg)
+            ]
+        )
+        for seg, f in alvos:
+            valor = f.partition("=")[2]
+            if FallbackCandidateValidationService._CONDICAO_CONCATENADA.search(valor):
+                return (
+                    f"Caminho de mapeamento canonico invalido: o filtro '[{f}]' em '{seg}' "
+                    "concatena condicoes com '&'. Cada segmento aceita um unico filtro "
+                    "chave=valor: escolha a chave que identifica o item e mapeie as demais "
+                    f"como campos do proprio item: {path}."
+                )
+        return None
+
     @staticmethod
     def _describe_bad_mapping_path(path: str) -> str:
         """Nomeia a violacao de gramatica encontrada, em vez de supor indice posicional."""
@@ -754,13 +1112,11 @@ class FallbackCandidateValidationService:
                         f"{rotulo} '[{filtro}]'. Em arrays use somente filtros "
                         f"semanticos no formato campo[chave=valor]: {path}."
                     )
-                if "&" in filtro.partition("=")[2]:
-                    return (
-                        f"Caminho de mapeamento canonico invalido: o filtro '[{filtro}]' "
-                        f"em '{segment}' concatena condicoes com '&'. Cada segmento aceita "
-                        "um unico filtro chave=valor: escolha a chave que identifica o item "
-                        f"e mapeie as demais como campos do proprio item: {path}."
-                    )
+                concatenado = FallbackCandidateValidationService._describe_concatenated_selector(
+                    path, segment=segment, filtro=filtro
+                )
+                if concatenado:
+                    return concatenado
         return (
             "Caminho de mapeamento canonico invalido. Use campo.campo para objetos "
             f"e campo[chave=valor] para itens de array: {path}."

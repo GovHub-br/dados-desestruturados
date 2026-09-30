@@ -77,6 +77,7 @@ class DeterministicRuleValidatorMixin:
                     preferred_row_index=self._optional_int(
                         rule.get("indice_linha_esperado")
                     ),
+                    exact={self._normalize_text(str(item)) for item in rule.get("valores_aceitos", [])},
                 )
                 return {
                     **base,
@@ -121,6 +122,7 @@ class DeterministicRuleValidatorMixin:
                     preferred_row_index=self._optional_int(
                         rule.get("indice_linha_esperado")
                     ),
+                    exact={self._normalize_text(str(rule.get("linha_rotulo", "")))},
                 )
                 idx = int(rule.get("indice_coluna_esperado", -1))
                 raw_value = None

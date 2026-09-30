@@ -74,6 +74,33 @@ class CandidateGenerationMixin:
                     "artefatos_contexto_llm": loaded_artifacts,
                 }
             )
+            if "entradas_esperadas" in enriched_context:
+                contract_context = enriched_context.get("contrato_semantico_relevante", {})
+                identity = enriched_context.get("identidade_documento")
+                analyses = analyze_tables(
+                    loaded_artifacts,
+                    contract_context=contract_context,
+                    document_identity=identity,
+                )
+                if analyses:
+                    enriched_context["estrutura_tabelas"] = table_structures_payload(analyses)
+                    self._persist_llm_validated(
+                        fallback_context=fallback_context,
+                        stage="layout_signature_candidato",
+                        filename="estrutura_tabelas.json",
+                        payload=table_structure_artifact(
+                            enriched_context["estrutura_tabelas"],
+                            contract_context=contract_context,
+                            document_identity=identity,
+                        ),
+                    )
+                enriched_context["entradas_esperadas"] = attach_resolved_row_anchors(
+                    enriched_context["entradas_esperadas"],
+                    contract_context=contract_context,
+                    loaded_artifacts=loaded_artifacts,
+                    document_identity=identity,
+                    analyses=analyses,
+                )
         candidate_validation_context = {
             **enriched_context,
             "fallback_context": fallback_context,

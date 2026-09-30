@@ -1,0 +1,173 @@
+{
+  "document_id": "2579cfdf5e0acb877f55b82e5975b9c2",
+  "entidade": "santander",
+  "dominio": "bancos",
+  "execution_id": "dag_detecta_pdf_e_extrai__santander__2T26__20260910T161739Z",
+  "contrato": {
+    "tipo_documento": "bancos",
+    "versao": "2.2.0"
+  },
+  "identidade": {
+    "entidade": "Banco Santander (Brasil) S.A.",
+    "periodo": "2T26"
+  },
+  "artefatos_esperados_por_requisito": {
+    "indicadores_monetarios.dados.valores.valor": [
+      "tables/table001.json",
+      "tables/table002.json",
+      "tables/table005.json"
+    ],
+    "indicadores_percentuais.dados.valores.valor": [
+      "charts/chart006.json"
+    ]
+  },
+  "ancoragens": {
+    "indicadores_monetarios.dados.valores.valor": [
+      {
+        "seletores": {
+          "indicador": "carteira_de_credito",
+          "periodo": "Jun/26"
+        },
+        "arquivo_origem": "tables/table001.json",
+        "indice_linha": 6,
+        "rotulo_linha": "TOTAL 1",
+        "indice_coluna": 1,
+        "cabecalho_coluna": "Jun/26",
+        "valor": 714769.0,
+        "obrigatorio": true,
+        "periodo": "Jun/26"
+      },
+      {
+        "seletores": {
+          "indicador": "margem_financeira",
+          "periodo": "2T26"
+        },
+        "arquivo_origem": "tables/table002.json",
+        "indice_linha": 6,
+        "rotulo_linha": "TOTAL",
+        "indice_coluna": 1,
+        "cabecalho_coluna": "2T26",
+        "valor": 15341.0,
+        "obrigatorio": true,
+        "periodo": "2T26"
+      },
+      {
+        "seletores": {
+          "indicador": "margem_financeira_com_clientes",
+          "periodo": "2T26"
+        },
+        "arquivo_origem": "tables/table002.json",
+        "indice_linha": 0,
+        "rotulo_linha": "Clientes",
+        "indice_coluna": 1,
+        "cabecalho_coluna": "2T26",
+        "valor": 16058.0,
+        "obrigatorio": false,
+        "periodo": "2T26"
+      },
+      {
+        "seletores": {
+          "indicador": "margem_financeira_com_mercado",
+          "periodo": "2T26"
+        },
+        "arquivo_origem": "tables/table002.json",
+        "indice_linha": 5,
+        "rotulo_linha": "Margem com o mercado",
+        "indice_coluna": 1,
+        "cabecalho_coluna": "2T26",
+        "valor": 718.0,
+        "obrigatorio": false,
+        "periodo": "2T26"
+      },
+      {
+        "seletores": {
+          "indicador": "resultado_recorrente",
+          "periodo": "2T26"
+        },
+        "arquivo_origem": "tables/table005.json",
+        "indice_linha": 10,
+        "rotulo_linha": "Lucro líquido recorrente",
+        "indice_coluna": 1,
+        "cabecalho_coluna": "2T26",
+        "valor": 3014.0,
+        "obrigatorio": true,
+        "periodo": "2T26"
+      }
+    ],
+    "indicadores_percentuais.dados.valores.valor": [
+      {
+        "seletores": {
+          "indicador": "inadimplencia_90_dias",
+          "periodo": "Dez/25"
+        },
+        "arquivo_origem": "charts/chart006.json",
+        "indice_linha": 2,
+        "rotulo_linha": "Dez/25",
+        "indice_coluna": 2,
+        "cabecalho_coluna": "Total",
+        "valor": 3.1,
+        "obrigatorio": true,
+        "periodo": "Dez/25"
+      },
+      {
+        "seletores": {
+          "indicador": "inadimplencia_90_dias",
+          "periodo": "Jun/25"
+        },
+        "arquivo_origem": "charts/chart006.json",
+        "indice_linha": 0,
+        "rotulo_linha": "Jun/25",
+        "indice_coluna": 2,
+        "cabecalho_coluna": "Total",
+        "valor": 2.6,
+        "obrigatorio": true,
+        "periodo": "Jun/25"
+      },
+      {
+        "seletores": {
+          "indicador": "inadimplencia_90_dias",
+          "periodo": "Jun/26"
+        },
+        "arquivo_origem": "charts/chart006.json",
+        "indice_linha": 4,
+        "rotulo_linha": "Jun/26",
+        "indice_coluna": 2,
+        "cabecalho_coluna": "Total",
+        "valor": 3.3,
+        "obrigatorio": true,
+        "periodo": "Jun/26"
+      },
+      {
+        "seletores": {
+          "indicador": "inadimplencia_90_dias",
+          "periodo": "Mar/26"
+        },
+        "arquivo_origem": "charts/chart006.json",
+        "indice_linha": 3,
+        "rotulo_linha": "Mar/26",
+        "indice_coluna": 2,
+        "cabecalho_coluna": "Total",
+        "valor": 3.3,
+        "obrigatorio": true,
+        "periodo": "Mar/26"
+      },
+      {
+        "seletores": {
+          "indicador": "inadimplencia_90_dias",
+          "periodo": "Set/25"
+        },
+        "arquivo_origem": "charts/chart006.json",
+        "indice_linha": 1,
+        "rotulo_linha": "Set/25",
+        "indice_coluna": 2,
+        "cabecalho_coluna": "Total",
+        "valor": 2.8,
+        "obrigatorio": true,
+        "periodo": "Set/25"
+      }
+    ]
+  },
+  "ausencias_esperadas": [],
+  "origem": "derivado da execucao baseline0 (candidato validado + auditoria da resolucao local), valores conferidos contra atlas-e2e-regressao / gabarito curado de bancos",
+  "revisao_pendente": []
+}

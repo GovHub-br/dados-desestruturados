@@ -13,12 +13,14 @@ from .metrics import (
     MetricValue,
     artifact_selection_quality_metrics,
     end_to_end_metrics,
+    evidence_prefilter_metrics,
     extraction_metrics,
     fallback_execution_metrics,
     fallback_stage_metrics,
     layout_validation_metrics,
     prompt_set_fingerprint,
     resolution_metrics,
+    table_structure_metrics,
     transition_metrics,
 )
 
@@ -31,6 +33,7 @@ __all__ = [
     "avaliar_mapeamento_canonico",
     "avaliar_selecao_artefatos",
     "end_to_end_metrics",
+    "evidence_prefilter_metrics",
     "extraction_metrics",
     "fallback_execution_metrics",
     "fallback_stage_metrics",
@@ -39,5 +42,6 @@ __all__ = [
     "metricas_de_conjunto",
     "prompt_set_fingerprint",
     "resolution_metrics",
+    "table_structure_metrics",
     "transition_metrics",
 ]

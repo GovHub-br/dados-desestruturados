@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from document_processing.domain.contracts.mapping_requirements import parsed_mapping_path
+
 from . import prompt_sets
 from ._common import *  # noqa: F401,F403
 
@@ -91,6 +93,9 @@ class FallbackTracePersistenceMixin:
             ),
             "persistido_em": datetime.now(UTC).isoformat(),
         }
+        reasoning_content = getattr(self.llm_client, "last_reasoning_content", None)
+        if isinstance(reasoning_content, str) and reasoning_content:
+            payload["reasoning_content"] = reasoning_content
         self.minio_client.put_json(
             object_key=self._fallback_object_key(
                 fallback_context,
@@ -129,6 +134,13 @@ class FallbackTracePersistenceMixin:
             ),
             "persistido_em": datetime.now(UTC).isoformat(),
         }
+        reasoning_content = (
+            error.reasoning_content
+            if isinstance(error, FallbackLlmClientError)
+            else getattr(self.llm_client, "last_reasoning_content", None)
+        )
+        if isinstance(reasoning_content, str) and reasoning_content:
+            payload["reasoning_content"] = reasoning_content
         if persisted_raw_response != parsed_response:
             payload["raw_response"] = persisted_raw_response
         self.minio_client.put_json(
@@ -175,25 +187,32 @@ class FallbackTracePersistenceMixin:
         candidate: LayoutSignatureCandidate,
         candidate_validation_context: dict[str, Any],
         artifact_paths: list[str],
-    ) -> None:
-        """Audita observacoes opcionais ausentes sem afetar a publicacao."""
+    ) -> set[str]:
+        """Audita observacoes opcionais ausentes e diz o que remover do candidato.
+
+        Devolve as chaves de ``mapeamento_canonico`` orfas: campos de contexto de
+        uma observacao opcional cujo valor nao foi comprovado. Mantidas, elas
+        chegam a revalidacao com ``obrigatorio: true`` e barram a publicacao de
+        um documento que legitimamente nao publica aquele valor.
+        """
         collect_missing = getattr(
             self.candidate_validator,
             "optional_mapping_observations_not_mapped",
             None,
         )
         if not callable(collect_missing):
-            return
+            return set()
         missing = collect_missing(candidate, candidate_validation_context)
         if not missing:
-            return
+            return set()
+        orphan_keys = self._orphan_context_mapping_keys(candidate=candidate, missing=missing)
         verified_artifacts = list(dict.fromkeys(path for path in artifact_paths if path))
         if not verified_artifacts:
             logging.warning(
                 "Observacoes opcionais ausentes nao foram persistidas: nenhum artefato "
                 "verificado foi informado."
             )
-            return
+            return orphan_keys
         payload = {
             "tipo_artefato": "campos_nao_mapeados_layout",
             "stage": "layout_signature_candidato",
@@ -224,6 +243,33 @@ class FallbackTracePersistenceMixin:
             ),
             payload=payload,
         )
+        return orphan_keys
+
+
+    @staticmethod
+    def _orphan_context_mapping_keys(
+        *,
+        candidate: LayoutSignatureCandidate,
+        missing: list[tuple[str, dict[str, str]]],
+    ) -> set[str]:
+        """Chaves de ``mapeamento_canonico`` que o candidato nao deveria ter mapeado.
+
+        ``missing`` inclui o path do proprio ``.valor`` ausente (nunca mapeado,
+        entao nunca casa aqui) e os paths de contexto da mesma observacao. Um
+        campo de contexto so vira orfao de fato quando o candidato o mapeou
+        mesmo sem o valor -- e essa entrada que precisa sair antes da revalidacao.
+        """
+        orphan_keys: set[str] = set()
+        for mapping_key in candidate.mapeamento_canonico:
+            normalized_path, selectors = parsed_mapping_path(mapping_key)
+            for missing_path, missing_selectors in missing:
+                if normalized_path == missing_path and all(
+                    selectors.get(key) == value
+                    for key, value in missing_selectors.items()
+                ):
+                    orphan_keys.add(mapping_key)
+                    break
+        return orphan_keys
 
 
     @staticmethod

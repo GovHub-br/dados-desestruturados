@@ -1,0 +1,305 @@
+{
+  "nome": "Releases trimestrais de resultados de varejo",
+  "dominio": "varejo",
+  "entidade": null,
+  "fonte": "Releases de resultados trimestrais divulgados publicamente por companhias de varejo",
+  "tipo_documento": "contrato_semantico",
+  "versao": "1.0.2",
+  "descricao": "Contrato semantico v1.0.0 para padronizar a extracao de indicadores brutos consolidados publicados nos releases trimestrais de companhias de varejo (Lojas Renner e Magazine Luiza na criacao). Ambas publicam moeda BRL apenas -- por isso moeda e literal fixa aqui, diferente dos dominios de siderurgia_mineracao e petroleo_gas. Os 4 indicadores miram explicitamente o nivel CONSOLIDADO da companhia: a Renner publica tambem 'EBITDA de varejo'/'Receita liquida de varejo' (segmento varejo, excluindo Realize) com rotulo parecido, mas de valor diferente do consolidado -- esses rotulos de segmento foram deliberadamente deixados de fora dos sinonimos para nao repetir o erro de mistura de segmento com consolidado ja visto no dominio construtoras (item 2.4) e no dominio bancos (item 3.2b). v1.0.2 corrige a leitura de escala: o candidato mapeava escala no mesmo cabecalho de coluna do periodo (ex.: '2T26'), porque as duas sao cabecalho_de_tabela na mesma linha e o contrato nao dizia qual coluna e qual. A escala publicada (ex.: 'R$ milhoes') fica no cabecalho da coluna de rotulo (indice 0), nunca na coluna do periodo -- ver orientacao no requisito de indicadores_monetarios.",
+  "contrato_semantico": {
+    "principios": {
+      "chaves_estaveis": "As chaves da saida devem ser genericas, reutilizaveis e independentes da empresa e do periodo do documento.",
+      "layout_independente": "A estrutura final deve permanecer igual mesmo que a apresentacao altere titulos, ordem das secoes, nomes das colunas ou formato visual.",
+      "periodos_como_valores": "Periodos especificos do documento nao devem aparecer nos nomes das chaves. Eles ficam como valores dentro das observacoes.",
+      "valores_brutos_primeiro": "O pipeline extrai o valor publicado, no nivel consolidado da companhia. Variacoes, margens derivadas nao publicadas e reconciliacoes ficam fora da extracao.",
+      "escala_e_moeda_explicitas": "Empresas do mesmo setor podem publicar em moedas diferentes (BRL/USD) e em escalas diferentes (milhoes/bilhoes). Moeda e escala lidas acompanham cada observacao monetaria e nunca sao convertidas na resolucao.",
+      "consolidado_nao_segmento": "Todo indicador deste contrato mira o valor consolidado da companhia. Quando o mesmo documento publica tambem uma abertura por segmento/unidade de negocio com rotulo parecido, o rotulo do segmento nao e sinonimo do indicador consolidado."
+    },
+    "entidades": {
+      "empresa": {
+        "descricao": "Companhia que divulgou a apresentacao/release de resultados.",
+        "obrigatorio": true,
+        "tipo": "string"
+      },
+      "indicador": {
+        "descricao": "Indicador bruto observado no release de resultados.",
+        "obrigatorio": true,
+        "tipo": "string",
+        "dominio": [
+          "receita_liquida",
+          "ebitda_ajustado",
+          "margem_ebitda",
+          "lucro_liquido"
+        ]
+      },
+      "escala": {
+        "descricao": "Escala em que o valor monetario foi publicado no ponto lido do documento.",
+        "obrigatorio": true,
+        "tipo": "string",
+        "dominio": [
+          "unidades",
+          "milhares",
+          "milhoes",
+          "bilhoes"
+        ],
+        "sinonimos": [
+          "R$ milhoes",
+          "em R$ milhoes",
+          "US$ milhoes",
+          "em US$ milhoes",
+          "R$ bilhoes",
+          "US$ bilhoes",
+          "milhoes",
+          "bilhoes"
+        ]
+      }
+    },
+    "metricas": {
+      "indicadores_monetarios": {
+        "descricao": "Indicadores publicados como valor monetario, com moeda e escala declaradas na propria observacao.",
+        "tipo": "grupo_metricas_brutas",
+        "indicadores": {
+          "receita_liquida": {
+            "descricao": "Receita liquida consolidada da companhia no trimestre: a linha de topo da operacao, e nao um recorte menor dentro dela. Atencao ao escopo da palavra 'varejo', que muda de linha para linha no mesmo documento: na Renner, 'Receita liquida de varejo' E a linha de topo (a receita de vestuario e um recorte dentro dela, e servicos financeiros entra como resultado, nao como receita -- a propria margem EBITDA total da companhia e calculada sobre ela), enquanto em EBITDA 'de varejo' e recorte e o total e 'EBITDA Total Ajustado'. O que se exclui aqui e o recorte por linha de produto (ex.: vestuario) ou por segmento reportado abaixo do total.",
+            "tipo": "number",
+            "obrigatorio": true,
+            "sinonimos": [
+              "Receita operacional liquida",
+              "Receita Liquida",
+              "Receita Liquida - Total",
+              "Receita liquida de varejo"
+            ]
+          },
+          "ebitda_ajustado": {
+            "descricao": "EBITDA ajustado CONSOLIDADO da companhia no trimestre (nao o recorte por segmento).",
+            "tipo": "number",
+            "obrigatorio": true,
+            "sinonimos": [
+              "EBITDA Total Ajustado",
+              "EBITDA Ajustado",
+              "EBITDA - Ajustado"
+            ]
+          },
+          "lucro_liquido": {
+            "descricao": "Resultado/lucro liquido CONSOLIDADO da companhia no trimestre. Quando a companhia publica as duas visoes, ajustada e contabil/nao-ajustada, mira a ajustada; quando publica so uma, usa a que existir. As duas empresas do dominio ficam em bases diferentes quando so uma delas divulga a visao ajustada -- e uma consequencia aceita desta regra, nao um erro de mapeamento.",
+            "tipo": "number",
+            "obrigatorio": true,
+            "sinonimos": [
+              "Lucro liquido do periodo",
+              "Lucro liquido",
+              "Resultado liquido ajustado"
+            ]
+          }
+        }
+      },
+      "indicadores_percentuais": {
+        "descricao": "Indicadores publicados como percentual, sem escala monetaria.",
+        "tipo": "grupo_metricas_brutas",
+        "unidade": "percentual",
+        "indicadores": {
+          "margem_ebitda": {
+            "descricao": "Margem EBITDA CONSOLIDADA da companhia no trimestre (nao o recorte por segmento).",
+            "tipo": "number",
+            "unidade": "percentual",
+            "obrigatorio": true,
+            "sinonimos": [
+              "Margem EBITDA total",
+              "Margem EBITDA Ajustado"
+            ]
+          }
+        }
+      }
+    },
+    "requisitos_mapeamento": {
+      "papeis": {
+        "papel_periodo": {
+          "periodo_referencia": {
+            "descricao": "Periodo a que o documento se refere (trimestre corrente).",
+            "derivacao": {
+              "origem": "identidade_documento.periodo"
+            }
+          },
+          "periodo_comparativo_anterior": {
+            "descricao": "Trimestre imediatamente anterior (comparacao t/t).",
+            "derivacao": {
+              "relacao": "anterior",
+              "passo": 1
+            }
+          },
+          "mesmo_periodo_ano_anterior": {
+            "descricao": "Mesmo trimestre do ano anterior (comparacao a/a).",
+            "derivacao": {
+              "relacao": "mesmo_periodo_ano_anterior"
+            }
+          }
+        }
+      },
+      "campos_obrigatorios": [
+        {
+          "path": "indicadores_monetarios.dados.valores.valor",
+          "descricao": "Indicadores monetarios brutos, com moeda e escala lidas no ponto do documento (empresas do mesmo setor podem publicar em moedas diferentes). Atencao a coluna de cada campo de contexto: periodo e o cabecalho da MESMA coluna do valor numerico (ex.: indice 1, '2T26'); escala e um cabecalho DIFERENTE, o da coluna de rotulo da linha (indice 0, ex.: 'R$ milhoes' ou 'R$ milhoes (exceto quando indicado)'). Nunca reaproveite o indice de coluna do periodo para a escala -- sao anotacoes publicadas em posicoes distintas da mesma tabela.",
+          "evidencia_esperada": {
+            "valor": "celula_de_tabela"
+          },
+          "observacoes_obrigatorias": [
+            {
+              "seletores": {
+                "indicador": "receita_liquida",
+                "papel_periodo": "periodo_referencia"
+              },
+              "campos_contexto_obrigatorios": [
+                "periodo",
+                "escala"
+              ]
+            },
+            {
+              "seletores": {
+                "indicador": "ebitda_ajustado",
+                "papel_periodo": "periodo_referencia"
+              },
+              "campos_contexto_obrigatorios": [
+                "periodo",
+                "escala"
+              ]
+            },
+            {
+              "seletores": {
+                "indicador": "lucro_liquido",
+                "papel_periodo": "periodo_referencia"
+              },
+              "campos_contexto_obrigatorios": [
+                "periodo",
+                "escala"
+              ]
+            }
+          ]
+        },
+        {
+          "path": "indicadores_percentuais.dados.valores.valor",
+          "descricao": "Indicadores percentuais brutos (margens e indices ja publicados em pontos percentuais).",
+          "evidencia_esperada": {
+            "valor": "celula_de_tabela"
+          },
+          "observacoes_obrigatorias": [
+            {
+              "seletores": {
+                "indicador": "margem_ebitda",
+                "papel_periodo": "periodo_referencia"
+              },
+              "campos_contexto_obrigatorios": [
+                "periodo"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "chaves_de_item": {
+      "indicadores_monetarios.dados": {
+        "chave": "indicador",
+        "origem_valor": "seletor_observacao"
+      },
+      "indicadores_monetarios.dados.valores": {
+        "chave": "papel_periodo",
+        "origem_valor": "seletor_observacao"
+      },
+      "indicadores_percentuais.dados": {
+        "chave": "indicador",
+        "origem_valor": "seletor_observacao"
+      },
+      "indicadores_percentuais.dados.valores": {
+        "chave": "papel_periodo",
+        "origem_valor": "seletor_observacao"
+      }
+    },
+    "derivacoes": [
+      {
+        "destino": "fonte",
+        "origem": {
+          "tipo": "contrato",
+          "campo": "fonte"
+        }
+      },
+      {
+        "destino": "empresa",
+        "origem": {
+          "tipo": "manifesto",
+          "campo": "candidate.entity_name"
+        }
+      },
+      {
+        "destino": "periodo_referencia",
+        "origem": {
+          "tipo": "manifesto",
+          "campo": "candidate.period_label"
+        }
+      },
+      {
+        "destino": "periodos_disponiveis.periodo_referencia",
+        "origem": {
+          "tipo": "manifesto",
+          "campo": "candidate.period_label"
+        }
+      },
+      {
+        "destino": "indicadores_monetarios.dados[*].empresa",
+        "origem": {
+          "tipo": "manifesto",
+          "campo": "candidate.entity_name"
+        }
+      },
+      {
+        "destino": "indicadores_percentuais.dados[*].empresa",
+        "origem": {
+          "tipo": "manifesto",
+          "campo": "candidate.entity_name"
+        }
+      }
+    ]
+  },
+  "schema_saida": {
+    "fonte": "string",
+    "empresa": "string",
+    "periodo_referencia": "string",
+    "periodos_disponiveis": {
+      "periodo_referencia": "string",
+      "periodo_comparativo_anterior": "string | null",
+      "mesmo_periodo_ano_anterior": "string | null"
+    },
+    "indicadores_monetarios": {
+      "tipo": "valor_bruto",
+      "dados": [
+        {
+          "empresa": "string",
+          "indicador": "string",
+          "valores": [
+            {
+              "periodo": "string",
+              "papel_periodo": "string",
+              "moeda": "BRL",
+              "escala": "string",
+              "valor": "number | null"
+            }
+          ]
+        }
+      ]
+    },
+    "indicadores_percentuais": {
+      "tipo": "valor_bruto",
+      "unidade": "percentual",
+      "dados": [
+        {
+          "empresa": "string",
+          "indicador": "string",
+          "valores": [
+            {
+              "periodo": "string",
+              "papel_periodo": "string",
+              "valor": "number | null"
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

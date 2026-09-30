@@ -176,6 +176,20 @@ class FallbackContextProjectionMixin:
             "paths_permitidos": sorted(schema_paths(schema_saida) - set(fixed_paths)),
             "arrays_que_exigem_seletor": sorted(schema_array_paths(schema_saida)),
         }
+        declared_item_keys = item_keys(contract)
+        if declared_item_keys:
+            structure["chaves_de_item"] = declared_item_keys
+        declared_origins = item_key_origins(contract)
+        if declared_origins:
+            structure["origem_das_chaves"] = declared_origins
+        identity_attributes = item_key_identity_attributes(contract)
+        if identity_attributes:
+            structure["atributos_identidade"] = identity_attributes
+        declared_derivations = derived_paths(contract)
+        if declared_derivations:
+            structure["paths_derivados"] = sorted(declared_derivations)
+        # Falha cedo se o contrato declarar papeis inconsistentes com as observacoes.
+        role_specs_from_context(contract)
         return {
             "identificacao": {
                 "nome": contract.get("nome"),

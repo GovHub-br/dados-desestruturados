@@ -1,0 +1,136 @@
+{
+  "document_id": "6b73450ae5d87a625f7ea2ef4e71e964",
+  "entidade": "gerdau",
+  "dominio": "siderurgia_mineracao",
+  "execution_id": "dag_detecta_pdf_e_extrai__gerdau__2T26__20260921T155341Z",
+  "contrato": {
+    "tipo_documento": "siderurgia_mineracao",
+    "versao": "1.0.2"
+  },
+  "identidade": {
+    "entidade": "Gerdau",
+    "periodo": "2T26"
+  },
+  "artefatos_esperados_por_requisito": {
+    "indicadores_monetarios.dados.valores.valor": [
+      "tables/table001.json",
+      "tables/table009.json",
+      "tables/table012.json"
+    ],
+    "indicadores_percentuais.dados.valores.valor": [
+      "tables/table009.json"
+    ],
+    "indicadores_razao.dados.valores.valor": [
+      "tables/table001.json"
+    ]
+  },
+  "ancoragens": {
+    "indicadores_monetarios.dados.valores.valor": [
+      {
+        "seletores": {
+          "indicador": "receita_liquida",
+          "papel_periodo": "periodo_referencia"
+        },
+        "arquivo_origem": "tables/table001.json",
+        "indice_linha": 1,
+        "rotulo_linha": "Receita líquida 1 (R$ milhões)",
+        "indice_coluna": 1,
+        "cabecalho_coluna": "2T26",
+        "valor": 17871.0,
+        "valor_bruto": "17.871",
+        "obrigatorio": true,
+        "periodo": "2T26",
+        "conferido_e2e": false
+      },
+      {
+        "seletores": {
+          "indicador": "ebitda_ajustado",
+          "papel_periodo": "periodo_referencia"
+        },
+        "arquivo_origem": "tables/table001.json",
+        "indice_linha": 2,
+        "rotulo_linha": "EBITDA ajustado 2 (R$ milhões)",
+        "indice_coluna": 1,
+        "cabecalho_coluna": "2T26",
+        "valor": 3430.0,
+        "valor_bruto": "3.430",
+        "obrigatorio": true,
+        "periodo": "2T26",
+        "conferido_e2e": false
+      },
+      {
+        "seletores": {
+          "indicador": "lucro_liquido",
+          "papel_periodo": "periodo_referencia"
+        },
+        "arquivo_origem": "tables/table001.json",
+        "indice_linha": 4,
+        "rotulo_linha": "Lucro líquido ajustado 2 (R$ milhões)",
+        "indice_coluna": 1,
+        "cabecalho_coluna": "2T26",
+        "valor": 1466.0,
+        "valor_bruto": "1.466",
+        "obrigatorio": true,
+        "periodo": "2T26",
+        "conferido_e2e": false
+      },
+      {
+        "seletores": {
+          "indicador": "divida_liquida",
+          "papel_periodo": "periodo_referencia"
+        },
+        "arquivo_origem": "tables/table012.json",
+        "indice_linha": 5,
+        "rotulo_linha": "Dívida líquida",
+        "indice_coluna": 1,
+        "cabecalho_coluna": "2T26",
+        "valor": 8118.0,
+        "valor_bruto": "8.118",
+        "obrigatorio": false,
+        "periodo": "2T26",
+        "conferido_e2e": false
+      }
+    ],
+    "indicadores_percentuais.dados.valores.valor": [
+      {
+        "seletores": {
+          "indicador": "margem_ebitda",
+          "papel_periodo": "periodo_referencia"
+        },
+        "arquivo_origem": "tables/table009.json",
+        "indice_linha": 9,
+        "rotulo_linha": "Margem EBITDA Ajustada",
+        "indice_coluna": 1,
+        "cabecalho_coluna": "2T26",
+        "valor": 19.2,
+        "valor_bruto": "19,2%",
+        "obrigatorio": true,
+        "periodo": "2T26",
+        "conferido_e2e": false
+      }
+    ],
+    "indicadores_razao.dados.valores.valor": [
+      {
+        "seletores": {
+          "indicador": "alavancagem_divida_liquida_ebitda",
+          "papel_periodo": "periodo_referencia"
+        },
+        "arquivo_origem": "tables/table001.json",
+        "indice_linha": 6,
+        "rotulo_linha": "Dívida líquida/EBITDA ajustado",
+        "indice_coluna": 1,
+        "cabecalho_coluna": "2T26",
+        "valor": 0.69,
+        "valor_bruto": "0,69x",
+        "obrigatorio": false,
+        "periodo": "2T26",
+        "conferido_e2e": false
+      }
+    ]
+  },
+  "ausencias_esperadas": [],
+  "origem": "Curadoria manual sobre os artefatos de extracao da execucao de 21/09/2026 (release exp-setores-novos-criacao-inicial). Cada ancoragem foi conferida celula a celula contra tables/*.json e charts/*.json no MinIO. Nenhum valor foi conferido ponta a ponta contra uma resolucao aprovada, por isso conferido_e2e=false em todas.",
+  "revisao_pendente": [
+    "corrigido em 2026-09-30: lucro_liquido movido de 'Lucro líquido' (tables/table009.json linha 0) para 'Lucro líquido ajustado 2 (R$ milhões)' (tables/table001.json linha 4). Os dois valem 1.466 no 2T26, mas o candidato da release exp-correcoes-numero-e-contrato ancorou no ajustado, seguindo a preferencia declarada pelo usuario para lucro liquido (usar a versao ajustada quando existir). O gabarito estava desatualizado em relacao a essa regra, nao o candidato."
+  ]
+}

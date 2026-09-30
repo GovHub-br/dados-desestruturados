@@ -91,9 +91,30 @@ class MappingPlanService:
         semantic = contract_context.get("contrato_semantico", {})
         if not isinstance(semantic, dict):
             semantic = {}
+        projected_requirements = mapping_requirements_payload(list(unit.requirements))
+        original_requirements = semantic.get("requisitos_mapeamento", {})
+        roles = (
+            original_requirements.get("papeis")
+            if isinstance(original_requirements, dict)
+            else None
+        )
+        if isinstance(roles, dict):
+            # `papeis` so faz sentido para seletores que alguma observacao da
+            # unidade usa; os demais pertencem a outra chamada.
+            used_selectors = {
+                selector
+                for requirement in unit.requirements
+                for observation in requirement.observations
+                for selector in observation.selectors
+            }
+            kept_roles = {
+                selector: spec for selector, spec in roles.items() if selector in used_selectors
+            }
+            if kept_roles:
+                projected_requirements["papeis"] = kept_roles
         projected_semantic = {
             **semantic,
-            "requisitos_mapeamento": mapping_requirements_payload(list(unit.requirements)),
+            "requisitos_mapeamento": projected_requirements,
         }
         return {
             **contract_context,
@@ -155,11 +176,26 @@ class MappingPlanService:
                 for required_path in required_paths
             )
         ]
-        return {
+        subschema = {
             "campos_raiz": [root_path],
             "paths_permitidos": sorted(set(allowed)),
             "arrays_que_exigem_seletor": sorted(set(arrays)),
         }
+        for block in ("chaves_de_item", "origem_das_chaves", "atributos_identidade"):
+            declared = structure.get(block, {})
+            if not isinstance(declared, dict):
+                continue
+            scoped = {
+                str(array_path): str(value)
+                for array_path, value in declared.items()
+                if str(array_path) in set(arrays)
+            }
+            if scoped:
+                subschema[block] = scoped
+        derived = structure.get("paths_derivados", [])
+        if isinstance(derived, list) and derived:
+            subschema["paths_derivados"] = sorted(str(path) for path in derived)
+        return subschema
 
 
 MAPPING_PLAN_SERVICE = MappingPlanService()

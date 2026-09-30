@@ -1,0 +1,129 @@
+{
+  "document_id": "b218a350695c3642d4794f0b942bc87e",
+  "entidade": "mrv",
+  "dominio": "construtoras",
+  "execution_id": "dag_detecta_pdf_e_extrai__mrv__1T26__20260714T233547Z",
+  "contrato": {
+    "tipo_documento": "construtoras",
+    "versao": "1.9.0"
+  },
+  "identidade": {
+    "entidade": "MRV",
+    "periodo": "1T26"
+  },
+  "artefatos_esperados_por_requisito": {
+    "balancos_das_empresas.lancamentos.dados.valores.valor": [
+      "tables/table002.json"
+    ],
+    "balancos_das_empresas.vendas.dados.valores.valor": [
+      "tables/table002.json"
+    ]
+  },
+  "ancoragens": {
+    "balancos_das_empresas.lancamentos.dados.valores.valor": [
+      {
+        "seletores": {
+          "empresa": "MRV",
+          "papel_periodo": "periodo_referencia"
+        },
+        "arquivo_origem": "tables/table002.json",
+        "indice_linha": 5,
+        "rotulo_linha": "Unidades",
+        "segmento": "TOTAL INCORPORACAO",
+        "indice_coluna": 1,
+        "cabecalho_coluna": "1T26",
+        "valor": 10386,
+        "periodo": "1T26",
+        "obrigatorio": true,
+        "conferido_e2e": false
+      },
+      {
+        "seletores": {
+          "empresa": "MRV",
+          "papel_periodo": "periodo_comparativo_anterior"
+        },
+        "arquivo_origem": "tables/table002.json",
+        "indice_linha": 5,
+        "rotulo_linha": "Unidades",
+        "segmento": "TOTAL INCORPORACAO",
+        "indice_coluna": 2,
+        "cabecalho_coluna": "4T25",
+        "valor": 10360,
+        "periodo": "4T25",
+        "obrigatorio": false,
+        "conferido_e2e": false
+      },
+      {
+        "seletores": {
+          "empresa": "MRV",
+          "papel_periodo": "mesmo_periodo_ano_anterior"
+        },
+        "arquivo_origem": "tables/table002.json",
+        "indice_linha": 5,
+        "rotulo_linha": "Unidades",
+        "segmento": "TOTAL INCORPORACAO",
+        "indice_coluna": 3,
+        "cabecalho_coluna": "1T25",
+        "valor": 10837,
+        "periodo": "1T25",
+        "obrigatorio": false,
+        "conferido_e2e": false
+      }
+    ],
+    "balancos_das_empresas.vendas.dados.valores.valor": [
+      {
+        "seletores": {
+          "empresa": "MRV",
+          "papel_periodo": "periodo_referencia"
+        },
+        "arquivo_origem": "tables/table002.json",
+        "indice_linha": 15,
+        "rotulo_linha": "Unidades",
+        "segmento": "TOTAL INCORPORACAO",
+        "indice_coluna": 1,
+        "cabecalho_coluna": "1T26",
+        "valor": 9141,
+        "periodo": "1T26",
+        "obrigatorio": true,
+        "conferido_e2e": false
+      },
+      {
+        "seletores": {
+          "empresa": "MRV",
+          "papel_periodo": "periodo_comparativo_anterior"
+        },
+        "arquivo_origem": "tables/table002.json",
+        "indice_linha": 15,
+        "rotulo_linha": "Unidades",
+        "segmento": "TOTAL INCORPORACAO",
+        "indice_coluna": 2,
+        "cabecalho_coluna": "4T25",
+        "valor": 10477,
+        "periodo": "4T25",
+        "obrigatorio": false,
+        "conferido_e2e": false
+      },
+      {
+        "seletores": {
+          "empresa": "MRV",
+          "papel_periodo": "mesmo_periodo_ano_anterior"
+        },
+        "arquivo_origem": "tables/table002.json",
+        "indice_linha": 15,
+        "rotulo_linha": "Unidades",
+        "segmento": "TOTAL INCORPORACAO",
+        "indice_coluna": 3,
+        "cabecalho_coluna": "1T25",
+        "valor": 8377,
+        "periodo": "1T25",
+        "obrigatorio": false,
+        "conferido_e2e": false
+      }
+    ]
+  },
+  "ausencias_esperadas": [],
+  "origem": "derivado da execucao baseline0 (candidato validado + auditoria da resolucao local), valores conferidos contra atlas-e2e-regressao / gabarito curado de bancos",
+  "revisao_pendente": [
+    "decisao de segmentacao: gabarito usa TOTAL INCORPORACAO (consolidado); a baseline0 mapeou a marca MRV (9.841/8.841) e separou Sensia; o gabarito e2e (162/402/457) e invalido"
+  ]
+}

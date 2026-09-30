@@ -27,4 +27,5 @@ airflow/state/*
 
 resultados*
 
-eval/relatorios/*
+# Relatorios do harness da assinatura de layout (saida derivada do Langfuse)
+eval/relatorios/
