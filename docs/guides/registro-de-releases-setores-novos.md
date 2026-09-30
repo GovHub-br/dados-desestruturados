@@ -460,6 +460,55 @@ observacao a que pertence. Uma observacao opcional e legitimamente ausente nao
 deveria ter os campos de contexto dela cobrados. E defeito de modelagem, so
 visivel depois que o item 4 tirou a obrigatoriedade do `.valor`.
 
+#### Comparacao pareada
+
+`comparar_releases_langfuse.py` falhou duas vezes por `TimeoutError` do
+Langfuse — a primeira paginando `/api/public/scores`, a segunda em
+`traces_por_release()`, que pagina **todos** os traces do projeto sem filtro.
+As consultas filtradas por release responderam normalmente a sessao inteira,
+entao a comparacao foi refeita com consultas dirigidas (traces por release,
+scores por trace, com retentativa). Pendencia do comparador, nao dos dados.
+
+Principais deltas:
+
+| metrica | base | novo | delta |
+| --- | --- | --- | --- |
+| `e2e_apto_para_bronze` * | 0.550 (n=20) | **0.929** (n=14) | +0.379 |
+| `e2e_sucesso` | 0.550 (n=20) | 0.929 (n=14) | +0.379 |
+| `resolucao_cobertura_campos` | 0.618 (n=19) | 0.992 (n=14) | +0.373 |
+| `resolucao_campos_mapeados` | 9.68 (n=19) | 16.14 (n=14) | +6.46 |
+| `publicacao_realizada` | 0.714 (n=7) | 0.857 (n=7) | +0.143 |
+| `revalidacao_aprovada` | 0.714 (n=7) | 0.857 (n=7) | +0.143 |
+| `fallback_candidato_valido` | 0.857 (n=7) | 1.000 (n=7) | +0.143 |
+| `llm_etapa_sucesso` | 0.969 (n=32) | 1.000 (n=34) | +0.031 |
+| `e2e_duracao_segundos` | 263.9 (n=7) | 228.3 (n=7) | −35.6 |
+| `resolucao_cobertura_obrigatorios` * | 0.990 (n=12) | 0.989 (n=14) | −0.001 |
+
+`*` = guarda.
+
+**A unica guarda com delta negativo e `resolucao_cobertura_obrigatorios`
+(−0.001), e e artefato de medicao.** Olhando a distribuicao em vez da media:
+na base, 10 traces em 1.000 e **2 em 0.938** (15/16, a CSN, com a alavancagem
+nao resolvida pelo parsing do "x"); agora, 12 traces em 1.000 e **2 em 0.923**
+(12/13, a **PRIO**, com o `periodo` da alavancagem opcional). Ou seja: a CSN
+subiu de 0.938 para 1.000 e a PRIO passou a entrar no denominador, coisa que
+na base nao acontecia porque ela nunca chegava a revalidacao. Nenhum documento
+piorou; um documento a mais passou a ser contado.
+
+Cobertura de obrigatorios por entidade nesta release, lida da auditoria:
+csn 14/14, gerdau 20/20, vale 18/18, petrobras 14/14, renner 11/11,
+mglu 11/11, **prio 12/13**.
+
+Outros deltas negativos, todos rotulados como medicao:
+
+- `e2e_autonomia_deterministica` 0.650 → 0.500: o numero absoluto de traces em
+  0.0 e o mesmo (7 nas duas); o que mudou foi o denominador (20 → 14), porque
+  a base tinha 6 traces `atlas.resolucao` a mais do caminho de cascata;
+- `transicao_resolucao_para_fallback` 0.538 → 0.000: nesta release a DAG 3 foi
+  disparada direto, entao a DAG 2 nunca precisou entregar o bastao;
+- `estrutura_tabela_lida` 1.000 → 0.941: uma observacao a mais (16 → 17), a
+  nova com 0.0.
+
 #### Nota de leitura do comparador
 
 A base tem 13 traces `atlas.resolucao` e esta release tem 7, porque o lote 1
@@ -500,3 +549,7 @@ renner e mglu publicaram `v1.1.0` ainda carregando `escala = "2T26"`, igual a
    contrato (preferir ajustada, usar a unica quando so houver uma), mas as duas
    empresas seguem em bases diferentes.
 6. **Precisao da fase 0**: vale caiu para 0.125; csn segue em 0.125.
+7. **`comparar_releases_langfuse.py` nao completa**: paginacao sem filtro
+   (`traces_por_release()` e `scores()`) da `TimeoutError` contra este
+   Langfuse. Consultas filtradas por release funcionam. Vale filtrar a
+   paginacao por release no script.
