@@ -5,7 +5,7 @@
   "execution_id": "dag_detecta_pdf_e_extrai__gerdau__2T26__20260921T155341Z",
   "contrato": {
     "tipo_documento": "siderurgia_mineracao",
-    "versao": "1.0.1"
+    "versao": "1.0.2"
   },
   "identidade": {
     "entidade": "Gerdau",
@@ -63,9 +63,9 @@
           "indicador": "lucro_liquido",
           "papel_periodo": "periodo_referencia"
         },
-        "arquivo_origem": "tables/table009.json",
-        "indice_linha": 0,
-        "rotulo_linha": "Lucro líquido",
+        "arquivo_origem": "tables/table001.json",
+        "indice_linha": 4,
+        "rotulo_linha": "Lucro líquido ajustado 2 (R$ milhões)",
         "indice_coluna": 1,
         "cabecalho_coluna": "2T26",
         "valor": 1466.0,
@@ -130,5 +130,7 @@
   },
   "ausencias_esperadas": [],
   "origem": "Curadoria manual sobre os artefatos de extracao da execucao de 21/09/2026 (release exp-setores-novos-criacao-inicial). Cada ancoragem foi conferida celula a celula contra tables/*.json e charts/*.json no MinIO. Nenhum valor foi conferido ponta a ponta contra uma resolucao aprovada, por isso conferido_e2e=false em todas.",
-  "revisao_pendente": []
+  "revisao_pendente": [
+    "corrigido em 2026-09-30: lucro_liquido movido de 'Lucro líquido' (tables/table009.json linha 0) para 'Lucro líquido ajustado 2 (R$ milhões)' (tables/table001.json linha 4). Os dois valem 1.466 no 2T26, mas o candidato da release exp-correcoes-numero-e-contrato ancorou no ajustado, seguindo a preferencia declarada pelo usuario para lucro liquido (usar a versao ajustada quando existir). O gabarito estava desatualizado em relacao a essa regra, nao o candidato."
+  ]
 }
