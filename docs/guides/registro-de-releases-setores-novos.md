@@ -37,7 +37,7 @@ expuseram.
 
 | release | ultimo commit | estado |
 | --- | --- | --- |
-| `exp-setores-novos-criacao-inicial` | `6d28038` — contratos v1.0.0/v1.0.1 de siderurgia_mineracao, petroleo_gas e varejo + PDFs de teste 2T26 (CSN, Vale, Gerdau, Petrobras, PRIO, Renner, MGLU) | rodada em 21/09 (criacao inicial de layout, sem release anterior para comparar): **5/7 entidades publicaram layout** (vale, gerdau, petrobras, renner, mglu); csn e prio reprovados. Ver lote 1 |
+| `exp-setores-novos-criacao-inicial` | `e962c23` — gabaritos dos 7 documentos e medicao da rodada (lote 2). Antes: `6d28038` — contratos v1.0.0/v1.0.1 de siderurgia_mineracao, petroleo_gas e varejo + PDFs de teste 2T26 | rodada em 21/09 (criacao inicial de layout, sem release anterior para comparar): **5/7 entidades publicaram layout** (vale, gerdau, petrobras, renner, mglu); csn e prio reprovados (lote 1). Medida com gabarito em 30/09 sem rerodar: **prio e a unica falha de ancoragem real** (f3 arquivo 0.500); csn e gerdau em 0.833, os outros 4 em 1.000 (lote 2) |
 
 ## Lote 1: contratos novos + criacao inicial de layout (`exp-setores-novos-criacao-inicial`, 21/09)
 
