@@ -315,3 +315,58 @@ Consolidando as do lote 1 com o que mudou:
 
 Continua sem comparacao pareada no Langfuse: esta e a primeira medicao destes
 documentos, e agora serve de linha de base para a proxima rodada.
+
+## Lote 3: correcoes de normalizador e contrato (`exp-correcoes-numero-e-contrato`, 30/09)
+
+Primeira release destes dominios com comparacao pareada: a base e
+`exp-setores-novos-criacao-inicial`, medida no lote 2, sobre os **mesmos 7
+document_id e execution_id**.
+
+### Hipotese
+
+As 4 falhas do lote 1 tem causas independentes e ja isoladas. Corrigindo o
+normalizador de numeros (sinal contabil e sufixo de razao) e as duas
+contradicoes de contrato, csn/renner/mglu passam a publicar com valor correto
+e a prio passa a aprovar declarando a ausencia da alavancagem, sem que nada
+regrida em vale/gerdau/petrobras.
+
+### Itens
+
+| item | onde | o que muda |
+| --- | --- | --- |
+| sinal contabil | `domain/resolution/numbers.py` | `(50,4)` passa a ser `-50,4`; antes virava `+50,4` |
+| sufixo de razao | `domain/resolution/numbers.py` | `3,49x` / `0,69x` passam a parsear; antes davam `null` |
+| testes | `tests/unit/domain/test_resolution_numbers.py` | 3 → 8 casos, cobrindo os dois defeitos |
+| contrato `petroleo_gas` v1.0.2 | `alavancagem_divida_liquida_ebitda` | `obrigatorio: true` → `false` |
+| contrato `varejo` v1.0.1 | `campos_contexto_obrigatorios` | `"moeda"` sai dos 3 indicadores monetarios |
+| contrato `varejo` v1.0.1 | `receita_liquida` | descricao corrigida + sinonimo "Receita liquida de varejo" |
+| contrato `varejo` v1.0.1 | `lucro_liquido` | descricao explicita: preferir a ajustada, usar a nao ajustada quando for a unica |
+
+`siderurgia_mineracao` **nao mudou**: a alavancagem ja era `obrigatorio: false`
+nele, e o que reprovava a CSN era o parsing do `"x"`.
+
+Sem mudanca de prompt (`sincronizar_prompts_langfuse.py --verificar`: 18
+iguais, 0 divergentes).
+
+### Metrica-alvo e guardas
+
+- **Alvo:** `e2e_apto_para_bronze` de 5/7 para 7/7, e o lucro liquido resolvido
+  da MGLU negativo (`-50,4`), lido direto do `schema_saida_resolvido.json` no
+  MinIO — o sinal nao aparece em metrica nenhuma, so na leitura do valor.
+- **Guardas:** `resolucao_cobertura_obrigatorios`, `revalidacao_gate_efetivo`,
+  `validacao_cobertura_de_regras`, mais `assinatura_f3_arquivo_origem_correto`
+  (nao pode cair de 0.881) e `assinatura_f0_selecao_revocacao` (0.948).
+
+### Nota de procedimento
+
+`listar_documentos_release.py` devolveu 0 documentos para a release-base: ele
+filtra por `fallback_execution_id` no padrao
+`dag_valida_e_fallback_llm__<release>__<dominio>__<entidade>`, e a rodada de
+21/09 foi cascata automatica DAG 2 → DAG 3, com
+`fallback=dag_valida_e_fallback_llm__manual__<timestamp>`. O lote foi montado
+a partir do MinIO, preservando `document_id` e `execution_id` da base — o
+pareamento do comparador se mantem.
+
+### Resultado
+
+_(a preencher apos a rodada)_
