@@ -16,8 +16,9 @@ resultado. Um item só passa com evidência. "VM" indica que o comando roda em
 | A5 | Volta se morrer | `kill -9 $(pgrep -f docling_runtime.server)` → A1 volta em ≤ 30 s | RF1 | | |
 | A6 | Volta após reboot sem login | `sudo reboot`; sem login nem SSH: A1 + A2 pela VM em ≤ 5 min. Duração de A2 na mesma ordem de antes, o que confirma a GPU | RF1 | | |
 | A7 | Atualização sem novidade | `atualizar-runner.sh` → "nada novo"; o runner não reinicia | RF7 | | |
-| A8 | Atualização com commit novo | Commit novo no `main` → o script troca, reinicia e mostra `ANTES → DEPOIS`; A1 ok | RF7 | | |
-| A9 | Atualização com falha volta sozinha | `atualizar-runner.sh <branch de teste com erro de import>` → termina com erro; `git rev-parse HEAD` igual ao anterior; A1 ok. Depois, `atualizar-runner.sh main` | RF7 | | |
+| A7b | Agendamento ativo | `launchctl print system/com.ocr-cidades.docling-runner-atualizacao` carregado; uma linha nova em `docling-runner-atualizacao.log` a cada 15 min, inclusive após reboot sem login | RF7 | | |
+| A8 | Atualização com commit novo | Merge no `main` → em até 15 min, **sem ninguém executar nada**, uma linha `ok` em `atualizacoes.log` e A1 ok | RF7 | | |
+| A9 | Atualização com falha volta sozinha | `atualizar-runner.sh <branch de teste com erro de import>` → termina com erro; `git rev-parse HEAD` igual ao anterior; A1 ok; a execução agendada seguinte ignora o commit com falha. Depois, `atualizar-runner.sh main` | RF7 | | |
 | A10 | Não interrompe extração | Rodar a atualização durante uma extração: o script espera o fim | RF7 | | |
 | A11 | Configuração correta | `runner.env` em modo 600, com `HF_HOME` e `PIPELINE_TMP_DIR` em `~/ocr-data`; não existe `~/docling-runner/repo/.env` | RF5 | | |
 
