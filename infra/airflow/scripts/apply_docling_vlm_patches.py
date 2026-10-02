@@ -129,10 +129,15 @@ def _safe_model_max_length(raw_value: Any, default: int = 1024) -> int:
         "        self._model_max_length = _safe_model_max_length(self._processor.tokenizer.model_max_length, default=1024)\n",
         file_label=module_name,
     )
+    # Granite Vision 4.1 (ChartExtractionModelGraniteVisionV4) declara um
+    # model_max_length sentinela; o teto efetivo e este default. Com 4096, um
+    # grafico que entra em repeticao gera 4x mais linhas espurias e a extracao
+    # fica ~3x mais lenta (Cury 2T26: 83s -> 260s), sem ganho nos demais
+    # graficos. 1024 e o valor validado em producao no Mac Studio.
     content = _replace_once(
         content,
         "            self._model_max_length = self._processor.tokenizer.model_max_length\n",
-        "            self._model_max_length = _safe_model_max_length(self._processor.tokenizer.model_max_length, default=4096)\n",
+        "            self._model_max_length = _safe_model_max_length(self._processor.tokenizer.model_max_length, default=1024)\n",
         file_label=module_name,
     )
 
