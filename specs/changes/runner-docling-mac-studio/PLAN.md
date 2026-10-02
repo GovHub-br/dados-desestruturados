@@ -7,12 +7,12 @@ Escopo mínimo. Leia antes [CONTEXT.md](CONTEXT.md) (problema e armadilhas),
 
 | Etapa | Onde | Entrega | Esforço |
 | --- | --- | --- | --- |
-| 1 | Repositório (1 PR) | 4 arquivos em `infra/docling-runner/macos/` + runbook | P |
+| 1 | Repositório (2 PRs: serviço e atualização automática) | 5 arquivos em `infra/docling-runner/macos/` + runbook | P |
 | 2 | Mac Studio | Runner instalado como serviço do sistema (launchd) | P |
 | 3 | Mac + VM | Validação (reboot sem login, kill, SSH, atualização, DAG real) | P |
 | 4 | Mac | Remoção do clone legado do Desktop (opcional, após o aceite) | P |
 
-A VM não é alterada (D7).
+A VM não é alterada (D8).
 
 Resultado no Mac Studio:
 
@@ -27,7 +27,7 @@ Resultado no Mac Studio:
 /Library/LaunchDaemons/com.ocr-cidades.docling-runner.plist
 ```
 
-## Etapa 1 — Repositório (um PR pequeno)
+## Etapa 1 — Repositório (dois PRs pequenos)
 
 ### 1.1 `infra/docling-runner/macos/com.ocr-cidades.docling-runner.plist`
 
@@ -56,33 +56,29 @@ O launcher é o que o launchd executa. Ele:
 O `runner.env.example` documenta as variáveis do servidor e como acrescentar
 as linhas `DOCLING_LLM_*` e `DOCLING_TEXT_CANDIDATE_*` do `.env` atual.
 
-### 1.3 `infra/docling-runner/macos/atualizar-runner.sh [branch]`
+### 1.3 `atualizar-runner.sh` e `com.ocr-cidades.docling-runner-atualizacao.plist`
 
-O branch padrão é `main`. Passos:
+O plist executa o script a cada 15 min (D7). O script também pode ser rodado à
+mão, e o próprio arquivo documenta os passos. Em resumo:
 
-1. Aborta se `git status --porcelain` não estiver vazio: o clone é espelho.
-2. Enquanto `pgrep -f docling_pipeline` encontrar processo, espera
-   ("extração em andamento").
-3. Guarda `ANTES=$(git rev-parse HEAD)`. Depois roda `git fetch origin <branch>`
-   e `git checkout -B <branch> origin/<branch>`, o que equivale a `git pull` e
-   também permite testar outro branch. Se o commit não mudou, sai com
-   "nada novo".
-4. Se `requirements.txt` mudou entre `ANTES` e o novo commit: roda
-   `venv/bin/python -m pip install -r requirements.txt` e reaplica
-   `infra/airflow/scripts/apply_docling_vlm_patches.py`.
-5. Valida em ambiente limpo, igual ao do serviço:
-   `env -i PATH="$RUNNER_HOME/venv/bin:/usr/bin:/bin" PYTHONPATH="$RUNNER_HOME/repo" python3 -c "import docling_pipeline, docling_runtime.server"`.
-6. Reinicia com `pkill -TERM -u lablivre -f docling_runtime.server`. O
-   `KeepAlive` religa.
-7. Espera até 60 s por `curl -fsS localhost:8081/healthz`.
-8. **Se 5 ou 7 falharem:**
-   - `git checkout -B <branch> $ANTES`;
-   - se as dependências mudaram, reinstala e reaplica os patches;
-   - reinicia, espera o `/healthz` e sai com erro.
-9. Imprime `ANTES → DEPOIS` e o `/healthz`.
+1. trava contra execuções simultâneas;
+2. busca o branch em uso (ou o informado) e sai se não houver commit novo, ou
+   se o commit novo já falhou antes;
+3. espera não haver extração em andamento;
+4. faz o checkout;
+5. reinstala as dependências e os patches se o `requirements.txt` ou o script
+   de patches mudaram;
+6. valida com `python3 -m docling_pipeline --help` em ambiente limpo, que
+   carrega a mesma cadeia de imports de um job;
+7. reinicia via `pkill` e espera o `/healthz`;
+8. em falha, volta ao commit anterior e registra em `atualizacoes.log`.
 
-Uma extração que chegue entre o passo 2 e o 6 é interrompida pelo reinício. O
-Airflow repete a task (`retries=1`).
+O corpo do script fica numa função `main` chamada na última linha. Ele vive no
+clone que atualiza, e assim o bash já leu tudo antes de o git reescrever o
+arquivo.
+
+Uma extração que chegue entre a espera (3) e o reinício (7) é interrompida.
+O Airflow repete a task (`retries=1`).
 
 ### 1.4 Runbook
 
@@ -115,13 +111,13 @@ Depois do merge, seguir a seção **Instalação** do runbook
 [`docs/operations/docling-runner-launchd.md`](../../../docs/operations/docling-runner-launchd.md),
 que é a fonte única dos comandos. Em resumo:
 
-1. clone dedicado em `~/docling-runner/repo`;
+1. clone dedicado em `~/docling-runner/repo`, por HTTPS (D2);
 2. venv recriado com o `pip freeze` do `.venv-chart` + patches de GPU +
    `pip check` (D3);
 3. `runner.env` a partir do exemplo, com as linhas `DOCLING_LLM_*` e
    `DOCLING_TEXT_CANDIDATE_*` do `.env` atual (D4);
 4. validação do pipeline em ambiente limpo (`env -i`);
-5. plist em `/Library/LaunchDaemons` (`root:wheel`, 644) + `launchctl bootstrap system`;
+5. os dois plists em `/Library/LaunchDaemons` (`root:wheel`, 644) + `launchctl bootstrap system`;
 6. `/healthz` no Mac e a partir da VM.
 
 **Rollback:** `sudo launchctl bootout system/com.ocr-cidades.docling-runner`

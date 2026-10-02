@@ -14,10 +14,17 @@ registradas em [CONTEXT.md](CONTEXT.md) como fora de escopo.
   - Com FileVault desligado, um LaunchDaemon sobe no boot sem login.
   - Rodar como `lablivre` mantém o dono de `~/ocr-data` e do cache de modelos.
 
-## D2 — Clone completo e dedicado, atualizado por `git pull`
+## D2 — Clone completo e dedicado, por HTTPS anônimo
 
-- **Decisão:** `~/docling-runner/repo`, clone completo no branch `main`, usando
-  o acesso ao GitHub que já existe no Mac.
+- **Decisão:** `~/docling-runner/repo`, clone completo no branch `main`, por
+  `https://github.com/GovHub-br/dados-desestruturados.git`.
+- **Por que HTTPS:**
+  - O repositório é público.
+  - A chave SSH que já existe no Mac (`id_rsa`) tem senha guardada no
+    Keychain (`UseKeychain yes`). O Keychain só destrava com login, então a
+    atualização automática falharia depois de um reboot sem login.
+  - Testado em 2026-10-02: HTTPS anônimo funciona num ambiente zerado
+    (`env -i`), igual ao do launchd.
 - **Por quê:**
   - Simplicidade, decidida em 2026-10-02.
   - Fora do Desktop, para evitar o bloqueio de privacidade do macOS a
@@ -71,7 +78,24 @@ registradas em [CONTEXT.md](CONTEXT.md) como fora de escopo.
     órfão;
   - `sudo` só na instalação.
 
-## D7 — VM fora desta entrega
+## D7 — Atualização automática a cada 15 min, acompanhando o branch em uso
+
+- **Decisão:** um segundo LaunchDaemon
+  (`com.ocr-cidades.docling-runner-atualizacao`, `StartInterval=900`,
+  `ProcessType=Background`) executa `atualizar-runner.sh`, decidido em
+  2026-10-02. Sem argumento, o script segue o branch em uso. Assim, testar
+  um branch não é desfeito pelo agendamento, e voltar é
+  `atualizar-runner.sh main`.
+- **Consequência:** todo merge no `main` chega à produção em até 15 min. O
+  `main` precisa estar sempre em condição de rodar.
+- **Proteções para rodar sem supervisão:**
+  - trava com PID, que remove a trava órfã de uma execução interrompida;
+  - o commit revertido não é tentado de novo, para um `main` quebrado não
+    reiniciar o runner a cada 15 min;
+  - no revert, o runner só reinicia se já tiver sido reiniciado;
+  - histórico em `~/docling-runner/atualizacoes.log`.
+
+## D8 — VM fora desta entrega
 
 - **Decisão:** a VM de produção não é alterada agora (decidido em 2026-10-02).
 - **Consequência conhecida:** após um reboot da VM, a stack precisa ser

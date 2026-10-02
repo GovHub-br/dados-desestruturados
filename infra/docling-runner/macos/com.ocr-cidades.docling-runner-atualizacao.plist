@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  Atualizacao automatica do runner Docling: a cada 15 min executa
+  atualizar-runner.sh, que so troca o codigo e reinicia o runner quando ha
+  commit novo no branch em uso (normalmente main).
+
+  Instalacao e operacao: docs/operations/docling-runner-launchd.md
+  O launchd nao inicia uma nova execucao enquanto a anterior estiver rodando.
+-->
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>com.ocr-cidades.docling-runner-atualizacao</string>
+
+  <key>UserName</key>
+  <string>lablivre</string>
+  <key>GroupName</key>
+  <string>staff</string>
+
+  <key>ProgramArguments</key>
+  <array>
+    <string>/bin/bash</string>
+    <string>/Users/lablivre/docling-runner/repo/infra/docling-runner/macos/atualizar-runner.sh</string>
+  </array>
+
+  <!-- O clone usa HTTPS anonimo (repositorio publico): nao depende de chave SSH
+       nem do Keychain, que fica travado quando ninguem fez login. -->
+  <key>EnvironmentVariables</key>
+  <dict>
+    <key>RUNNER_HOME</key>
+    <string>/Users/lablivre/docling-runner</string>
+    <key>HOME</key>
+    <string>/Users/lablivre</string>
+    <key>PATH</key>
+    <string>/usr/bin:/bin:/usr/sbin:/sbin</string>
+    <key>GIT_TERMINAL_PROMPT</key>
+    <string>0</string>
+  </dict>
+
+  <key>StartInterval</key>
+  <integer>900</integer>
+
+  <!-- Tarefa de manutencao: prioridade baixa, sem competir com as extracoes. -->
+  <key>ProcessType</key>
+  <string>Background</string>
+
+  <key>StandardOutPath</key>
+  <string>/Users/lablivre/ocr-data/logs/docling-runner-atualizacao.log</string>
+  <key>StandardErrorPath</key>
+  <string>/Users/lablivre/ocr-data/logs/docling-runner-atualizacao.log</string>
+</dict>
+</plist>

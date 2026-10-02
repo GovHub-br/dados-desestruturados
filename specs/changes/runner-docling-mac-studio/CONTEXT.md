@@ -37,8 +37,8 @@ Em 2026-09-29 houve uma queda de energia e as duas máquinas reiniciaram:
 ## Objetivo
 
 Quando o Mac reiniciar ou o runner cair, o serviço volta sozinho e fica pronto
-para extrair, sem ninguém entrar na máquina. Atualizar o runner passa a ser um
-comando simples e seguro.
+para extrair, sem ninguém entrar na máquina. O código novo do `main` chega ao
+runner sozinho, com segurança.
 
 ## Estado observado que importa para a implementação
 
@@ -73,7 +73,7 @@ comando simples e seguro.
 ## Fora de escopo (registrado para depois)
 
 - Restart automático da stack da VM. Hoje ela tem `restart: "no"` e exige
-  `docker compose … up -d` manual após reboot (ver D7).
+  `docker compose … up -d` manual após reboot (ver D8).
 - Token de acesso na porta 8081 (hoje qualquer máquina da rede pode enviar
   PDFs).
 - Chave do GitHub dedicada e somente leitura. Por ora usa-se o acesso
