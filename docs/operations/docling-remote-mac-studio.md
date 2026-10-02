@@ -184,7 +184,9 @@ Funcao de cada pasta:
 
 ## Variaveis no Mac Studio
 
-Para teste manual:
+Em producao, estas variaveis ficam em `~/docling-runner/runner.env`, lido pelo
+servico (ver [docling-runner-launchd.md](docling-runner-launchd.md)). Para teste
+manual:
 
 ```bash
 export PYTHONPATH=$PWD
@@ -422,33 +424,12 @@ docker compose up -d
 
 ## Runner persistente no Mac Studio
 
-O Mac Studio pode rodar o runner manualmente para testes:
+Em producao, o runner roda no Mac Studio como LaunchDaemon. Ele sobe no boot
+sem login e volta sozinho se cair. Instalacao, atualizacao e diagnostico estao
+em [docling-runner-launchd.md](docling-runner-launchd.md).
 
-```bash
-cd ~/ocr-cidades/dados-desestruturados
-source .venv/bin/activate
-python -m docling_runtime.server
-```
-
-Para operacao, use `launchd` com um `LaunchAgent`, como descrito no documento:
-
-```text
-dados-desestruturados/docs/operations/docling-runner-launchd.md
-```
-
-O importante e que o `launchd` injete estas variaveis:
-
-```text
-PYTHONPATH
-PROJECT_ROOT
-DOCLING_RUNNER_HOST
-DOCLING_RUNNER_PORT
-PIPELINE_TMP_DIR
-HF_HOME
-```
-
-Neste modelo, nao inclua `MINIO_*` no `launchd`, porque o Mac Studio nao precisa
-acessar o MinIO.
+Neste modelo, nao inclua `MINIO_*` na configuracao do runner, porque o Mac
+Studio nao precisa acessar o MinIO.
 
 ## Ordem de implementacao recomendada
 

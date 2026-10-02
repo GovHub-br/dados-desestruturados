@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  Runner Docling do Mac Studio como LaunchDaemon: sobe no boot sem login,
+  volta sozinho se o processo morrer e nao depende de sessao de terminal.
+
+  Instalacao e operacao: docs/operations/docling-runner-launchd.md
+  O launchd nao expande "~" nem "$HOME": todos os caminhos sao absolutos.
+-->
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>com.ocr-cidades.docling-runner</string>
+
+  <!-- Daemon de sistema rodando como usuario comum, nunca como root. -->
+  <key>UserName</key>
+  <string>lablivre</string>
+  <key>GroupName</key>
+  <string>staff</string>
+
+  <!-- O ambiente (venv, PATH, configuracao) e montado pelo launcher versionado. -->
+  <key>ProgramArguments</key>
+  <array>
+    <string>/bin/bash</string>
+    <string>/Users/lablivre/docling-runner/repo/infra/docling-runner/macos/run-runner.sh</string>
+  </array>
+
+  <key>EnvironmentVariables</key>
+  <dict>
+    <key>RUNNER_HOME</key>
+    <string>/Users/lablivre/docling-runner</string>
+    <key>HOME</key>
+    <string>/Users/lablivre</string>
+  </dict>
+
+  <key>RunAtLoad</key>
+  <true/>
+  <key>KeepAlive</key>
+  <true/>
+
+  <!-- Intervalo minimo entre tentativas de subida, para nao entrar em laco apertado. -->
+  <key>ThrottleInterval</key>
+  <integer>10</integer>
+
+  <!-- Sem ProcessType (ou com Standard) o launchd limita CPU e I/O do processo. -->
+  <key>ProcessType</key>
+  <string>Interactive</string>
+
+  <key>StandardOutPath</key>
+  <string>/Users/lablivre/ocr-data/logs/docling-runner.out.log</string>
+  <key>StandardErrorPath</key>
+  <string>/Users/lablivre/ocr-data/logs/docling-runner.err.log</string>
+</dict>
+</plist>
