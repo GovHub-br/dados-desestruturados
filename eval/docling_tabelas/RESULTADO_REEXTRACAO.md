@@ -54,7 +54,7 @@ Na página 7 do mesmo PDF, a tabela "1 - SBPE: Evolução do saldo…" também g
 
 ## O que piorou
 
-1. **Gerdau, p. 24, bloco "RESULTADOS 2T25".** Título passou de "RESULTADOS POR SEGMENTOS DE NEGÓCIO" (título da página) para "Margem Bruta", que é um rótulo de linha de outro bloco da página, reconhecido pelo Docling como seção. Linhas idênticas.
+1. **Gerdau, p. 24, bloco "RESULTADOS 2T25".** Título passou de "RESULTADOS POR SEGMENTOS DE NEGÓCIO" (título da página) para "Margem Bruta", que é um rótulo de linha de outro bloco da página, reconhecido pelo Docling como seção. Linhas idênticas. Essa tabela de 26 linhas é, na verdade, dois blocos colados entre páginas (ver "O que a correção não resolve").
 2. **PRIO, p. 12, tabela "Estoque de óleo".** Título passou de "DESEMPENHO FINANCEIRO" (seção da página) para "Resultados do Período", que é o título da tabela de cima. A tabela não tem título próprio. Linhas idênticas.
 3. **Vale, p. 19, "Demonstrações financeiras simplificadas".** O Docling não reconheceu cabeçalho (colunas `0` a `8`). Antes a tabela vinha com "US$/t \| 2T26 \| 2T25 …": unidade errada, mas nomes de período certos por coincidência da cópia pela largura. Linhas idênticas; só os nomes das colunas de período se perderam.
 
@@ -65,6 +65,7 @@ Neutras: Renner, "EBITDA Total" → "Ajustado" (o título do PDF é "EBITDA Tota
 ## O que a correção não resolve
 
 - **Fusão entre páginas.** Petrobras: as tabelas 24, 28 e 30 começam no topo da página seguinte e continuam coladas na anterior (a "TABELA 23" tem 24 linhas e duas linhas "Total"). A correção só impede a fusão de fragmentos da mesma página. Já melhorou (antes eram 48 linhas numa tabela), mas não está resolvido.
+- **Gerdau, p. 24 e 25 (igual na extração antiga).** As duas páginas têm 5 blocos de "RESULTADOS" empilhados (2T26, 1T26, 2T25, 6M26, 6M25). O Docling devolveu como tabela só 2: o 2T25 (p. 24) e o 6M26 (p. 25), que a regra de continuação entre páginas colou numa tabela de 26 linhas (linhas 0 a 12 e 13 a 25, cada metade com seu "RESULTADOS …"). Os outros 3 blocos (2T26, 1T26 e 6M25) **não estão em nenhum arquivo da extração**: só os rótulos de linha vieram, como blocos de texto (46 blocos nas p. 24 e 25, iguais nas duas extrações), e nenhum número. O PDF tem camada de texto com os números. O nosso extrator converte todo `TableItem` que recebe e o log mostra 23 itens do Docling, então a perda acontece dentro do Docling (detecção de layout), não no nosso código. A causa exata não foi confirmada, porque a saída bruta do Docling não é gravada.
 - **Título que só existe dentro da imagem ou como célula** (ex.: "Estoque de óleo", "Balanço patrimonial") continua não sendo seção; a tabela recebe o título mais próximo, certo ou não. Vale p. 20 tem o título errado nos dois lados.
 - **Layout signature da ABECIP:** não foi usado como critério (decisão D5). Ele aponta para a tabela fundida (`table005.json`) e precisa ser reescrito se a mudança for adotada.
 
