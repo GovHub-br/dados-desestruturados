@@ -45,6 +45,27 @@ $PY eval/docling_tabelas/scripts/replay_corpus_secoes.py . /tmp/secoes_novo.json
 # campo "replay" = título atribuído; "idx" nulo = tabela fundida (fora da comparação)
 ```
 
+## Reextração real no Mac Studio (etapas 5 e 6)
+
+Rodam no contêiner `ocr_airflow_scheduler`, que tem o cliente do MinIO, o `PYTHONPATH` do
+projeto e a rota até o runner; o repositório é montado nele, então a saída cai em
+`eval/docling_tabelas/extracoes/` (no `.gitignore`: é grande e se reproduz com os scripts).
+Nada é gravado no MinIO e o Airflow não é acionado, então DAG 2 e DAG 3 não rodam.
+
+```bash
+S=/opt/project/dados-desestruturados/eval/docling_tabelas/scripts
+
+# extração antiga mais recente de cada PDF (só leitura no MinIO) -> extracoes/antigo/
+docker exec ocr_airflow_scheduler python $S/baixar_extracoes_antigas.py
+
+# envia os PDFs de documentos-origem/ ao runner (mesmo POST /extract-file e mesmas flags da DAG)
+# --dry-run só lista e testa o /healthz; --filtro abecip limita; é retomável
+docker exec ocr_airflow_scheduler python $S/extrair_lote_runner.py --rotulo novo --dry-run
+docker exec -d ocr_airflow_scheduler sh -c "python $S/extrair_lote_runner.py --rotulo novo > /opt/project/dados-desestruturados/eval/docling_tabelas/extracoes/novo.log 2>&1"
+```
+
+`--rotulo` é o nome da pasta de saída: `novo` (runner na branch), `controle` (runner no `main`).
+
 ## Resultados da validação offline (2026-10-19)
 
 - ABECIP: 7 de 7 meses fundidos viram 3 tabelas com título e cabeçalho certos.
