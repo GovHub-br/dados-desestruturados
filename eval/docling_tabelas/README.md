@@ -66,6 +66,15 @@ docker exec -d ocr_airflow_scheduler sh -c "python $S/extrair_lote_runner.py --r
 
 `--rotulo` é o nome da pasta de saída: `novo` (runner na branch), `controle` (runner no `main`).
 
+```bash
+# compara extracoes/antigo × extracoes/novo e escreve comparacao_extracoes.md (só biblioteca padrão)
+python3 eval/docling_tabelas/scripts/comparar_extracoes.py
+```
+
+O comparador pareia as tabelas pelo conteúdo e inclui uma prova de que nenhuma linha de dados
+foi perdida ou inventada; se a mudança é melhor ou pior se decide abrindo o PDF. O resultado da
+reextração de 2026-10-20 está em [RESULTADO_REEXTRACAO.md](RESULTADO_REEXTRACAO.md).
+
 ## Resultados da validação offline (2026-10-19)
 
 - ABECIP: 7 de 7 meses fundidos viram 3 tabelas com título e cabeçalho certos.
