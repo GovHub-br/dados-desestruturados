@@ -17,7 +17,7 @@ desta mudança; "controle" indica o runner no `main`.
 | A7 | Reextração Gerdau/Vale | Mac: a tabela "DEMONSTRAÇÃO DO RESULTADO" (Gerdau, p. 22) e as 4 da p. 37 da Vale mantêm o cabeçalho verdadeiro | RF4 | 2026-10-20: Gerdau p. 22 sem "AGÊNCIAS DE RATINGS", com o cabeçalho de períodos do PDF; Vale p. 37 com os 4 cabeçalhos "US$ bilhão/US$ milhões …" e títulos certos (conferido no PDF) | ✅ |
 | A8 | Empresas que têm signature | Mac vs controle, Cury, Direcional, Pacaembu e Plano&Plano: abrir o PDF e comparar cada tabela (`schema`, `rows`, `section_title`). Classificar cada diferença como melhor, neutra ou pior que o controle. **O signature não entra na conta** (ver "Fora do critério") | RF2, RF4 | 2026-10-20, comparado com a extração antiga (sem controle em `main`): Cury 6 de 6 idênticas; Direcional, Pacaembu e Plano&Plano só trocaram títulos, todos melhores; `schema` e `rows` iguais | ✅ |
 | A9 | Demais empresas | Mac vs controle: toda diferença de `schema` ou `rows` fora do conjunto esperado (A6, A7) é conferida contra o PDF e classificada como melhor, neutra ou pior. `blocks/`, `metrics/` e `charts/` não deveriam mudar (RF2): qualquer diferença é investigada | RF2 | 2026-10-20: 23 de 23 grupos alterados com "dados preservados" (nenhuma linha de dados perdida ou inventada); `sections`, `blocks`, `metrics`, `cases`, `text_candidates` e nº de gráficos iguais nos 15 PDFs | ✅ |
-| A10 | Títulos alterados | Amostra de pelo menos 30 mudanças de `section_title` revisada pelo conteúdo da tabela: melhores ou neutras, nenhuma pior | RF1 | 2026-10-20: 44 mudanças só de título, 14 conferidas no PDF e 30 pelo conteúdo: 40 melhores, 2 neutras, **2 piores** (Gerdau p. 24 "Margem Bruta"; PRIO p. 12 "Resultados do Período"). Além delas, 1 cabeçalho que ficou genérico (Vale p. 19). Ver `eval/docling_tabelas/RESULTADO_REEXTRACAO.md` | ❌ |
+| A10 | Títulos alterados | Amostra de pelo menos 30 mudanças de `section_title` revisada pelo conteúdo da tabela: melhores ou neutras, nenhuma pior | RF1 | 2026-10-20: 44 mudanças só de título, 14 conferidas no PDF e 30 pelo conteúdo: 40 melhores, 2 neutras, **2 piores** (Gerdau p. 24 "Margem Bruta"; PRIO p. 12 "Resultados do Período"). Além delas, 1 cabeçalho que ficou genérico (Vale p. 19). Ver `eval/docling_tabelas/RESULTADO_REEXTRACAO.md`. Fora do escopo atual (D6); pendências em `eval/docling_tabelas/PENDENCIAS.md` | ❌ |
 | A11 | Desempenho | Tempo por PDF do Mac dentro de 5% do controle | RF5 | Não medido: não houve extração de controle em `main`. Os 15 PDFs levaram 49,7 min no total | — |
 | A12 | Runner de volta ao `main` | `git -C ~/docling-runner/repo branch --show-current` → `main` e `/healthz` ok | — | | |
 
@@ -49,5 +49,6 @@ o signature, não a extração. Por isso:
 
 Reextração de 15 PDFs (um por empresa) em 2026-10-20: o problema da ABECIP está resolvido e
 62 de 67 mudanças são melhores, 2 neutras e 3 piores. Pelo critério acima, A10 reprova
-(2 títulos piores) e a branch volta para análise; a decisão entre adotar como está ou
-refinar a regra do título está em `eval/docling_tabelas/RESULTADO_REEXTRACAO.md`.
+(2 títulos piores, em Gerdau e PRIO). Dentro do escopo atual (ABECIP e construtoras) não há
+diferença pior; as pioras e os limites foram registrados em `eval/docling_tabelas/PENDENCIAS.md`
+(decisão D6).

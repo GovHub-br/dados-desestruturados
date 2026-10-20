@@ -49,3 +49,7 @@ Os dados em que os scripts se apoiam (`resultados*`, `airflow/state/*`) estão n
 `eval/docling_tabelas/`, para a comparação poder ser repetida em outra máquina ou
 sessão. Os scripts em `historico/` documentam como se chegou aqui e não fazem parte do
 fluxo de validação.
+
+## D6 — Escopo desta rodada: ABECIP e construtoras
+
+Na reextração de 15 PDFs (2026-10-20), ABECIP e construtoras ficaram resolvidas e sem piora. As 3 pioras (Gerdau p. 24, PRIO p. 12, Vale p. 19) e os limites que a correção não cobre (blocos perdidos pelo Docling, fusão entre páginas) estão em outras empresas. O usuário decidiu documentá-los para análise futura em `eval/docling_tabelas/PENDENCIAS.md`, sem refinar a regra agora. A reprovação de A10 fica registrada como medida, não como bloqueio.

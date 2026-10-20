@@ -8,7 +8,9 @@
 
 ## Veredito
 
-**Melhorou, com três regressões pequenas.** O problema da ABECIP está resolvido e a mesma correção consertou tabelas empilhadas e cabeçalhos trocados em Vale, Gerdau, MGLU e Petrobras. Pelo critério do [ACCEPTANCE.md](../../specs/changes/docling-titulo-tabela-e-fusao/ACCEPTANCE.md) ("qualquer diferença pior reprova"), a branch **ainda não passa**, por causa de duas trocas de título e de um cabeçalho que ficou genérico. Veja "O que piorou".
+**Dentro do escopo atual (ABECIP e construtoras): resolvido, sem pioras.** ABECIP: a tabela fundida virou 3 tabelas corretas. Cury: sem mudança. Direcional, Pacaembu, Plano&Plano e Tenda: só trocaram título, todos para melhor e conferidos no PDF.
+
+**No conjunto dos 15 PDFs: melhorou, com três regressões pequenas**, todas fora do escopo (Gerdau, PRIO, Vale). Pelo critério do [ACCEPTANCE.md](../../specs/changes/docling-titulo-tabela-e-fusao/ACCEPTANCE.md) ("qualquer diferença pior reprova"), o conjunto não passa em A10. Por decisão do usuário (D6), isso e os limites encontrados foram registrados em [PENDENCIAS.md](PENDENCIAS.md) para análise futura.
 
 | Tipo de mudança (67 no total) | Quantidade |
 | --- | --- |
@@ -16,7 +18,7 @@
 | Neutra | 2 |
 | Pior | 3 |
 
-Das 67, 14 trocas de título e 12 divisões ou cabeçalhos foram conferidas **abrindo o PDF**; as demais foram julgadas pelo conteúdo da tabela (título combina com as linhas) e, nas divisões, pela prova de dados abaixo.
+Das 67, 16 trocas de título e 12 divisões ou cabeçalhos foram conferidas **abrindo o PDF**; as demais foram julgadas pelo conteúdo da tabela (título combina com as linhas) e, nas divisões, pela prova de dados abaixo.
 
 ## O problema da ABECIP (maio/2026, página 8)
 
@@ -83,12 +85,9 @@ Neutras: Renner, "EBITDA Total" → "Ajustado" (o título do PDF é "EBITDA Tota
 
 Não foi feita a extração de controle em `main`: a prova de dados e a igualdade dos artefatos fora de tabelas já atribuem as diferenças ao código.
 
-## Recomendação
+## Decisão e próximos passos
 
-Pelo critério escrito, a branch reprova (A10). Mesmo assim, o ganho é grande (22 divisões e cabeçalhos corrigidos, 40 títulos melhores) e as três pioras são pequenas e não alteram nenhum valor extraído. A decisão entre as duas saídas é sua:
-
-1. **Adotar como está**, registrando os três casos e a fusão entre páginas como limitações conhecidas.
-2. **Refinar antes**, testando a hipótese da distância máxima do título e, em seguida, repetindo só Gerdau, PRIO, Vale e Petrobras no Mac. A branch não pode receber push enquanto o runner estiver nela; o refinamento exige trocar de commit com `atualizar-runner.sh`.
+Decisão do usuário (2026-10-20): o problema a resolver agora é ABECIP e construtoras, já resolvido; as pioras e os limites das outras empresas vão para [PENDENCIAS.md](PENDENCIAS.md), sem refinar a regra por enquanto. Falta decidir o merge no `main`. O runner do Mac Studio **ainda está na branch**: voltar com `atualizar-runner.sh main` (A12).
 
 ## Como repetir
 
