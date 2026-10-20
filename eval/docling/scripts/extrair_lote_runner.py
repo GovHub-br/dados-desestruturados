@@ -7,14 +7,17 @@ Faz o mesmo que a DAG de extração: usa o `DoclingPipelineClient` do projeto, q
 O que este script NÃO faz, de propósito: não grava nada no MinIO (só lê os PDFs), não
 aciona o Airflow e portanto não dispara a DAG de resolução nem a de fallback.
 
-Saída: `eval/docling_tabelas/extracoes/<rotulo>/<slug>/{extraction/,extraction.tar.gz,meta.json}`.
+Saída: `eval/docling/extracoes/<rotulo>/<slug>/{extraction/,extraction.tar.gz,meta.json}`.
 Retomável: PDF com `meta.json` de sucesso é pulado (use `--refazer` para repetir).
 
 Rodar dentro do contêiner do Airflow:
 
     docker exec ocr_airflow_scheduler python \
-        /opt/project/dados-desestruturados/eval/docling_tabelas/scripts/extrair_lote_runner.py \
-        --rotulo novo [--filtro abecip] [--dry-run]
+        /opt/project/dados-desestruturados/eval/docling/scripts/extrair_lote_runner.py \
+        --rotulo novo [--amostra | --filtro abecip] [--dry-run]
+
+`--amostra` usa a lista de `eval/docling/amostra_padrao.txt` (1 PDF por empresa), o conjunto
+que as medições de mudanças no Docling devem repetir.
 """
 
 from __future__ import annotations
@@ -43,9 +46,16 @@ def main() -> None:
     analisador = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     analisador.add_argument("--rotulo", required=True, help="nome da pasta de saída, ex.: novo ou controle")
     analisador.add_argument("--filtro", action="append", default=[], help="só PDFs cujo caminho contém o texto (repetível)")
+    analisador.add_argument("--amostra", action="store_true", help="usa os filtros de eval/docling/amostra_padrao.txt")
     analisador.add_argument("--dry-run", action="store_true", help="lista o que enviaria e testa o /healthz; não extrai")
     analisador.add_argument("--refazer", action="store_true", help="repete PDFs já extraídos com sucesso")
     args = analisador.parse_args()
+    if args.amostra:
+        arquivo = Path(__file__).resolve().parents[1] / "amostra_padrao.txt"
+        for linha in arquivo.read_text(encoding="utf-8").splitlines():
+            filtro = linha.split("#", 1)[0].strip()
+            if filtro:
+                args.filtro.append(filtro)
 
     cliente_docling = DoclingPipelineClient()
     config = cliente_docling.config

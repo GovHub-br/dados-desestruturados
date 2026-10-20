@@ -1,6 +1,8 @@
 # Pendências do `docling_pipeline` para análise futura
 
-Achadas na reextração de 2026-10-20 ([RESULTADO_REEXTRACAO.md](RESULTADO_REEXTRACAO.md)). Ficam **fora do escopo atual** (ABECIP e construtoras). Dados para reproduzir: `extracoes/{antigo,novo,pdfs}/` e [comparacao_extracoes.md](comparacao_extracoes.md).
+Protocolo para medir qualquer correção: [README.md](README.md).
+
+Achadas na reextração de 2026-10-20 ([resultado](resultados/2026-10-titulo-tabela-fusao/RESULTADO.md)). Ficam **fora do escopo atual** (ABECIP e construtoras). Dados para reproduzir: `extracoes/{antigo,novo,pdfs}/` e [comparacao_extracoes.md](resultados/2026-10-titulo-tabela-fusao/comparacao_extracoes.md).
 
 | # | Problema | Onde | Evidência | Origem |
 | --- | --- | --- | --- | --- |
@@ -16,7 +18,7 @@ Achadas na reextração de 2026-10-20 ([RESULTADO_REEXTRACAO.md](RESULTADO_REEXT
 
 ## Como se chegou nisso (análise de cobertura, 2026-10-20)
 
-`scripts/analisar_cobertura.py` compara, por página, os números da camada de texto do PDF com os da extração (tabela, texto, gráfico ou ausente). Relatórios: [cobertura_novo.md](cobertura_novo.md) e [cobertura_antigo.md](cobertura_antigo.md). Cobre os 30 PDFs (15 extrações novas e as 15 antigas sem reextração). Teste de controle: acusa a Gerdau p. 24 e 25. Regressão: os mesmos 416 números ausentes antes e depois, página a página. **ABECIP (11 meses), Cury, Pacaembu e Plano&Plano: nenhuma tabela perdida.** Ponto cego: tabela em imagem sem camada de texto não é medida (a CSN p. 3, que é imagem, foi coletada por OCR); as páginas com imagem grande e sem tabela foram olhadas por amostra (capas, divisores, QR, gráficos).
+`scripts/analisar_cobertura.py` compara, por página, os números da camada de texto do PDF com os da extração (tabela, texto, gráfico ou ausente). Relatórios: [cobertura_novo.md](resultados/2026-10-titulo-tabela-fusao/cobertura_novo.md) e [cobertura_antigo.md](resultados/2026-10-titulo-tabela-fusao/cobertura_antigo.md). Cobre os 30 PDFs (15 extrações novas e as 15 antigas sem reextração). Teste de controle: acusa a Gerdau p. 24 e 25. Regressão: os mesmos 416 números ausentes antes e depois, página a página. **ABECIP (11 meses), Cury, Pacaembu e Plano&Plano: nenhuma tabela perdida.** Ponto cego: tabela em imagem sem camada de texto não é medida (a CSN p. 3, que é imagem, foi coletada por OCR); as páginas com imagem grande e sem tabela foram olhadas por amostra (capas, divisores, QR, gráficos).
 
 Hipóteses para quando for tratado (nenhuma testada):
 

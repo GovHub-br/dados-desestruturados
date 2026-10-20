@@ -1,6 +1,6 @@
 """Baixa do MinIO a extração antiga mais recente de cada PDF de `documentos-origem/`.
 
-Somente leitura no MinIO. Grava em `eval/docling_tabelas/extracoes/antigo/<slug>/extraction/`.
+Somente leitura no MinIO. Grava em `eval/docling/extracoes/antigo/<slug>/extraction/`.
 
 A ligação PDF → execução vem do `manifesto_execucao.json` de cada execução
 (`input_pdf_uri`), não do nome da pasta. Havendo mais de uma execução para o mesmo PDF,
@@ -9,7 +9,7 @@ vale a de `execution_id` mais recente; todas ficam registradas em `meta.json`.
 Rodar dentro do contêiner do Airflow:
 
     docker exec ocr_airflow_scheduler python \
-        /opt/project/dados-desestruturados/eval/docling_tabelas/scripts/baixar_extracoes_antigas.py
+        /opt/project/dados-desestruturados/eval/docling/scripts/baixar_extracoes_antigas.py
 """
 
 from __future__ import annotations

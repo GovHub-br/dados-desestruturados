@@ -1,8 +1,8 @@
 # Contexto da mudança — Título por tabela e fim da fusão de tabelas no `docling_pipeline`
 
-- Status: em validação (diagnóstico e protótipo em 2026-10-19; reextração no Mac Studio pendente)
+- Status: validada na reextração de 2026-10-20 para o escopo ABECIP e construtoras (pendências das demais empresas em `eval/docling/PENDENCIAS.md`); falta o merge no `main` e devolver o runner ao `main`.
 - Branch: `fix/docling-titulo-tabela-e-fusao`, criada a partir de `origin/main` em `c017c16`.
-- Ferramentas, linhas de base e variantes testadas: [eval/docling_tabelas/](../../../eval/docling_tabelas/README.md).
+- Como medir (protocolo, ferramentas, resultado): [eval/docling/](../../../eval/docling/README.md). Protótipos, linhas de base e scripts de reprodução da primeira rodada estão na tag `arquivo/docling-titulo-evidencias`.
 
 ## Problema
 

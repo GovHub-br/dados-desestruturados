@@ -24,6 +24,7 @@ O relatório NÃO diz se a mudança é melhor ou pior: isso é julgado abrindo o
 onde olhar, com título, cabeçalho e linhas de cada lado.
 
 Uso: python comparar_extracoes.py [--antigo antigo] [--novo novo] [--saida arquivo.md] [--filtro texto]
+O relatório vai para extracoes/ (fora do git); copie para resultados/<data>-<id>/ o que valer registrar.
 """
 
 from __future__ import annotations
@@ -170,9 +171,11 @@ def main() -> None:
     p = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     p.add_argument("--antigo", default="antigo")
     p.add_argument("--novo", default="novo")
-    p.add_argument("--saida", default=str(RAIZ.parent / "comparacao_extracoes.md"))
+    p.add_argument("--saida", default="", help="padrão: extracoes/comparacao_<antigo>_vs_<novo>.md (fora do git)")
     p.add_argument("--filtro", default="")
     args = p.parse_args()
+    if not args.saida:
+        args.saida = str(RAIZ / f"comparacao_{args.antigo}_vs_{args.novo}.md")
 
     def _concluido(pasta: Path) -> bool:
         meta = pasta / "meta.json"

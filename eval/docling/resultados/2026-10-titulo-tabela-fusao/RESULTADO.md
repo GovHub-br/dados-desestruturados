@@ -10,7 +10,7 @@
 
 **Dentro do escopo atual (ABECIP e construtoras): resolvido, sem pioras.** ABECIP: a tabela fundida virou 3 tabelas corretas. Cury: sem mudança. Direcional, Pacaembu, Plano&Plano e Tenda: só trocaram título, todos para melhor e conferidos no PDF.
 
-**No conjunto dos 15 PDFs: melhorou, com três regressões pequenas**, todas fora do escopo (Gerdau, PRIO, Vale). Pelo critério do [ACCEPTANCE.md](../../specs/changes/docling-titulo-tabela-e-fusao/ACCEPTANCE.md) ("qualquer diferença pior reprova"), o conjunto não passa em A10. Por decisão do usuário (D6), isso e os limites encontrados foram registrados em [PENDENCIAS.md](PENDENCIAS.md) para análise futura.
+**No conjunto dos 15 PDFs: melhorou, com três regressões pequenas**, todas fora do escopo (Gerdau, PRIO, Vale). Pelo critério do [ACCEPTANCE.md](../../../../specs/changes/docling-titulo-tabela-e-fusao/ACCEPTANCE.md) ("qualquer diferença pior reprova"), o conjunto não passa em A10. Por decisão do usuário (D6), isso e os limites encontrados foram registrados em [PENDENCIAS.md](../../PENDENCIAS.md) para análise futura.
 
 | Tipo de mudança (67 no total) | Quantidade |
 | --- | --- |
@@ -87,16 +87,10 @@ Não foi feita a extração de controle em `main`: a prova de dados e a igualdad
 
 ## Decisão e próximos passos
 
-Decisão do usuário (2026-10-20): o problema a resolver agora é ABECIP e construtoras, já resolvido; as pioras e os limites das outras empresas vão para [PENDENCIAS.md](PENDENCIAS.md), sem refinar a regra por enquanto. Falta decidir o merge no `main`. O runner do Mac Studio **ainda está na branch**: voltar com `atualizar-runner.sh main` (A12).
+Decisão do usuário (2026-10-20): o problema a resolver agora é ABECIP e construtoras, já resolvido; as pioras e os limites das outras empresas vão para [PENDENCIAS.md](../../PENDENCIAS.md), sem refinar a regra por enquanto. Falta decidir o merge no `main`. O runner do Mac Studio **ainda está na branch**: voltar com `atualizar-runner.sh main` (A12).
 
 ## Como repetir
 
-```bash
-S=/opt/project/dados-desestruturados/eval/docling_tabelas/scripts
-docker exec ocr_airflow_scheduler python $S/baixar_extracoes_antigas.py
-docker exec ocr_airflow_scheduler python $S/extrair_lote_runner.py --rotulo novo \
-  --filtro data-abecip-2026-05 --filtro cury_2T26 …          # um filtro por PDF
-python3 eval/docling_tabelas/scripts/comparar_extracoes.py    # gera comparacao_extracoes.md
-```
-
-Os dados brutos ficam em `eval/docling_tabelas/extracoes/` (`antigo/`, `novo/`, `pdfs/`), fora do git.
+Protocolo, ferramentas e amostra padrão: [eval/docling/README.md](../../README.md). Os dados brutos ficam em
+`eval/docling/extracoes/` (`antigo/`, `novo/`, `pdfs/`), fora do git. Os protótipos, linhas de base e scripts
+de reprodução offline desta primeira medição estão na tag `arquivo/docling-titulo-evidencias`.

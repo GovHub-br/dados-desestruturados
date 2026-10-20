@@ -31,4 +31,4 @@ resultados*
 eval/relatorios/
 
 # Extrações locais da comparação do Docling (grandes; reproduzíveis pelos scripts)
-eval/docling_tabelas/extracoes/
+eval/docling/extracoes/

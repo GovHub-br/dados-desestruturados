@@ -42,14 +42,15 @@ fora do conjunto esperado também saiu (A9): uma diferença pode ser justamente 
 fusão corrigida em outra empresa. Reescrever o signature da ABECIP, se a mudança for
 adotada, é tarefa posterior.
 
-## D4 — Ferramentas e linhas de base dentro do repositório
+## D4 — Ferramentas no repositório, evidência arquivada
 
-Os dados em que os scripts se apoiam (`resultados*`, `airflow/state/*`) estão no
-`.gitignore`. Por isso as linhas de base (JSON) e os scripts ficam em
-`eval/docling_tabelas/`, para a comparação poder ser repetida em outra máquina ou
-sessão. Os scripts em `historico/` documentam como se chegou aqui e não fazem parte do
-fluxo de validação.
+As ferramentas de medição (extração em lote, comparação e cobertura) ficam em `eval/docling/`,
+com o protocolo e a amostra padrão, para que toda mudança futura no Docling seja medida do mesmo
+jeito. Os protótipos, as linhas de base e os scripts de reprodução offline da primeira rodada
+dependem de dados fora do git (`resultados*`, `airflow/state/*`) e do código do commit `c017c16`;
+ninguém mais consegue rodá-los e envelhecem com o `main`. Foram arquivados na tag
+`arquivo/docling-titulo-evidencias` (`git show arquivo/docling-titulo-evidencias:eval/docling_tabelas/README.md`).
 
 ## D6 — Escopo desta rodada: ABECIP e construtoras
 
-Na reextração de 15 PDFs (2026-10-20), ABECIP e construtoras ficaram resolvidas e sem piora. As 3 pioras (Gerdau p. 24, PRIO p. 12, Vale p. 19) e os limites que a correção não cobre (blocos perdidos pelo Docling, fusão entre páginas) estão em outras empresas. O usuário decidiu documentá-los para análise futura em `eval/docling_tabelas/PENDENCIAS.md`, sem refinar a regra agora. A reprovação de A10 fica registrada como medida, não como bloqueio.
+Na reextração de 15 PDFs (2026-10-20), ABECIP e construtoras ficaram resolvidas e sem piora. As 3 pioras (Gerdau p. 24, PRIO p. 12, Vale p. 19) e os limites que a correção não cobre (blocos perdidos pelo Docling, fusão entre páginas) estão em outras empresas. O usuário decidiu documentá-los para análise futura em `eval/docling/PENDENCIAS.md`, sem refinar a regra agora. A reprovação de A10 fica registrada como medida, não como bloqueio.
