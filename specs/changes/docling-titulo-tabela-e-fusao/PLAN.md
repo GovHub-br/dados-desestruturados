@@ -20,7 +20,9 @@
    (mesmo Mac, mesmas bibliotecas, mesmo limite de tokens dos gráficos do PR #17).
    Cada reprocessamento cria um `execution_id` novo; nada é sobrescrito no MinIO.
 6. **Comparar** a extração nova com (a) o controle em `main` e (b) as extrações
-   antigas do MinIO. Registrar o resultado em `eval/docling_tabelas/`.
+   antigas do MinIO, **pelo conteúdo**: abrir o PDF e conferir cada diferença de tabela
+   (melhor, neutra ou pior). Não rodar as regras do signature como teste de aprovação.
+   Registrar o resultado em `eval/docling_tabelas/`.
 7. **Decidir** pelo critério do [ACCEPTANCE.md](ACCEPTANCE.md). Se a nova versão
    ganhar, merge no `main` e `atualizar-runner.sh main` (ou deixar a atualização
    automática trazer). Se não, voltar o runner para o `main` e arquivar a branch.
@@ -42,5 +44,7 @@
 - Rollback do código: `git revert` do commit; não há migração de dados.
 - O runner **não volta sozinho** ao `main`: a atualização automática acompanha a branch
   em uso. Ao terminar o teste, voltar explicitamente.
-- O layout signature da ABECIP deve ser regenerado depois de adotar esta mudança. Até
-  lá, uma extração nova da ABECIP não casa com o signature atual (`table005.json`).
+- O layout signature atual da ABECIP (`table005.json`, a tabela fundida) não casará com
+  a extração nova. Isso **não é critério de aceite nem regressão**: o signature foi
+  escrito sobre a extração pior. Se a mudança for adotada, ele é reescrito depois, em
+  tarefa própria.

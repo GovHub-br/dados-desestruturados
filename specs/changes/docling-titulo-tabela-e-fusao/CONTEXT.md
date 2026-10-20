@@ -45,7 +45,9 @@ que está logo acima dela, sem piorar as extrações que hoje estão corretas.
 - Blocos, métricas e gráficos: continuam com a regra atual de associação à seção.
 - OCR: perda de acentos e caracteres trocados ("Posigao", "Milh6es", "0UT/2025").
 - Etapa de LLM da extração de texto e qualquer mudança em `docling_runtime/`.
-- Regenerar o layout signature da ABECIP (consequência desta mudança, ver riscos).
+- Layout signature e regras determinísticas: não são critério de aceite desta mudança
+  (foram escritos sobre a extração antiga). Reescrever o da ABECIP é tarefa posterior,
+  só se a mudança for adotada.
 
 ## Vocabulário e invariantes
 
@@ -62,7 +64,9 @@ que está logo acima dela, sem piorar as extrações que hoje estão corretas.
 
 - O layout signature atual da ABECIP aponta para `tables/table005.json` com
   `faixas_linhas` fixas (1–10, 12–22, 24–35) e cabeçalhos "nas linhas 0, 11 e 23".
-  Foi escrito sobre a tabela fundida e **precisa ser regenerado** após a mudança.
+  Foi escrito sobre a tabela fundida, isto é, sobre o defeito. Uma extração melhor não
+  vai casar com ele, e isso **não conta contra a extração**: é o signature que está
+  desatualizado. Não é critério de aceite (ver `ACCEPTANCE.md`).
 - A regra de cabeçalho por (título, largura) pode perder uma propagação legítima
   em tabela que continua na página seguinte sob outro título. Não é mensurável
   sem reextrair os PDFs; por isso a validação final é a reextração no Mac Studio.

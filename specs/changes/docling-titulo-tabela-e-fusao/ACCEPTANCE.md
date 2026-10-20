@@ -15,18 +15,35 @@ desta mudança; "controle" indica o runner no `main`.
 | A5 | Replay do corpus | `replay_corpus_secoes.py` e `replay_propagacao_cabecalho.py`: 0 de 322 cabeçalhos trocados | RF4 | 2026-10-19, 0 de 322 | ✅ |
 | A6 | Reextração ABECIP | Mac: reextrair os PDFs de ABECIP dos 7 meses fundidos; `tables/` traz 3 tabelas na página das modalidades, com `section_title` correto | RF1, RF3 | | |
 | A7 | Reextração Gerdau/Vale | Mac: a tabela "DEMONSTRAÇÃO DO RESULTADO" (Gerdau, p. 22) e as 4 da p. 37 da Vale mantêm o cabeçalho verdadeiro | RF4 | | |
-| A8 | Empresas com signature | Mac vs controle, Cury, Direcional, Pacaembu e Plano&Plano: `schema` e `rows` de todas as tabelas idênticos; só `section_title`/`title_canonical` podem mudar. Regras determinísticas do signature com o mesmo resultado | RF2, RF4 | | |
-| A9 | Demais empresas | Mac vs controle: `schema` e `rows` idênticos fora do conjunto esperado (A6, A7); `blocks/`, `metrics/` e `charts/` idênticos | RF2 | | |
+| A8 | Empresas que têm signature | Mac vs controle, Cury, Direcional, Pacaembu e Plano&Plano: abrir o PDF e comparar cada tabela (`schema`, `rows`, `section_title`). Classificar cada diferença como melhor, neutra ou pior que o controle. **O signature não entra na conta** (ver "Fora do critério") | RF2, RF4 | | |
+| A9 | Demais empresas | Mac vs controle: toda diferença de `schema` ou `rows` fora do conjunto esperado (A6, A7) é conferida contra o PDF e classificada como melhor, neutra ou pior. `blocks/`, `metrics/` e `charts/` não deveriam mudar (RF2): qualquer diferença é investigada | RF2 | | |
 | A10 | Títulos alterados | Amostra de pelo menos 30 mudanças de `section_title` revisada pelo conteúdo da tabela: melhores ou neutras, nenhuma pior | RF1 | | |
 | A11 | Desempenho | Tempo por PDF do Mac dentro de 5% do controle | RF5 | | |
 | A12 | Runner de volta ao `main` | `git -C ~/docling-runner/repo branch --show-current` → `main` e `/healthz` ok | — | | |
 
 ## Critério de decisão (etapa 7)
 
-A nova versão **fica** se A6 a A9 passarem sem exceção e A10 não encontrar nenhuma
-mudança pior. Qualquer alteração de `schema` ou `rows` fora do conjunto esperado, ou
-qualquer título pior, reprova e a branch volta para análise. Em caso de dúvida, o
-controle em `main` prevalece, porque ele é a mesma máquina e as mesmas bibliotecas.
+A nova versão **fica** se A6 e A7 passarem e a comparação pelo conteúdo (A8 a A10) não
+encontrar nenhuma diferença **pior** que o controle. Diferença em `schema`, `rows` ou
+título que seja melhor ou neutra não reprova: o que importa é se a extração reflete
+melhor o PDF, não se ela é igual à antiga. Qualquer diferença pior reprova e a branch
+volta para análise. Em caso de dúvida, o controle em `main` prevalece, porque ele é a
+mesma máquina e as mesmas bibliotecas.
+
+## Fora do critério: layout signature e regras determinísticas
+
+O layout signature e as regras determinísticas que existem hoje foram escritos sobre a
+extração **antiga**. O da ABECIP, por exemplo, aponta para `tables/table005.json`, a
+tabela fundida, com `faixas_linhas` fixas e cabeçalhos "nas linhas 0, 11 e 23". Se a
+extração nova for melhor e por isso não casar com o signature, quem está desatualizado é
+o signature, não a extração. Por isso:
+
+- Nenhum item deste aceite exige que o signature ou as regras determinísticas continuem
+  funcionando sobre a extração nova.
+- Falha do signature sobre a extração nova **não** reprova a mudança e não conta como
+  regressão. O julgamento é só pela comparação do conteúdo extraído com o PDF.
+- Se a mudança for adotada, reescrever o signature sobre a extração nova é tarefa
+  posterior, fora desta mudança.
 
 ## Resultado
 

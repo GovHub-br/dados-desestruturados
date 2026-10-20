@@ -26,6 +26,22 @@ segundo é removido. Só pode **reduzir** substituições de cabeçalho, nunca c
 Risco conhecido e não mensurável offline: perder a propagação de uma tabela que
 continua em outra página sob título diferente. A reextração no Mac decide.
 
+## D5 — Layout signature e regras determinísticas não são critério de aceite
+
+A versão inicial do aceite exigia que as regras determinísticas do signature
+continuassem com o mesmo resultado (A8). Isso usa a extração antiga como gabarito. O
+signature da ABECIP foi escrito sobre a tabela fundida (`table005.json`, faixas de
+linhas fixas); uma extração que separa as três tabelas corretamente não casa com ele, e
+a falha seria lida como regressão quando é melhoria. O mesmo vale para qualquer outra
+linha de base construída sobre a extração antiga.
+
+O critério passa a ser só a comparação do conteúdo extraído com o PDF: cada diferença
+entre a extração nova e o controle é classificada como melhor, neutra ou pior, e só
+"pior" reprova (A8 a A10). Por coerência, a exigência de `schema` e `rows` idênticos
+fora do conjunto esperado também saiu (A9): uma diferença pode ser justamente uma
+fusão corrigida em outra empresa. Reescrever o signature da ABECIP, se a mudança for
+adotada, é tarefa posterior.
+
 ## D4 — Ferramentas e linhas de base dentro do repositório
 
 Os dados em que os scripts se apoiam (`resultados*`, `airflow/state/*`) estão no

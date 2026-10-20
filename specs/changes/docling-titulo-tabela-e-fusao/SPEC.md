@@ -32,4 +32,6 @@ Construcao". Nenhuma linha de cabeçalho aparece como linha de dados.
 
 Ver [ACCEPTANCE.md](ACCEPTANCE.md). Resumo: testes de unidade verdes; replays sobre o
 corpus gravado sem trocar cabeçalhos; reextração dos mesmos PDFs no Mac Studio com
-diferenças somente onde esperado; decisão final por comparação com a extração antiga.
+cada diferença conferida contra o PDF e nenhuma pior; decisão final por comparação com a
+extração antiga. O layout signature atual não é critério: foi escrito sobre a extração
+antiga.
