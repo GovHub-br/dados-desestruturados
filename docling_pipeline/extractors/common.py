@@ -83,10 +83,28 @@ def _bbox_horizontal_distance(anchor: BoundingBox, section_bbox: BoundingBox) ->
     return abs(anchor_center - section_center)
 
 
-def _section_match_score(anchor: BoundingBox, section_bbox: BoundingBox) -> tuple[float, float, float]:
+def _section_is_above(anchor: BoundingBox, section_bbox: BoundingBox) -> bool:
+    anchor_top = anchor.top if anchor.top is not None else anchor.bottom
+    section_top = section_bbox.top if section_bbox.top is not None else section_bbox.bottom
+    if anchor_top is None or section_top is None:
+        return False
+    return section_top >= anchor_top
+
+
+def _section_match_score(
+    anchor: BoundingBox,
+    section_bbox: BoundingBox,
+    *,
+    closest_above: bool = False,
+) -> tuple[float, float, float]:
     vertical_distance = _bbox_vertical_distance(anchor, section_bbox)
     horizontal_overlap = _bbox_horizontal_overlap(anchor, section_bbox)
     horizontal_distance = _bbox_horizontal_distance(anchor, section_bbox)
+
+    if closest_above:
+        # Width cannot come first here: a page-wide heading would always beat a
+        # narrow subtitle sitting right above the table.
+        return (vertical_distance, -horizontal_overlap, horizontal_distance)
 
     # Better candidates have:
     # 1. more horizontal overlap
@@ -116,6 +134,7 @@ def nearest_section(
     page_number: Optional[int],
     anchor_bbox: Optional[BoundingBox] = None,
     order_index: Optional[int] = None,
+    closest_above: bool = False,
 ) -> Optional[SectionRecord]:
     candidates = [s for s in sections if s.page_number == page_number]
     if not candidates and page_number is not None:
@@ -133,6 +152,17 @@ def nearest_section(
             candidates = preceding
     if anchor_bbox is not None:
         with_bbox = [s for s in candidates if s.bbox is not None]
+        if with_bbox and closest_above:
+            above = [
+                s
+                for s in with_bbox
+                if _section_is_above(anchor_bbox, s.bbox)  # type: ignore[arg-type]
+                and _bbox_horizontal_overlap(anchor_bbox, s.bbox) > 0.0  # type: ignore[arg-type]
+            ]
+            if above:
+                return min(above, key=lambda section: _section_match_score(anchor_bbox, section.bbox, closest_above=True))  # type: ignore[arg-type]
+            # No heading above the anchor: the closest one below usually belongs to the
+            # next block, so fall back to the default ranking.
         if with_bbox:
             return min(with_bbox, key=lambda section: _section_match_score(anchor_bbox, section.bbox))  # type: ignore[arg-type]
     return candidates[-1]
@@ -145,6 +175,7 @@ def resolve_section_for_item(
     page_number: Optional[int],
     anchor_bbox: Optional[BoundingBox] = None,
     order_index: Optional[int] = None,
+    closest_above: bool = False,
 ) -> Optional[SectionRecord]:
     sections_by_self_ref = {section.self_ref: section for section in sections if section.self_ref}
     item_self = item_self_ref(item)
@@ -163,6 +194,7 @@ def resolve_section_for_item(
         page_number=page_number,
         anchor_bbox=anchor_bbox,
         order_index=order_index,
+        closest_above=closest_above,
     )
 
 
