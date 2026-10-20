@@ -1,0 +1,54 @@
+--- /Users/mateusdecastrosantos/Documents/Desestruturados/dados-desestruturados/docling_pipeline/extractors/common.py	2026-09-13 00:41:42
++++ proto_C/docling_pipeline/extractors/common.py	2026-10-19 21:55:32
+@@ -89,12 +89,30 @@
+     horizontal_distance = _bbox_horizontal_distance(anchor, section_bbox)
+ 
+     # Better candidates have:
+-    # 1. more horizontal overlap
+-    # 2. smaller vertical distance
++    # 1. smaller vertical distance (the closest heading above the anchor)
++    # 2. more horizontal overlap
+     # 3. smaller horizontal center distance
+-    return (-horizontal_overlap, vertical_distance, horizontal_distance)
++    # A largura do titulo nao pode ser o criterio principal: o H1 da pagina cobre toda a largura e
++    # sempre "ganharia" de um subtitulo estreito colado na tabela (ex.: "4 - Construcao").
++    return (vertical_distance, -horizontal_overlap, horizontal_distance)
+ 
+ 
++def _legacy_match_score(anchor: BoundingBox, section_bbox: BoundingBox) -> tuple[float, float, float]:
++    return (
++        -_bbox_horizontal_overlap(anchor, section_bbox),
++        _bbox_vertical_distance(anchor, section_bbox),
++        _bbox_horizontal_distance(anchor, section_bbox),
++    )
++
++
++def _section_is_above(anchor: BoundingBox, section_bbox: BoundingBox) -> bool:
++    anchor_top = anchor.top if anchor.top is not None else anchor.bottom
++    section_top = section_bbox.top if section_bbox.top is not None else section_bbox.bottom
++    if anchor_top is None or section_top is None:
++        return False
++    return section_top >= anchor_top
++
++
+ def infer_column_semantics(col_name: str) -> str:
+     lowered = col_name.lower()
+     if lowered in DIMENSION_COLUMN_HINTS:
+@@ -134,7 +152,16 @@
+     if anchor_bbox is not None:
+         with_bbox = [s for s in candidates if s.bbox is not None]
+         if with_bbox:
+-            return min(with_bbox, key=lambda section: _section_match_score(anchor_bbox, section.bbox))  # type: ignore[arg-type]
++            above = [
++                s
++                for s in with_bbox
++                if _section_is_above(anchor_bbox, s.bbox)  # type: ignore[arg-type]
++                and _bbox_horizontal_overlap(anchor_bbox, s.bbox) > 0.0  # type: ignore[arg-type]
++            ]
++            if above:
++                return min(above, key=lambda section: _section_match_score(anchor_bbox, section.bbox))  # type: ignore[arg-type]
++            # Nenhum titulo acima da tabela: o mais proximo ABAIXO costuma ser o titulo do bloco seguinte.
++            return min(with_bbox, key=lambda section: _legacy_match_score(anchor_bbox, section.bbox))  # type: ignore[arg-type]
+     return candidates[-1]
+ 
+ 

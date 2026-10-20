@@ -1,0 +1,56 @@
+# Validação do `docling_pipeline`: título por tabela e fusão de tabelas
+
+Ferramentas, linhas de base e variantes da mudança descrita em
+[specs/changes/docling-titulo-tabela-e-fusao/](../../specs/changes/docling-titulo-tabela-e-fusao/CONTEXT.md).
+
+Os scripts **reexecutam o código real** de `docling_pipeline/extractors/` sobre extrações já
+gravadas (replay). Não precisam do Docling, só de `pandas` e `pydantic`. Os dados em que se
+apoiam (`resultados_construtoras/`, `airflow/state/resolution_inputs/`) são locais e estão no
+`.gitignore`; por isso as linhas de base estão versionadas em `dados/`.
+
+## Como repetir
+
+```bash
+python -m venv /tmp/venv-diag && /tmp/venv-diag/bin/pip install pandas pydantic
+PY=/tmp/venv-diag/bin/python
+
+# código antigo (main antes da correção) exportado do git, sem tocar na árvore de trabalho
+mkdir -p /tmp/codigo_antigo && git archive c017c16 docling_pipeline | tar -x -C /tmp/codigo_antigo
+
+# cada script recebe a pasta que CONTÉM docling_pipeline/: antigo = /tmp/codigo_antigo, novo = .
+$PY eval/docling_tabelas/scripts/abecip_meses.py /tmp/codigo_antigo   # reproduz as 7 fusões
+$PY eval/docling_tabelas/scripts/abecip_meses.py .                    # 3 tabelas por mês
+$PY eval/docling_tabelas/scripts/gerdau_vale.py /tmp/codigo_antigo
+$PY eval/docling_tabelas/scripts/gerdau_vale.py .
+```
+
+Regra de leitura: o código **antigo** precisa reproduzir o defeito gravado (é o que valida o
+método). Só então a saída do código novo vale como evidência.
+
+## Pastas
+
+| Pasta | Conteúdo |
+| --- | --- |
+| `scripts/` | Validações ativas. `harness_abecip_pag8.py` (página 8, jun/2026), `abecip_meses.py` (todos os meses fundidos), `gerdau_vale.py` (cabeçalho trocado fora da ABECIP), `replay_corpus_secoes.py <código> <saída.json>` (título de todas as tabelas de item único do corpus), `replay_propagacao_cabecalho.py <código> <saída.json>` (cabeçalhos trocados no corpus), `prova_composicao_table_id.py` (prova que a tabela fundida é a soma dos itens 97, 99 e 101) |
+| `dados/baseline/` | Saída do código antigo (`c017c16`) sobre o corpus: `secoes_*` e `propagacao_*`. Comparar a saída nova com estes arquivos |
+| `dados/variantes/` | Saída de cada protótipo testado, inclusive os descartados (nome termina em `_descartada`) |
+| `patches/` | Diffs dos protótipos sobre `c017c16`. O código definitivo é o da branch; os patches registram como as variantes diferiam |
+| `historico/` | Scripts do diagnóstico, só para registro. `dependencia_largura_inconclusivo.py` não distingue propagação legítima de coincidência e **não** sustenta nenhuma conclusão |
+
+## Comparar saídas de `replay_*`
+
+```bash
+$PY eval/docling_tabelas/scripts/replay_corpus_secoes.py . /tmp/secoes_novo.json
+# comparar /tmp/secoes_novo.json com dados/baseline/secoes_codigo_c017c16.json:
+# campo "replay" = título atribuído; "idx" nulo = tabela fundida (fora da comparação)
+```
+
+## Resultados da validação offline (2026-10-19)
+
+- ABECIP: 7 de 7 meses fundidos viram 3 tabelas com título e cabeçalho certos.
+- Gerdau (1) e Vale (4): cabeçalho verdadeiro mantido; o código antigo reproduz o defeito.
+- Corpus: 0 de 322 cabeçalhos trocados. Título muda em 92 de 291 tabelas de item único
+  (50 fora da ABECIP); 30 dessas 50 foram inspecionadas pelo conteúdo: 24 melhores, 5
+  neutras, 0 piores.
+- A reextração real no Mac Studio e a comparação com o MinIO estão no
+  [ACCEPTANCE.md](../../specs/changes/docling-titulo-tabela-e-fusao/ACCEPTANCE.md).
