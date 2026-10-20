@@ -28,7 +28,7 @@ S=/opt/project/dados-desestruturados/eval/docling/scripts
    ao runner em até 15 min e o reinicia.
 3. **Extrair a amostra padrão** ([amostra_padrao.txt](amostra_padrao.txt): 1 PDF por empresa, 15 PDFs, ~50 min):
    `docker exec -d ocr_airflow_scheduler sh -c "python $S/extrair_lote_runner.py --rotulo novo --amostra > /opt/project/dados-desestruturados/eval/docling/extracoes/novo.log 2>&1"`.
-   Retomável; `--dry-run` só lista e testa o `/healthz`; `--filtro` limita a PDFs específicos. Use
+   Retomável; `--dry-run` só lista os PDFs e tenta o `/healthz` (se o runner estiver inacessível, avisa e segue; numa extração real, falha antes de enviar qualquer coisa); `--filtro` limita a PDFs específicos. Use
    `caffeinate` na máquina que dispara. Mesmas flags da DAG (OCR, gráficos, texto por LLM).
 4. **Comparar** (só biblioteca padrão):
    `python3 eval/docling/scripts/comparar_extracoes.py` → `extracoes/comparacao_antigo_vs_novo.md`

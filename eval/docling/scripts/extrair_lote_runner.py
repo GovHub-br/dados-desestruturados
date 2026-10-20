@@ -65,7 +65,13 @@ def main() -> None:
         "enable_llm_text_extraction": config.docling_enable_llm_text_extraction,
     }
     print(f"runner: {config.docling_runner_base_url}  flags: {flags}")
-    print(f"runner /healthz: {_healthz(config.docling_runner_base_url)}")
+    try:
+        print(f"runner /healthz: {_healthz(config.docling_runner_base_url)}")
+    except OSError as erro:  # URLError e TimeoutError são OSError
+        aviso = f"runner inacessível em {config.docling_runner_base_url} ({erro}); confira a rede/VPN até o Mac Studio"
+        if not args.dry_run:
+            raise SystemExit(f"ERRO: {aviso}. Nada foi enviado.") from erro
+        print(f"AVISO (dry-run segue só com a listagem): {aviso}")
 
     minio, bucket = _lote.cliente_minio()
     pdfs = [
