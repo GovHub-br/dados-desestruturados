@@ -416,6 +416,7 @@ Pendencias que o lote abriu ou manteve:
 | `exp-fase2-item24-escopo` | `a5eb677` — item 2.4: escopo de `resolve_row_anchor` por grupo de metrica (`classify_table_metric_group`) e por entidade do documento (`_entity_child_row`) | codigo aprovado e commitado em 19/09; rerun do lote 10 revelou que o voto de vocabulario nao classificava a tabela real do `eztc3` (ver lote 11) |
 | `exp-fase2-item24-titulo` | `079b7ad` — corrige `classify_table_metric_group` para decidir pelo `name`/titulo da tabela antes do voto de rotulos | rodada e comparada em 19/09 (base `exp-gate-e-ancoragem-linha`, lote de 10): **eztc3 e direcional confirmados corretos (1,0/1,0/1,0) via leitura direta do MinIO**; comparador cru **REPROVADO** por regressoes nao relacionadas (santander, pre-existente desde `exp-fase2-ancoragem-numerica`; itau, variancia de LLM confirmada por rerun limpo). Ver lote 11 |
 | `exp-item32b-sinonimo-por-valor` | `9d9b7b1` — item 3.2b: sinonimos de entidade com varios valores de dominio (`escopo_periodo`, `recorte`, `escala`) passam a ser um dict valor->rotulos, escopado por valor; contrato bancos v2.3.0; score de producao `resolucao_linha_por_sinonimo` | rodada e comparada em 20/09 (santander + itau, lote parcial): comparador cru REPROVADO, mas a causa (Itau escolheu `chart002` em vez de `chart004` para inadimplencia) e alheia ao fix — item 3.1 (L), ja documentado desde o lote 7. Mecanismo nao ativou em nenhuma das duas execucoes (`resolucao_linha_por_sinonimo=0`); correcao provada pelos testes unitarios. **Aprovado com ressalva: cenario original nao re-exercitado em producao**. Ver lote 12 |
+| `exp-abecip-docling-antigo` / `exp-abecip-docling-novo` | `9175e34` (metrica e gabarito em `cd7b4ab`); sem mudanca de codigo de fallback: a variavel e a extracao (Docling do PR #18) | rodadas e comparadas em 21/10 sobre ABECIP maio/2026: comparador **REPROVADO** pela guarda nova `assinatura_resolvido_observacoes_corretas` (0,918 -> 0,639); producao inalterada (`e2e_apto_para_bronze` 1 nas duas). Causa real e mecanica: o fallback nao gera `linhas_de_tabelas`. Ver lote 13 |
 
 ## Experimento revertido: declaracao explicita de ausencia opcional (`exp-declaracao-explicita-opcional`, 2026-09-18)
 
@@ -1338,3 +1339,62 @@ Este lote mede o que isso faz **depois** da extracao, na criacao do layout.
 - **Ponteiro:** a DAG 3 publica uma versao minor do layout se a revalidacao aprovar, para as
   duas releases. Rodar a antiga primeiro: o ponteiro termina na versao gerada sobre a extracao
   nova, e as demais versoes ficam no MinIO.
+
+### Resultado (21/10, `exp-abecip-docling-novo` contra `exp-abecip-docling-antigo`, 1 documento, `--sem-pareamento`)
+
+Ambas limpas (1 `atlas.fallback` + 1 revalidacao, commit `9175e34`, arvore limpa, prompts 18 iguais). A
+extracao nova so valeu na segunda tentativa: a primeira reextracao pela DAG 1 saiu com a tabela fundida
+(36 linhas) porque o runner do Mac Studio nao estava no codigo do PR #18; refeita depois de o usuario
+atualizar o runner, a p. 8 saiu em `table005` (10 linhas), `table006` (11) e `table007` (12).
+
+| metrica | antigo (fundida) | novo (3 tabelas) |
+| --- | --- | --- |
+| `assinatura_resolvido_observacoes_corretas` (guarda) | 0,918 (56 de 61) | **0,639 (39 de 61)** |
+| `assinatura_resolvido_observacoes_ausentes` | 4 | **22** |
+| `assinatura_resolvido_observacoes_erradas` | 1 | 0 (artefato: a modalidade com o erro nao foi mapeada) |
+| `por_modalidade_e_instituicao`: corretas / erradas / ausentes | 27 / 1 / 2 | **10 / 0 / 20** |
+| serie anual, serie mensal, saldos, captacoes (corretas de 16, 5, 5, 5) | 16, 5, 4, 4 | 16, 5, 4, 4 |
+| `e2e_apto_para_bronze`, `resolucao_cobertura_obrigatorios`, `revalidacao_aprovada` | 1, 1, 1 | 1, 1, 1 |
+| tokens / duracao / tentativas | 46.005 / 368 s / 5 | 48.466 / 378 s / 5 |
+
+- **Hipotese confirmada.** Na release nova a LLM mapeou `por_modalidade_e_instituicao` so para
+  `table007` (Aquisicao e Construcao, rotulada `total`, linhas 0-11): 11 instituicoes de 30. As tabelas
+  Construcao (9) e Aquisicao (10) ficaram de fora, **sem erro**. O candidato foi valido e publicado
+  (`v2.7.0`).
+- **Teto sem LLM.** Resolvendo a extracao nova com o mesmo layout, trocando so `por_modalidade_e_instituicao`
+  por `linhas_de_tabelas` com 3 fontes (`table005` linhas 0-8, `table006` 0-9, `table007` 0-10), o valor
+  volta a **0,918**, igual ao do antigo. O dado esta todo na extracao; falta o fallback saber pedir o
+  mapeamento. Referencia: layouts historicos `periodo=2025-10/v2.4.0` (meses que ja saiam com 3 tabelas).
+- **As guardas de producao nao enxergam isso.** `e2e_apto_para_bronze`, a cobertura de obrigatorios e a
+  aprovacao da revalidacao ficaram em 1: o campo obrigatorio existe e esta preenchido (com 11 de 30 linhas).
+  So o gabarito acusa. Vale para qualquer colecao parcial.
+- **Rotulo de cada regressao:** `observacoes_corretas`/`ausentes` = **real** (valor publicado perdido), com causa
+  mecanica no que a extracao muda (`SupportedMappingOrigin` nao lista `linhas_de_tabelas`; os prompts nao o
+  citam). `erradas` "melhorou" = **artefato de medicao** (a linha errada, BANCO DO BRASIL com `686`, esta numa
+  tabela que deixou de ser mapeada). Tokens (+5 %) e duracao (+3 %) = **ambiente/variancia**, mesma contagem
+  de tentativas.
+- **Defeitos que nao dependem da extracao nova** (iguais nas duas releases, ficam fora do delta): erros de OCR
+  na p. 8 (`BANCO DOBRASIL` em 2 tabelas, `686` no lugar de `989`; `eval/docling/PENDENCIAS.md` P10 e P11) e
+  layout da LLM lendo a poupanca a partir da linha 1, o que pula Jan/2026 em `saldos_mensais` e
+  `captacoes_liquidas_mensais` (2 observacoes).
+- **Medicao previa confere:** o layout vigente antes do lote (`v2.5.0`) resolvido offline dava 0,918 / 0,590;
+  a LLM na release antiga repetiu o mesmo mapeamento (0,918).
+
+**Veredito.** A mudanca do Docling esta certa para a extracao (validada contra o PDF em 20/10) e **nao se
+reverte aqui**, mas a ABECIP piora de ponta a ponta enquanto o fallback nao gerar `linhas_de_tabelas`:
+guarda `assinatura_resolvido_observacoes_corretas` reprovada. Proximo passo proposto, uma release propria (nao
+feita neste lote): incluir `linhas_de_tabelas` em `SupportedMappingOrigin`, no validador de candidato e nos
+prompts de unidade, e medir contra este gabarito (alvo: `assinatura_resolvido_observacoes_corretas` >= 0,918 na
+extracao nova; guardas: as de producao mais `assinatura_f3_arquivo_origem_correto` nos documentos de bancos e
+construtoras). O comparador cru nao reprova nada em bancos e construtoras por causa deste lote: nao os tocou.
+
+**Ponteiros apos o lote.** `layouts/abecip/abecip/current.json` = `v2.7.0` (gerado sobre a extracao nova,
+0,639). Versoes `v2.5.0` (manual de 17/09), `v2.6.0` (release antiga, 0,918 na extracao antiga) e `v2.7.0` ficam no
+MinIO. Voltar para `v2.6.0` nao conserta: ele resolve a extracao nova em 9 de 30 linhas (medido offline para
+`v2.5.0`, mesmo mapeamento). Nenhum ponteiro foi mexido; decisao do usuario.
+
+**Pendencias.** (1) release do fallback acima; (2) o layout da LLM pula a primeira linha de dados da poupanca
+(item de ancoragem de linha/indice, fora do escopo); (3) P10/P11 (OCR) em `eval/docling/PENDENCIAS.md`; (4) antes de
+processar o proximo mes da ABECIP, o layout vigente (`v2.7.0`) cobre so 11 de 30 linhas da p. 8; (5) o gabarito
+cobre um documento (maio/2026) e checa as series pelo valor, sem contexto de periodo.
+

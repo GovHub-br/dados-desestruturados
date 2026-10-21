@@ -1,6 +1,6 @@
 # Contexto da mudança — Título por tabela e fim da fusão de tabelas no `docling_pipeline`
 
-- Status: validada na reextração de 2026-10-20 para o escopo ABECIP e construtoras (pendências das demais empresas em `eval/docling/PENDENCIAS.md`); falta o merge no `main` e devolver o runner ao `main`.
+- Status: validada na reextração de 2026-10-20 para o escopo ABECIP e construtoras (pendências das demais empresas em `eval/docling/PENDENCIAS.md`); falta o merge no `main` e devolver o runner ao `main`. **Efeito a jusante na ABECIP medido em 21/10** ([lote 13](../../../docs/guides/registro-de-releases.md)): com as 3 tabelas, o fallback so mapeia uma delas (11 de 30 linhas de `por_modalidade_e_instituicao`) porque nao gera `linhas_de_tabelas`; extracao certa, layout pior, ate esse ajuste.
 - Branch: `fix/docling-titulo-tabela-e-fusao`, criada a partir de `origin/main` em `c017c16`.
 - Como medir (protocolo, ferramentas, resultado): [eval/docling/](../../../eval/docling/README.md). Protótipos, linhas de base e scripts de reprodução da primeira rodada estão na tag `arquivo/docling-titulo-evidencias`.
 
