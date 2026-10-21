@@ -417,7 +417,7 @@ Pendencias que o lote abriu ou manteve:
 | `exp-fase2-item24-titulo` | `079b7ad` — corrige `classify_table_metric_group` para decidir pelo `name`/titulo da tabela antes do voto de rotulos | rodada e comparada em 19/09 (base `exp-gate-e-ancoragem-linha`, lote de 10): **eztc3 e direcional confirmados corretos (1,0/1,0/1,0) via leitura direta do MinIO**; comparador cru **REPROVADO** por regressoes nao relacionadas (santander, pre-existente desde `exp-fase2-ancoragem-numerica`; itau, variancia de LLM confirmada por rerun limpo). Ver lote 11 |
 | `exp-item32b-sinonimo-por-valor` | `9d9b7b1` — item 3.2b: sinonimos de entidade com varios valores de dominio (`escopo_periodo`, `recorte`, `escala`) passam a ser um dict valor->rotulos, escopado por valor; contrato bancos v2.3.0; score de producao `resolucao_linha_por_sinonimo` | rodada e comparada em 20/09 (santander + itau, lote parcial): comparador cru REPROVADO, mas a causa (Itau escolheu `chart002` em vez de `chart004` para inadimplencia) e alheia ao fix — item 3.1 (L), ja documentado desde o lote 7. Mecanismo nao ativou em nenhuma das duas execucoes (`resolucao_linha_por_sinonimo=0`); correcao provada pelos testes unitarios. **Aprovado com ressalva: cenario original nao re-exercitado em producao**. Ver lote 12 |
 | `exp-abecip-docling-antigo` / `exp-abecip-docling-novo` | `9175e34` (metrica e gabarito em `cd7b4ab`); sem mudanca de codigo de fallback: a variavel e a extracao (Docling do PR #18) | rodadas e comparadas em 21/10 sobre ABECIP maio/2026: comparador **REPROVADO** pela guarda nova `assinatura_resolvido_observacoes_corretas` (0,918 -> 0,639); producao inalterada (`e2e_apto_para_bronze` 1 nas duas). Causa real e mecanica: o fallback nao gera `linhas_de_tabelas`. Ver lote 13 |
-| `exp-fallback-linhas-de-tabelas` | `9277545` — `linhas_de_tabelas` no modelo, validador e prompts do fallback (3 blocos: `comum-contrato` v9, `unit-mapping-estrutura` v3, `unit-mapping-artefatos` v3) + metricas `selecao_tabelas_*` | rodada e comparada em 21/10: **aprovada com ressalva**. Alvo atingido na ABECIP (`assinatura_resolvido_observacoes_corretas` 0,639 -> **0,951**). Guarda em 4 documentos: Cury, Direcional e Santander identicos a base; Itau nao publicou (resposta cortada no teto de tokens, 8 de 8 tentativas, pendencia ja registrada), sem controle que descarte o prompt. Ver lote 14 |
+| `exp-fallback-linhas-de-tabelas` | `9277545` — `linhas_de_tabelas` no modelo, validador e prompts do fallback (3 blocos: `comum-contrato` v9, `unit-mapping-estrutura` v3, `unit-mapping-artefatos` v3) + metricas `selecao_tabelas_*` | rodada e comparada em 21/10: **aprovada pelo usuario**, com uma ressalva aberta (Itau). Alvo atingido na ABECIP (`assinatura_resolvido_observacoes_corretas` 0,639 -> **0,951**). Guarda em 7 documentos: as 5 construtoras principais (Cury, Direcional, Plano&Plano, Pacaembu, Tenda) e o Santander identicos a base em guardas e valores resolvidos; so o Itau nao publicou (resposta cortada no teto de tokens, 8 de 8 tentativas, pendencia ja registrada), sem controle que descarte o prompt. Cyrela, EZTEC e MRV nao medidas. Ver lote 14 |
 
 ## Experimento revertido: declaracao explicita de ausencia opcional (`exp-declaracao-explicita-opcional`, 2026-09-18)
 
@@ -1481,12 +1481,31 @@ documento so:
 - **Ponteiros apos o lote:** `abecip` v2.8.0, `cury` v1.14.0, `direcional` v1.14.0, `santander` v1.16.0 (todos publicados
   por esta release; equivalentes a base nas metricas), `itau` v1.11.0 (inalterado). Nenhum voltou.
 
-**Veredito: aprovada com ressalva.** O alvo subiu e a unica guarda que caiu tem causa mecanica conhecida e anterior a esta
-release. Tokens da guarda -8 % (43,6 mil -> 40,0 mil). O lote de 10 documentos nao foi rodado, so 4 (decisao do usuario);
-as demais construtoras, MRV, Cyrela, EZTEC, Pacaembu, Plano&Plano e Tenda nao foram medidas nesta release.
+**Veredito: aprovada pelo usuario em 21/10, com uma ressalva aberta (Itau).** O alvo subiu e a unica guarda que caiu tem causa
+mecanica conhecida e anterior a esta release. O lote de 10 documentos nao foi rodado por inteiro (decisao do usuario): foram 4 na
+primeira etapa e, depois, as 3 construtoras principais que faltavam (complemento abaixo). Cyrela, EZTEC e MRV nao foram medidas.
 
 **Pendencias.** (1) Itau: o limite de tokens por fragmento e a causa de fundo, e a correcao do plano e a chamada de
 ancoragem plana (o codigo monta, a LLM responde curto) ou o orcamento; a proposta de faixas e tabelas irmas pelo codigo
 vai na mesma direcao. (2) Medir a variancia da LLM na ABECIP (varias execucoes). (3) Item 3 (indice de linha): a poupanca
 ja nao pula Jan/2026, mas por efeito de um exemplo; a correcao que dura e o codigo propor a faixa. (4) OCR (P10 e P11).
+
+### Complemento (21/10): Plano&Plano, Pacaembu e Tenda
+
+Pedido do usuario depois do resultado acima: as construtoras principais sao Plano&Plano, Pacaembu, Direcional, Tenda e Cury; Cury e
+Direcional ja estavam medidas. Rodadas as tres que faltavam, mesmas condicoes (rotulo `exp-fallback-linhas-de-tabelas`, commit
+`9277545`, `document_id` e `execution_id` da base), pontuadas so elas com `--entidade` (117 scores, sem duplicar os dos outros).
+
+| documento | guardas contra `exp-fase2-item24-titulo` | valores resolvidos | ponteiro |
+| --- | --- | --- | --- |
+| Plano&Plano | identicas | identicos (33 de 33 folhas) | v1.15.0 |
+| Pacaembu | identicas | identicos (33 de 33 folhas) | v1.14.0 |
+| Tenda | identicas | identicos (33 de 33 folhas) | v1.14.0 |
+
+Com Cury e Direcional, as **5 construtoras principais** ficam com guardas e valores resolvidos identicos a base, sem diferenca alguma
+em folha. O comparador cru sobre as 7 execucoes pareadas continua reprovando, e a conta fecha com um documento so:
+`e2e_apto_para_bronze` 0,857 = 6 de 7 aprovados, e o que falha e o Itau (teto de tokens, acima). Duracao e tentativas maiores no
+agregado vem das 8 tentativas do Itau; os tokens por execucao caem (-8 %). Nao ha regressao em nenhum documento que publicou.
+
+**Ainda nao medidas:** Cyrela (CYRE3), EZTEC (EZTC3) e MRV, que nao estavam entre as principais indicadas.
 
