@@ -63,6 +63,8 @@ para confirmar formatos, não para decidir arquitetura.
 Documentação para subir, configurar e manter os serviços: runtime Docling,
 OpenMetadata e linha de base da reorganização. A matriz de migração documenta
 origem, situação e substitutos de materiais que foram reorganizados.
+Para medir o efeito de uma mudança no Docling (antes × depois), use o protocolo em
+[eval/docling/](../eval/docling/README.md).
 
 ### [Planos](plans/)
 

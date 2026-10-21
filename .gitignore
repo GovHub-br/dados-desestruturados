@@ -29,3 +29,6 @@ resultados*
 
 # Relatorios do harness da assinatura de layout (saida derivada do Langfuse)
 eval/relatorios/
+
+# Extrações locais da comparação do Docling (grandes; reproduzíveis pelos scripts)
+eval/docling/extracoes/

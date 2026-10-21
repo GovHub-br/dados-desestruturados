@@ -267,6 +267,8 @@ A resolução de seção mistura:
 
 Isso reduz dependência de um único sinal estrutural.
 
+Para **tabelas**, a heurística espacial usa `closest_above=True`: vence o título mais próximo acima da tabela que se sobrepõe a ela na horizontal, e só sem título acima vale a ordem anterior (maior sobreposição horizontal primeiro). Blocos, métricas e gráficos continuam com a ordem anterior, em que um título largo de página vence um subtítulo estreito colado no item.
+
 #### `extractors/sections.py`
 
 Extrai seções navegando em `conv_res.document.iterate_items()`.
@@ -353,10 +355,9 @@ Quando uma tabela posterior aparece com:
 - colunas genéricas (`column_1`, `column_2` etc.), ou
 - schema que parece conter dados em vez de cabeçalhos,
 
-o extrator tenta reutilizar o último cabeçalho considerado confiável por:
+o extrator tenta reutilizar o último cabeçalho considerado confiável com a mesma chave de seção + largura.
 
-- chave de seção + largura;
-- ou apenas largura da tabela.
+A busca só pela largura da tabela foi removida: ela copiava o cabeçalho de tabelas sem relação (ver [specs/changes/docling-titulo-tabela-e-fusao/](../../specs/changes/docling-titulo-tabela-e-fusao/CONTEXT.md)).
 
 ###### Merge de fragmentos
 
@@ -366,7 +367,8 @@ Fragmentos podem ser mesclados quando houver compatibilidade de:
 - alinhamento horizontal de bbox;
 - largura compatível;
 - seção compatível;
-- combinação válida de header/body.
+- combinação válida de header/body;
+- nenhum título entre os fragmentos, quando eles estão na mesma página (um título no meio indica tabelas separadas; entre páginas isso não é considerado).
 
 Isso trata casos comuns em PDFs onde o cabeçalho sai separado do corpo da tabela.
 

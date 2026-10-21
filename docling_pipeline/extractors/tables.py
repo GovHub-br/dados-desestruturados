@@ -161,7 +161,6 @@ def _clone_candidate(candidate: ExtractedTableCandidate, df: pd.DataFrame) -> Ex
 def _propagate_headers(candidates: list[ExtractedTableCandidate]) -> list[ExtractedTableCandidate]:
     propagated: list[ExtractedTableCandidate] = []
     last_header_by_key: dict[tuple[str, int], list[str]] = {}
-    last_header_by_width: dict[int, list[str]] = {}
 
     for candidate in candidates:
         columns = _stringify_row(candidate.df.columns.tolist())
@@ -170,11 +169,12 @@ def _propagate_headers(candidates: list[ExtractedTableCandidate]) -> list[Extrac
         header_key = (section_key, len(columns))
 
         corrected_df = candidate.df
-        remembered_header = last_header_by_key.get(header_key) or last_header_by_width.get(len(columns))
+        # Remembered per (section, width) only: matching by width alone copies the
+        # header of an unrelated table onto this one.
+        remembered_header = last_header_by_key.get(header_key)
 
         if _header_is_usable(columns):
             last_header_by_key[header_key] = columns
-            last_header_by_width[len(columns)] = columns
         elif remembered_header and len(remembered_header) == len(columns):
             if _columns_are_generic(columns):
                 corrected_df = _build_dataframe(remembered_header, rows)
@@ -186,11 +186,36 @@ def _propagate_headers(candidates: list[ExtractedTableCandidate]) -> list[Extrac
     return propagated
 
 
+def _section_between(
+    left: ExtractedTableCandidate,
+    right: ExtractedTableCandidate,
+    sections: Optional[list[SectionRecord]],
+) -> bool:
+    # A heading between two tables of the same page means they are separate tables.
+    # Across pages the new page's heading always sits between the fragments, so it
+    # says nothing about a continuation.
+    if not sections or right.page_number is None:
+        return False
+    left_page = left.end_page_number if left.end_page_number is not None else left.page_number
+    if left_page != right.page_number:
+        return False
+    left_last = left.source_order_indices[-1]
+    right_first = right.source_order_indices[0]
+    return any(
+        s.page_number == right.page_number and left_last < s.order_index < right_first for s in sections
+    )
+
+
 def _merge_pair(
     left: ExtractedTableCandidate,
     right: ExtractedTableCandidate,
+    sections: Optional[list[SectionRecord]] = None,
 ) -> Optional[ExtractedTableCandidate]:
-    if not _page_gap_ok(left, right) or not _bboxes_align(left.bbox, right.bbox):
+    if (
+        not _page_gap_ok(left, right)
+        or not _bboxes_align(left.bbox, right.bbox)
+        or _section_between(left, right, sections)
+    ):
         return None
 
     left_columns = list(left.df.columns)
@@ -240,7 +265,10 @@ def _merge_pair(
     )
 
 
-def _merge_table_fragments(candidates: list[ExtractedTableCandidate]) -> list[ExtractedTableCandidate]:
+def _merge_table_fragments(
+    candidates: list[ExtractedTableCandidate],
+    sections: Optional[list[SectionRecord]] = None,
+) -> list[ExtractedTableCandidate]:
     merged: list[ExtractedTableCandidate] = []
     index = 0
 
@@ -249,7 +277,7 @@ def _merge_table_fragments(candidates: list[ExtractedTableCandidate]) -> list[Ex
         next_index = index + 1
 
         while next_index < len(candidates):
-            candidate = _merge_pair(current, candidates[next_index])
+            candidate = _merge_pair(current, candidates[next_index], sections)
             if candidate is None:
                 break
             current = candidate
@@ -324,6 +352,7 @@ def extract_tables(
             page_number=page_number,
             anchor_bbox=bbox,
             order_index=idx,
+            closest_above=True,
         )
 
         try:
@@ -349,6 +378,6 @@ def extract_tables(
     candidates = _propagate_headers(candidates)
 
     if merge_fragments:
-        candidates = _merge_table_fragments(candidates)
+        candidates = _merge_table_fragments(candidates, sections)
 
     return _materialize_table_records(document_id, candidates)

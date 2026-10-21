@@ -157,6 +157,11 @@ Docling command (`command_builder.py`, `server.py`) — see
 [docs/operations/docling-remote-mac-studio.md](docs/operations/docling-remote-mac-studio.md)
 for the remote-runner setup this repo relies on.
 
+Changes to `docling_pipeline/`, `docling_runtime/` or the Docling version must be measured with the
+protocol in [eval/docling/README.md](eval/docling/README.md) (extract the standard sample on the runner,
+compare with the MinIO extractions, judge each difference against the PDF). Known problems that are
+not fixed yet: [eval/docling/PENDENCIAS.md](eval/docling/PENDENCIAS.md).
+
 ### `portal/`
 
 A FastAPI app (`portal/app.py`) that is thin by design: routing lives in

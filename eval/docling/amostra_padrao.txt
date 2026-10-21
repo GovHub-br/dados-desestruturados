@@ -1,0 +1,18 @@
+# Amostra padrão da medição de mudanças no Docling: 1 PDF por empresa (os outros
+# meses/trimestres são muito parecidos). Cada linha é um texto que precisa aparecer no
+# caminho do PDF em documentos-origem/. Uso: extrair_lote_runner.py --amostra
+data-abecip-2026-05     # ABECIP: tem 3 tabelas empilhadas na p. 8 (caso de controle)
+cury_2T26
+direcional_2T26
+pacaembu_2T26
+plano-plano_2T26
+Tenda-2026-06-30
+itau_2T26
+santander_2T26
+2T26_petrobras
+2T26_prio
+2T26_csn
+2T26_gerdau             # tem perdas conhecidas nas p. 21, 24 e 25 (controle positivo da cobertura)
+2T26_vale
+2T26_mglu
+2T26_renner
