@@ -7,6 +7,11 @@ dag_detecta_e_baixa_pdfs_construtoras
   -> busca RI e grava documentos-origem
   -> dispara dag_extrai_documentos_origem com os manifestos novos
 
+dag_detecta_e_baixa_pdfs_abecip
+  -> le a pagina de informativos mensais da ABECIP
+  -> grava no documentos-origem so o que ainda nao existe (por checksum)
+  -> dispara dag_extrai_documentos_origem com os manifestos que faltam extrair
+
 Portal ou operador manual
   -> grava PDF e documento_origem.json em documentos-origem
   -> dispara dag_extrai_documentos_origem
@@ -127,6 +132,37 @@ Ele não deve conter texto aberto, resumo narrativo ou status de compatibilidade
 ### Saídas esperadas
 
 PDF de origem e manifesto de deteccao. Esta DAG nao executa Docling.
+
+## DAG 1A (ABECIP): monitorar os informativos mensais
+
+### Nome
+
+- `dag_detecta_e_baixa_pdfs_abecip`
+
+### Responsabilidades
+
+- ler `https://www.abecip.org.br/imprensa/informativos-mensais` (primeira página da
+  listagem, do mais novo para o mais antigo);
+- identificar o período de referência (`AAAA-MM`) de cada informativo;
+- baixar cada PDF, calcular o checksum e gravar em `documentos-origem/` apenas o que ainda
+  não existe, em qualquer layout de pasta;
+- disparar `dag_extrai_documentos_origem` com os manifestos ainda sem extração.
+
+### Diferenças em relação à DAG de RI das construtoras
+
+- Agenda `0 18 1-7,20-31 * *` (UTC): a ABECIP publica todo mês, entre os dias 23 e 4
+  (observado em 2026), não numa janela trimestral.
+- Cada PDF fica em um diretório próprio, `ano=/periodo=/document_id=/`, com seu
+  `documento_detectado.json`; um mês republicado não sobrescreve o manifesto do anterior.
+- `FORCE_EXTRACT` é ignorado: o monitor só encaminha o que ainda não foi extraído.
+- Uma falha da página (nenhum informativo reconhecido) derruba a execução em vez de
+  parecer "sem novidades".
+
+### Operação
+
+- Antes de despausar: `scripts/simular_monitor_abecip.py` mostra, sem gravar nada, o que
+  entraria em extração.
+- Especificação, decisões e evidências: `specs/changes/monitor-informativos-abecip/`.
 
 ## DAG 1B: extrair documentos de origem
 

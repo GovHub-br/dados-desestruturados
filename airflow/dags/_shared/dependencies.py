@@ -6,11 +6,15 @@ Os casos de uso continuam importáveis e testáveis sem Airflow.
 
 from functools import lru_cache
 
-from document_processing.application.use_cases.documents import SourceDocumentProcessingUseCase
+from document_processing.application.use_cases.documents import (
+    MonitoredSourceIngestionUseCase,
+    SourceDocumentProcessingUseCase,
+)
 from document_processing.application.use_cases.fallback import FallbackLlmService
 from document_processing.application.use_cases.observability import AtlasExecutionTracer
 from document_processing.application.use_cases.resolution import ResolveSchemaUseCase
 from document_processing.application.use_cases.runtime_payloads import ConstrutorasPayloadBuilder
+from document_processing.infrastructure.abecip import AbecipInformativosClient
 from document_processing.infrastructure.docling import DoclingPipelineClient
 from document_processing.infrastructure.governance import OperationalMetadataClient
 from document_processing.infrastructure.llm import FallbackLlmClient, HttpClient
@@ -44,6 +48,20 @@ def build_source_document_processing_use_case() -> SourceDocumentProcessingUseCa
             config_loader=loader,
             http_client=http_client,
         ),
+    )
+
+
+@lru_cache(maxsize=1)
+def build_abecip_monitor_use_case() -> MonitoredSourceIngestionUseCase:
+    """Monta o monitor dos informativos mensais da ABECIP com adaptadores concretos."""
+    loader, config = _settings()
+    http_client = HttpClient()
+    return MonitoredSourceIngestionUseCase(
+        source=AbecipInformativosClient(http_client=http_client),
+        http_client=http_client,
+        config=config,
+        config_loader=loader,
+        minio_client=MinioStorageClient(config),
     )
 
 

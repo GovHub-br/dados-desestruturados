@@ -267,7 +267,11 @@ def verificar_colunas(unidades: list[Unidade], tabelas: dict[str, Tabela]) -> li
             problemas = []
             if "unidades" in f and "unidad" not in h:
                 problemas.append("campo de unidades, cabecalho sem unidades")
-            if ("volume" in f or "milhoes" in f) and not any(k in h for k in ("milh", "r$", "rs")):
+            if f.startswith(("saldo", "captacao")):
+                palavra = "saldo" if f.startswith("saldo") else "captacao"
+                if palavra not in h:
+                    problemas.append(f"campo de {palavra}, cabecalho sem {palavra}")
+            elif ("volume" in f or "milhoes" in f) and not any(k in h for k in ("milh", "r$", "rs")):
                 problemas.append("campo de volume, cabecalho sem R$/milhoes")
             if f.endswith("_mensais") and re.search(r"ano\d", h) and "mes" not in h:
                 problemas.append("campo mensal lendo coluna de acumulado no ano")
@@ -283,6 +287,39 @@ def verificar_colunas(unidades: list[Unidade], tabelas: dict[str, Tabela]) -> li
     if not achados:
         achados.append(achado(OK, "coluna", "campos", "cabecalhos coerentes com o nome dos campos"))
     return achados
+
+
+def verificar_celulas(unidades: list[Unidade], tabelas: dict[str, Tabela]) -> list[dict[str, str]]:
+    """Celulas numericas que o OCR provavelmente leu errado: ponto no lugar da virgula, letra no meio do numero."""
+    suspeitas: list[str] = []
+    vistos: set[tuple[str, int, int]] = set()
+    for u in unidades:
+        tabela = tabelas.get(u.arquivo)
+        if tabela is None:
+            continue
+        colunas = colunas_numericas(u)
+        for ini, fim in u.faixas:
+            for i in range(ini, fim + 1):
+                if i >= len(tabela.linhas) or (u.arquivo, i, -1) in vistos:
+                    continue
+                for campo, coluna in colunas.items():
+                    texto = celula(tabela.linhas[i], coluna)
+                    if not texto or texto in {"-", "–", "—"} or (u.arquivo, i, coluna) in vistos:
+                        continue
+                    vistos.add((u.arquivo, i, coluna))
+                    motivo = None
+                    if re.fullmatch(r"\d{1,3}(\.\d{3})*\.\d{1,2}", texto) and texto.count(".") >= 1 and not re.fullmatch(r"\d{1,3}(\.\d{3})+", texto):
+                        motivo = "ponto no lugar da virgula decimal"
+                    elif re.search(r"[A-Za-z]", texto):
+                        motivo = "letra dentro do numero"
+                    elif parse_flexible_number(texto) is None:
+                        motivo = "nao e numero"
+                    if motivo:
+                        lido = parse_flexible_number(texto)
+                        suspeitas.append(f"{tabela.arquivo} linha {i} '{celula(tabela.linhas[i], 0)}' col {coluna} ({campo}): '{texto}' -> {lido}  [{motivo}]")
+    if not suspeitas:
+        return [achado(OK, "celulas", "colunas numericas", "nenhuma celula suspeita de erro de OCR")]
+    return [achado(ALERTA, "celulas", "OCR", "; ".join(suspeitas[:6]) + (f" (+{len(suspeitas) - 6})" if len(suspeitas) > 6 else ""))]
 
 
 def execucoes_da_release(minio: Any, bucket: str, release: str) -> dict[str, str]:
@@ -325,7 +362,7 @@ def verificar_execucao(minio: Any, bucket: str, execucao: str, prefixo: str) -> 
     document_id = prefixo.split("document_id=")[1].split("/")[0]
     tabelas = carregar_tabelas(minio, bucket, document_id, str(candidato.get("execution_id_origem")))
     unidades = unidades_do_layout(mapeamento, tabelas)
-    achados = verificar_cobertura(unidades, tabelas) + verificar_somas(unidades, tabelas) + verificar_identidade(unidades, tabelas) + verificar_colunas(unidades, tabelas)
+    achados = verificar_cobertura(unidades, tabelas) + verificar_somas(unidades, tabelas) + verificar_identidade(unidades, tabelas) + verificar_colunas(unidades, tabelas) + verificar_celulas(unidades, tabelas)
     escolhidas = []
     for obj in minio.list_objects(bucket, prefix=prefixo + "unidades/", recursive=True):
         if obj.object_name.endswith("selecao_artefatos_layout.json"):

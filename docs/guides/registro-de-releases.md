@@ -1544,3 +1544,66 @@ antigas, lido na ultima) aparece de novo?
 - **Medida adicional sem LLM:** o layout vigente de maio (`v2.8.0`) resolvido offline sobre a extracao nova de cada mes,
   que e o que a DAG 2 faria em producao no mes seguinte (o layout carrega o rotulo de periodo e faixas de maio).
 - **Fora desta release:** OCR (P10 e P11), detector de faixas pelo codigo, valores de bancos e construtoras.
+
+### Resultado (21/10, 9 meses, extracao nova + fallback do lote 14)
+
+Release: 9 `atlas.fallback` + 9 revalidacoes, commit `6682a5c` (marcado `arvore_suja`: so `eval/abecip/verificar_colecoes.py` foi
+ajustado depois do commit, `src/` identico), prompts 18 iguais. As DAGs 3 rodaram **em serie** (a numeracao de versao do layout
+colide com runs simultaneos da mesma entidade: o segundo e recusado na publicacao). Harness uma vez (54 scores `assinatura_f1_*`;
+so maio tem gabarito, os outros 8 meses ficam sem as metricas de ancoragem e de valor resolvido).
+
+**Producao.** `e2e_apto_para_bronze` 8 de 9; `selecao_tabelas_sem_mapeamento` = 0 nos 9; 4 a 5 tentativas, 47 a 59 mil tokens e 3 a 8
+min por mes. O 2026-07 foi reprovado (`apto_para_bronze` 0, cobertura de obrigatorios 0,8) e nao publicou.
+
+**Verificador** (`eval/abecip/verificar_colecoes.py`; consistencia interna, nao verdade absoluta):
+
+| mes | itens por_modalidade | alertas | `TOTAL` como instituicao | comeca em 1 / pula Jan | soma != TOTAL | layout |
+| --- | --- | --- | --- | --- | --- | --- |
+| 2025-10 | 30 | 5 | nao | `serie_mensal` lida da tabela **anual** (comeca na linha 15) | sim, 3 tabelas, 10x | v2.9.0 |
+| 2025-11 | 30 | 5 | nao | poupanca pula Jan | sim | v2.10.0 |
+| 2025-12 | 33 | 7 | **sim** | nao | sim, 10x | v2.11.0 |
+| 2026-01 | 29 | 6 | **sim** | nao | sim (pequeno) | v2.12.0 |
+| 2026-02 | 26 | 3 | nao | poupanca pula Jan | nao | v2.13.0 |
+| 2026-03 | 29 | 5 | **sim** | nao | nao | v2.14.0 |
+| 2026-04 | 29 | 1 | nao | nao | nao (so celulas de OCR) | v2.15.0 |
+| 2026-06 | 30 | **0** | nao | nao | nao | v2.16.0 |
+| 2026-07 | **0** | 12 | sim | **sim, em tudo** | (consequencia da faixa) | nao publicado |
+
+- **Hipotese, em partes.** (a) *Cobertura das tres tabelas*: **confirmada nos 9 meses** (e em maio): `linhas_de_tabelas` em todos, nenhuma
+  tabela escolhida sem uso, nenhum mes perdeu modalidade, apesar de os indices mudarem (`005-007` x `006-008`) e das tabelas terem de 7
+  a 14 linhas. (b) *Ler sem pular a primeira linha*: **nao confirmada**: 3 de 9 meses comecam na linha 1 (2025-11, 2026-02, 2026-07);
+  o "lido" do lote 14 era amostra de 1.
+- **2026-07 (pior caso).** A LLM contou a partir de 1 em todas as colecoes: faixas `(1,12)`, `(1,13)` e `(1,14)` para tabelas de 12, 13 e 14
+  linhas (indices 0-11, 0-12, 0-13). O resolvedor descarta, sem erro, a faixa cujo fim passa da ultima linha
+  (`end >= row_count`), a colecao sai vazia, o obrigatorio nao resolve e a revalidacao nao aprova. O pipeline **falhou seguro**
+  (nao publicou), mas o defeito e o indice, e hoje ele e silencioso.
+- **`TOTAL` publicado como se fosse instituicao** em 4 de 9 meses (2025-12, 2026-01, 2026-03 e 2026-07): 3 itens falsos por mes, um por
+  modalidade (em 2025-12, "TOTAL" com 49.586 unidades). Em maio nao ocorreu.
+- **Dados com erro de OCR em 5 dos 9 meses**, alguns de **10x** (`3.159.7` publicado como 31.597 em 2025-10; `9.447.9` como 94.479 e
+  `1.563.6` como 15.636 em 2025-12): o ponto no lugar da virgula, com milhar, e lido como separador de milhar. A regra soma = TOTAL
+  acusou todos.
+- **Retratacao.** O alerta de coluna do 2026-03 (captacao lendo "Variacao do Saldo") **nao e do layout**: o dado da coluna 11 e a captacao
+  (-18.807, igual a maio); o que esta errado e o **cabecalho** que o Docling atribuiu a essa coluna.
+- **Titulo do Docling (2025-10).** O cabecalho "2 - SBPE: FINANCIAMENTOS..." nao foi detectado como secao; acima da `table004` so ha
+  a nota `**(Depositos-Retiradas)`, que a regra de titulo escolheu. A extracao antiga dava o titulo generico da pagina. Os dois
+  estao errados; o novo e mais enganoso. Efeito observado: `serie_mensal_sbpe` mapeada para a tabela anual.
+
+**Teste sem LLM: reuso do layout de maio (`v2.8.0`) em cada mes** (o que a DAG 2 faria em producao no mes seguinte). Resolve sem erro em
+todos, mas so o **2026-06 (mesma numeracao de tabelas de maio) tem 0 alertas**; nos outros 8 meses ha de 13 a 16 alertas, a serie anual
+sai vazia em 8 de 9 e as modalidades saem de tabelas erradas (2025-10 a 2025-12) ou incompletas (2026-01 a 2026-04: 20 itens em vez de 29
+ou 30). Como os layouts gerados saem com `regras_deteccao_mudanca` vazia, a DAG 2 declararia `compativel` e publicaria dado errado.
+**Um layout por indice de tabela nao serve de um mes para o outro.**
+
+**Ponteiros apos o lote.** `layouts/abecip/abecip/current.json` = `v2.16.0` (o do 2026-06, o unico limpo); versoes `v2.9.0` a `v2.15.0` guardadas,
+uma por mes; 2026-07 nao publicou; `v2.8.0` (maio) e `v2.7.0` anteriores. Nenhum ponteiro foi mexido; decisao do usuario.
+
+**Veredito.** O lote 14 se sustenta (cobertura das tres tabelas em 9 de 9), mas este lote mostra que o resultado de maio escondia defeitos
+de **posicao** que a LLM escolhe e varia de mes para mes (faixa que inclui total, que comeca em 1, tabela errada), e que erros de OCR
+chegam a dado 10x errado sem alerta. **Nao esta "tudo certo" para publicar mes a mes sem revisao.**
+
+**Pendencias.** (1) Detector no codigo de faixas de dados, linha de total e tabelas irmas; o verificador vira o teste de aceitacao (meta: 0
+alertas de cobertura nos 9 meses). (2) `soma = TOTAL` e celulas suspeitas como alerta/validacao de producao. (3) Resolvedor: faixa fora
+da tabela deve ser erro explicito, nao descarte silencioso. (4) Reuso entre meses: identificar a tabela pelo titulo/cabecalho em vez do
+indice, ou regras de deteccao de mudanca no layout. (5) Docling: `PENDENCIAS.md` P12 (titulo perdido, escolhe nota de rodape), P13
+(cabecalho trocado no 2026-03) e extensao de P11 (separador decimal). (6) Decidir o ponteiro (hoje `v2.16.0`). (7) OCR, adiado.
+

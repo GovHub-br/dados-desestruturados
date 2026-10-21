@@ -139,6 +139,19 @@ documentos-origem/abecip/abecip/ano=2026/periodo=maio/boletim.pdf
 contratos/abecip/v2.0.1/contrato_semantico_abecip.json
 ```
 
+Os PDFs que o monitor `dag_detecta_e_baixa_pdfs_abecip` grava seguem um layout com um
+diretório por documento, para que uma republicação do mesmo mês não sobrescreva o
+manifesto da versão anterior:
+
+```text
+documentos-origem/abecip/abecip/ano=2026/periodo=2026-08/document_id=<sha256[:32]>/
+  <sha256[:16]>_data-abecip-2026-08.pdf
+  documento_detectado.json
+```
+
+O monitor reconhece pelo checksum os PDFs que entraram por outro layout (carga manual,
+portal) e não os duplica.
+
 ### `execucoes/`
 
 Armazena os artefatos gerados em cada execucao.
