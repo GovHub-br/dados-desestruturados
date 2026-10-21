@@ -417,6 +417,7 @@ Pendencias que o lote abriu ou manteve:
 | `exp-fase2-item24-titulo` | `079b7ad` — corrige `classify_table_metric_group` para decidir pelo `name`/titulo da tabela antes do voto de rotulos | rodada e comparada em 19/09 (base `exp-gate-e-ancoragem-linha`, lote de 10): **eztc3 e direcional confirmados corretos (1,0/1,0/1,0) via leitura direta do MinIO**; comparador cru **REPROVADO** por regressoes nao relacionadas (santander, pre-existente desde `exp-fase2-ancoragem-numerica`; itau, variancia de LLM confirmada por rerun limpo). Ver lote 11 |
 | `exp-item32b-sinonimo-por-valor` | `9d9b7b1` — item 3.2b: sinonimos de entidade com varios valores de dominio (`escopo_periodo`, `recorte`, `escala`) passam a ser um dict valor->rotulos, escopado por valor; contrato bancos v2.3.0; score de producao `resolucao_linha_por_sinonimo` | rodada e comparada em 20/09 (santander + itau, lote parcial): comparador cru REPROVADO, mas a causa (Itau escolheu `chart002` em vez de `chart004` para inadimplencia) e alheia ao fix — item 3.1 (L), ja documentado desde o lote 7. Mecanismo nao ativou em nenhuma das duas execucoes (`resolucao_linha_por_sinonimo=0`); correcao provada pelos testes unitarios. **Aprovado com ressalva: cenario original nao re-exercitado em producao**. Ver lote 12 |
 | `exp-abecip-docling-antigo` / `exp-abecip-docling-novo` | `9175e34` (metrica e gabarito em `cd7b4ab`); sem mudanca de codigo de fallback: a variavel e a extracao (Docling do PR #18) | rodadas e comparadas em 21/10 sobre ABECIP maio/2026: comparador **REPROVADO** pela guarda nova `assinatura_resolvido_observacoes_corretas` (0,918 -> 0,639); producao inalterada (`e2e_apto_para_bronze` 1 nas duas). Causa real e mecanica: o fallback nao gera `linhas_de_tabelas`. Ver lote 13 |
+| `exp-fallback-linhas-de-tabelas` | `9277545` — `linhas_de_tabelas` no modelo, validador e prompts do fallback (3 blocos: `comum-contrato` v9, `unit-mapping-estrutura` v3, `unit-mapping-artefatos` v3) + metricas `selecao_tabelas_*` | rodada e comparada em 21/10: **aprovada com ressalva**. Alvo atingido na ABECIP (`assinatura_resolvido_observacoes_corretas` 0,639 -> **0,951**). Guarda em 4 documentos: Cury, Direcional e Santander identicos a base; Itau nao publicou (resposta cortada no teto de tokens, 8 de 8 tentativas, pendencia ja registrada), sem controle que descarte o prompt. Ver lote 14 |
 
 ## Experimento revertido: declaracao explicita de ausencia opcional (`exp-declaracao-explicita-opcional`, 2026-09-18)
 
@@ -1440,3 +1441,52 @@ tabelas, e nenhuma metrica de producao acusou.
 - **Fora desta release:** OCR (P10 e P11), indice de linha (item 3), regras de deteccao de mudanca geradas
   automaticamente. Tests: 15 novos em `test_linhas_de_tabelas_no_fallback.py` (um deles roda o validador completo
   com o contrato real da ABECIP) e 4 em `test_observability_metrics.py`; todos provados por mutacao.
+
+### Resultado (21/10, ABECIP contra `exp-abecip-docling-novo`; guarda de 4 documentos contra `exp-fase2-item24-titulo`)
+
+Release limpa: 5 `atlas.fallback` (ABECIP, Cury, Direcional, Santander, Itau) + o `__r2` do Itau, commit `9277545`, arvore
+limpa, prompts 18 iguais. O harness foi rodado uma vez para a ABECIP e uma vez para os outros 4 (`--entidade`, opcao
+nova que evita duplicar scores) e uma vez para o trace do `__r2` (`--trace`, tambem nova).
+
+**ABECIP (alvo).** Pareada por `execution_id` (mesma extracao do lote 13): `assinatura_resolvido_observacoes_corretas`
+**0,639 -> 0,951** (58 de 61); `por_modalidade_e_instituicao` 10/0/20 -> 27/1/2 (corretas/erradas/ausentes); a LLM usou
+`linhas_de_tabelas` com as tres fontes e as faixas certas (0-8, 0-9, 0-10). `selecao_tabelas_sem_mapeamento` 2 -> **0**
+(a metrica nova funciona em producao). Tentativas 5 -> 4, duracao 378 -> 306 s. Os 3 que faltam sao o OCR (P10 e P11).
+Regressoes do comparador, todas sem consequencia: `erradas` 0 -> 1 e **artefato de medicao** (a linha com `686` em vez de
+`989` voltou a ser mapeada, antes a tabela inteira ficava de fora); tokens +12 % e **ambiente/prompt maior**, com menos
+tentativas. A poupanca deixou de pular Jan/2026 (saldos e captacoes 4/5 -> 5/5): efeito provavel do exemplo novo
+`linha_inicial: 0`, a ressalva de atribuicao declarada; **nao e atribuivel so ao item 1**. Ponteiro `abecip` = `v2.8.0`.
+Foi uma execucao so: a variancia da LLM nao foi medida.
+
+**Guarda (os prompts sao comuns a todos os dominios).** O comparador cru **reprova** (`e2e_apto_para_bronze`
+1,00 -> 0,75, `assinatura_f1_cobertura_obrigatorios`, `assinatura_f3_arquivo_origem_correto`), mas a diferenca e um
+documento so:
+
+| documento | guardas contra a base | valores resolvidos | leitura |
+| --- | --- | --- | --- |
+| Cury | identicas | identicos (33 folhas) | sem efeito |
+| Direcional | identicas | identicos (33 folhas) | sem efeito |
+| Santander | identicas | 1 de 67 difere: `margem_financeira_com_mercado` 2T26, base `718`, novo `-718` | **novo certo**: o PDF mostra `(718)`; vem do normalizador de sinal contabil de 30/09, nao desta release |
+| Itau | `e2e_apto_para_bronze` 0 | nao publicou | **ambiente**, ver abaixo |
+
+- **Itau (`indicadores_monetarios`)**: 4 tentativas no original e 4 no `__r2`, todas com `finish_reason: "length"` e
+  "conteudo nao e JSON valido": a resposta e cortada no teto de `FALLBACK_LLM_FRAGMENT_MAX_TOKENS=15000` (reasoning +
+  conteudo de uma unidade com mais de 100 chaves de saida). Nenhuma tentativa traz `linhas_de_tabelas`; o conteudo e a
+  lista de indicadores em `celula_de_tabela`. E o padrao ja registrado (lote 8: 2 erros e 1 sucesso; outra release: 4 erros
+  seguidos; lote 11: redisparo limpo). `indicadores_percentuais` falhou no original (resposta vazia e recusa da
+  ancoragem por sinonimo, item 3.2) e passou de primeira no `__r2`: variancia. **Rotulo: ambiente (limite de tokens
+  pre-existente).** Ressalva: 8 de 8 e mais seguido que o historico e **nao ha controle** com os prompts antigos, entao
+  nao esta descartado que o texto novo empurre o reasoning para cima. Um controle custa um redisparo com os blocos antigos
+  republicados; nao foi feito.
+- **Ponteiros apos o lote:** `abecip` v2.8.0, `cury` v1.14.0, `direcional` v1.14.0, `santander` v1.16.0 (todos publicados
+  por esta release; equivalentes a base nas metricas), `itau` v1.11.0 (inalterado). Nenhum voltou.
+
+**Veredito: aprovada com ressalva.** O alvo subiu e a unica guarda que caiu tem causa mecanica conhecida e anterior a esta
+release. Tokens da guarda -8 % (43,6 mil -> 40,0 mil). O lote de 10 documentos nao foi rodado, so 4 (decisao do usuario);
+as demais construtoras, MRV, Cyrela, EZTEC, Pacaembu, Plano&Plano e Tenda nao foram medidas nesta release.
+
+**Pendencias.** (1) Itau: o limite de tokens por fragmento e a causa de fundo, e a correcao do plano e a chamada de
+ancoragem plana (o codigo monta, a LLM responde curto) ou o orcamento; a proposta de faixas e tabelas irmas pelo codigo
+vai na mesma direcao. (2) Medir a variancia da LLM na ABECIP (varias execucoes). (3) Item 3 (indice de linha): a poupanca
+ja nao pula Jan/2026, mas por efeito de um exemplo; a correcao que dura e o codigo propor a faixa. (4) OCR (P10 e P11).
+

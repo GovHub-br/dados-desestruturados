@@ -274,12 +274,29 @@ def main() -> int:
     parser.add_argument("--release", required=True)
     parser.add_argument("--sem-scores", action="store_true", help="Nao grava scores no Langfuse; so o relatorio local.")
     parser.add_argument("--contrato", action="append", default=[], help="Override dominio=caminho do contrato a usar na avaliacao.")
+    parser.add_argument(
+        "--trace",
+        action="append",
+        default=[],
+        help="Avalia so os traces com estes ids (repetivel). Para pontuar um redisparo `__r2` sem duplicar o scores do original.",
+    )
+    parser.add_argument(
+        "--entidade",
+        action="append",
+        default=[],
+        help="Avalia so as entidades indicadas (repetivel). Serve para pontuar traces que entraram na release depois da "
+        "primeira rodada sem duplicar os scores dos que ja foram pontuados.",
+    )
     args = parser.parse_args()
 
     client = Langfuse()
     contratos = carregar_contratos(args.contrato)
     gabaritos = carregar_gabaritos()
     traces = client.traces(args.release)
+    if args.entidade:
+        traces = [t for t in traces if str((t.get("metadata") or {}).get("entidade") or "") in set(args.entidade)]
+    if args.trace:
+        traces = [t for t in traces if str(t.get("id")) in set(args.trace)]
     if not traces:
         print(f"release '{args.release}' sem traces atlas.fallback.")
         return 1
