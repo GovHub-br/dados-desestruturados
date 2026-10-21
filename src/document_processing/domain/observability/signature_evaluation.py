@@ -1,15 +1,18 @@
-"""Metricas por fase da assinatura de layout (plano da assinatura, fases 0, 1, 2 e 3).
+"""Metricas por fase da assinatura de layout (plano da assinatura, fases 0, 1, 2 e 3) e do valor resolvido.
 
 Cada metrica e definida sobre objetos do contrato (requisito, observacao,
 seletor, array, papel) e do artefato (indice de linha/coluna, rotulo) — nunca
 sobre um nome de campo ou rotulo de um dominio. O que e especifico de um
 documento fica no gabarito (``eval/gabaritos/<document_id>.json``).
 
-Convencao de nomes: ``assinatura_f<fase>_<metrica>``.
+Convencao de nomes: ``assinatura_f<fase>_<metrica>``. As metricas do valor
+resolvido, que conferem o ``schema_saida_resolvido`` com o gabarito sem olhar
+como o layout chegou la, usam ``assinatura_resolvido_<metrica>``.
 """
 
 from __future__ import annotations
 
+import math
 from dataclasses import dataclass, field
 from typing import Any
 
@@ -442,3 +445,85 @@ def anchoring_metrics(
         }
         metrics.append(MetricValue("assinatura_f3_ausencia_declarada", float(len(declared)), comment="Ausencias registradas em campos_nao_mapeados pelo candidato.", metadata=meta))
     return metrics
+
+
+def _no_caminho(valor: Any, caminho: str) -> Any:
+    """Desce por um caminho com pontos em dicionarios aninhados; ``None`` se quebrar."""
+    atual = valor
+    for parte in caminho.split("."):
+        if not isinstance(atual, dict) or parte not in atual:
+            return None
+        atual = atual[parte]
+    return atual
+
+
+def _valor_igual(obtido: Any, esperado: Any, tolerancia: float) -> bool:
+    if esperado is None or obtido is None:
+        return esperado is None and obtido is None
+    if isinstance(esperado, (int, float)) and not isinstance(esperado, bool):
+        if not isinstance(obtido, (int, float)) or isinstance(obtido, bool):
+            return False
+        return math.isclose(float(obtido), float(esperado), rel_tol=0.0, abs_tol=tolerancia)
+    return normalize_text(obtido) == normalize_text(esperado)
+
+
+def resolved_observation_metrics(
+    resolved: dict[str, Any],
+    gabarito: dict[str, Any],
+    *,
+    etapa: str = "final",
+) -> list[MetricValue]:
+    """Confere o ``schema_saida_resolvido`` com as observacoes do gabarito.
+
+    O gabarito declara, por path de colecao, observacoes ``{contexto, campos,
+    tolerancia?}``: ``contexto`` identifica o item (caminho dentro do item ->
+    valor, texto sem acento nem caixa) e ``campos`` traz os valores que ele deve
+    ter. Uma observacao e *correta* se algum item do contexto tem todos os
+    valores; *errada* se ha item no contexto mas nenhum com os valores; *ausente*
+    se nao ha item no contexto. Sem ``contexto`` o teste e so de presenca do
+    valor em algum item da colecao (nunca "errada"), o que serve a colecoes cujo
+    rotulo de periodo depende da escolha do layout.
+
+    E uma conferencia por subconjunto: item a mais na saida nao e penalizado.
+    Nao ha metrica sem observacoes no gabarito, para nao confundir "nao medido"
+    com zero.
+    """
+    declaradas = gabarito.get("observacoes_resolvidas") or {}
+    total = corretas = erradas = ausentes = 0
+    por_colecao: dict[str, dict[str, int]] = {}
+    for caminho, observacoes in declaradas.items():
+        itens = _no_caminho(resolved, str(caminho))
+        itens = [item for item in itens if isinstance(item, dict)] if isinstance(itens, list) else []
+        contagem = por_colecao.setdefault(str(caminho), {"corretas": 0, "erradas": 0, "ausentes": 0})
+        for observacao in observacoes or []:
+            if not isinstance(observacao, dict):
+                continue
+            total += 1
+            contexto = observacao.get("contexto") or {}
+            campos = observacao.get("campos") or {}
+            tolerancia = float(observacao.get("tolerancia") or 1e-6)
+            candidatos = [
+                item
+                for item in itens
+                if all(_valor_igual(_no_caminho(item, str(k)), v, tolerancia) for k, v in contexto.items())
+            ]
+            if any(
+                all(_valor_igual(_no_caminho(item, str(k)), v, tolerancia) for k, v in campos.items())
+                for item in candidatos
+            ):
+                corretas += 1
+                contagem["corretas"] += 1
+            elif candidatos and contexto:
+                erradas += 1
+                contagem["erradas"] += 1
+            else:
+                ausentes += 1
+                contagem["ausentes"] += 1
+    if not total:
+        return []
+    meta = {"etapa": etapa, "por_colecao": por_colecao}
+    return [
+        MetricValue("assinatura_resolvido_observacoes_corretas", corretas / total, comment=f"Observacoes do gabarito com o valor certo no schema resolvido. {corretas} de {total}.", metadata=meta),
+        MetricValue("assinatura_resolvido_observacoes_erradas", float(erradas), comment="Observacoes cujo item existe no schema resolvido com valor diferente do gabarito.", metadata=meta),
+        MetricValue("assinatura_resolvido_observacoes_ausentes", float(ausentes), comment="Observacoes do gabarito sem item correspondente no schema resolvido.", metadata=meta),
+    ]

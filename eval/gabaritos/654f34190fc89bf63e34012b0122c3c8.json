@@ -1,0 +1,567 @@
+{
+  "document_id": "654f34190fc89bf63e34012b0122c3c8",
+  "entidade": "abecip",
+  "dominio": "abecip",
+  "contrato": {
+    "tipo_documento": "contrato_semantico",
+    "versao": "2.3.0"
+  },
+  "identidade": {
+    "entidade": "ABECIP",
+    "periodo": "2026-05"
+  },
+  "origem": "data-abecip-2026-05.pdf, paginas 7 e 8, transcrito da imagem (o PDF nao tem camada de texto nessas tabelas). Na p.8 a soma das linhas fecha com a linha TOTAL de cada tabela; linha TOTAL fica fora (nao e instituicao). Celulas com '-' no PDF (SAFRA, mes) nao sao exigidas.",
+  "observacoes_resolvidas": {
+    "financiamentos_imobiliarios.por_modalidade_e_instituicao": [
+      {
+        "contexto": {
+          "modalidade": "construcao",
+          "instituicao_financeira": "CAIXA"
+        },
+        "campos": {
+          "volume_mensal_milhoes": 2378.1,
+          "unidades_mensais": 11286,
+          "volume_acumulado_ano_milhoes": 13994.8,
+          "unidades_acumuladas_ano": 71112
+        }
+      },
+      {
+        "contexto": {
+          "modalidade": "construcao",
+          "instituicao_financeira": "BRADESCO"
+        },
+        "campos": {
+          "volume_mensal_milhoes": 1165.8,
+          "unidades_mensais": 3748,
+          "volume_acumulado_ano_milhoes": 4795.6,
+          "unidades_acumuladas_ano": 14747
+        }
+      },
+      {
+        "contexto": {
+          "modalidade": "construcao",
+          "instituicao_financeira": "ITAÚ UNIBANCO"
+        },
+        "campos": {
+          "volume_mensal_milhoes": 1971.4,
+          "unidades_mensais": 5329,
+          "volume_acumulado_ano_milhoes": 3218.3,
+          "unidades_acumuladas_ano": 8950
+        }
+      },
+      {
+        "contexto": {
+          "modalidade": "construcao",
+          "instituicao_financeira": "BRB"
+        },
+        "campos": {
+          "volume_mensal_milhoes": 3.5,
+          "unidades_mensais": 4,
+          "volume_acumulado_ano_milhoes": 196.0,
+          "unidades_acumuladas_ano": 240
+        }
+      },
+      {
+        "contexto": {
+          "modalidade": "construcao",
+          "instituicao_financeira": "BANCO DO BRASIL"
+        },
+        "campos": {
+          "volume_mensal_milhoes": 8.3,
+          "unidades_mensais": 98,
+          "volume_acumulado_ano_milhoes": 103.3,
+          "unidades_acumuladas_ano": 793
+        }
+      },
+      {
+        "contexto": {
+          "modalidade": "construcao",
+          "instituicao_financeira": "BANRISUL"
+        },
+        "campos": {
+          "volume_mensal_milhoes": 17.8,
+          "unidades_mensais": 109,
+          "volume_acumulado_ano_milhoes": 49.3,
+          "unidades_acumuladas_ano": 214
+        }
+      },
+      {
+        "contexto": {
+          "modalidade": "construcao",
+          "instituicao_financeira": "SAFRA"
+        },
+        "campos": {
+          "volume_acumulado_ano_milhoes": 43.0,
+          "unidades_acumuladas_ano": 160
+        }
+      },
+      {
+        "contexto": {
+          "modalidade": "construcao",
+          "instituicao_financeira": "POUPEX"
+        },
+        "campos": {
+          "volume_mensal_milhoes": 0.9,
+          "unidades_mensais": 19,
+          "volume_acumulado_ano_milhoes": 4.5,
+          "unidades_acumuladas_ano": 97
+        }
+      },
+      {
+        "contexto": {
+          "modalidade": "construcao",
+          "instituicao_financeira": "BANPARÁ"
+        },
+        "campos": {
+          "volume_mensal_milhoes": 0.4,
+          "unidades_mensais": 1,
+          "volume_acumulado_ano_milhoes": 0.4,
+          "unidades_acumuladas_ano": 1
+        }
+      },
+      {
+        "contexto": {
+          "modalidade": "aquisicao",
+          "instituicao_financeira": "CAIXA"
+        },
+        "campos": {
+          "volume_mensal_milhoes": 4957.4,
+          "unidades_mensais": 14767,
+          "volume_acumulado_ano_milhoes": 23814.6,
+          "unidades_acumuladas_ano": 74461
+        }
+      },
+      {
+        "contexto": {
+          "modalidade": "aquisicao",
+          "instituicao_financeira": "ITAÚ UNIBANCO"
+        },
+        "campos": {
+          "volume_mensal_milhoes": 3553.5,
+          "unidades_mensais": 6853,
+          "volume_acumulado_ano_milhoes": 16292.3,
+          "unidades_acumuladas_ano": 31902
+        }
+      },
+      {
+        "contexto": {
+          "modalidade": "aquisicao",
+          "instituicao_financeira": "BRADESCO"
+        },
+        "campos": {
+          "volume_mensal_milhoes": 1729.8,
+          "unidades_mensais": 3078,
+          "volume_acumulado_ano_milhoes": 7235.9,
+          "unidades_acumuladas_ano": 13105
+        }
+      },
+      {
+        "contexto": {
+          "modalidade": "aquisicao",
+          "instituicao_financeira": "SANTANDER"
+        },
+        "campos": {
+          "volume_mensal_milhoes": 1170.9,
+          "unidades_mensais": 2336,
+          "volume_acumulado_ano_milhoes": 5395.6,
+          "unidades_acumuladas_ano": 10901
+        }
+      },
+      {
+        "contexto": {
+          "modalidade": "aquisicao",
+          "instituicao_financeira": "BRB"
+        },
+        "campos": {
+          "volume_mensal_milhoes": 61.8,
+          "unidades_mensais": 107,
+          "volume_acumulado_ano_milhoes": 640.0,
+          "unidades_acumuladas_ano": 912
+        }
+      },
+      {
+        "contexto": {
+          "modalidade": "aquisicao",
+          "instituicao_financeira": "BANCO DO BRASIL"
+        },
+        "campos": {
+          "volume_mensal_milhoes": 98.9,
+          "unidades_mensais": 280,
+          "volume_acumulado_ano_milhoes": 350.5,
+          "unidades_acumuladas_ano": 989
+        }
+      },
+      {
+        "contexto": {
+          "modalidade": "aquisicao",
+          "instituicao_financeira": "BANRISUL"
+        },
+        "campos": {
+          "volume_mensal_milhoes": 19.9,
+          "unidades_mensais": 46,
+          "volume_acumulado_ano_milhoes": 278.5,
+          "unidades_acumuladas_ano": 188
+        }
+      },
+      {
+        "contexto": {
+          "modalidade": "aquisicao",
+          "instituicao_financeira": "BANPARÁ"
+        },
+        "campos": {
+          "volume_mensal_milhoes": 18.3,
+          "unidades_mensais": 50,
+          "volume_acumulado_ano_milhoes": 84.3,
+          "unidades_acumuladas_ano": 230
+        }
+      },
+      {
+        "contexto": {
+          "modalidade": "aquisicao",
+          "instituicao_financeira": "AILOS"
+        },
+        "campos": {
+          "volume_mensal_milhoes": 8.8,
+          "unidades_mensais": 28,
+          "volume_acumulado_ano_milhoes": 23.2,
+          "unidades_acumuladas_ano": 61
+        }
+      },
+      {
+        "contexto": {
+          "modalidade": "aquisicao",
+          "instituicao_financeira": "POUPEX"
+        },
+        "campos": {
+          "volume_mensal_milhoes": 3.3,
+          "unidades_mensais": 6,
+          "volume_acumulado_ano_milhoes": 11.8,
+          "unidades_acumuladas_ano": 26
+        }
+      },
+      {
+        "contexto": {
+          "modalidade": "total",
+          "instituicao_financeira": "CAIXA"
+        },
+        "campos": {
+          "volume_mensal_milhoes": 7335.5,
+          "unidades_mensais": 26053,
+          "volume_acumulado_ano_milhoes": 37809.4,
+          "unidades_acumuladas_ano": 145573
+        }
+      },
+      {
+        "contexto": {
+          "modalidade": "total",
+          "instituicao_financeira": "ITAÚ UNIBANCO"
+        },
+        "campos": {
+          "volume_mensal_milhoes": 5524.8,
+          "unidades_mensais": 12182,
+          "volume_acumulado_ano_milhoes": 19510.7,
+          "unidades_acumuladas_ano": 40852
+        }
+      },
+      {
+        "contexto": {
+          "modalidade": "total",
+          "instituicao_financeira": "BRADESCO"
+        },
+        "campos": {
+          "volume_mensal_milhoes": 2895.6,
+          "unidades_mensais": 6826,
+          "volume_acumulado_ano_milhoes": 12031.5,
+          "unidades_acumuladas_ano": 27852
+        }
+      },
+      {
+        "contexto": {
+          "modalidade": "total",
+          "instituicao_financeira": "SANTANDER"
+        },
+        "campos": {
+          "volume_mensal_milhoes": 1170.9,
+          "unidades_mensais": 2336,
+          "volume_acumulado_ano_milhoes": 5395.6,
+          "unidades_acumuladas_ano": 10901
+        }
+      },
+      {
+        "contexto": {
+          "modalidade": "total",
+          "instituicao_financeira": "BRB"
+        },
+        "campos": {
+          "volume_mensal_milhoes": 65.3,
+          "unidades_mensais": 111,
+          "volume_acumulado_ano_milhoes": 836.0,
+          "unidades_acumuladas_ano": 1152
+        }
+      },
+      {
+        "contexto": {
+          "modalidade": "total",
+          "instituicao_financeira": "BANCO DO BRASIL"
+        },
+        "campos": {
+          "volume_mensal_milhoes": 107.2,
+          "unidades_mensais": 378,
+          "volume_acumulado_ano_milhoes": 453.8,
+          "unidades_acumuladas_ano": 1782
+        }
+      },
+      {
+        "contexto": {
+          "modalidade": "total",
+          "instituicao_financeira": "BANRISUL"
+        },
+        "campos": {
+          "volume_mensal_milhoes": 37.7,
+          "unidades_mensais": 155,
+          "volume_acumulado_ano_milhoes": 327.8,
+          "unidades_acumuladas_ano": 402
+        }
+      },
+      {
+        "contexto": {
+          "modalidade": "total",
+          "instituicao_financeira": "BANPARÁ"
+        },
+        "campos": {
+          "volume_mensal_milhoes": 18.7,
+          "unidades_mensais": 51,
+          "volume_acumulado_ano_milhoes": 84.7,
+          "unidades_acumuladas_ano": 231
+        }
+      },
+      {
+        "contexto": {
+          "modalidade": "total",
+          "instituicao_financeira": "SAFRA"
+        },
+        "campos": {
+          "volume_acumulado_ano_milhoes": 43.0,
+          "unidades_acumuladas_ano": 160
+        }
+      },
+      {
+        "contexto": {
+          "modalidade": "total",
+          "instituicao_financeira": "AILOS"
+        },
+        "campos": {
+          "volume_mensal_milhoes": 8.8,
+          "unidades_mensais": 28,
+          "volume_acumulado_ano_milhoes": 23.2,
+          "unidades_acumuladas_ano": 61
+        }
+      },
+      {
+        "contexto": {
+          "modalidade": "total",
+          "instituicao_financeira": "POUPEX"
+        },
+        "campos": {
+          "volume_mensal_milhoes": 4.2,
+          "unidades_mensais": 25,
+          "volume_acumulado_ano_milhoes": 16.3,
+          "unidades_acumuladas_ano": 123
+        }
+      }
+    ],
+    "financiamentos_imobiliarios.serie_historica_anual": [
+      {
+        "campos": {
+          "unidades_financiadas": 421386,
+          "volume_financiado_milhoes": 56197.59
+        }
+      },
+      {
+        "campos": {
+          "unidades_financiadas": 492908,
+          "volume_financiado_milhoes": 79916.89
+        }
+      },
+      {
+        "campos": {
+          "unidades_financiadas": 453209,
+          "volume_financiado_milhoes": 82760.69
+        }
+      },
+      {
+        "campos": {
+          "unidades_financiadas": 529797,
+          "volume_financiado_milhoes": 109177.81
+        }
+      },
+      {
+        "campos": {
+          "unidades_financiadas": 538347,
+          "volume_financiado_milhoes": 112854.43
+        }
+      },
+      {
+        "campos": {
+          "unidades_financiadas": 341508,
+          "volume_financiado_milhoes": 75578.51
+        }
+      },
+      {
+        "campos": {
+          "unidades_financiadas": 199689,
+          "volume_financiado_milhoes": 46610.2
+        }
+      },
+      {
+        "campos": {
+          "unidades_financiadas": 175619,
+          "volume_financiado_milhoes": 43149.11
+        }
+      },
+      {
+        "campos": {
+          "unidades_financiadas": 228380,
+          "volume_financiado_milhoes": 57387.24
+        }
+      },
+      {
+        "campos": {
+          "unidades_financiadas": 297961,
+          "volume_financiado_milhoes": 78701.56
+        }
+      },
+      {
+        "campos": {
+          "unidades_financiadas": 426771,
+          "volume_financiado_milhoes": 123974.22
+        }
+      },
+      {
+        "campos": {
+          "unidades_financiadas": 866250,
+          "volume_financiado_milhoes": 205374.27
+        }
+      },
+      {
+        "campos": {
+          "unidades_financiadas": 713246,
+          "volume_financiado_milhoes": 179164.83
+        }
+      },
+      {
+        "campos": {
+          "unidades_financiadas": 499149,
+          "volume_financiado_milhoes": 152677.92
+        }
+      },
+      {
+        "campos": {
+          "unidades_financiadas": 532113,
+          "volume_financiado_milhoes": 180409.31
+        }
+      },
+      {
+        "campos": {
+          "unidades_financiadas": 457656,
+          "volume_financiado_milhoes": 156297.08
+        }
+      }
+    ],
+    "financiamentos_imobiliarios.serie_mensal_sbpe": [
+      {
+        "campos": {
+          "unidades_financiadas": 35701,
+          "volume_financiado_milhoes": 12125
+        },
+        "tolerancia": 1
+      },
+      {
+        "campos": {
+          "unidades_financiadas": 35139,
+          "volume_financiado_milhoes": 11776
+        },
+        "tolerancia": 1
+      },
+      {
+        "campos": {
+          "unidades_financiadas": 54636,
+          "volume_financiado_milhoes": 18481
+        },
+        "tolerancia": 1
+      },
+      {
+        "campos": {
+          "unidades_financiadas": 55468,
+          "volume_financiado_milhoes": 16980
+        },
+        "tolerancia": 1
+      },
+      {
+        "campos": {
+          "unidades_financiadas": 48145,
+          "volume_financiado_milhoes": 17169
+        },
+        "tolerancia": 1
+      }
+    ],
+    "poupanca_sbpe.saldos_mensais": [
+      {
+        "campos": {
+          "saldo_milhoes": 752485
+        }
+      },
+      {
+        "campos": {
+          "saldo_milhoes": 753033
+        }
+      },
+      {
+        "campos": {
+          "saldo_milhoes": 748614
+        }
+      },
+      {
+        "campos": {
+          "saldo_milhoes": 753834
+        }
+      },
+      {
+        "campos": {
+          "saldo_milhoes": 760745
+        }
+      }
+    ],
+    "poupanca_sbpe.captacoes_liquidas_mensais": [
+      {
+        "campos": {
+          "captacao_liquida_milhoes": -18807
+        }
+      },
+      {
+        "campos": {
+          "captacao_liquida_milhoes": -4069
+        }
+      },
+      {
+        "campos": {
+          "captacao_liquida_milhoes": -9089
+        }
+      },
+      {
+        "campos": {
+          "captacao_liquida_milhoes": 499
+        }
+      },
+      {
+        "campos": {
+          "captacao_liquida_milhoes": 2295
+        }
+      }
+    ]
+  },
+  "revisao_pendente": [
+    "Conferencia por subconjunto: as series mensais e a anual sao checadas so pelo valor (sem contexto de periodo), porque o rotulo depende da escolha do layout. Meses de 2025 nao entram.",
+    "Na p.8, 'Aquisicao e Construcao' e a modalidade 'total' do contrato (dominio: construcao, aquisicao, total)."
+  ]
+}

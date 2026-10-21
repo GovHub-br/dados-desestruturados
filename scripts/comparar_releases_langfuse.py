@@ -79,6 +79,8 @@ MAIOR_MELHOR = {
     "assinatura_f3_arquivo_origem_correto",
     "assinatura_f3_rotulo_linha_correto",
     "assinatura_f3_indice_coluna_correto",
+    # Valor resolvido contra o gabarito (colecoes sem chave de item, ex.: ABECIP).
+    "assinatura_resolvido_observacoes_corretas",
 }
 
 # Metricas em que descer e melhor.
@@ -101,6 +103,8 @@ MENOR_MELHOR = {
     "assinatura_f1_chaves_fora_das_esperadas",
     "assinatura_f3_ausencia_falso_negativo",
     "assinatura_f3_ausencia_falso_positivo",
+    "assinatura_resolvido_observacoes_erradas",
+    "assinatura_resolvido_observacoes_ausentes",
 }
 
 # Metricas de guarda: nunca podem regredir, mesmo que nao sejam o alvo.
@@ -115,6 +119,8 @@ GUARDA = {
     "assinatura_f0_selecao_revocacao",
     "assinatura_f1_cobertura_obrigatorios",
     "assinatura_f3_arquivo_origem_correto",
+    # Valor publicado errado ou perdido nao tem conserto depois: quando ha gabarito, nao pode cair.
+    "assinatura_resolvido_observacoes_corretas",
 }
 
 

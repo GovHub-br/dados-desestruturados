@@ -1288,3 +1288,53 @@ investigar): a regressao recorrente do santander desde
 neste lote, mas por variancia de rodada, nao por este fix — **segue aberta**,
 so nao reproduzida desta vez.
 
+
+## Lote 13: ABECIP sobre a extracao nova do Docling (`exp-abecip-docling-antigo` x `exp-abecip-docling-novo`, 21/10)
+
+Primeiro lote da ABECIP neste registro (as execucoes anteriores dela eram
+manuais e sem release limpa) e primeiro cuja variavel independente e a **DAG 1**:
+o branch `fix/docling-titulo-tabela-e-fusao` (PR #18) passou a extrair a p. 8
+do boletim como **3 tabelas** (Construcao, Aquisicao, Aquisicao e Construcao) onde
+antes saia **1 fundida** de 36 linhas. Validacao do Docling:
+[eval/docling/resultados/2026-10-titulo-tabela-fusao/RESULTADO.md](../../eval/docling/resultados/2026-10-titulo-tabela-fusao/RESULTADO.md).
+Este lote mede o que isso faz **depois** da extracao, na criacao do layout.
+
+### Declarado antes de rodar
+
+- **Documento:** ABECIP maio/2026 (`data-abecip-2026-05.pdf`, `document_id=654f34190fc89bf63e34012b0122c3c8`),
+  um PDF so (os meses sao parecidos). Contrato `abecip v2.3.0`.
+- **Variavel independente:** a extracao. Mesmo codigo, mesmo contrato, mesmos
+  prompts (`--verificar` = 18 iguais, 0 divergentes) nas duas releases.
+  - `exp-abecip-docling-antigo`: DAG 3 em `criacao_inicial_layout` sobre a extracao de 31/08
+    (`dag_detecta_pdf_e_extrai__abecip__2026-05__20260831T154401Z`, tabela fundida).
+  - `exp-abecip-docling-novo`: DAG 3 nos mesmos moldes sobre extracao refeita agora, com o
+    runner do Mac Studio no codigo do branch (3 tabelas).
+- **Pareamento:** o comparador pareia por `(document_id, etapa, execution_id da extracao)`. A
+  extracao nova tem outro `execution_id` por construcao, entao nao ha par: comparar com
+  `--sem-pareamento` (1 documento de cada lado, mesma composicao).
+- **Hipotese (a verificar, nao ha codigo novo neste lote):** o resolvedor sabe juntar varias
+  tabelas fisicas numa colecao (`linhas_de_tabelas`, com `fontes`), e os layouts historicos da
+  ABECIP dos meses de 3 tabelas ja o usam, mas o fallback nao: `SupportedMappingOrigin`
+  (`domain/fallback/models.py`) nao o lista e os prompts nao o citam. Logo, com a extracao nova a
+  DAG 3 so consegue mapear `por_modalidade_e_instituicao` para **uma** das tres tabelas, e
+  `assinatura_resolvido_observacoes_corretas` cai em relacao a antiga.
+- **Medicao previa sem LLM** (layout publicado v2.5.0 resolvido offline sobre as duas extracoes):
+  `por_modalidade_e_instituicao` 30 linhas (antiga) x 9 (nova), as outras quatro colecoes iguais;
+  `assinatura_resolvido_observacoes_corretas` 0,918 x 0,590.
+- **Metrica-alvo (nova, desta release):** `assinatura_resolvido_observacoes_corretas` (e
+  `_erradas`, `_ausentes`): confere o `schema_saida_resolvido` da revalidacao com o gabarito
+  curado contra o PDF (`eval/gabaritos/654f34190fc89bf63e34012b0122c3c8.json`, 61 observacoes:
+  30 de `por_modalidade_e_instituicao`, 16 da serie anual, 5 de cada uma das tres series
+  mensais; transcritas da imagem, com a soma das linhas fechando com o TOTAL de cada tabela da
+  p. 8). As metricas `assinatura_f*` nao servem aqui: medem uma linha e uma coluna por
+  observacao, e a ABECIP e de colecoes. Como nasce nesta release, **nao ha delta**: le-se o
+  valor absoluto contra o gabarito.
+- **Guardas:** `e2e_apto_para_bronze`, `resolucao_cobertura_obrigatorios`,
+  `assinatura_resolvido_observacoes_corretas` (guarda nova: valor publicado errado ou perdido
+  nao tem conserto depois).
+- **Datasets Langfuse:** nenhum item da ABECIP existia nos 4 datasets (populados em 05/09, antes
+  do fallback dela em 17/09). Criado `e2e-gabarito::abecip::654f...` em `atlas-e2e-regressao`
+  com a saida esperada curada; `popular_datasets_langfuse_atlas.py --so-gabaritos`.
+- **Ponteiro:** a DAG 3 publica uma versao minor do layout se a revalidacao aprovar, para as
+  duas releases. Rodar a antiga primeiro: o ponteiro termina na versao gerada sobre a extracao
+  nova, e as demais versoes ficam no MinIO.

@@ -12,10 +12,16 @@ Somente execucoes aprovadas viram saida esperada. Execucoes reprovadas entram
 como itens negativos, com `metadata.rotulo = "reprovado"`, para que a avaliacao
 tambem meça falsos positivos.
 
+Os gabaritos curados com `observacoes_resolvidas` (`eval/gabaritos/`) viram itens de
+`atlas-e2e-regressao` com a saida esperada conferida contra o PDF, e nao a de uma
+execucao aprovada. `--so-gabaritos` envia so esses itens (nao precisa do MinIO e nao
+reenvia os itens das outras entidades).
+
 Uso:
 
     python scripts/popular_datasets_langfuse_atlas.py --dry-run
     python scripts/popular_datasets_langfuse_atlas.py
+    python scripts/popular_datasets_langfuse_atlas.py --so-gabaritos
 """
 
 from __future__ import annotations
@@ -72,6 +78,44 @@ def _truncate_json(value: Any, limit: int = 100_000) -> Any:
     if len(serialized) <= limit:
         return value
     return {"_truncado": True, "_amostra": serialized[:limit]}
+
+
+GABARITOS = Path(__file__).resolve().parents[1] / "eval" / "gabaritos"
+
+
+def build_gabarito_items() -> list[dict[str, Any]]:
+    """Itens de e2e a partir dos gabaritos curados que declaram `observacoes_resolvidas`."""
+    items: list[dict[str, Any]] = []
+    for arquivo in sorted(GABARITOS.glob("*.json")):
+        gabarito = json.loads(arquivo.read_text(encoding="utf-8"))
+        observacoes = gabarito.get("observacoes_resolvidas")
+        if not observacoes:
+            continue
+        entidade = str(gabarito.get("entidade") or "")
+        document_id = str(gabarito.get("document_id") or arquivo.stem)
+        items.append(
+            {
+                "datasetName": DATASET_E2E,
+                "id": f"e2e-gabarito::{entidade}::{document_id}",
+                "input": {
+                    "dominio": gabarito.get("dominio"),
+                    "entidade": entidade,
+                    "document_id": document_id,
+                    "contrato": gabarito.get("contrato"),
+                    "identidade": gabarito.get("identidade"),
+                },
+                "expectedOutput": _truncate_json({"observacoes_resolvidas": observacoes}),
+                "metadata": {
+                    "dominio": gabarito.get("dominio"),
+                    "entidade": entidade,
+                    "document_id": document_id,
+                    "rotulo": "gabarito_curado",
+                    "gabarito": f"eval/gabaritos/{arquivo.name}",
+                    "origem": gabarito.get("origem"),
+                },
+            }
+        )
+    return items
 
 
 def build_items(reader: MinioReader) -> list[dict[str, Any]]:
@@ -221,10 +265,17 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--dry-run", action="store_true")
     parser.add_argument("--limit", type=int, default=0)
+    parser.add_argument(
+        "--so-gabaritos",
+        action="store_true",
+        help="envia so os itens dos gabaritos curados (sem ler o MinIO)",
+    )
     args = parser.parse_args()
 
-    reader = MinioReader()
-    items = build_items(reader)
+    if args.so_gabaritos:
+        items = build_gabarito_items()
+    else:
+        items = build_items(MinioReader()) + build_gabarito_items()
     if args.limit:
         items = items[: args.limit]
 

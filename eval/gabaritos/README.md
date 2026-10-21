@@ -38,3 +38,32 @@ requisito do contrato e pelos seletores da observacao.
 
 Origem: execucao `baseline0` (2026-09-13/14), candidatos validados + auditoria da
 resolucao local com os contratos construtoras v1.9.0 e bancos v2.2.0.
+
+## Valor resolvido (`observacoes_resolvidas`)
+
+Para colecoes sem chave de item (ex.: ABECIP), onde nao ha "uma linha e uma coluna por
+observacao" para ancorar, o gabarito declara o **valor que o `schema_saida_resolvido` deve ter**:
+
+```json
+"observacoes_resolvidas": {
+  "<path da colecao>": [
+    {"contexto": {"modalidade": "construcao", "instituicao_financeira": "CAIXA"},
+     "campos": {"volume_mensal_milhoes": 2378.1, "unidades_mensais": 11286},
+     "tolerancia": 0}
+  ]
+}
+```
+
+- `contexto` (opcional) identifica o item; caminho dentro do item -> valor, texto sem acento nem caixa.
+  Sem `contexto` o teste e so de presenca do valor em algum item da colecao (nunca "errada"); use
+  quando o rotulo do periodo depende da escolha do layout.
+- `campos` traz os valores esperados; `tolerancia` (opcional) e absoluta.
+- E conferencia por subconjunto: item a mais na saida nao e penalizado. Celula que o PDF deixa vazia
+  nao deve ser declarada.
+- Produz `assinatura_resolvido_observacoes_corretas|erradas|ausentes`. O harness le o schema do
+  MinIO (`<fallback_prefix>revalidation/schema_saida_resolvido.json` do trace), entao precisa rodar
+  onde o pacote `minio` existe (no conteiner do Airflow). `popular_datasets_langfuse_atlas.py
+  --so-gabaritos` envia o gabarito como item de `atlas-e2e-regressao`.
+- Transcreva do PDF, nao da extracao: se a tabela e imagem, leia a imagem e confira as somas com a
+  linha de total.
+
