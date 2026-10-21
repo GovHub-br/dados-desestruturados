@@ -9,7 +9,8 @@ tabelas da extracao em que ele foi gerado e confere o que o proprio documento ga
    OCR ou linha perdida);
 3. identidade entre tabelas: Aquisicao e Construcao = Construcao + Aquisicao, por instituicao;
 4. semantica da coluna: campo de unidades sai de coluna cujo cabecalho fala de unidades, campo de volume de coluna
-   em R$, mensal x acumulado no ano coincide com o cabecalho, series leem o ano mais recente.
+   em R$, mensal x acumulado no ano coincide com o cabecalho, series leem o ano mais recente;
+5. itens vazios: item publicado em que todos os campos numericos vieram nulos (mes futuro lido como se tivesse dado).
 
 Mede consistencia, nao verdade absoluta: um erro que o PDF repete de forma coerente nao aparece aqui. O gabarito
 curado (`eval/gabaritos/`) continua sendo a medida de verdade, so para maio/2026.
@@ -322,6 +323,44 @@ def verificar_celulas(unidades: list[Unidade], tabelas: dict[str, Tabela]) -> li
     return [achado(ALERTA, "celulas", "OCR", "; ".join(suspeitas[:6]) + (f" (+{len(suspeitas) - 6})" if len(suspeitas) > 6 else ""))]
 
 
+def itens_de_colecao(resolvido: Any, nome: str) -> list[dict[str, Any]]:
+    """Itens da colecao ``nome`` onde ela estiver no schema resolvido."""
+    if isinstance(resolvido, dict):
+        for chave, valor in resolvido.items():
+            if chave == nome and isinstance(valor, list):
+                return [i for i in valor if isinstance(i, dict)]
+            achados = itens_de_colecao(valor, nome)
+            if achados:
+                return achados
+    return []
+
+
+def item_sem_valor(item: dict[str, Any]) -> bool:
+    """Todos os campos numericos do item vieram nulos (ha ao menos um campo numerico/nulo, e nenhum com numero)."""
+    campos = [v for v in item.values() if v is None or (isinstance(v, (int, float)) and not isinstance(v, bool))]
+    return bool(campos) and all(v is None for v in campos)
+
+
+COLECOES_PUBLICADAS = (
+    "por_modalidade_e_instituicao",
+    "serie_historica_anual",
+    "serie_mensal_sbpe",
+    "saldos_mensais",
+    "captacoes_liquidas_mensais",
+)
+
+
+def verificar_itens_vazios(resolvido: Any) -> list[dict[str, str]]:
+    achados: list[dict[str, str]] = []
+    for nome in COLECOES_PUBLICADAS:
+        itens = itens_de_colecao(resolvido, nome)
+        vazios = [i for i in itens if item_sem_valor(i)]
+        if vazios:
+            rotulos = [str((i.get("periodo") or {}).get("rotulo_publicado") or i.get("instituicao_financeira") or "?") for i in vazios]
+            achados.append(achado(ALERTA, "itens-vazios", nome, f"{len(vazios)} de {len(itens)} item(ns) sem nenhum valor numerico ({', '.join(rotulos[:6])}{'...' if len(rotulos) > 6 else ''})"))
+    return achados
+
+
 def execucoes_da_release(minio: Any, bucket: str, release: str) -> dict[str, str]:
     """Prefixo de cada execucao do fallback de uma release: {execution_id: prefixo}."""
     achadas: dict[str, str] = {}
@@ -377,6 +416,7 @@ def verificar_execucao(minio: Any, bucket: str, execucao: str, prefixo: str) -> 
         achados.append(achado(INFO, "periodo", "layout", f"rotulo de periodo fixo no layout: {rotulos}"))
     resolvido = ler(minio, bucket, prefixo + "revalidation/schema_saida_resolvido.json") or {}
     itens = ((resolvido.get("financiamentos_imobiliarios") or {}).get("por_modalidade_e_instituicao")) or []
+    achados += verificar_itens_vazios(resolvido)
     return {
         "execucao": execucao,
         "document_id": document_id,

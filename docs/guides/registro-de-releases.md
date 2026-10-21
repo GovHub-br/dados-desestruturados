@@ -1607,3 +1607,56 @@ da tabela deve ser erro explicito, nao descarte silencioso. (4) Reuso entre mese
 indice, ou regras de deteccao de mudanca no layout. (5) Docling: `PENDENCIAS.md` P12 (titulo perdido, escolhe nota de rodape), P13
 (cabecalho trocado no 2026-03) e extensao de P11 (separador decimal). (6) Decidir o ponteiro (hoje `v2.16.0`). (7) OCR, adiado.
 
+
+
+## Lote 16: as linhas da tabela inteira passam a ser decididas por codigo (`exp-faixas-por-codigo`, 21/10)
+
+Resposta ao lote 15: a LLM erra a contagem de linhas de um jeito diferente a cada mes (linha `TOTAL` publicada como
+instituicao em 4 de 9, faixa comecando em 1 e pulando a primeira linha em 3 de 9, colecao vazia em julho porque as faixas
+passavam do fim). Decisao do usuario: quando a instrucao le a tabela como um todo, quem diz de que linha a que linha vai e
+o codigo; a LLM segue escolhendo tabela, coluna de cada campo e valores fixos. Nada especifico da ABECIP no codigo ou no
+prompt, e nada de regra no contrato: linha de total e dado calculado e a plataforma so coleta dado bruto.
+
+### Declarado antes de rodar
+
+- **Itens (commit `4675ccf`, um so mecanismo):**
+  1. `table_row_ranges.data_row_ranges`: faixas das linhas de dados de uma tabela, sem cabecalho, sem titulo de bloco,
+     sem linha de total/subtotal (reconhecida pelo rotulo, sem somar nada) e so com linhas que tem valor numerico nas
+     colunas que a instrucao le (evita meses futuros vazios). Sem faixa na instrucao `linhas_de_tabela` /
+     `linhas_de_tabelas` (por fonte), o codigo preenche `linha_inicial`/`linha_final` (varias faixas viram `segmentos`
+     que levam os `valores_por_segmento`) depois que o fragmento passa na validacao; `faixas_por_codigo.json` registra
+     quem decidiu cada instrucao. Faixa explicita da LLM (parte da tabela, ex.: anos completos da serie anual) nao e tocada.
+  2. Validador: faixa explicita que passa da ultima linha, ou invertida, e recusada com o tamanho da tabela (antes o
+     resolvedor a descartava em silencio e a colecao saia vazia). Roda no ciclo de reparo da LLM.
+  3. Prompt: tabela inteira nao declara faixa; parte da tabela conta de 0, `linha_final` inclusiva. Os exemplos antigos
+     usavam `linha_inicial: 1`. Blocos publicados (`--empurrar`; antes: 16 iguais e 2 divergentes, exatamente estes):
+     `unit-mapping-estrutura` v3 -> v4 e `candidato-estrutura` v1 -> v2.
+- **Hipotese:** com o codigo contando as linhas, o layout inicial da ABECIP deixa de depender do mes: nenhum `TOTAL`
+  como instituicao, nenhuma primeira linha pulada, nenhuma faixa alem do fim, nenhum mes futuro vazio na serie mensal.
+- **Previsao offline (sem LLM)**, trocando so as faixas dos layouts do lote 15 (`eval/abecip/simular_faixas_por_codigo.py`):
+  0 alertas de cobertura nos 9 meses (antes 1 a 8 por mes); julho de 0 para 36 itens; maio mantem 0,951 no gabarito. Os
+  alertas que restam sao de OCR (soma = TOTAL, identidade) e o cabecalho trocado de 2026-03 (P13).
+- **Metrica-alvo (ABECIP, 10 documentos: maio + 9 meses, em serie):** `eval/abecip/verificar_colecoes.py` com **0 alertas de
+  cobertura e 0 de itens vazios** em todos os meses (a checagem de itens vazios entra agora no verificador: nos lotes 14 e
+  15 acusa maio 7 de 12, 2026-03 9 de 12, 2025-11 e 2026-02 em saldos/captacoes, 2026-07 1 de 7); `e2e_apto_para_bronze`
+  = 1 nos 10 (julho publica); maio com `assinatura_resolvido_observacoes_corretas` >= 0,951.
+- **Guardas:** `e2e_apto_para_bronze`, `resolucao_cobertura_obrigatorios`, `revalidacao_gate_efetivo`,
+  `validacao_cobertura_de_regras`, `assinatura_resolvido_observacoes_corretas`, `selecao_tabelas_sem_mapeamento`.
+- **Etapas:** (1) ABECIP sozinha, DAG 3 em serie (a mesma entidade em paralelo colide na numeracao de versao). Bases:
+  maio contra `exp-fallback-linhas-de-tabelas`, os 9 meses contra `exp-abecip-varios-meses`; o `execution_id` da extracao e o
+  mesmo, entao o pareamento vale. (2) So se a etapa 1 passar, todas as outras entidades com layout (17), cada uma contra a
+  ultima release que a mediu: Cury, Direcional, Plano&Plano, Pacaembu, Tenda e Santander contra
+  `exp-fallback-linhas-de-tabelas`; Cyrela, EZTEC, MRV e Itau contra `exp-fase2-item24-titulo`; Petrobras, Prio, Vale,
+  Gerdau, CSN, Renner e Magalu contra `exp-correcoes-contexto-opcional-e-escala`. Criterio: guardas e valores resolvidos
+  identicos a base; qualquer diferenca recebe um rotulo (real, medicao ou ambiente) depois de comparar o mapeamento e
+  redisparar com `__r2`.
+- **Ressalva de atribuicao.** O codigo novo so age em instrucoes de tabela inteira, que so a ABECIP usa hoje; nas demais
+  entidades (celula e cabecalho) ele e inerte. O que pode mudar nelas e o texto do bloco `unit-mapping-estrutura`, comum a
+  todas, e a variancia da LLM: por isso a etapa 2 existe e compara o mapeamento, nao so o resultado.
+- **Ponteiros antes do lote** (`current.json`): abecip v2.16.0, itau v1.11.0, santander v1.16.0, cury v1.14.0, cyre3 v1.1.0,
+  direcional v1.14.0, eztc3 v1.13.0, mrv v1.12.0, pacaembu v1.14.0, plano-plano v1.15.0, tenda v1.14.0, petrobras v1.2.0,
+  prio v1.1.0, csn v1.2.0, gerdau v1.2.0, vale v1.2.0, mglu v1.2.0, renner v1.2.0. Cada run que aprova publica uma versao
+  nova e move o ponteiro; voltar e decisao do usuario.
+- **Fora desta release:** OCR (P10, P11, rotulos de mes lidos como `imr`/`1no`/`m`), serie anual como sub-bloco (a faixa
+  continua da LLM; ideia: rotulo inicial e final em vez de indice), identificar a tabela por titulo, resolver em tempo
+  de resolucao em vez de na criacao do layout.
