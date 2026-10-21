@@ -1398,3 +1398,45 @@ MinIO. Voltar para `v2.6.0` nao conserta: ele resolve a extracao nova em 9 de 30
 processar o proximo mes da ABECIP, o layout vigente (`v2.7.0`) cobre so 11 de 30 linhas da p. 8; (5) o gabarito
 cobre um documento (maio/2026) e checa as series pelo valor, sem contexto de periodo.
 
+
+## Lote 14: o fallback passa a gerar `linhas_de_tabelas` + metrica de tabelas sem mapeamento (`exp-fallback-linhas-de-tabelas`, 21/10)
+
+Resposta ao resultado do lote 13: com a pagina das modalidades da ABECIP em tres tabelas, a LLM so
+mapeou uma (11 de 30 linhas) porque o candidato nao tinha como descrever uma colecao vinda de varias
+tabelas, e nenhuma metrica de producao acusou.
+
+### Declarado antes de rodar
+
+- **Itens (dois, fechados juntos):**
+  1. **Vocabulario.** `linhas_de_tabelas` (uma instrucao com `fontes`, uma por tabela) passa a ser aceito pelo
+     modelo do candidato (`SupportedMappingOrigin`), pelo validador (cada fonte exige `arquivo_origem` e segue as
+     regras de campos da `linhas_de_tabela`; a colecao inteira dispensa filtro no path) e pelos tipos de
+     evidencia do contrato; o resolvedor ja o lia. Tres blocos de prompt dizem quando usa-lo (varias tabelas
+     para a mesma colecao) e o exemplo de formato da unidade traz o tipo: `unit-mapping-estrutura`,
+     `unit-mapping-artefatos` e `comum-contrato`. Os blocos `candidato-*` (fluxo sem unidades) nao mudam.
+  2. **Visibilidade.** Duas metricas de producao, sem gabarito, emitidas no trace do fallback:
+     `selecao_tabelas_sem_mapeamento` (tabelas que a selecao escolheu e nenhuma instrucao do layout cita;
+     menor e melhor) e `selecao_tabelas_mapeadas` (fracao; maior e melhor). Reproduzidas sobre os artefatos do
+     lote 13: 0 / 1,000 no `antigo` e **2 / 0,667 no `novo`** (`table005` e `table006`). Sao diagnosticas, nao
+     guardas e nao viram gate nesta release. Linhas de dados cobertas por tabela nao foram usadas: faixas
+     parciais sao legitimas (tabelas com meses sem valor, linhas de total), o que a tornaria ruidosa.
+- **Hipotese:** com o tipo disponivel, a LLM usa uma fonte por tabela e a ABECIP volta ao nivel da extracao antiga.
+- **Metrica-alvo:** `assinatura_resolvido_observacoes_corretas` da ABECIP maio/2026 (extracao nova,
+  `...20261021T112000Z`) de **0,639 para >= 0,918** (teto medido sem LLM com o mesmo layout trocando so a colecao
+  das modalidades: 0,918). Secundaria: `selecao_tabelas_sem_mapeamento` 2 -> 0.
+- **Guardas:** `e2e_apto_para_bronze`, `resolucao_cobertura_obrigatorios`, `revalidacao_gate_efetivo`,
+  `validacao_cobertura_de_regras`, `assinatura_resolvido_observacoes_corretas` e, no lote de 10 documentos,
+  `assinatura_f0_selecao_revocacao`, `assinatura_f1_cobertura_obrigatorios`,
+  `assinatura_f3_arquivo_origem_correto`, `avaliacao_revocacao`. Os prompts sao comuns a todos os dominios, entao o
+  lote de bancos e construtoras e obrigatorio para provar que nao regrediu.
+- **Etapas:** (1) ABECIP sozinha, base `exp-abecip-docling-novo` (mesmo `execution_id` da extracao: pareamento
+  valido, sem `--sem-pareamento`); (2) so se o alvo subir, o lote de 10 documentos, base
+  `exp-gate-e-ancoragem-linha` (ultima base aprovada de 10 documentos).
+- **Prompts publicados** (`--empurrar`; antes: 15 iguais, 3 divergentes, os 3 acima): `comum-contrato` v8 -> v9,
+  `unit-mapping-estrutura` v2 -> v3, `unit-mapping-artefatos` v2 -> v3.
+- **Ressalva de atribuicao.** O exemplo novo do prompt usa `linha_inicial: 0`, enquanto os dois exemplos antigos de
+  `linhas_de_tabela` usam 1. Isto pode mexer no deslocamento de linha que a LLM faz na poupanca (Jan/2026 pulado,
+  item 3 deste plano): se a metrica de poupanca mudar nesta release, nao e atribuivel so ao item 1.
+- **Fora desta release:** OCR (P10 e P11), indice de linha (item 3), regras de deteccao de mudanca geradas
+  automaticamente. Tests: 15 novos em `test_linhas_de_tabelas_no_fallback.py` (um deles roda o validador completo
+  com o contrato real da ABECIP) e 4 em `test_observability_metrics.py`; todos provados por mutacao.

@@ -665,59 +665,31 @@ class FallbackCandidateValidationService:
                     f"{mapping_path}."
                 )
             if entry.tipo_origem == "linhas_de_tabela":
-                fields = payload.get("campos", [])
-                segments = payload.get("segmentos", payload.get("faixas_linhas", []))
-                if not isinstance(segments, list):
-                    segments = []
-                has_positional_columns = isinstance(
-                    payload.get("indices_colunas"), list
-                ) or any(
-                    isinstance(segment, dict)
-                    and isinstance(segment.get("indices_colunas"), list)
-                    for segment in segments
+                FallbackCandidateValidationService._validate_table_rows_source(
+                    payload, mapping_path=mapping_path, schema_paths=schema_paths
                 )
-                if not isinstance(fields, list) or (not fields and not has_positional_columns):
+                continue
+            if entry.tipo_origem == "linhas_de_tabelas":
+                sources = payload.get("fontes")
+                if (
+                    not isinstance(sources, list)
+                    or not sources
+                    or not all(isinstance(source, dict) for source in sources)
+                ):
                     raise RuntimeError(
-                        "Mapeamento linhas_de_tabela deve declarar campos nomeados "
-                        "ou indices_colunas posicionais: "
-                        f"{mapping_path}."
+                        "Mapeamento linhas_de_tabelas deve declarar fontes: lista nao vazia "
+                        "de objetos, uma por tabela, cada uma com arquivo_origem, linhas e "
+                        f"campos: {mapping_path}."
                     )
-                fields_to_validate = list(fields) if isinstance(fields, list) else []
-                for segment in segments:
-                    if isinstance(segment, dict) and isinstance(segment.get("campos"), list):
-                        fields_to_validate.extend(segment["campos"])
-                for field in fields_to_validate:
-                    if not isinstance(field, dict):
+                for source in sources:
+                    if not str(source.get("arquivo_origem", "")).strip():
                         raise RuntimeError(
-                            "Cada campo de linhas_de_tabela deve ser objeto: "
+                            "Cada fonte de linhas_de_tabelas exige arquivo_origem: "
                             f"{mapping_path}."
                         )
-                    allowed_field_keys = {"caminho_saida", "indice_coluna", "tipo"}
-                    invalid_field_keys = set(field) - allowed_field_keys
-                    if invalid_field_keys:
-                        raise RuntimeError(
-                            "Campo de linhas_de_tabela usa chaves nao suportadas "
-                            f"{sorted(invalid_field_keys)} em {mapping_path}; use somente "
-                            "caminho_saida, indice_coluna e tipo."
-                        )
-                    if not str(field.get("caminho_saida", "")).strip() or not isinstance(
-                        field.get("indice_coluna"), int
-                    ):
-                        raise RuntimeError(
-                            "Cada campo de linhas_de_tabela exige caminho_saida e "
-                            f"indice_coluna inteiro: {mapping_path}."
-                        )
-                    if field.get("tipo") not in {None, "texto", "numero"}:
-                        raise RuntimeError(
-                            "tipo de campo em linhas_de_tabela deve ser texto ou numero; "
-                            f"nao use derivacoes: {mapping_path}."
-                        )
-                    output_path = str(field.get("caminho_saida", "")).strip()
-                    if output_path and f"{normalize_schema_path(mapping_path)}.{output_path}" not in schema_paths:
-                        raise RuntimeError(
-                            "caminho_saida de linhas_de_tabela nao pertence ao item "
-                            f"de destino no schema_saida: {mapping_path}.{output_path}."
-                        )
+                    FallbackCandidateValidationService._validate_table_rows_source(
+                        source, mapping_path=mapping_path, schema_paths=schema_paths
+                    )
                 continue
             if entry.tipo_origem not in table_origins:
                 continue
@@ -751,6 +723,68 @@ class FallbackCandidateValidationService:
                     "com o rotulo observado na linha; indice_linha_esperado sozinho nao "
                     "basta porque a posicao da linha varia entre tabelas do mesmo "
                     f"documento: {mapping_path}."
+                )
+
+    @staticmethod
+    def _validate_table_rows_source(
+        payload: dict[str, Any],
+        *,
+        mapping_path: str,
+        schema_paths: set[str],
+    ) -> None:
+        """Valida campos e faixas de uma instrucao de linhas (a do topo ou uma fonte)."""
+        fields = payload.get("campos", [])
+        segments = payload.get("segmentos", payload.get("faixas_linhas", []))
+        if not isinstance(segments, list):
+            segments = []
+        has_positional_columns = isinstance(
+            payload.get("indices_colunas"), list
+        ) or any(
+            isinstance(segment, dict)
+            and isinstance(segment.get("indices_colunas"), list)
+            for segment in segments
+        )
+        if not isinstance(fields, list) or (not fields and not has_positional_columns):
+            raise RuntimeError(
+                "Mapeamento linhas_de_tabela deve declarar campos nomeados "
+                "ou indices_colunas posicionais: "
+                f"{mapping_path}."
+            )
+        fields_to_validate = list(fields) if isinstance(fields, list) else []
+        for segment in segments:
+            if isinstance(segment, dict) and isinstance(segment.get("campos"), list):
+                fields_to_validate.extend(segment["campos"])
+        for field in fields_to_validate:
+            if not isinstance(field, dict):
+                raise RuntimeError(
+                    "Cada campo de linhas_de_tabela deve ser objeto: "
+                    f"{mapping_path}."
+                )
+            allowed_field_keys = {"caminho_saida", "indice_coluna", "tipo"}
+            invalid_field_keys = set(field) - allowed_field_keys
+            if invalid_field_keys:
+                raise RuntimeError(
+                    "Campo de linhas_de_tabela usa chaves nao suportadas "
+                    f"{sorted(invalid_field_keys)} em {mapping_path}; use somente "
+                    "caminho_saida, indice_coluna e tipo."
+                )
+            if not str(field.get("caminho_saida", "")).strip() or not isinstance(
+                field.get("indice_coluna"), int
+            ):
+                raise RuntimeError(
+                    "Cada campo de linhas_de_tabela exige caminho_saida e "
+                    f"indice_coluna inteiro: {mapping_path}."
+                )
+            if field.get("tipo") not in {None, "texto", "numero"}:
+                raise RuntimeError(
+                    "tipo de campo em linhas_de_tabela deve ser texto ou numero; "
+                    f"nao use derivacoes: {mapping_path}."
+                )
+            output_path = str(field.get("caminho_saida", "")).strip()
+            if output_path and f"{normalize_schema_path(mapping_path)}.{output_path}" not in schema_paths:
+                raise RuntimeError(
+                    "caminho_saida de linhas_de_tabela nao pertence ao item "
+                    f"de destino no schema_saida: {mapping_path}.{output_path}."
                 )
 
     @staticmethod
@@ -1027,7 +1061,8 @@ class FallbackCandidateValidationService:
             if (
                 current_path in array_paths
                 and current_path == normalize_mapping_path(path)
-                and (mapping_entry or {}).get("tipo_origem") == "linhas_de_tabela"
+                and (mapping_entry or {}).get("tipo_origem")
+                in {"linhas_de_tabela", "linhas_de_tabelas"}
             ):
                 continue
             if current_path in array_paths and "[" not in raw_part:

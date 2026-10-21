@@ -66,7 +66,13 @@ def unit_mapping_structure_instruction() -> str:
         "item. Cada campo deve ter somente caminho_saida, indice_coluna e, opcionalmente, "
         "tipo texto ou numero. Nao use nome, derivacao, valor_constante ou tipo derivado "
         "dentro de campos. Valores repetidos pertencem a valores_por_segmento ou valores_fixos "
-        "da instrucao. Para tabelas, "
+        "da instrucao. Quando as linhas de uma mesma colecao estiverem em mais de uma tabela "
+        "do documento (por exemplo, uma tabela para cada categoria, cada uma com titulo "
+        "proprio), nao mapeie so uma delas: use uma unica instrucao linhas_de_tabelas no path "
+        "da colecao, com a lista fontes, uma fonte por tabela. Cada fonte declara arquivo_origem, "
+        "linha_inicial, linha_final, campos (como em linhas_de_tabela) e valores_por_segmento "
+        "com o valor que distingue aquela tabela. Use linhas_de_tabela quando todas as linhas "
+        "estiverem numa unica tabela. Para tabelas, "
         "nao use regex nem padrao_cabecalho_aceito; o resolvedor le as posicoes "
         "indicadas. Regex e reservado a bloco_textual."
     )
@@ -80,7 +86,7 @@ def unit_mapping_artifacts_instruction() -> str:
         "faixas que estejam realmente observados neles. Uma instrucao de tabela deve "
         "referenciar arquivo_origem e os indices necessarios para o resolvedor. Nao "
         "invente arquivos, campos ou valores. Se uma colecao inteira for preenchida "
-        "por linhas_de_tabela, use diretamente o path da colecao. Fora desse caso, todo "
+        "por linhas_de_tabela ou por linhas_de_tabelas, use diretamente o path da colecao. Fora desse caso, todo "
         "array listado em arrays_que_exigem_seletor, inclusive os aninhados dentro de outro "
         "array, exige o proprio filtro [chave=valor] no segmento correspondente do path. A "
         "chave de cada array e a declarada em chaves_de_item do subesquema; se chaves_de_item "
@@ -136,6 +142,7 @@ def unit_mapping_structure_example(*, unit_id: str) -> dict[str, Any]:
             "cabecalho_de_tabela",
             "celula_de_tabela",
             "linhas_de_tabela",
+            "linhas_de_tabelas",
             "juncao_de_registros_json",
         ],
         "formatos_de_origem": {
@@ -163,6 +170,32 @@ def unit_mapping_structure_example(*, unit_id: str) -> dict[str, Any]:
                 "campos": [
                     {"caminho_saida": "identificador", "indice_coluna": 0},
                     {"caminho_saida": "valor", "indice_coluna": 3, "tipo": "numero"},
+                ],
+                "obrigatorio": True,
+            },
+            "linhas_de_tabelas": {
+                "tipo_origem": "linhas_de_tabelas",
+                "fontes": [
+                    {
+                        "arquivo_origem": "tables/table001.json",
+                        "linha_inicial": 0,
+                        "linha_final": 8,
+                        "valores_por_segmento": {"categoria": "primeira"},
+                        "campos": [
+                            {"caminho_saida": "identificador", "indice_coluna": 0},
+                            {"caminho_saida": "valor", "indice_coluna": 1, "tipo": "numero"},
+                        ],
+                    },
+                    {
+                        "arquivo_origem": "tables/table002.json",
+                        "linha_inicial": 0,
+                        "linha_final": 9,
+                        "valores_por_segmento": {"categoria": "segunda"},
+                        "campos": [
+                            {"caminho_saida": "identificador", "indice_coluna": 0},
+                            {"caminho_saida": "valor", "indice_coluna": 1, "tipo": "numero"},
+                        ],
+                    },
                 ],
                 "obrigatorio": True,
             },

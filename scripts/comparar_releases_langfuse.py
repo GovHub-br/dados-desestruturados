@@ -57,6 +57,7 @@ MAIOR_MELHOR = {
     # Selecao de artefatos: quanto da evidencia escolhida sustenta a unidade.
     "selecao_evidencia_especifica",
     "selecao_prefiltro_reducao",
+    "selecao_tabelas_mapeadas",
     "selecao_prefiltro_leitura_completa",
     "selecao_escolha_dentro_do_prefiltro",
     # Fase 2 em producao: estrutura da tabela e papel por coluna resolvidos pelo codigo.
@@ -95,6 +96,7 @@ MENOR_MELHOR = {
     "validacao_regras_reprovadas",
     "transicao_resolucao_para_fallback",
     "selecao_evidencia_descartada",
+    "selecao_tabelas_sem_mapeamento",
     "selecao_candidatos_por_requisito",
     "assinatura_f0_selecao_artefatos_por_requisito",
     "assinatura_f1_array_sem_filtro",
