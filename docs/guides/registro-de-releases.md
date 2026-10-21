@@ -1509,3 +1509,38 @@ agregado vem das 8 tentativas do Itau; os tokens por execucao caem (-8 %). Nao h
 
 **Ainda nao medidas:** Cyrela (CYRE3), EZTEC (EZTC3) e MRV, que nao estavam entre as principais indicadas.
 
+
+## Lote 15: ABECIP em varios meses, extracao nova + fallback novo (`exp-abecip-varios-meses`, 21/10)
+
+Pergunta do usuario depois da aprovacao do lote 14: o resultado de maio/2026 vale para os outros meses, cada um com
+tabelas de tamanhos e posicoes diferentes, e o deslocamento de linha da poupanca (Jan/2026 pulado em 3 de 3 geracoes
+antigas, lido na ultima) aparece de novo?
+
+### Declarado antes de rodar
+
+- **Documentos:** os 9 outros meses da ABECIP no MinIO (2025-10, 2025-11, 2025-12, 2026-01, 2026-02, 2026-03, 2026-04,
+  2026-06, 2026-07), cada um **reextraido agora** pela DAG 1 no runner com o codigo do PR #18 (todos com
+  `should_trigger_dag2=false`: a DAG 2 nao e acionada). Sem a reextracao o teste mediria a extracao antiga, que fundia a
+  p. 8 em 7 de 11 meses. Maio/2026 ja tem a rodada do lote 14.
+- **Variavel independente:** o mes (estrutura do documento). Mesmo codigo (`beb4025`), mesmos prompts (18 iguais),
+  mesmo contrato `abecip v2.3.0`, DAG 3 em `criacao_inicial_layout` (um run por mes, rotulo `exp-abecip-varios-meses`).
+- **Hipotese:** o fallback gera, em todos os meses, um layout que cobre as tres tabelas das modalidades e le as series sem
+  pular a primeira linha de dados.
+- **Como se mede sem gabarito lido no PDF de cada mes.** O gabarito curado existe so para maio (61 observacoes lidas da
+  imagem) e ler os outros nove nao cabe. Em cada mes sao verificadas propriedades que o proprio documento garante,
+  calculadas direto das tabelas extraidas e do layout (`eval/abecip/verificar_colecoes.py`):
+  1. **cobertura de linhas:** a faixa mapeada de cada tabela comeca na primeira linha de dados, nao inclui a linha de
+     total e nao deixa linha de dados de fora; nenhuma tabela escolhida fica sem mapeamento;
+  2. **soma = TOTAL:** a soma das instituicoes de cada tabela de modalidade bate com a linha TOTAL da mesma tabela
+     (acusa digito errado de OCR ou linha perdida);
+  3. **identidade entre tabelas:** Aquisicao e Construcao = Construcao + Aquisicao, por instituicao;
+  4. **semantica da coluna:** campo de unidades vem de coluna cujo cabecalho fala de unidades, campo de volume de
+     coluna com R$, e mensal x acumulado no ano coincide com o cabecalho.
+  Isto mede **consistencia**, nao verdade absoluta: um erro que o PDF e o layout repetem de forma coerente nao aparece.
+  Maio serve de calibracao (os defeitos conhecidos, `686` x `989` e `BANCO DOBRASIL`, precisam ser acusados).
+- **Metricas de producao e guardas:** `e2e_apto_para_bronze`, `resolucao_cobertura_obrigatorios`,
+  `selecao_tabelas_sem_mapeamento` (alvo 0), tentativas e tokens. Nao ha base pareavel (primeira rodada de cada mes sob
+  esta versao): leitura por valor absoluto, sem delta.
+- **Medida adicional sem LLM:** o layout vigente de maio (`v2.8.0`) resolvido offline sobre a extracao nova de cada mes,
+  que e o que a DAG 2 faria em producao no mes seguinte (o layout carrega o rotulo de periodo e faixas de maio).
+- **Fora desta release:** OCR (P10 e P11), detector de faixas pelo codigo, valores de bancos e construtoras.
