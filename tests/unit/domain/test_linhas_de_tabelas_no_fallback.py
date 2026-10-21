@@ -369,31 +369,78 @@ def test_faixa_explicita_alem_do_fim_da_tabela_e_recusada_com_o_tamanho_da_tabel
         _fonte_abecip("tables/table005.json", "construcao", 6),
         _fonte_sem_faixa("tables/table006.json", "aquisicao"),
     )
-    with pytest.raises(RuntimeError, match=r"Faixa de linhas fora da tabela.*linha_final 6.*6 linhas"):
+    with pytest.raises(RuntimeError, match=r"Faixa de linhas incompativel com a tabela.*linha_final 6.*6 linhas"):
         FallbackCandidateValidationService().validate_candidate_layout(_candidato_abecip(modalidade), contexto)
 
 
-def test_faixa_explicita_dentro_da_tabela_e_a_omitida_passam_com_a_evidencia_carregada():
+def test_faixa_igual_as_linhas_de_dados_e_a_omitida_passam_com_a_evidencia_carregada():
     contexto = {**_contexto_abecip(), "artefatos_contexto_llm": _tabelas_da_pagina()}
     for modalidade in (
-        _linhas_de_tabelas(_fonte_abecip("tables/table005.json", "construcao", 5)),
+        _linhas_de_tabelas(_fonte_abecip("tables/table005.json", "construcao", 4)),
         _modalidade_sem_faixa(),
     ):
         FallbackCandidateValidationService().validate_candidate_layout(_candidato_abecip(modalidade), contexto)
 
 
-def test_o_prompt_diz_que_as_linhas_da_tabela_inteira_sao_do_codigo_e_que_a_faixa_conta_de_zero():
+def test_faixa_que_inclui_a_linha_total_e_recusada_na_criacao_com_a_diferenca_e_o_caminho_certo():
+    contexto = {**_contexto_abecip(), "artefatos_contexto_llm": _tabelas_da_pagina()}
+    modalidade = _linhas_de_tabelas(_fonte_abecip("tables/table005.json", "construcao", 5))
+    with pytest.raises(RuntimeError) as erro:
+        FallbackCandidateValidationService().validate_candidate_layout(_candidato_abecip(modalidade), contexto)
+    texto = str(erro.value)
+    assert "linha de total" in texto and "5 ('TOTAL')" in texto
+    assert "NAO declare faixa" in texto and "rotulo_inicial e rotulo_final" in texto
+
+
+def test_faixa_que_pula_a_primeira_linha_de_dados_e_recusada_na_criacao():
+    contexto = {**_contexto_abecip(), "artefatos_contexto_llm": _tabelas_da_pagina()}
+    fonte = _fonte_abecip("tables/table005.json", "construcao", 4)
+    fonte["linha_inicial"] = 1
+    with pytest.raises(RuntimeError, match=r"deixa de ler linha de dados: linha 0 \('BANCO 0'\)"):
+        FallbackCandidateValidationService().validate_candidate_layout(
+            _candidato_abecip(_linhas_de_tabelas(fonte)), contexto
+        )
+
+
+def test_na_correcao_parcial_a_faixa_do_layout_base_e_preservada_mesmo_se_divergir():
+    contexto = {**_contexto_abecip(), "artefatos_contexto_llm": _tabelas_da_pagina()}
+    divergente = _candidato(_linhas_de_tabelas(_fonte_abecip("tables/table005.json", "construcao", 5)))
+    validar = FallbackCandidateValidationService._validate_explicit_row_ranges_fit_tables
+    with pytest.raises(RuntimeError, match="linha de total"):
+        validar(divergente, contexto)
+    parcial = divergente.model_copy(update={"escopo_correcao": "correcao_parcial_mapeamento"})
+    validar(parcial, contexto)
+    # mas o que o resolvedor descartaria em silencio e erro em qualquer escopo
+    alem_do_fim = _candidato(_linhas_de_tabelas(_fonte_abecip("tables/table005.json", "construcao", 9)))
+    with pytest.raises(RuntimeError, match="passa da ultima linha"):
+        validar(alem_do_fim.model_copy(update={"escopo_correcao": "correcao_parcial_mapeamento"}), contexto)
+
+
+def test_parte_da_tabela_por_rotulos_passa_e_rotulo_inexistente_e_recusado():
+    contexto = {**_contexto_abecip(), "artefatos_contexto_llm": _tabelas_da_pagina()}
+    ok = _fonte_sem_faixa("tables/table005.json", "construcao")
+    ok.update(rotulo_inicial="BANCO 1", rotulo_final="BANCO 3")
+    FallbackCandidateValidationService().validate_candidate_layout(_candidato_abecip(_linhas_de_tabelas(ok)), contexto)
+    ruim = {**ok, "rotulo_final": "BANCO X"}
+    with pytest.raises(RuntimeError, match="rotulo_final 'BANCO X' nao e o rotulo de nenhuma linha"):
+        FallbackCandidateValidationService().validate_candidate_layout(_candidato_abecip(_linhas_de_tabelas(ruim)), contexto)
+
+
+def test_o_prompt_diz_que_as_linhas_da_tabela_inteira_sao_do_codigo_e_que_a_parte_se_declara_por_rotulo():
     from document_processing.application.use_cases.fallback.unit_mapping_prompts import (
+        unit_mapping_artifacts_instruction,
         unit_mapping_structure_instruction,
     )
 
     estrutura = unit_mapping_structure_instruction()
     assert "NAO declare linha_inicial, linha_final, segmentos nem faixas_linhas" in estrutura
     assert "o codigo define as linhas de dados" in estrutura
-    assert "a partir de 0" in estrutura and "linha_final inclusiva" in estrutura
+    assert "rotulo_inicial e rotulo_final" in estrutura and "Nunca conte linhas" in estrutura
+    # o bloco de artefatos nao pode pedir "faixas": e dele que a LLM tira o habito de contar
+    assert "faixas" not in unit_mapping_artifacts_instruction().split("Uma instrucao de tabela")[0]
 
 
-def test_os_exemplos_de_tabela_inteira_nao_trazem_faixa_e_o_de_parte_da_tabela_comeca_em_zero():
+def test_os_exemplos_de_tabela_inteira_nao_trazem_faixa_e_o_de_parte_da_tabela_usa_rotulos():
     from document_processing.application.use_cases.fallback.unit_mapping_prompts import (
         unit_mapping_structure_example,
     )
@@ -408,7 +455,8 @@ def test_os_exemplos_de_tabela_inteira_nao_trazem_faixa_e_o_de_parte_da_tabela_c
     assert not chaves_de_faixa & set(modelo)
 
     parte = formatos["linhas_de_tabela_parte_da_tabela"]
-    assert parte["faixas_linhas"][0]["linha_inicial"] == 0
+    assert not chaves_de_faixa & set(parte)
+    assert parte["rotulo_inicial"] and parte["rotulo_final"]
     schema = {f"{COLECAO}.identificador", f"{COLECAO}.valor"}
     _validar_tabelas(_candidato(parte), schema_paths=schema)
     _validar_tabelas(_candidato(formatos["linhas_de_tabela"]), schema_paths=schema)

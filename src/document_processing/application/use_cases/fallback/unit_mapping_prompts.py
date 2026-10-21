@@ -64,9 +64,11 @@ def unit_mapping_structure_instruction() -> str:
         "uma colecao inteira, mapeie o path da colecao sem filtro e declare os campos que "
         "relacionem cada indice_coluna ao campo do item. Quando a colecao usa a tabela "
         "inteira, NAO declare linha_inicial, linha_final, segmentos nem faixas_linhas: o "
-        "codigo define as linhas de dados, sem cabecalho e sem linha de total. Declare a "
-        "faixa somente quando a colecao usa apenas uma parte da tabela; nesse caso conte "
-        "as linhas a partir de 0, com linha_final inclusiva, e nunca passe da ultima linha. "
+        "codigo define as linhas de dados, sem cabecalho e sem linha de total, e uma faixa "
+        "diferente dessas linhas e recusada. Quando a colecao usa apenas uma PARTE da "
+        "tabela, declare rotulo_inicial e rotulo_final: a primeira celula da primeira e da "
+        "ultima linha dessa parte, copiadas do arquivo exatamente como aparecem. Nunca conte "
+        "linhas. "
         "Cada campo deve ter somente caminho_saida, indice_coluna e, opcionalmente, "
         "tipo texto ou numero. Nao use nome, derivacao, valor_constante ou tipo derivado "
         "dentro de campos. Valores repetidos pertencem a valores_por_segmento ou valores_fixos "
@@ -86,9 +88,9 @@ def unit_mapping_artifacts_instruction() -> str:
     """Instrui o uso dos artefatos como evidencia completa da chamada."""
     return (
         "Os proximos artefatos sao toda a evidencia disponivel para esta chamada. "
-        "Use somente arquivos presentes nesse bloco e escolha indices, rotulos e "
-        "faixas que estejam realmente observados neles. Uma instrucao de tabela deve "
-        "referenciar arquivo_origem e os indices necessarios para o resolvedor. Nao "
+        "Use somente arquivos presentes nesse bloco e escolha indices de coluna e "
+        "rotulos que estejam realmente observados neles. Uma instrucao de tabela deve "
+        "referenciar arquivo_origem e os indices de coluna necessarios para o resolvedor. Nao "
         "invente arquivos, campos ou valores. Se uma colecao inteira for preenchida "
         "por linhas_de_tabela ou por linhas_de_tabelas, use diretamente o path da colecao. Fora desse caso, todo "
         "array listado em arrays_que_exigem_seletor, inclusive os aninhados dentro de outro "
@@ -174,7 +176,8 @@ def unit_mapping_structure_example(*, unit_id: str) -> dict[str, Any]:
             "linhas_de_tabela_parte_da_tabela": {
                 "tipo_origem": "linhas_de_tabela",
                 "arquivo_origem": "tables/table001.json",
-                "faixas_linhas": [{"linha_inicial": 0, "linha_final": 14}],
+                "rotulo_inicial": "primeira celula da primeira linha da parte",
+                "rotulo_final": "primeira celula da ultima linha da parte",
                 "campos": [
                     {"caminho_saida": "identificador", "indice_coluna": 0},
                     {"caminho_saida": "valor", "indice_coluna": 3, "tipo": "numero"},

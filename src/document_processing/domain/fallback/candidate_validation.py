@@ -735,11 +735,15 @@ class FallbackCandidateValidationService:
         candidate: LayoutSignatureCandidate,
         fallback_problem_context: dict[str, Any],
     ) -> None:
-        """Faixa explicita de linhas tem de caber na tabela que a LLM recebeu.
+        """Faixa e rotulos de linhas tem de bater com a tabela que a LLM recebeu.
 
         O resolvedor descarta em silencio a faixa cujo fim passa da ultima linha
         e a colecao sai vazia; aqui a LLM recebe o erro com o tamanho da tabela.
-        Faixa omitida nao entra: a tabela inteira e decidida por codigo.
+        Nos escopos de criacao a faixa numerica tambem tem de coincidir com as
+        linhas de dados (sem total, sem linha pulada, sem linha vazia): quem quer
+        a tabela inteira nao declara faixa, e quem quer uma parte declara
+        rotulo_inicial e rotulo_final. Faixa omitida nao entra: o codigo a define.
+        Na correcao parcial o layout base e preservado como esta.
         """
         loaded = fallback_problem_context.get("artefatos_contexto_llm")
         if not isinstance(loaded, dict) or not loaded:
@@ -748,9 +752,13 @@ class FallbackCandidateValidationService:
             path: entry.model_dump(mode="json", exclude_none=True)
             for path, entry in candidate.mapeamento_canonico.items()
         }
-        problems = explicit_row_range_problems(entries, loaded)
+        creating = candidate.escopo_correcao in {
+            FallbackCandidateValidationService.CREATION_SCOPE,
+            FallbackCandidateValidationService.FULL_REMAP_SCOPE,
+        }
+        problems = explicit_row_range_problems(entries, loaded, estrito=creating)
         if problems:
-            raise RuntimeError("Faixa de linhas fora da tabela: " + " ".join(problems))
+            raise RuntimeError("Faixa de linhas incompativel com a tabela: " + " ".join(problems))
 
     @staticmethod
     def _validate_table_rows_source(

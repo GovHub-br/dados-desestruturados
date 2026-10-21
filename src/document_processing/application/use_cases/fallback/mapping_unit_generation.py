@@ -179,7 +179,7 @@ class MappingUnitGenerationMixin:
                     position,
                     len(units),
                     unit.id,
-                    sum(1 for item in row_range_log if item["acao"] == "faixa_do_codigo"),
+                    sum(1 for item in row_range_log if item["acao"] in {"faixa_do_codigo", "faixa_por_rotulos"}),
                 )
             logging.info(
                 "Unidade %s/%s (%s): fragmento validado com %s mapeamento(s) e %s correcao(oes)",

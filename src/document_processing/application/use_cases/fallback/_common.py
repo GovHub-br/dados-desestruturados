@@ -167,7 +167,7 @@ def fill_fragment_row_ranges(
         for path, entry in fragment.mapeamento_canonico.items()
     }
     mapeamento, registro = fill_mapping_row_ranges(entradas, loaded_artifacts)
-    if not any(item["acao"] == "faixa_do_codigo" for item in registro):
+    if not any(item["acao"] in {"faixa_do_codigo", "faixa_por_rotulos"} for item in registro):
         return fragment, registro
     dados = fragment.model_dump(mode="json", exclude_none=True)
     dados["mapeamento_canonico"] = mapeamento

@@ -12,6 +12,11 @@ Linha de total ou subtotal e dado calculado, e a plataforma coleta so dado
 bruto (secao "Valores Brutos e Metricas Derivadas" do SPEC): ela fica de fora
 e fecha a faixa. Nada aqui conhece um dominio; o que entra na faixa vem so da
 forma da tabela (``schema`` + ``rows`` do Docling).
+
+Quando a colecao usa so uma parte da tabela, a LLM nao conta linhas: declara
+``rotulo_inicial`` e ``rotulo_final`` (a primeira celula da primeira e da ultima
+linha da parte) e o codigo acha os indices. Faixa numerica da LLM so vale se
+coincidir com as linhas de dados que o codigo calcula.
 """
 
 from __future__ import annotations
@@ -112,6 +117,7 @@ def data_row_ranges(
 
 TIPOS_DE_LINHAS_DE_TABELA = ("linhas_de_tabela", "linhas_de_tabelas")
 _CHAVES_DE_FAIXA = ("linha_inicial", "linha_final", "segmentos", "faixas_linhas")
+_CHAVES_DE_ROTULO = ("rotulo_inicial", "rotulo_final")
 
 
 @dataclass(frozen=True)
@@ -136,6 +142,11 @@ def _tem_faixa_explicita(instrucao: Mapping[str, Any]) -> bool:
     return any(instrucao.get(chave) not in (None, [], {}) for chave in _CHAVES_DE_FAIXA)
 
 
+def _rotulos_declarados(instrucao: Mapping[str, Any]) -> tuple[str, str]:
+    """``(rotulo_inicial, rotulo_final)`` declarados; vazio quando nao ha."""
+    return tuple(str(instrucao.get(chave) or "").strip() for chave in _CHAVES_DE_ROTULO)  # type: ignore[return-value]
+
+
 def _colunas_lidas(instrucao: Mapping[str, Any]) -> list[int]:
     """Colunas numericas que a instrucao le (campos ``numero`` e ``indices_colunas`` posicionais)."""
     campos = list(instrucao.get("campos") or [])
@@ -151,7 +162,76 @@ def _colunas_lidas(instrucao: Mapping[str, Any]) -> list[int]:
     return sorted(colunas)
 
 
+def _linhas_das_faixas(faixas: Sequence[RowRange]) -> set[int]:
+    return {linha for inicio, fim in faixas for linha in range(inicio, fim + 1)}
+
+
+def _rotulo_da_linha(linha: Sequence[Any]) -> str:
+    """Rotulo da linha: a primeira celula preenchida (``2010``, ``Jan``, ``CAIXA``), normalizada."""
+    return next((normalize_text(celula) for celula in linha if _texto(celula)), "")
+
+
+def _linhas_do_conteudo(conteudo: Mapping[str, Any]) -> list[list[Any]]:
+    return [list(row) if isinstance(row, (list, tuple)) else [] for row in conteudo["rows"]]
+
+
+def resolve_label_range(
+    conteudo: Mapping[str, Any],
+    rotulo_inicial: str,
+    rotulo_final: str,
+    faixas_de_dados: Sequence[RowRange],
+) -> tuple[tuple[RowRange, ...], str | None]:
+    """Faixas de uma parte da tabela dadas pelo rotulo da primeira e da ultima linha.
+
+    Cada rotulo tem de aparecer em exatamente uma linha de dados; rotulo ausente
+    ou repetido devolve a causa em vez de adivinhar. A parte ainda respeita o
+    que o codigo exclui (cabecalho, titulo de bloco, linha de total).
+    """
+    linhas = _linhas_do_conteudo(conteudo)
+    dados = sorted(_linhas_das_faixas(faixas_de_dados))
+    rotulos = {i: _rotulo_da_linha(linhas[i]) for i in dados}
+
+    def achar(rotulo: str, papel: str) -> tuple[int | None, str | None]:
+        alvo = normalize_text(rotulo)
+        indices = [i for i in dados if rotulos[i] == alvo]
+        if len(indices) == 1:
+            return indices[0], None
+        if not indices:
+            amostra = [str(_texto(next((c for c in linhas[i] if _texto(c)), ""))) for i in dados]
+            return None, (
+                f"{papel} '{rotulo}' nao e o rotulo de nenhuma linha de dados da tabela "
+                f"(primeiros: {amostra[:3]}; ultimos: {amostra[-3:]}); copie a primeira celula da linha exatamente como aparece."
+            )
+        return None, f"{papel} '{rotulo}' aparece em mais de uma linha de dados (linhas {indices[:6]}); a parte da tabela fica ambigua."
+
+    inicio, fim = (dados[0] if dados else 0), (dados[-1] if dados else -1)
+    if rotulo_inicial:
+        achado, erro = achar(rotulo_inicial, "rotulo_inicial")
+        if erro:
+            return (), erro
+        inicio = achado  # type: ignore[assignment]
+    if rotulo_final:
+        achado, erro = achar(rotulo_final, "rotulo_final")
+        if erro:
+            return (), erro
+        fim = achado  # type: ignore[assignment]
+    if inicio > fim:
+        return (), f"rotulo_final '{rotulo_final}' vem antes de rotulo_inicial '{rotulo_inicial}' na tabela."
+    partes = tuple((max(a, inicio), min(b, fim)) for a, b in faixas_de_dados if max(a, inicio) <= min(b, fim))
+    return partes, (None if partes else "a parte da tabela pedida nao tem linha de dados.")
+
+
+def _limpar_faixa(instrucao: dict[str, Any]) -> None:
+    """Tira a faixa antiga sem perder os valores por bloco, que passam para a propria instrucao."""
+    segmentos = instrucao.get("segmentos") or instrucao.get("faixas_linhas") or []
+    if len(segmentos) == 1 and isinstance(segmentos[0], dict) and segmentos[0].get("valores_por_segmento"):
+        instrucao.setdefault("valores_por_segmento", segmentos[0]["valores_por_segmento"])
+    for chave in _CHAVES_DE_FAIXA:
+        instrucao.pop(chave, None)
+
+
 def _aplicar_faixas(instrucao: dict[str, Any], faixas: Sequence[RowRange]) -> None:
+    _limpar_faixa(instrucao)
     if len(faixas) == 1:
         instrucao["linha_inicial"], instrucao["linha_final"] = faixas[0]
         return
@@ -169,18 +249,20 @@ def fill_table_row_ranges(
     mapeamento: Mapping[str, Any],
     tabelas: Mapping[str, Any],
 ) -> TableRowRangeFill:
-    """Preenche por codigo as linhas de cada instrucao de tabela inteira.
+    """Preenche por codigo as linhas de cada instrucao de tabela.
 
-    Uma instrucao ``linhas_de_tabela`` (ou cada fonte de ``linhas_de_tabelas``)
-    sem ``linha_inicial``, ``linha_final``, ``segmentos`` nem ``faixas_linhas``
-    le a tabela como um todo: as linhas vem de ``data_row_ranges``, com as
-    colunas que a propria instrucao le. Uma instrucao com faixa explicita e um
-    pedaco da tabela escolhido pela LLM e nao e tocada. ``tabelas`` mapeia o
-    ``arquivo_origem`` ao artefato da tabela; tabela ausente deixa a instrucao
-    como veio, e o registro diz isso (o resolvedor, sem faixa, le todas as
-    linhas da tabela).
+    Uma instrucao ``linhas_de_tabela`` (ou cada fonte de ``linhas_de_tabelas``):
 
-    O mapeamento recebido nao e alterado.
+    - com ``rotulo_inicial``/``rotulo_final``: le a parte da tabela entre esses
+      rotulos (``resolve_label_range``); os rotulos ficam na instrucao, para auditoria;
+    - com faixa numerica: a faixa da LLM e mantida (o validador ja recusou a que
+      diverge das linhas de dados, nos escopos de criacao);
+    - sem nenhuma das duas: le a tabela como um todo, com as linhas de
+      ``data_row_ranges`` nas colunas que a propria instrucao le.
+
+    ``tabelas`` mapeia o ``arquivo_origem`` ao artefato da tabela; tabela
+    ausente deixa a instrucao como veio, e o registro diz isso (o resolvedor,
+    sem faixa, le todas as linhas da tabela). O mapeamento recebido nao e alterado.
     """
     novo = copy.deepcopy(dict(mapeamento))
     registro: list[dict[str, Any]] = []
@@ -191,19 +273,30 @@ def fill_table_row_ranges(
             arquivo = str(instrucao.get("arquivo_origem") or "").strip()
             item: dict[str, Any] = {"caminho": caminho, "arquivo_origem": arquivo}
             registro.append(item)
-            if _tem_faixa_explicita(instrucao):
+            rotulo_inicial, rotulo_final = _rotulos_declarados(instrucao)
+            if _tem_faixa_explicita(instrucao) and not (rotulo_inicial or rotulo_final):
                 item["acao"] = "faixa_da_llm"
                 continue
             artefato = tabelas.get(arquivo)
-            faixas = data_row_ranges(artefato, colunas=_colunas_lidas(instrucao)) if artefato is not None else None
-            if faixas is None:
+            conteudo = table_artifact_content(artefato) if artefato is not None else None
+            faixas = data_row_ranges(conteudo, colunas=_colunas_lidas(instrucao)) if conteudo is not None else None
+            if faixas is None or conteudo is None:
                 item["acao"] = "tabela_nao_carregada"
-            elif not faixas:
+                continue
+            if not faixas:
                 item["acao"] = "sem_linhas_de_dados"
-            else:
-                _aplicar_faixas(instrucao, faixas)
-                item["acao"] = "faixa_do_codigo"
-                item["faixas"] = [list(faixa) for faixa in faixas]
+                continue
+            acao = "faixa_do_codigo"
+            if rotulo_inicial or rotulo_final:
+                faixas, erro = resolve_label_range(conteudo, rotulo_inicial, rotulo_final, faixas)
+                if erro:
+                    item["acao"] = "rotulos_nao_resolvidos"
+                    item["erro"] = erro
+                    continue
+                acao = "faixa_por_rotulos"
+            _aplicar_faixas(instrucao, faixas)
+            item["acao"] = acao
+            item["faixas"] = [list(faixa) for faixa in faixas]
     return TableRowRangeFill(mapeamento=novo, registro=registro)
 
 
@@ -220,37 +313,100 @@ def _faixas_explicitas(instrucao: Mapping[str, Any]) -> list[tuple[Any, Any]]:
     return faixas
 
 
+def _descrever(linhas: Sequence[Sequence[Any]], indices: Sequence[int], motivo: str) -> str:
+    amostra = ", ".join(f"{i} ('{_texto(next((c for c in linhas[i] if _texto(c)), ''))}')" if i < len(linhas) else f"{i}" for i in indices[:4])
+    return f"{motivo}: linha {amostra}" + ("..." if len(indices) > 4 else "")
+
+
+def _divergencia(
+    caminho: str,
+    arquivo: Any,
+    conteudo: Mapping[str, Any],
+    faixas_da_llm: Sequence[RowRange],
+    faixas_de_dados: Sequence[RowRange],
+) -> str | None:
+    """Por que a faixa numerica da LLM difere das linhas de dados que o codigo calcula; ``None`` se coincidem."""
+    linhas = _linhas_do_conteudo(conteudo)
+    llm, codigo = _linhas_das_faixas(faixas_da_llm), _linhas_das_faixas(faixas_de_dados)
+    if llm == codigo:
+        return None
+    sobra = sorted(llm - codigo)
+    falta = sorted(codigo - llm)
+    partes = []
+    agregadas = [i for i in sobra if i < len(linhas) and is_aggregate_label(_rotulo_da_linha(linhas[i]))]
+    if agregadas:
+        partes.append(_descrever(linhas, agregadas, "le linha de total (dado calculado, nao se coleta)"))
+    outras = [i for i in sobra if i not in agregadas]
+    if outras:
+        partes.append(_descrever(linhas, outras, "le linha que nao e de dados (cabecalho, titulo ou sem valor nas colunas lidas)"))
+    if falta:
+        partes.append(_descrever(linhas, falta, "deixa de ler linha de dados"))
+    lida = ", ".join(f"{a} a {b}" for a, b in faixas_da_llm)
+    dados = ", ".join(f"{a} a {b}" for a, b in faixas_de_dados)
+    return (
+        f"{caminho} ({arquivo}): a faixa declarada ({lida}) difere das linhas de dados da tabela ({dados}); {'; '.join(partes)}. "
+        "Para ler a tabela inteira, NAO declare faixa: o codigo a define. Para ler so uma parte, declare rotulo_inicial e rotulo_final "
+        "(a primeira celula da primeira e da ultima linha da parte, copiadas do arquivo) em vez de contar linhas."
+    )
+
+
 def explicit_row_range_problems(
     mapeamento: Mapping[str, Any],
     tabelas: Mapping[str, Any],
+    *,
+    estrito: bool = False,
 ) -> list[str]:
-    """Faixas explicitas que o resolvedor descartaria em silencio por nao caberem na tabela.
+    """Faixas e rotulos que o resolvedor descartaria ou que divergem da tabela, com a causa.
 
-    O resolvedor ignora a faixa inteira quando ``linha_final`` passa da ultima
-    linha, ``linha_inicial`` e negativa ou o fim vem antes do inicio, e a
-    colecao sai vazia sem erro. Aqui o erro aparece com a causa, para a LLM
-    corrigir. Tabela nao carregada nao e verificada.
+    - Faixa que passa da ultima linha, e negativa ou invertida: o resolvedor a
+      descartaria em silencio e a colecao sairia vazia.
+    - Rotulo inicial/final que nao existe, e repetido ou fora de ordem.
+    - ``estrito`` (escopos de criacao de layout): faixa numerica diferente das
+      linhas de dados da tabela (linha de total, primeira linha pulada, linha sem
+      valor); a LLM recebe a diferenca e corrige. Fora desses escopos o layout base
+      e preservado como esta.
+
+    Tabela nao carregada nao e verificada.
     """
     problemas: list[str] = []
     for caminho, entrada in mapeamento.items():
         if not isinstance(entrada, Mapping):
             continue
         for instrucao in _instrucoes_de_linhas(entrada):
-            artefato = tabelas.get(str(instrucao.get("arquivo_origem") or "").strip())
+            arquivo = instrucao.get("arquivo_origem")
+            artefato = tabelas.get(str(arquivo or "").strip())
             conteudo = table_artifact_content(artefato) if artefato is not None else None
-            if conteudo is None or not _tem_faixa_explicita(instrucao):
+            if conteudo is None:
+                continue
+            rotulo_inicial, rotulo_final = _rotulos_declarados(instrucao)
+            dados = data_row_ranges(conteudo, colunas=_colunas_lidas(instrucao)) or ()
+            if rotulo_inicial or rotulo_final:
+                _, erro = resolve_label_range(conteudo, rotulo_inicial, rotulo_final, dados)
+                if erro:
+                    problemas.append(f"{caminho} ({arquivo}): {erro}")
+                continue
+            if not _tem_faixa_explicita(instrucao):
                 continue
             total = len(conteudo["rows"])
-            arquivo = instrucao.get("arquivo_origem")
+            invalidas = False
+            validas: list[RowRange] = []
             for inicio, fim in _faixas_explicitas(instrucao):
                 fim = total - 1 if fim is None else fim
                 if not isinstance(inicio, int) or not isinstance(fim, int):
                     continue
                 if inicio < 0 or fim < inicio:
+                    invalidas = True
                     problemas.append(f"{caminho} ({arquivo}): faixa {inicio} a {fim} invalida; a contagem comeca em 0 e linha_final nao pode vir antes de linha_inicial.")
                 elif fim >= total:
+                    invalidas = True
                     problemas.append(
                         f"{caminho} ({arquivo}): linha_final {fim} passa da ultima linha da tabela, que tem {total} linhas "
                         f"(indices 0 a {total - 1}); o resolvedor descartaria a faixa inteira. Conte a partir de 0, com linha_final inclusiva."
                     )
+                else:
+                    validas.append((inicio, fim))
+            if estrito and not invalidas and validas and dados:
+                divergencia = _divergencia(caminho, arquivo, conteudo, validas, dados)
+                if divergencia:
+                    problemas.append(divergencia)
     return problemas

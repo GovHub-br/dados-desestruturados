@@ -11,6 +11,7 @@ from document_processing.domain.fallback.table_row_ranges import (
     explicit_row_range_problems,
     fill_table_row_ranges,
     is_aggregate_label,
+    resolve_label_range,
 )
 
 
@@ -308,3 +309,106 @@ def test_faixas_invalidas_sao_apontadas_em_segmentos_e_em_fontes() -> None:
 def test_tabela_nao_carregada_ou_sem_faixa_explicita_nao_e_verificada() -> None:
     assert explicit_row_range_problems({"colecao": _linhas_de_tabela(linha_final=99)}, {}) == []
     assert explicit_row_range_problems({"colecao": _linhas_de_tabela()}, {"tables/t1.json": CONSTRUCAO_2026_01}) == []
+
+
+# --- parte da tabela por rotulo, nao por contagem ----------------------------
+
+# Tabela anual real: anos completos, o ano corrente aberto mes a mes e uma linha "Em 2025".
+ANUAL_COM_ANO_CORRENTE = _tabela(
+    ["Anos", "Unidades", "Volume"],
+    [[str(ano), "400.000", "100.000,5"] for ano in range(2010, 2025)]
+    + [["2025*", "38.529", "13.479,2"], ["", "36.273", "12.737,1"], ["", "34.225", "12.092,9"], ["Em 2025", "369.085", "127.780,4"]],
+)
+
+
+def test_rotulo_inicial_e_final_escolhem_a_parte_da_tabela_sem_contar_linhas() -> None:
+    dados = data_row_ranges(ANUAL_COM_ANO_CORRENTE)
+    assert dados == ((0, 18),)
+    faixas, erro = resolve_label_range(ANUAL_COM_ANO_CORRENTE, "2010", "2024", dados or ())
+    assert (faixas, erro) == (((0, 14),), None)
+
+
+def test_so_o_rotulo_final_ou_so_o_inicial_completam_o_outro_lado_com_a_tabela() -> None:
+    dados = data_row_ranges(ANUAL_COM_ANO_CORRENTE) or ()
+    assert resolve_label_range(ANUAL_COM_ANO_CORRENTE, "", "2024", dados)[0] == ((0, 14),)
+    assert resolve_label_range(ANUAL_COM_ANO_CORRENTE, "2020", "", dados)[0] == ((10, 18),)
+
+
+def test_rotulo_ausente_repetido_ou_fora_de_ordem_devolve_a_causa() -> None:
+    dados = data_row_ranges(ANUAL_COM_ANO_CORRENTE) or ()
+    _, erro = resolve_label_range(ANUAL_COM_ANO_CORRENTE, "1999", "2024", dados)
+    assert erro is not None and "rotulo_inicial '1999'" in erro and "primeiros" in erro
+    repetida = _tabela(["A", "B", "C"], [["X", "1", "2"], ["Y", "3", "4"], ["X", "5", "6"]])
+    _, erro = resolve_label_range(repetida, "X", "Y", data_row_ranges(repetida) or ())
+    assert erro is not None and "mais de uma linha" in erro
+    _, erro = resolve_label_range(ANUAL_COM_ANO_CORRENTE, "2024", "2010", dados)
+    assert erro is not None and "vem antes" in erro
+
+
+def test_o_rotulo_nao_casa_linha_de_total_nem_titulo() -> None:
+    _, erro = resolve_label_range(CONSTRUCAO_2026_01, "TOTAL", "TOTAL", data_row_ranges(CONSTRUCAO_2026_01) or ())
+    assert erro is not None and "nao e o rotulo de nenhuma linha de dados" in erro
+
+
+def test_o_rotulo_ignora_acento_caixa_e_espaco() -> None:
+    dados = data_row_ranges(MENSAL_2025_11) or ()
+    assert resolve_label_range(MENSAL_2025_11, " jan ", "DEZ", dados)[0] == ((0, 11),)
+
+
+def test_instrucao_com_rotulos_vira_faixa_numerica_e_guarda_os_rotulos() -> None:
+    mapeamento = {"anual": _linhas_de_tabela(rotulo_inicial="2010", rotulo_final="2024")}
+    preenchido = fill_table_row_ranges(mapeamento, {"tables/t1.json": ANUAL_COM_ANO_CORRENTE})
+    instrucao = preenchido.mapeamento["anual"]
+    assert (instrucao["linha_inicial"], instrucao["linha_final"]) == (0, 14)
+    assert instrucao["rotulo_inicial"] == "2010" and instrucao["rotulo_final"] == "2024"
+    assert preenchido.registro[0]["acao"] == "faixa_por_rotulos"
+
+
+def test_rotulos_valem_mais_que_a_faixa_numerica_e_nao_perdem_os_valores_por_segmento() -> None:
+    mapeamento = {
+        "anual": _linhas_de_tabela(
+            segmentos=[{"linha_inicial": 3, "linha_final": 20, "valores_por_segmento": {"modalidade": "total"}}],
+            rotulo_inicial="2010",
+            rotulo_final="2024",
+        )
+    }
+    instrucao = fill_table_row_ranges(mapeamento, {"tables/t1.json": ANUAL_COM_ANO_CORRENTE}).mapeamento["anual"]
+    assert "segmentos" not in instrucao
+    assert (instrucao["linha_inicial"], instrucao["linha_final"]) == (0, 14)
+    assert instrucao["valores_por_segmento"] == {"modalidade": "total"}
+
+
+def test_rotulo_que_nao_resolve_deixa_a_instrucao_como_veio_e_registra_o_erro() -> None:
+    mapeamento = {"anual": _linhas_de_tabela(rotulo_inicial="1999")}
+    preenchido = fill_table_row_ranges(mapeamento, {"tables/t1.json": ANUAL_COM_ANO_CORRENTE})
+    assert preenchido.mapeamento == mapeamento
+    assert preenchido.registro[0]["acao"] == "rotulos_nao_resolvidos" and "1999" in preenchido.registro[0]["erro"]
+
+
+# --- faixa numerica que diverge das linhas de dados (so nos escopos de criacao) ---
+
+
+def test_estrito_aponta_total_primeira_linha_pulada_e_linha_vazia_com_o_rotulo_de_cada_uma() -> None:
+    tabelas = {"tables/t1.json": CONSTRUCAO_2026_01}
+    com_total = explicit_row_range_problems({"c": _linhas_de_tabela(linha_inicial=0, linha_final=6)}, tabelas, estrito=True)
+    assert len(com_total) == 1 and "linha de total" in com_total[0] and "6 ('TOTAL')" in com_total[0]
+    pulada = explicit_row_range_problems({"c": _linhas_de_tabela(linha_inicial=1, linha_final=5)}, tabelas, estrito=True)
+    assert len(pulada) == 1 and "deixa de ler linha de dados: linha 0 ('CAIXA')" in pulada[0]
+    mensal = {"serie": _linhas_de_tabela(campos=[{"caminho_saida": "m", "indice_coluna": 0}, {"caminho_saida": "u", "indice_coluna": 3, "tipo": "numero"}], linha_inicial=0, linha_final=11)}
+    vazia = explicit_row_range_problems(mensal, {"tables/t1.json": MENSAL_ANO_CORRENTE_ATE_JUNHO}, estrito=True)
+    assert len(vazia) == 1 and "sem valor nas colunas lidas" in vazia[0] and "6 ('Jul')" in vazia[0]
+
+
+def test_estrito_aceita_a_faixa_que_coincide_e_o_nao_estrito_nao_compara() -> None:
+    tabelas = {"tables/t1.json": CONSTRUCAO_2026_01}
+    assert explicit_row_range_problems({"c": _linhas_de_tabela(linha_inicial=0, linha_final=5)}, tabelas, estrito=True) == []
+    assert explicit_row_range_problems({"c": _linhas_de_tabela(linha_inicial=1, linha_final=6)}, tabelas) == []
+
+
+def test_estrito_aceita_segmentos_cuja_uniao_e_as_linhas_de_dados() -> None:
+    tabela = _tabela(
+        ["Item", "2025", "2024"],
+        [["Construcao", "", ""], ["CAIXA", "10", "9"], ["BRB", "2", "1"], ["Aquisicao", "", ""], ["CAIXA", "20", "19"], ["BRB", "4", "3"]],
+    )
+    segmentos = [{"linha_inicial": 1, "linha_final": 2}, {"linha_inicial": 4, "linha_final": 5}]
+    assert explicit_row_range_problems({"c": _linhas_de_tabela(segmentos=segmentos)}, {"tables/t1.json": tabela}, estrito=True) == []

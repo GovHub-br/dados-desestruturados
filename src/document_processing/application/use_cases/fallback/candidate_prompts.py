@@ -100,8 +100,9 @@ def candidate_structure_instruction() -> str:
         "terminar em um campo terminal, a DAG grava somente o valor extraido nesse campo. "
         "Para celula_de_tabela e cabecalho_de_tabela, informe os indices observados; para "
         "linhas_de_tabela, informe as colunas a capturar; as linhas da tabela inteira sao "
-        "definidas pelo codigo, e a faixa so se declara quando a colecao usa parte da "
-        "tabela (contagem a partir de 0, linha_final inclusiva). Nao use regex nem "
+        "definidas pelo codigo (nao declare faixa), e quando a colecao usa so uma parte da "
+        "tabela declare rotulo_inicial e rotulo_final, a primeira celula da primeira e da "
+        "ultima linha da parte, sem contar linhas. Nao use regex nem "
         "padrao_cabecalho_aceito em tabelas: a DAG le diretamente a posicao informada e "
         "preserva o cabecalho bruto. Regex e reservado a bloco_textual."
     )
