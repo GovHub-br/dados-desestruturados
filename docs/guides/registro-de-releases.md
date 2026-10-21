@@ -1660,3 +1660,33 @@ prompt, e nada de regra no contrato: linha de total e dado calculado e a platafo
 - **Fora desta release:** OCR (P10, P11, rotulos de mes lidos como `imr`/`1no`/`m`), serie anual como sub-bloco (a faixa
   continua da LLM; ideia: rotulo inicial e final em vez de indice), identificar a tabela por titulo, resolver em tempo
   de resolucao em vez de na criacao do layout.
+
+### Tentativa 1 (`exp-faixas-por-codigo`): o mecanismo nao ativou; interrompida apos 2 documentos
+
+Rodados maio e 2025-10 (o resto da serie foi cancelado ao ver o resultado de maio). **Em maio, as 7 instrucoes de tabela vieram com
+faixa da LLM (`faixa_da_llm` em `faixas_por_codigo.json`) e o codigo nao preencheu nenhuma.** A instrucao nova esta na entrada da
+LLM (`entrada_llm_fragmento_layout_signature.json`) e ela declarou `faixas_linhas` mesmo assim: pedir no prompt nao basta. Maio
+saiu certo (verificador: 2 alertas, os dois de OCR; a serie mensal veio com `0 a 4`, certa, e no lote 14 tinha vindo `0 a 11`), mas
+por acerto da LLM, nao pelo mecanismo; 2025-10 nao foi avaliado. Ponteiro da ABECIP: v2.16.0 -> **v2.18.0** (maio v2.17.0,
+2025-10 v2.18.0). Rotulo `exp-faixas-por-codigo` fica sem comparacao.
+
+### Tentativa 2 (`exp-faixas-rotulos`): o codigo impoe a regra
+
+Declarado antes de rodar. Mesma hipotese, metrica-alvo, guardas, etapas, bases e ponteiros de antes da secao acima; muda o mecanismo
+(commit `fa1b8d2`):
+
+- Nos escopos de criacao, a **faixa numerica da LLM so vale se coincidir com as linhas de dados** que o codigo calcula. Se divergir
+  (linha de total, primeira linha pulada, linha sem valor nas colunas lidas, alem do fim), o validador recusa no ciclo de reparo da
+  LLM (3 tentativas por unidade) com a diferenca linha a linha e o caminho certo. Na correcao parcial o layout base e preservado;
+  so o que o resolvedor descartaria em silencio e erro em qualquer escopo.
+- **Parte da tabela por rotulo, nao por contagem:** `rotulo_inicial` e `rotulo_final` (primeira celula da primeira e da ultima
+  linha da parte); o codigo acha os indices, e rotulo ausente ou repetido volta como erro. E o caso da serie anual, que a tabela
+  traz junto com o ano corrente mes a mes e a linha "Em 20XX".
+- Prompts publicados: `unit-mapping-estrutura` v4 -> v5, `candidato-estrutura` v2 -> v3, `unit-mapping-artefatos` v3 -> v4
+  (o bloco de artefatos pedia "faixas").
+- **Previsao offline do validador sobre os 10 layouts ja gerados da ABECIP:** recusa 7 de 7 casos com `TOTAL` como instituicao ou
+  faixa alem do fim, os 3 de primeira linha pulada, os 4 de mes futuro vazio na serie mensal, e a serie anual em todos os meses
+  (por desenho: passa a ser por rotulo); nao recusa nenhuma faixa que a LLM tinha acertado.
+- **Risco declarado:** cada unidade com tabela tende a gastar uma tentativa de reparo a mais na primeira rodada (a LLM declara faixa
+  por habito), e uma unidade que nao acatar o erro em 3 tentativas falha e nao publica (falha segura, mas cai a disponibilidade).
+  Medir `correction_attempts_used` e `e2e_apto_para_bronze`.
