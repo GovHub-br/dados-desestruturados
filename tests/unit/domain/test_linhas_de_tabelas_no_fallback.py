@@ -283,3 +283,132 @@ def test_o_mesmo_candidato_com_campo_fora_do_schema_numa_das_fontes_e_recusado_c
     modalidade = _linhas_de_tabelas(_fonte_abecip("tables/table005.json", "construcao", 8), ruim)
     with pytest.raises(RuntimeError, match="volume_inventado"):
         FallbackCandidateValidationService().validate_candidate_layout(_candidato_abecip(modalidade), contexto)
+
+
+# --- as linhas da tabela inteira sao do codigo, nao da LLM ---------------------
+
+
+def _tabela_abecip(n_instituicoes: int) -> dict:
+    """Tabela de modalidade do Docling: instituicoes e, no fim, a linha TOTAL."""
+    linhas = [[f"BANCO {i}", "10,0", str(i + 1)] for i in range(n_instituicoes)]
+    linhas.append(["TOTAL", "99,0", "99"])
+    return {"schema": ["Agentes", "Volume", "Unidades"], "rows": linhas}
+
+
+def _fonte_sem_faixa(arquivo, modalidade):
+    fonte = _fonte_abecip(arquivo, modalidade, 0)
+    del fonte["linha_inicial"], fonte["linha_final"]
+    return fonte
+
+
+def _tabelas_da_pagina():
+    return {
+        "tables/table005.json": _tabela_abecip(5),
+        "tables/table006.json": _tabela_abecip(8),
+        "tables/table007.json": _tabela_abecip(9),
+    }
+
+
+def _modalidade_sem_faixa():
+    return _linhas_de_tabelas(
+        _fonte_sem_faixa("tables/table005.json", "construcao"),
+        _fonte_sem_faixa("tables/table006.json", "aquisicao"),
+        _fonte_sem_faixa("tables/table007.json", "total"),
+    )
+
+
+def test_candidato_sem_faixa_nas_fontes_passa_no_validador_completo():
+    contexto = _contexto_abecip()
+    modelo = FallbackCandidateValidationService().validate_candidate_layout(
+        _candidato_abecip(_modalidade_sem_faixa()), contexto
+    )
+    fontes = modelo.mapeamento_canonico["financiamentos_imobiliarios.por_modalidade_e_instituicao"].model_dump()["fontes"]
+    assert all("linha_inicial" not in fonte for fonte in fontes)
+
+
+def test_o_codigo_preenche_as_tres_tabelas_sem_a_linha_total_e_com_a_primeira_linha():
+    from document_processing.application.use_cases.fallback._common import fill_mapping_row_ranges
+
+    mapeamento, registro = fill_mapping_row_ranges(
+        {"financiamentos_imobiliarios.por_modalidade_e_instituicao": _modalidade_sem_faixa()}, _tabelas_da_pagina()
+    )
+    fontes = mapeamento["financiamentos_imobiliarios.por_modalidade_e_instituicao"]["fontes"]
+    assert [(f["linha_inicial"], f["linha_final"]) for f in fontes] == [(0, 4), (0, 7), (0, 8)]
+    assert [f["valores_por_segmento"]["modalidade"] for f in fontes] == ["construcao", "aquisicao", "total"]
+    assert {item["acao"] for item in registro} == {"faixa_do_codigo"}
+
+
+def test_fragmento_validado_sai_com_as_faixas_do_codigo_e_continua_valido():
+    from document_processing.application.use_cases.fallback._common import fill_fragment_row_ranges
+    from document_processing.domain.fallback.models import LayoutSignatureFragment
+
+    caminho = "financiamentos_imobiliarios.por_modalidade_e_instituicao"
+    fragmento = LayoutSignatureFragment.model_validate(
+        {
+            "tipo_artefato": "fragmento_layout_signature",
+            "unidade_mapeamento": "u",
+            "campos_nao_mapeados": [],
+            "mapeamento_canonico": {caminho: _modalidade_sem_faixa()},
+            "fontes_relevantes": {},
+            "metadados_estruturais_evidencia": {},
+        }
+    )
+    envelopes = {k: {"object_key": k, "formato": "json", "sample": v} for k, v in _tabelas_da_pagina().items()}
+    novo, registro = fill_fragment_row_ranges(fragmento, envelopes)
+    fontes = novo.mapeamento_canonico[caminho].model_dump(exclude_none=True)["fontes"]
+    assert [(f["linha_inicial"], f["linha_final"]) for f in fontes] == [(0, 4), (0, 7), (0, 8)]
+    assert len(registro) == 3
+    # o original nao muda e, sem nada para preencher, o proprio objeto volta
+    assert "linha_inicial" not in fragmento.mapeamento_canonico[caminho].model_dump(exclude_none=True)["fontes"][0]
+    assert fill_fragment_row_ranges(novo, envelopes)[0] is novo
+
+
+def test_faixa_explicita_alem_do_fim_da_tabela_e_recusada_com_o_tamanho_da_tabela():
+    contexto = {**_contexto_abecip(), "artefatos_contexto_llm": _tabelas_da_pagina()}
+    modalidade = _linhas_de_tabelas(
+        _fonte_abecip("tables/table005.json", "construcao", 6),
+        _fonte_sem_faixa("tables/table006.json", "aquisicao"),
+    )
+    with pytest.raises(RuntimeError, match=r"Faixa de linhas fora da tabela.*linha_final 6.*6 linhas"):
+        FallbackCandidateValidationService().validate_candidate_layout(_candidato_abecip(modalidade), contexto)
+
+
+def test_faixa_explicita_dentro_da_tabela_e_a_omitida_passam_com_a_evidencia_carregada():
+    contexto = {**_contexto_abecip(), "artefatos_contexto_llm": _tabelas_da_pagina()}
+    for modalidade in (
+        _linhas_de_tabelas(_fonte_abecip("tables/table005.json", "construcao", 5)),
+        _modalidade_sem_faixa(),
+    ):
+        FallbackCandidateValidationService().validate_candidate_layout(_candidato_abecip(modalidade), contexto)
+
+
+def test_o_prompt_diz_que_as_linhas_da_tabela_inteira_sao_do_codigo_e_que_a_faixa_conta_de_zero():
+    from document_processing.application.use_cases.fallback.unit_mapping_prompts import (
+        unit_mapping_structure_instruction,
+    )
+
+    estrutura = unit_mapping_structure_instruction()
+    assert "NAO declare linha_inicial, linha_final, segmentos nem faixas_linhas" in estrutura
+    assert "o codigo define as linhas de dados" in estrutura
+    assert "a partir de 0" in estrutura and "linha_final inclusiva" in estrutura
+
+
+def test_os_exemplos_de_tabela_inteira_nao_trazem_faixa_e_o_de_parte_da_tabela_comeca_em_zero():
+    from document_processing.application.use_cases.fallback.unit_mapping_prompts import (
+        unit_mapping_structure_example,
+    )
+
+    chaves_de_faixa = {"linha_inicial", "linha_final", "segmentos", "faixas_linhas"}
+    exemplo = unit_mapping_structure_example(unit_id="u")
+    formatos = exemplo["formatos_de_origem"]
+    assert not chaves_de_faixa & set(formatos["linhas_de_tabela"])
+    for fonte in formatos["linhas_de_tabelas"]["fontes"]:
+        assert not chaves_de_faixa & set(fonte)
+    modelo = exemplo["modelo_resposta"]["mapeamento_canonico"]["colecao.itens"]
+    assert not chaves_de_faixa & set(modelo)
+
+    parte = formatos["linhas_de_tabela_parte_da_tabela"]
+    assert parte["faixas_linhas"][0]["linha_inicial"] == 0
+    schema = {f"{COLECAO}.identificador", f"{COLECAO}.valor"}
+    _validar_tabelas(_candidato(parte), schema_paths=schema)
+    _validar_tabelas(_candidato(formatos["linhas_de_tabela"]), schema_paths=schema)

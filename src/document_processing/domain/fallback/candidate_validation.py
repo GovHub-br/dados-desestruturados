@@ -23,6 +23,7 @@ from document_processing.domain.fallback.row_anchoring import (
     resolve_row_anchor,
     table_metric_groups,
 )
+from document_processing.domain.fallback.table_row_ranges import explicit_row_range_problems
 from document_processing.domain.fallback.table_structure import table_artifact_content
 from document_processing.domain.layouts.paths import (
     normalize_mapping_path,
@@ -162,6 +163,10 @@ class FallbackCandidateValidationService:
         self._validate_table_mappings_use_indices_only(
             candidate_model,
             schema_paths=schema_paths,
+        )
+        self._validate_explicit_row_ranges_fit_tables(
+            candidate_model,
+            fallback_problem_context,
         )
         self._validate_candidate_does_not_override_deterministic_headers(candidate_model)
         self._validate_candidate_extra_sections(candidate_model)
@@ -724,6 +729,28 @@ class FallbackCandidateValidationService:
                     "basta porque a posicao da linha varia entre tabelas do mesmo "
                     f"documento: {mapping_path}."
                 )
+
+    @staticmethod
+    def _validate_explicit_row_ranges_fit_tables(
+        candidate: LayoutSignatureCandidate,
+        fallback_problem_context: dict[str, Any],
+    ) -> None:
+        """Faixa explicita de linhas tem de caber na tabela que a LLM recebeu.
+
+        O resolvedor descarta em silencio a faixa cujo fim passa da ultima linha
+        e a colecao sai vazia; aqui a LLM recebe o erro com o tamanho da tabela.
+        Faixa omitida nao entra: a tabela inteira e decidida por codigo.
+        """
+        loaded = fallback_problem_context.get("artefatos_contexto_llm")
+        if not isinstance(loaded, dict) or not loaded:
+            return
+        entries = {
+            path: entry.model_dump(mode="json", exclude_none=True)
+            for path, entry in candidate.mapeamento_canonico.items()
+        }
+        problems = explicit_row_range_problems(entries, loaded)
+        if problems:
+            raise RuntimeError("Faixa de linhas fora da tabela: " + " ".join(problems))
 
     @staticmethod
     def _validate_table_rows_source(

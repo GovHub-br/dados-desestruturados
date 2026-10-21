@@ -99,7 +99,9 @@ def candidate_structure_instruction() -> str:
         "para uma observacao representa o registro indicado pelo seletor; quando o path "
         "terminar em um campo terminal, a DAG grava somente o valor extraido nesse campo. "
         "Para celula_de_tabela e cabecalho_de_tabela, informe os indices observados; para "
-        "linhas_de_tabela, informe as faixas e colunas a capturar. Nao use regex nem "
+        "linhas_de_tabela, informe as colunas a capturar; as linhas da tabela inteira sao "
+        "definidas pelo codigo, e a faixa so se declara quando a colecao usa parte da "
+        "tabela (contagem a partir de 0, linha_final inclusiva). Nao use regex nem "
         "padrao_cabecalho_aceito em tabelas: a DAG le diretamente a posicao informada e "
         "preserva o cabecalho bruto. Regex e reservado a bloco_textual."
     )

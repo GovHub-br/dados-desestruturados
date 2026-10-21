@@ -230,6 +230,18 @@ class CandidateGenerationMixin:
                 loaded_artifacts=enriched_context.get("artefatos_contexto_llm"),
             ),
         )
+        candidate_layout = candidate_model.model_dump(mode="json", exclude_none=True)
+        candidate_layout["mapeamento_canonico"], row_range_log = fill_mapping_row_ranges(
+            candidate_layout.get("mapeamento_canonico", {}),
+            enriched_context.get("artefatos_contexto_llm"),
+        )
+        if row_range_log:
+            self._persist_llm_validated(
+                fallback_context=fallback_context,
+                stage="layout_signature_candidato",
+                filename="faixas_por_codigo.json",
+                payload=row_range_artifact(row_range_log),
+            )
         return {
             "tipo_artefato": "resposta_llm_layout_signature_candidato",
             "artifact_selection": (
@@ -238,7 +250,7 @@ class CandidateGenerationMixin:
                 else None
             ),
             "artifact_selection_raw_response": artifact_selection_raw,
-            "candidate_layout": candidate_model.model_dump(mode="json", exclude_none=True),
+            "candidate_layout": candidate_layout,
             "raw_response": raw_content,
             "correction_attempts_used": corrections_used,
             "validation_errors_repaired": validation_errors,

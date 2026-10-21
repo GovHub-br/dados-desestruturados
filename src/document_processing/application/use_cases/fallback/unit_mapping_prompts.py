@@ -61,17 +61,21 @@ def unit_mapping_structure_instruction() -> str:
         "normalizar; indice_linha_esperado e apenas uma dica de posicao e nao substitui o "
         "rotulo. seletor_coluna exige indice_coluna_esperado. Para cabecalho_de_tabela, use "
         "seletor_coluna.indice_coluna_esperado. Para linhas_de_tabela que preenche "
-        "uma colecao inteira, mapeie o path da colecao sem filtro e declare segmentos "
-        "ou faixas_linhas, mais campos que relacionem cada indice_coluna ao campo do "
-        "item. Cada campo deve ter somente caminho_saida, indice_coluna e, opcionalmente, "
+        "uma colecao inteira, mapeie o path da colecao sem filtro e declare os campos que "
+        "relacionem cada indice_coluna ao campo do item. Quando a colecao usa a tabela "
+        "inteira, NAO declare linha_inicial, linha_final, segmentos nem faixas_linhas: o "
+        "codigo define as linhas de dados, sem cabecalho e sem linha de total. Declare a "
+        "faixa somente quando a colecao usa apenas uma parte da tabela; nesse caso conte "
+        "as linhas a partir de 0, com linha_final inclusiva, e nunca passe da ultima linha. "
+        "Cada campo deve ter somente caminho_saida, indice_coluna e, opcionalmente, "
         "tipo texto ou numero. Nao use nome, derivacao, valor_constante ou tipo derivado "
         "dentro de campos. Valores repetidos pertencem a valores_por_segmento ou valores_fixos "
         "da instrucao. Quando as linhas de uma mesma colecao estiverem em mais de uma tabela "
         "do documento (por exemplo, uma tabela para cada categoria, cada uma com titulo "
         "proprio), nao mapeie so uma delas: use uma unica instrucao linhas_de_tabelas no path "
         "da colecao, com a lista fontes, uma fonte por tabela. Cada fonte declara arquivo_origem, "
-        "linha_inicial, linha_final, campos (como em linhas_de_tabela) e valores_por_segmento "
-        "com o valor que distingue aquela tabela. Use linhas_de_tabela quando todas as linhas "
+        "campos (como em linhas_de_tabela) e valores_por_segmento com o valor que distingue "
+        "aquela tabela; as linhas de cada fonte seguem a regra acima. Use linhas_de_tabela quando todas as linhas "
         "estiverem numa unica tabela. Para tabelas, "
         "nao use regex nem padrao_cabecalho_aceito; o resolvedor le as posicoes "
         "indicadas. Regex e reservado a bloco_textual."
@@ -160,13 +164,17 @@ def unit_mapping_structure_example(*, unit_id: str) -> dict[str, Any]:
             "linhas_de_tabela": {
                 "tipo_origem": "linhas_de_tabela",
                 "arquivo_origem": "tables/table001.json",
-                "segmentos": [
-                    {
-                        "linha_inicial": 1,
-                        "linha_final": 12,
-                        "valores_por_segmento": {"categoria": "observada"},
-                    }
+                "valores_por_segmento": {"categoria": "observada"},
+                "campos": [
+                    {"caminho_saida": "identificador", "indice_coluna": 0},
+                    {"caminho_saida": "valor", "indice_coluna": 3, "tipo": "numero"},
                 ],
+                "obrigatorio": True,
+            },
+            "linhas_de_tabela_parte_da_tabela": {
+                "tipo_origem": "linhas_de_tabela",
+                "arquivo_origem": "tables/table001.json",
+                "faixas_linhas": [{"linha_inicial": 0, "linha_final": 14}],
                 "campos": [
                     {"caminho_saida": "identificador", "indice_coluna": 0},
                     {"caminho_saida": "valor", "indice_coluna": 3, "tipo": "numero"},
@@ -178,8 +186,6 @@ def unit_mapping_structure_example(*, unit_id: str) -> dict[str, Any]:
                 "fontes": [
                     {
                         "arquivo_origem": "tables/table001.json",
-                        "linha_inicial": 0,
-                        "linha_final": 8,
                         "valores_por_segmento": {"categoria": "primeira"},
                         "campos": [
                             {"caminho_saida": "identificador", "indice_coluna": 0},
@@ -188,8 +194,6 @@ def unit_mapping_structure_example(*, unit_id: str) -> dict[str, Any]:
                     },
                     {
                         "arquivo_origem": "tables/table002.json",
-                        "linha_inicial": 0,
-                        "linha_final": 9,
                         "valores_por_segmento": {"categoria": "segunda"},
                         "campos": [
                             {"caminho_saida": "identificador", "indice_coluna": 0},
@@ -237,7 +241,6 @@ def unit_mapping_structure_example(*, unit_id: str) -> dict[str, Any]:
                 "colecao.itens": {
                     "tipo_origem": "linhas_de_tabela",
                     "arquivo_origem": "tables/table001.json",
-                    "faixas_linhas": [{"linha_inicial": 1, "linha_final": 12}],
                     "campos": [
                         {"caminho_saida": "codigo", "indice_coluna": 0},
                         {"caminho_saida": "valor", "indice_coluna": 4, "tipo": "numero"},
