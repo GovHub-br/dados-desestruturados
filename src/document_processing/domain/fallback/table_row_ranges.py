@@ -183,24 +183,32 @@ def resolve_label_range(
 ) -> tuple[tuple[RowRange, ...], str | None]:
     """Faixas de uma parte da tabela dadas pelo rotulo da primeira e da ultima linha.
 
-    Cada rotulo tem de aparecer em exatamente uma linha de dados; rotulo ausente
-    ou repetido devolve a causa em vez de adivinhar. A parte ainda respeita o
+    Cada rotulo tem de aparecer em exatamente uma linha de dados (primeiro pela
+    primeira celula da linha, depois por qualquer celula); rotulo ausente ou
+    repetido devolve a causa em vez de adivinhar. A parte ainda respeita o
     que o codigo exclui (cabecalho, titulo de bloco, linha de total).
     """
     linhas = _linhas_do_conteudo(conteudo)
     dados = sorted(_linhas_das_faixas(faixas_de_dados))
-    rotulos = {i: _rotulo_da_linha(linhas[i]) for i in dados}
+    primeira_celula = {i: _rotulo_da_linha(linhas[i]) for i in dados}
 
     def achar(rotulo: str, papel: str) -> tuple[int | None, str | None]:
+        """Casa pela primeira celula da linha e, so se nenhuma casar, por qualquer celula dela.
+
+        Tabela com uma coluna de marca na frente (``2025*``) ou rotulo na segunda
+        coluna (``Janeiro``) continua alcancavel; o rotulo repetido e erro nos dois casos.
+        """
         alvo = normalize_text(rotulo)
-        indices = [i for i in dados if rotulos[i] == alvo]
+        indices = [i for i in dados if primeira_celula[i] == alvo]
+        if not indices:
+            indices = [i for i in dados if any(normalize_text(celula) == alvo for celula in linhas[i] if _texto(celula))]
         if len(indices) == 1:
             return indices[0], None
         if not indices:
             amostra = [str(_texto(next((c for c in linhas[i] if _texto(c)), ""))) for i in dados]
             return None, (
                 f"{papel} '{rotulo}' nao e o rotulo de nenhuma linha de dados da tabela "
-                f"(primeiros: {amostra[:3]}; ultimos: {amostra[-3:]}); copie a primeira celula da linha exatamente como aparece."
+                f"(primeiros: {amostra[:3]}; ultimos: {amostra[-3:]}); copie o texto de uma celula da linha exatamente como aparece."
             )
         return None, f"{papel} '{rotulo}' aparece em mais de uma linha de dados (linhas {indices[:6]}); a parte da tabela fica ambigua."
 

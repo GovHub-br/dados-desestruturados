@@ -412,3 +412,24 @@ def test_estrito_aceita_segmentos_cuja_uniao_e_as_linhas_de_dados() -> None:
     )
     segmentos = [{"linha_inicial": 1, "linha_final": 2}, {"linha_inicial": 4, "linha_final": 5}]
     assert explicit_row_range_problems({"c": _linhas_de_tabela(segmentos=segmentos)}, {"tables/t1.json": tabela}, estrito=True) == []
+
+
+def test_rotulo_na_segunda_coluna_alcanca_a_parte_da_tabela_quando_a_primeira_celula_e_marca() -> None:
+    """Tabela anual com o ano corrente aberto: a linha ``2025*`` traz ``Janeiro`` na coluna ao lado."""
+    tabela = _tabela(
+        ["Anos", "Mes", "Unidades"],
+        [["2023", "", "499.149"], ["2024", "", "568.163"], ["2025*", "Janeiro", "38.529"], ["", "Fevereiro", "36.273"], ["", "Marco", "34.225"], ["Em 2025", "", "369.085"]],
+    )
+    dados = data_row_ranges(tabela) or ()
+    assert resolve_label_range(tabela, "Janeiro", "Marco", dados) == (((2, 4),), None)
+    # a primeira celula continua valendo primeiro
+    assert resolve_label_range(tabela, "2025*", "Marco", dados) == (((2, 4),), None)
+
+
+def test_rotulo_repetido_em_outra_celula_e_ambiguo_so_se_a_primeira_celula_nao_decide() -> None:
+    tabela = _tabela(["A", "B", "C"], [["X", "Y", "1"], ["Y", "", "2"], ["Z", "Y", "3"]])
+    dados = data_row_ranges(tabela) or ()
+    assert resolve_label_range(tabela, "Y", "Y", dados) == (((1, 1),), None)  # primeira celula: so a linha 1
+    tabela_ambigua = _tabela(["A", "B", "C"], [["X", "Y", "1"], ["W", "Y", "2"]])
+    _, erro = resolve_label_range(tabela_ambigua, "Y", "Y", data_row_ranges(tabela_ambigua) or ())
+    assert erro is not None and "mais de uma linha" in erro
