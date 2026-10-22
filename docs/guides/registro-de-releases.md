@@ -1690,3 +1690,29 @@ Declarado antes de rodar. Mesma hipotese, metrica-alvo, guardas, etapas, bases e
 - **Risco declarado:** cada unidade com tabela tende a gastar uma tentativa de reparo a mais na primeira rodada (a LLM declara faixa
   por habito), e uma unidade que nao acatar o erro em 3 tentativas falha e nao publica (falha segura, mas cai a disponibilidade).
   Medir `correction_attempts_used` e `e2e_apto_para_bronze`.
+
+#### Resultado da tentativa 2 (22/10, `exp-faixas-rotulos`, ABECIP maio + 9 meses; commit `fa1b8d2`, prompts v5/v3/v4)
+
+- **O mecanismo ativou em todos os meses.** `faixas_por_codigo.json`: nenhuma instrucao ficou com `faixa_da_llm`; entre 7 instrucoes por mes, de 1 a 7
+  foram `faixa_por_rotulos` e as demais `faixa_do_codigo` (a LLM omitiu a faixa depois do erro do validador). Maio: as 7 por rotulos.
+- **Verificador (`verificar_colecoes.py`), 10 documentos publicados (julho inclusive):** 0 alertas de cobertura e 0 de itens vazios em todos os meses
+  (lote 15: 1 a 8 de cobertura por mes). Itens por modalidade sem `TOTAL`: 30, 30, 30, 26, 26, 26, 29, 30, 30 e **36 em julho** (antes 0).
+  Alertas que sobram: soma = TOTAL, identidade e celulas, todos de OCR, mais 3 de coluna (2025-10 duas, 2026-03 uma = P13, cabecalho trocado do Docling).
+- **Comparador, 9 meses pareados contra `exp-abecip-varios-meses`:** `e2e_apto_para_bronze` 0,889 -> **1,000**, `resolucao_cobertura_obrigatorios`
+  0,978 -> 1,000, tokens -9 %, duracao -35 %. Nenhuma guarda regrediu (codigo de saida 1, nao 2). Regressoes fora de guarda, **custo previsto do
+  validador estrito e rotulo "ambiente/custo"**: `fallback_tentativas_llm_total` 4,22 -> 4,44, `llm_acerto_1a_tentativa` 0,946 -> 0,889.
+  Maio contra `exp-fallback-linhas-de-tabelas`: tudo estavel; `assinatura_resolvido_observacoes_corretas` 0,951 (erradas 1, ausentes 2: os mesmos OCR).
+- **Regressao real, 2025-10: a serie mensal veio da `table003` (saldo da poupanca), colunas de saldo e variacao, nas duas rodadas (`__r2` confirma que nao e
+  variancia).** Causa: a selecao de artefatos nao incluiu a `table004` (a mensal de financiamentos, sem titulo no Docling); sobraram a `table003` e a `table005`,
+  em que o ano corrente vem aberto mes a mes sob `2025*`, e o rotulo so casava pela primeira celula (`2025*`), nao por `Janeiro`. A LLM largou a `table005`.
+  No `__r2` a serie anual ainda saiu com a tabela inteira (26 itens, com `2025*`, 9 meses sem rotulo e `Em 2025`), porque a LLM omitiu a faixa e a omissao e,
+  por desenho, tabela inteira: o codigo nao tem como saber que o contrato quer so anos completos.
+- **Achado novo do verificador:** a serie anual de 2026-01 publica `2026*` (ano parcial) como ano; ja era assim no lote 15 e nos meses limpos a LLM o deixa de fora.
+- **Correcao** (`d8625ed`): o rotulo passa a casar por qualquer celula da linha quando a primeira nao casa; `unit-mapping-estrutura` v5 -> v6. O verificador
+  ganhou a checagem de serie anual (so anos completos). Ponteiro da ABECIP apos a tentativa 2: ver tentativa 3.
+
+### Tentativa 3 (`exp-faixas-rotulos-2`): mesma hipotese, ABECIP inteira de novo com a correcao de rotulos
+
+Declarado antes de rodar: codigo `d8625ed`, `unit-mapping-estrutura` v6 (os outros blocos como na tentativa 2). Os 10 documentos em serie, mesmas bases e metas;
+acrescenta-se a meta **0 alertas de serie anual** no verificador. Bases: maio contra `exp-fallback-linhas-de-tabelas`, os 9 meses contra `exp-abecip-varios-meses`.
+Esta e a rodada que vale como medicao final da ABECIP; so depois dela vao as outras 17 entidades, sob o mesmo rotulo.

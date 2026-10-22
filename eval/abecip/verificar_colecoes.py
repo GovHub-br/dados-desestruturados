@@ -10,7 +10,8 @@ tabelas da extracao em que ele foi gerado e confere o que o proprio documento ga
 3. identidade entre tabelas: Aquisicao e Construcao = Construcao + Aquisicao, por instituicao;
 4. semantica da coluna: campo de unidades sai de coluna cujo cabecalho fala de unidades, campo de volume de coluna
    em R$, mensal x acumulado no ano coincide com o cabecalho, series leem o ano mais recente;
-5. itens vazios: item publicado em que todos os campos numericos vieram nulos (mes futuro lido como se tivesse dado).
+5. itens vazios: item publicado em que todos os campos numericos vieram nulos (mes futuro lido como se tivesse dado);
+6. serie anual: so anos completos (``2010`` ... ``2025``); o ano corrente aberto mes a mes, ``2025*`` e ``Em 2025`` ficam de fora.
 
 Mede consistencia, nao verdade absoluta: um erro que o PDF repete de forma coerente nao aparece aqui. O gabarito
 curado (`eval/gabaritos/`) continua sendo a medida de verdade, so para maio/2026.
@@ -361,6 +362,14 @@ def verificar_itens_vazios(resolvido: Any) -> list[dict[str, str]]:
     return achados
 
 
+def verificar_serie_anual(resolvido: Any) -> list[dict[str, str]]:
+    itens = itens_de_colecao(resolvido, "serie_historica_anual")
+    fora = [str((i.get("periodo") or {}).get("rotulo_publicado")) for i in itens if not re.fullmatch(r"\d{4}", str((i.get("periodo") or {}).get("rotulo_publicado") or ""))]
+    if not fora:
+        return []
+    return [achado(ALERTA, "serie-anual", "serie_historica_anual", f"{len(fora)} de {len(itens)} item(ns) que nao sao ano completo ({', '.join(fora[:6])}{'...' if len(fora) > 6 else ''})")]
+
+
 def execucoes_da_release(minio: Any, bucket: str, release: str) -> dict[str, str]:
     """Prefixo de cada execucao do fallback de uma release: {execution_id: prefixo}."""
     achadas: dict[str, str] = {}
@@ -416,7 +425,7 @@ def verificar_execucao(minio: Any, bucket: str, execucao: str, prefixo: str) -> 
         achados.append(achado(INFO, "periodo", "layout", f"rotulo de periodo fixo no layout: {rotulos}"))
     resolvido = ler(minio, bucket, prefixo + "revalidation/schema_saida_resolvido.json") or {}
     itens = ((resolvido.get("financiamentos_imobiliarios") or {}).get("por_modalidade_e_instituicao")) or []
-    achados += verificar_itens_vazios(resolvido)
+    achados += verificar_itens_vazios(resolvido) + verificar_serie_anual(resolvido)
     return {
         "execucao": execucao,
         "document_id": document_id,
