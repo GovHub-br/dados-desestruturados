@@ -1716,3 +1716,12 @@ Declarado antes de rodar. Mesma hipotese, metrica-alvo, guardas, etapas, bases e
 Declarado antes de rodar: codigo `d8625ed`, `unit-mapping-estrutura` v6 (os outros blocos como na tentativa 2). Os 10 documentos em serie, mesmas bases e metas;
 acrescenta-se a meta **0 alertas de serie anual** no verificador. Bases: maio contra `exp-fallback-linhas-de-tabelas`, os 9 meses contra `exp-abecip-varios-meses`.
 Esta e a rodada que vale como medicao final da ABECIP; so depois dela vao as outras 17 entidades, sob o mesmo rotulo.
+
+#### Tentativa 3 interrompida por saldo do provedor (22/10, 00:10)
+
+A chamada da LLM passou a devolver `HTTP 402 Payment Required: Insufficient Balance` (`api.deepseek.com`) no meio da serie. Dos tres runs disparados sob
+`exp-faixas-rotulos-2`, **nenhum gerou candidato**: 2025-10 gastou os 15 000 tokens de saida no raciocinio (`finish_reason: length`) e a tentativa de socorro
+levou o 402; 2026-05 e 2025-11 falharam em ~15 s. O Airflow marca esses runs como `success` (a falha e interna ao fallback), entao "success" no estado do run
+**nao** significa que publicou: confira sempre `layout_signature_candidato.json` ou o verificador. Nenhuma versao foi publicada nem ponteiro movido. A rotulo
+`exp-faixas-rotulos-2` tem esses tres traces de falha e fica sem medicao; a ABECIP inteira precisa ser refeita (com sufixo `__r2` nos tres) quando houver saldo.
+Ponteiro da ABECIP ao fim da tentativa 2: ver `current.json` (a serie publicou uma versao por mes; o estado exato e listado ao fim do lote).
