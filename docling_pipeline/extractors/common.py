@@ -16,6 +16,12 @@ from ..helpers import (
 )
 from ..models import BoundingBox, NormalizedRowRecord, SectionRecord
 
+# Nota ou fonte ("**(Depositos-Retiradas)", "(*) valores...", "Fonte: ...") e o rodape da tabela de
+# cima, nunca o titulo da tabela de baixo.
+_NOTE_OR_SOURCE_TEXT = re.compile(r"^\s*(\*|\(\s*\*|[¹²³⁴⁵⁶⁷⁸⁹]|(fontes?|notas?|obs\.?)\s*:)", re.IGNORECASE)
+# Linha de fonte ("Fontes: Abecip e Banco Central") fecha o bloco da tabela acima dela.
+_SOURCE_LINE_TEXT = re.compile(r"^\s*fontes?\s*:", re.IGNORECASE)
+
 DIMENSION_COLUMN_HINTS = {
     "region",
     "regiao",
@@ -91,6 +97,28 @@ def _section_is_above(anchor: BoundingBox, section_bbox: BoundingBox) -> bool:
     return section_top >= anchor_top
 
 
+def is_note_or_source_text(text: Optional[str]) -> bool:
+    return bool(_NOTE_OR_SOURCE_TEXT.match(text or ""))
+
+
+def is_source_line_text(text: Optional[str]) -> bool:
+    return bool(_SOURCE_LINE_TEXT.match(text or ""))
+
+
+def _source_line_between(anchor: BoundingBox, section_bbox: BoundingBox, source_lines: list[BoundingBox]) -> bool:
+    """Ha uma linha de fonte entre o titulo candidato e a tabela: o titulo e de outro bloco."""
+    if anchor.top is None or section_bbox.bottom is None:
+        return False
+    for line in source_lines:
+        if line.page_number is not None and anchor.page_number is not None and line.page_number != anchor.page_number:
+            continue
+        if line.top is None or line.bottom is None or _bbox_horizontal_overlap(anchor, line) <= 0.0:
+            continue
+        if line.bottom >= anchor.top - 1.0 and line.top <= section_bbox.bottom + 1.0:
+            return True
+    return False
+
+
 def _section_match_score(
     anchor: BoundingBox,
     section_bbox: BoundingBox,
@@ -135,6 +163,7 @@ def nearest_section(
     anchor_bbox: Optional[BoundingBox] = None,
     order_index: Optional[int] = None,
     closest_above: bool = False,
+    source_lines: Optional[list[BoundingBox]] = None,
 ) -> Optional[SectionRecord]:
     candidates = [s for s in sections if s.page_number == page_number]
     if not candidates and page_number is not None:
@@ -159,8 +188,19 @@ def nearest_section(
                 if _section_is_above(anchor_bbox, s.bbox)  # type: ignore[arg-type]
                 and _bbox_horizontal_overlap(anchor_bbox, s.bbox) > 0.0  # type: ignore[arg-type]
             ]
+            own = [
+                s
+                for s in above
+                if not is_note_or_source_text(s.title_raw)
+                and not _source_line_between(anchor_bbox, s.bbox, source_lines or [])  # type: ignore[arg-type]
+            ]
+            if own:
+                return min(own, key=lambda section: _section_match_score(anchor_bbox, section.bbox, closest_above=True))  # type: ignore[arg-type]
             if above:
-                return min(above, key=lambda section: _section_match_score(anchor_bbox, section.bbox, closest_above=True))  # type: ignore[arg-type]
+                # Everything above is a note/source of the previous table or sits behind a source
+                # line that closed that table's block: the real heading was not detected. No title
+                # is better than borrowing the footnote or the previous table's title.
+                return None
             # No heading above the anchor: the closest one below usually belongs to the
             # next block, so fall back to the default ranking.
         if with_bbox:
@@ -176,6 +216,7 @@ def resolve_section_for_item(
     anchor_bbox: Optional[BoundingBox] = None,
     order_index: Optional[int] = None,
     closest_above: bool = False,
+    source_lines: Optional[list[BoundingBox]] = None,
 ) -> Optional[SectionRecord]:
     sections_by_self_ref = {section.self_ref: section for section in sections if section.self_ref}
     item_self = item_self_ref(item)
@@ -195,6 +236,7 @@ def resolve_section_for_item(
         anchor_bbox=anchor_bbox,
         order_index=order_index,
         closest_above=closest_above,
+        source_lines=source_lines,
     )
 
 
