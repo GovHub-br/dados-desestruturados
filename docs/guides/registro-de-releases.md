@@ -1817,3 +1817,56 @@ milhar tem sempre 3 digitos, entao em `3.159.7` o ultimo ponto so pode ser o dec
 - **O que ainda nao muda:** os `schema_saida_resolvido` ja publicados no MinIO foram gravados com o leitor antigo; o valor certo so aparece
   quando a DAG 2 resolver de novo (proxima execucao ou reprocessamento). Nenhum layout nem ponteiro muda: a regra e do resolvedor, nao do
   layout. O lote dispensou rotulo de release e LLM, entao nao ha traces no Langfuse.
+
+#### Resultado da tentativa 3 (03/11, `exp-faixas-rotulos-2`, codigo `5e20e02`: faixas por codigo + rotulos em qualquer celula + leitor de numeros do lote 18)
+
+Rodados em serie os 9 meses que faltavam (2025-11 e 2026-05 com `__r2`; o 2025-10 ja tinha sido feito como controle do lote 17). Os 9
+publicaram. Ambiente: o triggerer do Airflow travou com a revalidacao de 2026-02 em espera por 40 min depois de a DAG 2 terminar; reiniciado
+o conteiner (`docker compose restart airflow-triggerer`, sem recriar, rotulo preservado) a tarefa retomou. A `e2e_duracao_segundos` de 2026-02
+fica inflada por isso.
+
+- **Comparador** contra `exp-abecip-varios-meses` (9 x 9 traces): nenhuma guarda regrediu; `e2e_apto_para_bronze` 0,889 -> 1,000,
+  `resolucao_cobertura_obrigatorios` 0,978 -> 1,000; regressoes fora de guarda iguais as da tentativa 2 (custo do validador estrito):
+  `fallback_tentativas_llm_total` 4,22 -> 4,67, `llm_acerto_1a_tentativa` 0,944 -> 0,833.
+- **Harness** (uma vez, so o trace de maio `__r2`, `--trace`): `assinatura_resolvido_observacoes_corretas` 0,951 (1 errada, 2 ausentes), igual.
+- **Ponteiro da ABECIP apos a serie:** `v2.40.0` (o layout de 2026-07, que tem o erro de ano descrito abaixo). Voltar e decisao do usuario.
+
+### Auditoria de ponta a ponta contra o PDF (03/11, `eval/abecip/auditar_valores.py`)
+
+Pergunta do usuario: o que o PDF tem esta sendo extraido, mapeado pela LLM e publicado com o valor certo? Ferramenta nova, sem LLM: monta a
+referencia de cada mes pelas tabelas da extracao lidas por posicao (leitor de numeros proprio, independente de `parse_flexible_number`), confere
+cada celula pelas identidades do proprio boletim (acumulado = anterior + mes; saldo - saldo anterior = variacao; soma das instituicoes = TOTAL;
+Construcao + Aquisicao = Aquisicao e Construcao; meses da tabela 3 = tabela 2; serie anual igual entre os 10 PDFs) e compara cada valor
+publicado. Celula que nao fecha em nenhuma identidade foi lida na imagem do PDF. Alvos: os layouts da tentativa 3 e, para 2025-10, o do
+lote 17 (extracao nova), resolvidos com o codigo atual.
+
+- **Extracao:** as 6 tabelas que o contrato usa estao em todos os 10 meses, com todas as linhas (cobertura e soma = TOTAL fecham, salvo as
+  celulas de OCR abaixo). O que o contrato nao pede fica de fora por desenho: ano anterior, percentuais, acumulados, 12 meses, grafico.
+- **Por mes (valores publicados x PDF):**
+
+| mes | resultado |
+| --- | --- |
+| 2025-12, 2026-03 | tudo certo |
+| 2025-10 | valores certos, menos POUPEX/Construcao R$ no mes: PDF 0,9, OCR `6'0`, publicado 60,0; rotulos de mes `Jul` -> vazio/`m` e `Out` -> `1no` (OCR) nas tres series |
+| 2025-11 | valores certos, menos POUPEX/Aquisicao e Construcao R$ no ano: PDF 66,6, OCR `9'99`, publicado 999; rotulos `Jul` e `Out` errados (OCR) |
+| 2026-01 | valores certos, menos POUPEX/Aquisicao unidades no mes: PDF 3, extracao vazia, publicado nulo; serie anual publica `2026*` (ano parcial) |
+| 2026-02 | **valores certos, mas 138 publicados como texto** (`"35.701"`): a LLM nao marcou `"tipo": "numero"` e o resolvedor publica a celula crua; o periodo de `por_modalidade` sai na chave plana `"periodo.rotulo_publicado"`; serie anual com `2026*` |
+| 2026-04, 2026-06 | valores certos; serie anual com `2026*` |
+| 2026-05 | valores certos, menos Banco do Brasil/Aquisicao unidades no ano: PDF 989, OCR 686 (P11) |
+| 2026-07 | **saldos e captacoes do ano errado** (coluna de 2025 em vez de 2026, 12 itens em vez de 7; repetiu nas duas rodadas); modalidade gravada `Construcao`/`Aquisicao`/`Aquisicao e Construcao`, fora do dominio do contrato (`construcao`/`aquisicao`/`total`); o resto certo |
+
+- **Nao e erro:** a serie anual de 2024 difere entre os PDFs de 2025 (568.163 / 186.671,29) e os de 2026 (532.113 / 180.409,31); conferido na
+  imagem, e revisao da ABECIP e o publicado bate com o PDF de cada mes.
+- **Causas, em ordem de peso:**
+  1. *Codigo do pipeline, generico* (nao depende da ABECIP): (a) o resolvedor so converte para numero se a LLM declarar `"tipo": "numero"`,
+     embora o contrato diga `number` (2026-02 inteiro); (b) valor fixo fora do `dominio` do contrato passa na validacao (2026-07); (c) nada
+     confere que a serie mensal e do ano da competencia (2026-07, duas rodadas); (d) ano parcial `2026*` entra na serie anual (4 de 7 meses de
+     2026); (e) chave com ponto em `valores_por_segmento` sai plana. **Nenhum desses casos baixou `e2e_apto_para_bronze`**: o gate aprova.
+  2. *OCR:* 4 numeros em 10 meses (tres deles na ultima linha da tabela, POUPEX, lidos de cabeca para baixo: `0,9` -> `6'0`, `66,6` -> `9'99`)
+     e os rotulos de mes de 2025-10 e 2025-11.
+- **Construtoras** (layouts vigentes, resolvidos com o codigo atual, contra `eval/gabaritos/`): Cury, Direcional, Pacaembu, Plano&Plano e Tenda
+  6/6, EZTEC 5/5. **Cyrela:** publica "Numero de Lancamentos" (20, 17, 12 empreendimentos) e "Vendas ex-permuta R$ milhoes" (2.561, 2.240,
+  2.164) como unidades; o contrato pede `numero_de_unidades` e o documento nao publica unidades (o gabarito pede ausencia). **MRV:** publica a
+  marca MRV (9.841 / 8.841) e o gabarito o TOTAL INCORPORACAO (10.386 / 9.141 = MRV + SENSIA): decisao de contrato ja pendente no gabarito.
+  Os PDFs fonte de MRV e Cyrela nao estao mais no MinIO; conferido pela extracao. Os layouts das construtoras sao de lotes anteriores: a
+  etapa 2 do lote 16 (regerar as 17 entidades com o prompt atual) segue nao rodada.
