@@ -1725,3 +1725,37 @@ levou o 402; 2026-05 e 2025-11 falharam em ~15 s. O Airflow marca esses runs com
 **nao** significa que publicou: confira sempre `layout_signature_candidato.json` ou o verificador. Nenhuma versao foi publicada nem ponteiro movido. A rotulo
 `exp-faixas-rotulos-2` tem esses tres traces de falha e fica sem medicao; a ABECIP inteira precisa ser refeita (com sufixo `__r2` nos tres) quando houver saldo.
 Ponteiro da ABECIP ao fim da tentativa 2: ver `current.json` (a serie publicou uma versao por mes; o estado exato e listado ao fim do lote).
+
+## Lote 17: titulo de tabela sem nota de rodape no Docling, efeito no fallback (`exp-docling-titulo-nota`, 02/11)
+
+Sem mudanca no codigo do fallback: a variavel e a **extracao**. O PR #19 (`fix/docling-titulo-nota-e-fonte`, commit `0592726`) muda
+a regra de titulo de tabela do Docling: uma tabela sem titulo detectado nao herda mais a nota de rodape (`**(Depositos-Retiradas)`)
+nem o titulo da tabela de cima quando ha uma linha `Fonte:` entre os dois. Medicao da extracao pelo protocolo de `eval/docling/README.md`
+(`eval/docling/resultados/2026-11-titulo-nota-e-fonte/RESULTADO.md`): 25 PDFs, **1 de 289 tabelas muda**, a `table004` da ABECIP
+2025-10 (`**(Depositos-Retiradas)` -> `Table 4`), linhas e cabecalho identicos; todo o resto identico. Como so essa extracao muda,
+so ela precisa passar pelo fallback: nos outros 24 PDFs a entrada da DAG 3 e a mesma.
+
+### Declarado antes de rodar
+
+- **Hipotese:** a regressao real de 2025-10 na tentativa 2 do lote 16 (serie mensal lida da `table003`, saldo da poupanca) vem de a
+  selecao de artefatos nao ter incluido a `table004` (a mensal de financiamentos), que o Docling batizou com a nota de rodape da tabela
+  de cima. Com o titulo neutro, a selecao passa a considerar a `table004` e a serie mensal sai dela.
+- **Controle, para separar as duas causas:** a tentativa 2 tinha dois defeitos em 2025-10 (titulo do Docling e rotulo casando so pela
+  primeira celula); o segundo foi corrigido em `d8625ed` e nunca rodou em 2025-10 (a tentativa 3 caiu no 402). Por isso roda-se o
+  mesmo codigo duas vezes, mudando so a extracao:
+  1. **controle:** extracao antiga (`dag_detecta_pdf_e_extrai__abecip__2025-10__20261021T151108Z`), rotulo `exp-faixas-rotulos-2`,
+     run `exp-faixas-rotulos-2__abecip__abecip__2025-10__r2` (e o redisparo pendente da tentativa 3; conta para ela);
+  2. **teste:** extracao nova (DAG 1 `dag_extrai_documentos_origem` com o runner na branch do PR #19), rotulo `exp-docling-titulo-nota`,
+     run `exp-docling-titulo-nota__abecip__abecip__2025-10`.
+- **Codigo:** `8d8eb03` (fallback do lote 16, `d8625ed`), prompts sem mudanca (`unit-mapping-estrutura` v6, `unit-mapping-artefatos` v4,
+  `candidato-estrutura` v3; conferir 0 divergentes antes). Contrato: o mais novo do dominio `abecip`, igual ao lote 16.
+- **Metrica-alvo (2025-10, verificador `eval/abecip/verificar_colecoes.py`):** a `table004` entra na selecao e a `serie_mensal_sbpe`
+  sai dela, com 0 alertas de cobertura, de itens vazios e de serie anual. No controle, o esperado e a serie mensal ainda errada (se o
+  controle ja acertar, o merito e do `d8625ed` e o PR #19 nao tem efeito mensuravel no fallback, so na extracao).
+- **Guardas:** `e2e_apto_para_bronze`, `resolucao_cobertura_obrigatorios`, `revalidacao_gate_efetivo`, `validacao_cobertura_de_regras`,
+  `selecao_tabelas_sem_mapeamento`. O harness nao pontua 2025-10 (so maio tem gabarito); o comparador nao pareia (o `execution_id` da
+  extracao muda), entao a leitura e trace a trace, como no lote 13 (`--sem-pareamento`).
+- **Limite:** uma execucao de cada lado; se o teste e o controle divergirem fora do previsto, redisparar com `__r2` antes de concluir.
+- **Ponteiro antes do lote:** abecip `v2.29.0` (2025-10 `__r2` da tentativa 2, o defeituoso). Cada run que aprova publica uma versao
+  nova e move o ponteiro; voltar e decisao do usuario.
+- **Runner:** na branch `fix/docling-titulo-nota-e-fonte` durante o lote; volta para `main` depois do merge do PR #19.
