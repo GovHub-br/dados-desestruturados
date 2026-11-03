@@ -45,6 +45,38 @@ from .target_enumeration import (
 )
 
 
+def _declared_fixed_values(mapping_path: str, payload: dict[str, Any]) -> list[tuple[str, Any]]:
+    """(caminho do campo, valor) de cada valor fixo que a instrucao declara.
+
+    Cobre ``valor_fixo``, ``valores_fixos`` e ``valores_por_segmento``, no topo, nos
+    segmentos e em cada fonte de ``linhas_de_tabelas``; dicionario aninhado vira caminho.
+    """
+    found: list[tuple[str, Any]] = []
+
+    def flatten(values: Any, prefix: str = "") -> None:
+        if not isinstance(values, dict):
+            return
+        for key, value in values.items():
+            path = f"{prefix}.{key}" if prefix else str(key)
+            if isinstance(value, dict):
+                flatten(value, path)
+            else:
+                found.append((path, value))
+
+    def visit(node: dict[str, Any]) -> None:
+        flatten(node.get("valores_fixos"))
+        flatten(node.get("valores_por_segmento"))
+        for key in ("segmentos", "faixas_linhas", "fontes"):
+            for child in node.get(key) or []:
+                if isinstance(child, dict):
+                    visit(child)
+
+    if payload.get("tipo_origem") == "valor_fixo":
+        found.append((normalize_mapping_path(mapping_path), payload.get("valor_fixo")))
+    visit(payload)
+    return found
+
+
 class UnmappedRequiredFieldsError(RuntimeError):
     """A LLM declarou corretamente que a evidencia nao cobre campo obrigatorio."""
 
@@ -165,6 +197,10 @@ class FallbackCandidateValidationService:
             schema_paths=schema_paths,
         )
         self._validate_explicit_row_ranges_fit_tables(
+            candidate_model,
+            fallback_problem_context,
+        )
+        self._validate_fixed_values_in_contract_domain(
             candidate_model,
             fallback_problem_context,
         )
@@ -759,6 +795,37 @@ class FallbackCandidateValidationService:
         problems = explicit_row_range_problems(entries, loaded, estrito=creating)
         if problems:
             raise RuntimeError("Faixa de linhas incompativel com a tabela: " + " ".join(problems))
+
+    @staticmethod
+    def _validate_fixed_values_in_contract_domain(
+        candidate: LayoutSignatureCandidate,
+        fallback_problem_context: dict[str, Any],
+    ) -> None:
+        """Valor fixo de um campo cuja entidade tem ``dominio`` no contrato e um desses valores.
+
+        Sem isto a LLM grava `Aquisicao e Construcao` onde o contrato so admite
+        `construcao`, `aquisicao` ou `total`, e a revalidacao aprova. O campo casa com a
+        entidade pelo nome da folha (``modalidade`` -> ``entidades.modalidade``).
+        """
+        contract = fallback_problem_context.get("contrato_semantico_relevante", {})
+        semantic = contract.get("contrato_semantico", {}) if isinstance(contract, dict) else {}
+        entities = semantic.get("entidades", {}) if isinstance(semantic, dict) else {}
+        domains = {
+            str(name): [str(value) for value in spec["dominio"]]
+            for name, spec in (entities.items() if isinstance(entities, dict) else [])
+            if isinstance(spec, dict) and isinstance(spec.get("dominio"), list) and spec["dominio"]
+        }
+        if not domains:
+            return
+        problems = []
+        for mapping_path, entry in candidate.mapeamento_canonico.items():
+            payload = entry.model_dump(mode="json", exclude_none=True)
+            for output_path, value in _declared_fixed_values(mapping_path, payload):
+                allowed = domains.get(output_path.rsplit(".", 1)[-1])
+                if allowed and isinstance(value, str) and value not in allowed:
+                    problems.append(f"{mapping_path}: {output_path}={value!r}, o contrato admite {allowed}")
+        if problems:
+            raise RuntimeError("Valor fixo fora do dominio do contrato: " + "; ".join(problems) + ".")
 
     @staticmethod
     def _validate_table_rows_source(
