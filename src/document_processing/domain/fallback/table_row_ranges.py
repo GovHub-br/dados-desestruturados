@@ -462,9 +462,11 @@ def period_scope_problems(
 
     So vale para documento de periodo mensal (``AAAA-MM``); sem isso nao ha o que conferir.
 
-    - ``ano_de_referencia``: a serie mensal do ano de referencia tem no maximo um item
-      por mes ate o mes de referencia. Mais itens que isso e coluna de outro ano (o
-      cabecalho do Docling pode ter perdido o ano, entao a contagem e a prova).
+    - ``ano_de_referencia``: a coluna do ano de referencia tem no maximo um valor por
+      mes ate o mes de referencia. Coluna com mais valores que isso e de outro ano (o
+      cabecalho do Docling pode ter perdido o ano, entao a contagem e a prova). Conta a
+      coluna inteira, nao so a parte lida: janeiro a julho de uma coluna de 12 meses
+      continua sendo o ano anterior.
     - ``anos_completos``: cada linha lida e um ano anterior ao ano de referencia; o ano
       em andamento e as linhas de mes ficam de fora, declarando a parte por rotulos.
     """
@@ -483,15 +485,19 @@ def period_scope_problems(
             conteudo = table_artifact_content(artefato) if artefato is not None else None
             if conteudo is None:
                 continue
+            if escopo == "ano_de_referencia":
+                for coluna in _colunas_mapeadas(instrucao):
+                    com_valor = len(_linhas_das_faixas(data_row_ranges(conteudo, colunas=[coluna]) or ()))
+                    if com_valor > mes:
+                        problemas.append(
+                            f"{caminho} ({arquivo}): o contrato pede a serie do ano de referencia ({ano}), que vai no maximo "
+                            f"ate o mes {mes}, e a coluna {coluna} tem {com_valor} meses com valor na tabela: e de outro ano, "
+                            f"mesmo lendo so uma parte dela. Use a coluna de {ano}."
+                        )
+                continue
             linhas = _linhas_efetivas(instrucao, conteudo)
             if not linhas:
                 continue
-            if escopo == "ano_de_referencia" and len(linhas) > mes:
-                problemas.append(
-                    f"{caminho} ({arquivo}): o contrato pede a serie do ano de referencia ({ano}), que vai no maximo ate o "
-                    f"mes {mes}, e a instrucao le {len(linhas)} linhas com valor nas colunas mapeadas. As colunas lidas "
-                    f"sao de outro ano; use as colunas de {ano}."
-                )
             if escopo == "anos_completos":
                 rows = _linhas_do_conteudo(conteudo)
                 rotulos = {i: _texto(next((c for c in rows[i] if _texto(c)), "")) for i in linhas}

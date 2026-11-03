@@ -333,10 +333,17 @@ def main() -> int:
     for par in args.execucao:
         mes, run = par.split("=", 1)
         prefixo = next(
-            o.object_name.rsplit("layout_signature_candidato.json", 1)[0]
-            for o in minio.list_objects(bucket, prefix=PREFIXO_FALLBACK, recursive=True)
-            if o.object_name.endswith(f"execution_id=dag_valida_e_fallback_llm__{run}/layout_signature_candidato.json")
+            (
+                o.object_name.rsplit("layout_signature_candidato.json", 1)[0]
+                for o in minio.list_objects(bucket, prefix=PREFIXO_FALLBACK, recursive=True)
+                if o.object_name.endswith(f"execution_id=dag_valida_e_fallback_llm__{run}/layout_signature_candidato.json")
+            ),
+            None,
         )
+        if prefixo is None:
+            # o Airflow marca o run como success mesmo quando o fallback falha por dentro
+            print(f"\n=== {mes}  ({run})  SEM CANDIDATO: o fallback nao gerou layout")
+            continue
         candidato = json.loads(minio.get_object(bucket, prefixo + "layout_signature_candidato.json").read())
         document_id = prefixo.split("document_id=")[1].split("/")[0]
         execucao = str(candidato.get("execution_id_origem"))

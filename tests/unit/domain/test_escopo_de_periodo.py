@@ -58,7 +58,14 @@ def test_coluna_do_ano_anterior_tem_mais_meses_que_o_mes_de_referencia_e_e_recus
     problemas = period_scope_problems(
         {SALDOS: _instrucao("tables/table002.json", 1)}, TABELAS, {SALDOS: "ano_de_referencia"}, "2026-07"
     )
-    assert len(problemas) == 1 and "12 linhas" in problemas[0] and "2026" in problemas[0]
+    assert len(problemas) == 1 and "coluna 1 tem 12 meses" in problemas[0] and "2026" in problemas[0]
+
+
+def test_ler_so_janeiro_a_julho_da_coluna_do_ano_anterior_tambem_e_recusado():
+    """Regressao do lote 20: a LLM leu Jan a Jul por rotulos da coluna de 2025; contar so a parte lida dava 7."""
+    instrucao = _instrucao("tables/table002.json", 1, rotulo_inicial="Jan", rotulo_final="Jul")
+    problemas = period_scope_problems({SALDOS: instrucao}, TABELAS, {SALDOS: "ano_de_referencia"}, "2026-07")
+    assert len(problemas) == 1 and "coluna 1 tem 12 meses" in problemas[0]
 
 
 def test_coluna_do_ano_de_referencia_passa_mesmo_sem_tipo_numero_nos_campos():
