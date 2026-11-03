@@ -1921,3 +1921,31 @@ o contrato quer, entao a decisao fica no contrato. Pedido do usuario: comparar d
   2026-03 sem piora. **Base:** `exp-faixas-rotulos-2` (tentativa 3) nos mesmos 5 documentos.
 - **Limite:** uma execucao por PDF por braco; diferenca de um documento so e variancia ate prova em contrario.
 - **Ponteiro antes:** abecip `v2.40.0`. Cada run aprovado publica uma versao nova; voltar e decisao do usuario.
+
+### Resultado (03/11, auditoria por PDF contra o PDF; base `exp-faixas-rotulos-2`, contrato v2.3.0)
+
+| PDF | base v2.3.0 (sem texto) | braco 1, v2.4.0 (so texto) | braco 2, v2.5.0 (texto + validacao) |
+| --- | --- | --- | --- |
+| 2025-11 | certo (so OCR) | certo (so OCR) | certo (so OCR) |
+| 2026-01 | `2026*` na anual | **certo** | **certo** |
+| 2026-03 (controle) | certo | certo | certo |
+| 2026-06 | `2026*` na anual | sem layout (rede: `IncompleteRead` da API) -> `__r2` **certo** | **certo** |
+| 2026-07 | saldos/captacoes de 2025 (2 de 2 rodadas) | **certo** -> `__r2` **certo** | saldos/captacoes de **2025 Jan-Jul** (LLM declarou rotulo_final `Jul` na coluna de 2025) -> regra corrigida, `__r2` **certo** |
+
+- **O texto e o que move o resultado.** Sem texto (v2.3.0): ano errado em 2026-07 nas 2 rodadas e `2026*` em 4 de 4 meses de 2026 que o tinham. Com
+  texto (v2.4.0 ou v2.5.0): `2026*` em 0 de 4 rodadas; 2026-07 certo em 3 de 4 rodadas. O cabecalho do Docling de 2026-07 perdeu o ano, entao a
+  escolha da coluna continua ambigua para a LLM: o texto reduz o erro, nao o elimina.
+- **A validacao tinha uma brecha** e nao recusou a rodada errada do braco 2: contava so as linhas lidas (7) e a LLM tinha lido Jan-Jul da coluna de
+  12 meses. Corrigida em `c1f3815` (conta a coluna inteira; teste de regressao e mutacao). Offline, a regra corrigida recusa a rodada errada do braco 2
+  e os 6 erros da tentativa 3, e aprova os 15 layouts certos. Na rodada `__r2` do braco 2 a LLM acertou de primeira e a regra nao foi exercida.
+- **Custo igual:** `fallback_tentativas_llm_total` 4 a 5 por run nos tres rotulos; nenhuma recusa do validador de escopo nos runs (a LLM nunca precisou
+  de reparo por escopo). Tokens variam de 6 mil a 27 mil sem relacao com o braco (raciocinio do modelo). Guardas: `e2e_apto_para_bronze` e
+  `resolucao_cobertura_obrigatorios` = 1 em todos os runs que geraram layout.
+- **Leitura:** amostra pequena (5 PDFs, 1 a 2 rodadas). O braco 1 fechou 5 de 5 e o braco 2 4 de 5 na primeira rodada, mas a falha do braco 2 e o mesmo
+  modo de erro que o texto sozinho tambem permite (cabecalho sem ano): a validacao corrigida e o que o pega. **Recomendacao:** manter a v2.5.0 (texto +
+  validacao corrigida): mesmo texto, mesmo custo, e uma rede de seguranca para o caso que o texto nao garante. A decisao e do usuario.
+- **Ambiente:** o triggerer do Airflow travou de novo com a revalidacao do 2026-03 do braco 2 (DAG 2 terminou e a tarefa ficou adiada); reiniciado o
+  conteiner, o run terminou. Duas vezes no mesmo dia: pendencia do Airflow. Para refazer o 2026-06 e o 2026-07 do braco 1 com a v2.4.0, a v2.5.0 foi
+  retirada do MinIO por ~10 min (copia fora de `contratos/`) e recolocada; conferido que `contratos/abecip/` voltou a ter v2.4.0 e v2.5.0.
+- **Estado:** contrato mais novo da ABECIP no MinIO = **v2.5.0**. Ponteiro da ABECIP = `v2.52.0` (2026-07 `__r2` do braco 1, certo). Airflow no rotulo do
+  `.env`, `caffeinate` parado. Harness nao rodado (nenhum dos 5 PDFs tem gabarito).
