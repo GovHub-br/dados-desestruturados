@@ -1787,3 +1787,33 @@ so ela precisa passar pelo fallback: nos outros 24 PDFs a entrada da DAG 3 e a m
 - **Ponteiro da ABECIP apos o lote:** `v2.31.0` (o layout do teste, 2025-10 correto). Voltar para outra versao e decisao do usuario.
 - **Estado:** Airflow devolvido ao rotulo do `.env` (`exp-correcoes-contexto-opcional-e-escala`), `caffeinate` parado. A tentativa 3
   do lote 16 segue pendente (2025-10 `__r2` agora feito; faltam os outros 9 meses, com `__r2` em 2026-05 e 2025-11).
+
+## Lote 18: o leitor de numeros reconhece a virgula decimal lida como ponto (offline, sem LLM, 03/11)
+
+Escopo do usuario: so ABECIP e construtoras, e so a parte deterministica do OCR. Dos tres erros de OCR da ABECIP (P11), so um e do nosso
+codigo: o OCR le `3.159,7` como `3.159.7` e `parse_flexible_number` tratava todos os pontos como milhar, publicando 31.597 (10x). Grupo de
+milhar tem sempre 3 digitos, entao em `3.159.7` o ultimo ponto so pode ser o decimal. Ficam fora, por decisao do usuario: digito trocado
+(`989` -> `686`, pontual), rotulo com espaco perdido (`BANCO DOBRASIL`, P10) e rotulos de mes (`1no`, julho vazio).
+
+- **Mudanca:** `domain/resolution/numbers.py`, regra `THOUSANDS_THEN_DECIMAL_DOT_RE` (`d{1,3}(.ddd)+.d{1,2}` -> ultimo ponto e decimal),
+  antes da regra que apaga todos os pontos. Testes em `tests/unit/domain/test_resolution_numbers.py` (inclui `1.234.567`, `38.529`,
+  `3.159,7` e `3.3` inalterados); a regra foi desligada e o teste novo falhou (checagem de mutacao). Suite: 393 passam.
+- **Previsao (contagem nas extracoes):** 5 celulas no formato nas 11 extracoes da ABECIP (`5.395.6` em maio, `3.159.7` e `2.677.9` em
+  2025-10, `9.447.9` e `1.563.6` em 2025-12); 0 nas 5 construtoras da amostra do Docling.
+- **Medicao:** cada layout publicado resolvido duas vezes pelo resolvedor real, sobre a mesma extracao e o mesmo contrato, com o leitor
+  antigo (`git HEAD`) e o novo; comparacao folha a folha do `schema_saida`. Alvos: os 12 candidatos da ABECIP (`exp-faixas-rotulos`, os 10
+  meses e o `__r2` de 2025-10, e `exp-docling-titulo-nota` 2025-10) e os layouts vigentes das 8 construtoras (`current.json`). Sanidade:
+  a resolucao offline das construtoras bate 6 de 6 com o `schema_saida_resolvido` publicado (Cury, Tenda, MRV conferidos).
+
+| alvo | valores numericos | mudaram |
+| --- | --- | --- |
+| ABECIP 2025-10 (3 layouts) | 186 a 208 | 2 em cada: Itau, Aquisicao, volume no mes 31 597 -> **3 159,7**; BRB, Aquisicao, acumulado 26 779 -> **2 677,9** |
+| ABECIP 2025-12 | 196 | 2: acumulado no ano 94 479 -> **9 447,9** e 15 636 -> **1 563,6** |
+| ABECIP outros 8 meses | 141 a 210 | 0 (a celula `5.395.6` de maio nao esta em coluna lida pelo layout) |
+| 8 construtoras (Cury, Cyrela, Direcional, EZTEC, MRV, Pacaembu, Plano&Plano, Tenda) | 5 a 6 | 0 |
+
+- **Resultado:** so os valores 10x mudam, todos para o valor do PDF; nada mais muda. **Aprovado.** Os alertas de soma = TOTAL de 2025-10
+  e 2025-12 que vinham desses valores devem cair; os de digito trocado continuam.
+- **O que ainda nao muda:** os `schema_saida_resolvido` ja publicados no MinIO foram gravados com o leitor antigo; o valor certo so aparece
+  quando a DAG 2 resolver de novo (proxima execucao ou reprocessamento). Nenhum layout nem ponteiro muda: a regra e do resolvedor, nao do
+  layout. O lote dispensou rotulo de release e LLM, entao nao ha traces no Langfuse.
