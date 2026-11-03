@@ -1780,8 +1780,8 @@ so ela precisa passar pelo fallback: nos outros 24 PDFs a entrada da DAG 3 e a m
   nao resolve 2025-10.
 - **Nenhuma guarda regrediu**; os alertas que sobram sao de OCR (P10/P11, fora deste lote) e aparecem identicos nos dois lados.
 - **Limites:** uma execucao de cada lado (o controle repete exatamente a selecao das duas rodadas da tentativa 2, entao a diferenca
-  nao parece variancia). Nos dois lados `periodo` sai nulo nos itens de `serie_mensal_sbpe`: nao muda com a extracao, fica como
-  observacao para a medicao final da ABECIP. O titulo verdadeiro da `table004` ("2 - SBPE: FINANCIAMENTOS...") continua nao detectado:
+  nao parece variancia). Nos dois lados o `periodo.rotulo_publicado` da serie mensal vem do OCR da primeira coluna: julho vazio
+  e outubro `1no` (rotulos de mes lidos errado, ja listados em "Fora desta release" do lote 16; nao muda com a extracao). O titulo verdadeiro da `table004` ("2 - SBPE: FINANCIAMENTOS...") continua nao detectado:
   recupera-lo exigiria OCR do vao (P12 nivel 2), desnecessario para este caso.
 - **Decisao:** o PR #19 pode ser incorporado. Depois do merge, o runner volta para `main` (`atualizar-runner.sh main`).
 - **Ponteiro da ABECIP apos o lote:** `v2.31.0` (o layout do teste, 2025-10 correto). Voltar para outra versao e decisao do usuario.
