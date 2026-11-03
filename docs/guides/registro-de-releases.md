@@ -418,6 +418,7 @@ Pendencias que o lote abriu ou manteve:
 | `exp-item32b-sinonimo-por-valor` | `9d9b7b1` — item 3.2b: sinonimos de entidade com varios valores de dominio (`escopo_periodo`, `recorte`, `escala`) passam a ser um dict valor->rotulos, escopado por valor; contrato bancos v2.3.0; score de producao `resolucao_linha_por_sinonimo` | rodada e comparada em 20/09 (santander + itau, lote parcial): comparador cru REPROVADO, mas a causa (Itau escolheu `chart002` em vez de `chart004` para inadimplencia) e alheia ao fix — item 3.1 (L), ja documentado desde o lote 7. Mecanismo nao ativou em nenhuma das duas execucoes (`resolucao_linha_por_sinonimo=0`); correcao provada pelos testes unitarios. **Aprovado com ressalva: cenario original nao re-exercitado em producao**. Ver lote 12 |
 | `exp-abecip-docling-antigo` / `exp-abecip-docling-novo` | `9175e34` (metrica e gabarito em `cd7b4ab`); sem mudanca de codigo de fallback: a variavel e a extracao (Docling do PR #18) | rodadas e comparadas em 21/10 sobre ABECIP maio/2026: comparador **REPROVADO** pela guarda nova `assinatura_resolvido_observacoes_corretas` (0,918 -> 0,639); producao inalterada (`e2e_apto_para_bronze` 1 nas duas). Causa real e mecanica: o fallback nao gera `linhas_de_tabelas`. Ver lote 13 |
 | `exp-fallback-linhas-de-tabelas` | `9277545` — `linhas_de_tabelas` no modelo, validador e prompts do fallback (3 blocos: `comum-contrato` v9, `unit-mapping-estrutura` v3, `unit-mapping-artefatos` v3) + metricas `selecao_tabelas_*` | rodada e comparada em 21/10: **aprovada pelo usuario**, com uma ressalva aberta (Itau). Alvo atingido na ABECIP (`assinatura_resolvido_observacoes_corretas` 0,639 -> **0,951**). Guarda em 7 documentos: as 5 construtoras principais (Cury, Direcional, Plano&Plano, Pacaembu, Tenda) e o Santander identicos a base em guardas e valores resolvidos; so o Itau nao publicou (resposta cortada no teto de tokens, 8 de 8 tentativas, pendencia ja registrada), sem controle que descarte o prompt. Cyrela, EZTEC e MRV nao medidas. Ver lote 14 |
+| `exp-docling-titulo-nota` | `d4459ce` (fallback do lote 16, `d8625ed`); a variavel e a extracao (PR #19, `0592726`) | rodada em 03/11 sobre ABECIP 2025-10 contra controle com a extracao antiga (`exp-faixas-rotulos-2__...__2025-10__r2`): **aprovada** — a `table004` entra na selecao e a serie mensal sai dela (alertas de coluna 2 -> 0), guardas iguais. Ver lote 17 |
 
 ## Experimento revertido: declaracao explicita de ausencia opcional (`exp-declaracao-explicita-opcional`, 2026-09-18)
 
@@ -1759,3 +1760,30 @@ so ela precisa passar pelo fallback: nos outros 24 PDFs a entrada da DAG 3 e a m
 - **Ponteiro antes do lote:** abecip `v2.29.0` (2025-10 `__r2` da tentativa 2, o defeituoso). Cada run que aprova publica uma versao
   nova e move o ponteiro; voltar e decisao do usuario.
 - **Runner:** na branch `fix/docling-titulo-nota-e-fonte` durante o lote; volta para `main` depois do merge do PR #19.
+
+### Resultado (03/11, teste contra controle, ABECIP 2025-10, mesmo codigo `d4459ce`)
+
+| | controle (`exp-faixas-rotulos-2`, extracao antiga) | teste (`exp-docling-titulo-nota`, extracao nova) |
+| --- | --- | --- |
+| extracao | `...__2025-10__20261021T151108Z`, `table004` = `**(Depositos-Retiradas)` | `...__2025-10__20261103T022929Z`, `table004` = `Table 4` |
+| selecao, unidade `financiamentos_imobiliarios` | `table003`, `table005`-`table008` (sem a `table004`, embora oferecida a LLM) | **`table004`**, `table005`-`table008` |
+| `serie_mensal_sbpe` | da `table003`: saldo e variacao da poupanca (jan: 757 496 e -15 985) | **da `table004`**: unidades e R$ milhoes financiados no mes de 2025 (jan: 38 529 e 13 479, conferido na tabela) |
+| verificador: alertas de coluna | 2 (unidades e volume lidos de colunas de saldo) | **0** |
+| verificador: cobertura, itens vazios, serie anual | 0 / 0 / 0 | 0 / 0 / 0 |
+| alertas que sobram | 4 de OCR (soma = TOTAL, identidade, celulas), iguais nos dois | os mesmos 4 |
+| guardas | apto 1, cobertura obrigatorios 1, tabelas sem mapeamento 0 | iguais |
+| custo | 5 chamadas, 12 276 tokens, 336 s | 5 chamadas, 13 423 tokens, 336 s |
+| ponteiro publicado | v2.30.0 | v2.31.0 |
+
+- **Hipotese confirmada, e a causa e a extracao, nao o `d8625ed`:** com o mesmo codigo, o controle repete o erro da tentativa 2 (mesma
+  selecao, mesma serie mensal da poupanca); so com o titulo neutro a LLM passa a escolher a `table004`. A correcao de rotulos sozinha
+  nao resolve 2025-10.
+- **Nenhuma guarda regrediu**; os alertas que sobram sao de OCR (P10/P11, fora deste lote) e aparecem identicos nos dois lados.
+- **Limites:** uma execucao de cada lado (o controle repete exatamente a selecao das duas rodadas da tentativa 2, entao a diferenca
+  nao parece variancia). Nos dois lados `periodo` sai nulo nos itens de `serie_mensal_sbpe`: nao muda com a extracao, fica como
+  observacao para a medicao final da ABECIP. O titulo verdadeiro da `table004` ("2 - SBPE: FINANCIAMENTOS...") continua nao detectado:
+  recupera-lo exigiria OCR do vao (P12 nivel 2), desnecessario para este caso.
+- **Decisao:** o PR #19 pode ser incorporado. Depois do merge, o runner volta para `main` (`atualizar-runner.sh main`).
+- **Ponteiro da ABECIP apos o lote:** `v2.31.0` (o layout do teste, 2025-10 correto). Voltar para outra versao e decisao do usuario.
+- **Estado:** Airflow devolvido ao rotulo do `.env` (`exp-correcoes-contexto-opcional-e-escala`), `caffeinate` parado. A tentativa 3
+  do lote 16 segue pendente (2025-10 `__r2` agora feito; faltam os outros 9 meses, com `__r2` em 2026-05 e 2025-11).
