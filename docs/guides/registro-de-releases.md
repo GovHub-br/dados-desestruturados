@@ -1870,3 +1870,54 @@ lote 17 (extracao nova), resolvidos com o codigo atual.
   marca MRV (9.841 / 8.841) e o gabarito o TOTAL INCORPORACAO (10.386 / 9.141 = MRV + SENSIA): decisao de contrato ja pendente no gabarito.
   Os PDFs fonte de MRV e Cyrela nao estao mais no MinIO; conferido pela extracao. Os layouts das construtoras sao de lotes anteriores: a
   etapa 2 do lote 16 (regerar as 17 entidades com o prompt atual) segue nao rodada.
+
+## Lote 19: o resolvedor e o validador obedecem ao contrato (offline, sem LLM, 03/11)
+
+Tres das cinco causas da auditoria acima sao lacunas genericas do pipeline e foram corrigidas sem nada especifico da ABECIP (decisao do usuario:
+so o que faz o codigo obedecer ao contrato; regra que dependa do formato da ABECIP nao entra no codigo). Commit `bf30df7`.
+
+- **Itens:** (1) linhas de tabela: folha que o contrato declara `number` sai numero mesmo sem `"tipo": "numero"` na instrucao (antes a
+  celula crua era publicada como texto); (2) `valores_por_segmento`/`valores_fixos` com chave `periodo.rotulo_publicado` viram caminho
+  aninhado (antes saiam na chave plana e o `periodo` ficava nulo); (3) o validador recusa valor fixo fora do `dominio` da entidade no contrato
+  (o campo casa com a entidade pelo nome da folha). Testes em `tests/unit/domain/test_valores_pelo_contrato.py`; checagem de mutacao nos tres.
+- **Medicao:** os layouts publicados (10 da ABECIP: tentativa 3 e 2025-10 do lote 17; 8 construtoras) resolvidos com `git HEAD` e com o codigo
+  novo, comparados folha a folha; a regra de dominio aplicada aos mesmos layouts.
+
+| alvo | mudou |
+| --- | --- |
+| ABECIP 2026-02 | 140 valores texto -> numero; periodo de `por_modalidade` nulo -> `FEV/2026` |
+| ABECIP 2026-01, 2026-03, 2026-04, 2026-07 | periodo de `por_modalidade` nulo -> `JAN/2026`, `MAR/2026`, ... (52 a 72 folhas; o defeito da chave plana era mais amplo que 2026-02) |
+| ABECIP 2025-10, 2025-11, 2025-12, 2026-05, 2026-06 | nada |
+| 8 construtoras | nada |
+| regra de dominio | recusa so 2026-07 (`Construcao`, `Aquisicao`, `Aquisicao e Construcao`); os outros 17 layouts passam |
+
+- **Resultado:** aprovado. Os `schema_saida` ja publicados so mudam quando a DAG 2 resolver de novo.
+
+## Lote 20: escopo de periodo no contrato, so texto x texto + validacao (`exp-contrato-texto-periodo` x `exp-contrato-escopo-periodo`, 03/11)
+
+As outras duas causas da auditoria (serie mensal do ano errado em 2026-07; ano em andamento `2026*` na serie anual em 4 meses) dependem do que
+o contrato quer, entao a decisao fica no contrato. Pedido do usuario: comparar duas formas de dizer isso, em uns 5 PDFs da ABECIP cada.
+
+### Declarado antes de rodar
+
+- **Achado ao preparar:** `contrato_semantico.principios` nao e lido por nenhum codigo e nao chega a LLM; o texto tem de ir onde ela le. O recorte
+  do contrato que a LLM recebe leva `entidades`, `metricas` e `requisitos_mapeamento`, e o teste confirma que a `descricao` de cada
+  `campos_obrigatorios` chega ao recorte da unidade.
+- **Braco 1, `abecip v2.4.0` (`exp-contrato-texto-periodo`):** so texto. `descricao` nas quatro colecoes de serie: mensal = "do ano de referencia
+  do boletim, de janeiro ate o mes de referencia; meses de anos anteriores ficam de fora"; anual = "somente anos completos, anteriores ao ano de
+  referencia; o ano em andamento fica de fora". O codigo nao confere nada.
+- **Braco 2, `abecip v2.5.0` (`exp-contrato-escopo-periodo`):** o mesmo texto + `escopo_periodo` (`ano_de_referencia` nas tres series mensais,
+  `anos_completos` na anual), conferido no validador (commit `1db30c9`, `period_scope_problems`): com periodo mensal do documento, a serie do ano
+  de referencia nao pode ter mais linhas com valor do que o mes de referencia (o cabecalho do Docling de 2026-07 perdeu o ano, entao a contagem e
+  a prova), e a serie anual so le anos anteriores ao de referencia (a mensagem sugere `rotulo_inicial`/`rotulo_final`). So age se o contrato
+  declarar; sem isso e inerte. Offline, sobre os layouts da tentativa 3, recusa exatamente os erros da auditoria (2026-07; `2026*` em 2026-01,
+  02, 04 e 06) e passa os outros 5.
+- **Codigo nos dois bracos:** `1db30c9` (lotes 18 e 19 inclusos). Prompts sem mudanca (conferir 0 divergentes). A DAG 3 usa sempre o contrato mais
+  novo do dominio: publica-se a v2.4.0, roda o braco 1, publica-se a v2.5.0, roda o braco 2.
+- **PDFs (5):** 2025-11 (ano de 2025, rotulos de OCR), 2026-01 (`2026*`), 2026-03 (controle: limpo na tentativa 3), 2026-06 (`2026*`), 2026-07
+  (ano errado nas duas rodadas). Mesmas extracoes da tentativa 3. Em serie.
+- **Metrica-alvo:** auditoria (`eval/abecip/auditar_valores.py`) sem erro de mapeamento, sem `2026*` e sem valor fora do dominio nos 5 PDFs;
+  o braco que chegar la com menos tentativas de LLM e o melhor. Guardas: `e2e_apto_para_bronze`, `resolucao_cobertura_obrigatorios`, o controle
+  2026-03 sem piora. **Base:** `exp-faixas-rotulos-2` (tentativa 3) nos mesmos 5 documentos.
+- **Limite:** uma execucao por PDF por braco; diferenca de um documento so e variancia ate prova em contrario.
+- **Ponteiro antes:** abecip `v2.40.0`. Cada run aprovado publica uma versao nova; voltar e decisao do usuario.
