@@ -207,3 +207,105 @@ def test_titulo_entre_fragmentos_da_mesma_pagina_impede_a_fusao():
     assert len(tables._merge_table_fragments([esquerda, direita], secoes)) == 2
     # sem o título no meio, é o mesmo caso de "cabeçalho num fragmento e corpo no outro": funde
     assert len(tables._merge_table_fragments([esquerda, direita], [])) == 1
+
+
+# --- P12: o título que o Docling não detectou não é trocado pela nota da tabela de cima -------------
+#
+# ABECIP out/2025, página 5 (imagem, lida por OCR). O título "2 - SBPE: FINANCIAMENTOS IMOBILIÁRIOS ..."
+# não foi detectado; acima da tabela 2 só ficaram a nota "**(Depositos-Retiradas)" e a linha "Fontes:"
+# da tabela 1, e a regra do mais próximo acima dava a nota como título. Geometria real da extração.
+
+PAGINA_5 = 5
+
+
+def _caixa(top: float, bottom: float, left: float, right: float, pagina: int = PAGINA_5) -> BoundingBox:
+    return BoundingBox(page_number=pagina, left=left, top=top, right=right, bottom=bottom, coord_origin="BOTTOMLEFT")
+
+
+def _secao_p5(ordem: int, titulo: str, caixa: BoundingBox) -> SectionRecord:
+    return SectionRecord(
+        section_id=f"s{ordem}",
+        document_id="doc",
+        page_number=PAGINA_5,
+        title_raw=titulo,
+        title_canonical=slugify(titulo),
+        level_hint=1,
+        order_index=ordem,
+        bbox=caixa,
+    )
+
+
+SECOES_P5 = [
+    _secao_p5(54, "Indicadores do Crédito Imobiliário", _caixa(772.97, 749.94, 107.9, 489.43)),
+    _secao_p5(55, "1 - SBPE: EVOLUCAO DO SALDO DAS CONTAS DE POUPANCA", _caixa(740.53, 728.34, 51.31, 329.36)),
+    _secao_p5(56, "Valoresem R$ Milhoes", _caixa(737.66, 728.34, 473.71, 545.18)),
+    _secao_p5(59, "**(Depositos-Retiradas)", _caixa(575.68, 564.93, 285.62, 358.87)),
+    _secao_p5(62, "3 -SBPE: OPERACOES COM RECURSOS DE CADERNETA", _caixa(372.48, 360.66, 51.31, 306.96)),
+]
+FONTES_P5 = [_caixa(574.96, 566.36, 51.31, 148.73), _caixa(390.40, 382.16, 51.67, 148.73), _caixa(76.47, 68.23, 51.67, 148.73)]
+TABELAS_P5 = {
+    "saldo": (57, _caixa(727.63, 576.01, 50.07, 544.79)),
+    "financiamentos": (60, _caixa(544.38, 392.07, 50.10, 544.65)),
+    "anual": (63, _caixa(360.88, 77.52, 49.98, 254.52)),
+}
+
+
+def _titulo_p5(nome: str, *, fontes=FONTES_P5) -> str | None:
+    ordem, caixa = TABELAS_P5[nome]
+    secao = common.nearest_section(
+        SECOES_P5, page_number=PAGINA_5, anchor_bbox=caixa, order_index=ordem, closest_above=True, source_lines=fontes
+    )
+    return secao.title_raw if secao else None
+
+
+def test_tabela_sem_titulo_detectado_fica_sem_titulo_e_nao_herda_a_nota_de_rodape():
+    assert _titulo_p5("financiamentos") is None
+
+
+def test_as_tabelas_com_titulo_detectado_continuam_com_o_proprio_titulo():
+    assert _titulo_p5("saldo") == "1 - SBPE: EVOLUCAO DO SALDO DAS CONTAS DE POUPANCA"
+    assert _titulo_p5("anual") == "3 -SBPE: OPERACOES COM RECURSOS DE CADERNETA"
+
+
+def test_sem_a_linha_de_fonte_a_nota_ainda_nao_vira_titulo_e_o_titulo_de_cima_tambem_nao_vale_se_e_de_outra_tabela():
+    # Só a regra da nota: a nota sai, e sem a linha "Fontes:" o título de cima seria herdado.
+    # É por isso que a linha de fonte fecha o bloco: sem ela não ha como saber que o título é da tabela 1.
+    assert _titulo_p5("financiamentos", fontes=[]) == "1 - SBPE: EVOLUCAO DO SALDO DAS CONTAS DE POUPANCA"
+    assert _titulo_p5("financiamentos") is None
+
+
+@pytest.mark.parametrize(
+    "texto",
+    ["**(Depositos-Retiradas)", "* valores em milhões", "(*) Acumulado no ano", "¹ Inclui ajustes", "Fonte: Banco Central", "Fontes: Abecip", "Nota: dados preliminares", "Obs.: revisado"],
+)
+def test_nota_e_fonte_reconhecidas(texto: str):
+    assert common.is_note_or_source_text(texto)
+
+
+@pytest.mark.parametrize("texto", ["Notas Explicativas", "Fontes de Financiamento", "1 - SBPE: EVOLUCAO DO SALDO", "Resultado Consolidado", ""])
+def test_titulo_de_verdade_nao_e_confundido_com_nota(texto: str):
+    assert not common.is_note_or_source_text(texto)
+
+
+def test_linha_de_fonte_so_e_a_que_comeca_com_fonte_e_dois_pontos():
+    assert common.is_source_line_text("Fontes:AbecipeBancoCentral")
+    assert common.is_source_line_text(" Fonte : IBGE")
+    assert not common.is_source_line_text("Fontes de recursos")
+
+
+def test_tabelas_empilhadas_sob_um_titulo_sem_fonte_entre_elas_continuam_herdando_o_titulo():
+    # Ex.: balanço dividido em duas tabelas sob "TABELA 12 - BALANÇO PATRIMONIAL"; nada fecha o bloco.
+    secoes = [_secao_p5(10, "TABELA 12 - BALANCO PATRIMONIAL", _caixa(760.0, 748.0, 50.0, 400.0))]
+    segunda = _caixa(500.0, 300.0, 50.0, 545.0)
+    secao = common.nearest_section(secoes, page_number=PAGINA_5, anchor_bbox=segunda, order_index=30, closest_above=True, source_lines=[])
+    assert secao is not None and secao.title_raw == "TABELA 12 - BALANCO PATRIMONIAL"
+
+
+def test_fonte_de_outra_pagina_ou_fora_da_largura_da_tabela_nao_fecha_o_bloco():
+    secoes = [_secao_p5(10, "TABELA A", _caixa(760.0, 748.0, 50.0, 400.0))]
+    tabela = _caixa(500.0, 300.0, 50.0, 300.0)
+    outra_pagina = [_caixa(600.0, 590.0, 50.0, 150.0, pagina=PAGINA_5 + 1)]
+    fora_da_largura = [_caixa(600.0, 590.0, 400.0, 500.0)]
+    for fontes in (outra_pagina, fora_da_largura):
+        secao = common.nearest_section(secoes, page_number=PAGINA_5, anchor_bbox=tabela, order_index=30, closest_above=True, source_lines=fontes)
+        assert secao is not None and secao.title_raw == "TABELA A"

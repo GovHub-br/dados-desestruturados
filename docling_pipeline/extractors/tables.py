@@ -11,9 +11,9 @@ try:
 except Exception:  # pragma: no cover
     TableItem = object  # type: ignore[assignment]
 
-from ..helpers import dataframe_to_cell_records, item_bbox, item_page_number, normalize_space, slugify, stable_id
+from ..helpers import dataframe_to_cell_records, item_bbox, item_page_number, item_text, normalize_space, slugify, stable_id
 from ..models import BoundingBox, NormalizedRowRecord, SectionRecord, TableRecord
-from .common import dataframe_to_normalized_rows, resolve_section_for_item
+from .common import dataframe_to_normalized_rows, is_source_line_text, resolve_section_for_item
 
 _UUIDISH_RE = re.compile(r"[0-9a-f]{6,}-[0-9a-f-]{10,}", re.I)
 _LONG_NUMERIC_RE = re.compile(r"^\d{4,}$")
@@ -331,6 +331,20 @@ def _materialize_table_records(
     return tables, normalized_rows
 
 
+def _source_lines(items: list[tuple[Any, Any]]) -> list[BoundingBox]:
+    """Caixas das linhas "Fonte(s): ..." da pagina: cada uma fecha o bloco da tabela acima dela."""
+    lines: list[BoundingBox] = []
+    for item, _level in items:
+        if isinstance(item, TableItem) or not is_source_line_text(item_text(item)):
+            continue
+        bbox = item_bbox(item)
+        if bbox is not None:
+            if bbox.page_number is None:
+                bbox = bbox.model_copy(update={"page_number": item_page_number(item)})
+            lines.append(bbox)
+    return lines
+
+
 def extract_tables(
     document_id: str,
     conv_res: Any,
@@ -339,8 +353,10 @@ def extract_tables(
     merge_fragments: bool = True,
 ) -> tuple[list[TableRecord], list[NormalizedRowRecord]]:
     candidates: list[ExtractedTableCandidate] = []
+    items = list(conv_res.document.iterate_items())
+    source_lines = _source_lines(items)
 
-    for idx, (item, _level) in enumerate(conv_res.document.iterate_items()):
+    for idx, (item, _level) in enumerate(items):
         if not isinstance(item, TableItem):
             continue
 
@@ -353,6 +369,7 @@ def extract_tables(
             anchor_bbox=bbox,
             order_index=idx,
             closest_above=True,
+            source_lines=source_lines,
         )
 
         try:
