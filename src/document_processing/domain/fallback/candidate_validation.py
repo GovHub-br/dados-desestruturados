@@ -23,7 +23,10 @@ from document_processing.domain.fallback.row_anchoring import (
     resolve_row_anchor,
     table_metric_groups,
 )
-from document_processing.domain.fallback.table_row_ranges import explicit_row_range_problems
+from document_processing.domain.fallback.table_row_ranges import (
+    explicit_row_range_problems,
+    period_scope_problems,
+)
 from document_processing.domain.fallback.table_structure import table_artifact_content
 from document_processing.domain.layouts.paths import (
     normalize_mapping_path,
@@ -201,6 +204,10 @@ class FallbackCandidateValidationService:
             fallback_problem_context,
         )
         self._validate_fixed_values_in_contract_domain(
+            candidate_model,
+            fallback_problem_context,
+        )
+        self._validate_period_scope(
             candidate_model,
             fallback_problem_context,
         )
@@ -795,6 +802,43 @@ class FallbackCandidateValidationService:
         problems = explicit_row_range_problems(entries, loaded, estrito=creating)
         if problems:
             raise RuntimeError("Faixa de linhas incompativel com a tabela: " + " ".join(problems))
+
+    @staticmethod
+    def _validate_period_scope(
+        candidate: LayoutSignatureCandidate,
+        fallback_problem_context: dict[str, Any],
+    ) -> None:
+        """Colecao com ``escopo_periodo`` no contrato le so as linhas desse escopo.
+
+        Nada acontece sem a declaracao no contrato: o escopo e do dado que o contrato
+        quer (serie do ano de referencia, so anos completos), nao do codigo. Vale nos
+        escopos de criacao; na correcao parcial o layout base e preservado.
+        """
+        if candidate.escopo_correcao not in {
+            FallbackCandidateValidationService.CREATION_SCOPE,
+            FallbackCandidateValidationService.FULL_REMAP_SCOPE,
+        }:
+            return
+        contract = fallback_problem_context.get("contrato_semantico_relevante", {})
+        semantic = contract.get("contrato_semantico", {}) if isinstance(contract, dict) else {}
+        requirements = semantic.get("requisitos_mapeamento", {}) if isinstance(semantic, dict) else {}
+        fields = requirements.get("campos_obrigatorios", []) if isinstance(requirements, dict) else []
+        scopes = {
+            str(field.get("path", "")).strip(): str(field.get("escopo_periodo", "")).strip()
+            for field in fields if isinstance(field, dict) and field.get("escopo_periodo")
+        }
+        identity = fallback_problem_context.get("identidade_documento", {})
+        period = identity.get("periodo") if isinstance(identity, dict) else None
+        loaded = fallback_problem_context.get("artefatos_contexto_llm")
+        if not scopes or not period or not isinstance(loaded, dict):
+            return
+        entries = {
+            path: entry.model_dump(mode="json", exclude_none=True)
+            for path, entry in candidate.mapeamento_canonico.items()
+        }
+        problems = period_scope_problems(entries, loaded, scopes, str(period))
+        if problems:
+            raise RuntimeError("Linhas fora do escopo de periodo do contrato: " + " ".join(problems))
 
     @staticmethod
     def _validate_fixed_values_in_contract_domain(

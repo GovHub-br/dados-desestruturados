@@ -1,0 +1,172 @@
+{
+  "nome": "Boletins mensais de crédito imobiliário ABECIP",
+  "dominio": "abecip",
+  "entidade": "abecip",
+  "fonte": "ABECIP - Indicadores do Crédito Imobiliário SBPE",
+  "tipo_documento": "contrato_semantico",
+  "versao": "2.5.0",
+  "descricao": "Contrato semântico para boletins mensais da ABECIP. A saída preserva observações brutas, sua granularidade e o rótulo do período publicado; percentuais, participações, rankings e métricas derivadas não pertencem à extração.",
+  "contrato_semantico": {
+    "principios": {
+      "valores_brutos_primeiro": "Extrair somente valores observados, sem recalcular variações, acumulados ou janelas móveis.",
+      "granularidades_nao_substituiveis": "Séries mensais, acumulados publicados, últimos 12 meses e detalhamento por instituição devem coexistir.",
+      "periodo_explicito": "Cada observação deve informar o rótulo publicado e seu tipo para preservar a granularidade divulgada.",
+      "estoque_fluxo_distintos": "Saldo de poupança é estoque de fim de período; captação líquida é fluxo e não pode ser tratado como saldo."
+    },
+    "entidades": {
+      "periodo": {
+        "tipo": "objeto",
+        "campos": [
+          "rotulo_publicado",
+          "tipo_periodo"
+        ]
+      },
+      "modalidade": {
+        "tipo": "string",
+        "dominio": [
+          "construcao",
+          "aquisicao",
+          "total"
+        ]
+      },
+      "instituicao_financeira": {
+        "tipo": "string"
+      },
+      "funding": {
+        "tipo": "string",
+        "dominio": [
+          "sbpe"
+        ]
+      },
+      "unidade_monetaria": {
+        "tipo": "string",
+        "dominio": [
+          "milhoes_de_reais"
+        ]
+      }
+    },
+    "requisitos_mapeamento": {
+      "campos_obrigatorios": [
+        {
+          "path": "financiamentos_imobiliarios.serie_mensal_sbpe",
+          "descricao": "Série mensal do ano de referência do boletim: um item por mês, de janeiro até o mês de referência. Meses de anos anteriores, mesmo publicados na mesma tabela, ficam de fora.",
+          "escopo_periodo": "ano_de_referencia"
+        },
+        {
+          "path": "financiamentos_imobiliarios.serie_historica_anual",
+          "descricao": "Somente anos completos, anteriores ao ano de referência. O ano em andamento (parcial, marcado com asterisco ou aberto mês a mês) e o total do ano em curso ficam de fora.",
+          "escopo_periodo": "anos_completos"
+        },
+        {
+          "path": "financiamentos_imobiliarios.por_modalidade_e_instituicao"
+        },
+        {
+          "path": "poupanca_sbpe.saldos_mensais",
+          "descricao": "Saldo de fim de mês do ano de referência do boletim: um item por mês, de janeiro até o mês de referência. Meses de anos anteriores, mesmo publicados na mesma tabela, ficam de fora.",
+          "escopo_periodo": "ano_de_referencia"
+        },
+        {
+          "path": "poupanca_sbpe.captacoes_liquidas_mensais",
+          "descricao": "Captação líquida mensal do ano de referência do boletim: um item por mês, de janeiro até o mês de referência. Meses de anos anteriores, mesmo publicados na mesma tabela, ficam de fora.",
+          "escopo_periodo": "ano_de_referencia"
+        }
+      ]
+    }
+  },
+  "schema_saida": {
+    "fonte": "ABECIP - Indicadores do Crédito Imobiliário SBPE",
+    "tipo_documento": "boletim_mensal_credito_imobiliario_abecip",
+    "competencia_referencia": {
+      "rotulo_publicado": "string"
+    },
+    "metadados_origem": {
+      "data_publicacao": "string | null",
+      "data_extracao": "string | null",
+      "aviso_revisao": "string | null",
+      "document_id": "string | null"
+    },
+    "financiamentos_imobiliarios": {
+      "serie_mensal_sbpe": [
+        {
+          "periodo": {
+            "rotulo_publicado": "string",
+            "tipo_periodo": "mensal"
+          },
+          "funding": "sbpe",
+          "modalidade": "total",
+          "instituicao_financeira": "todas",
+          "volume_financiado_milhoes": "number | null",
+          "unidades_financiadas": "number | null"
+        }
+      ],
+      "observacoes_publicadas_sbpe": [
+        {
+          "periodo": {
+            "rotulo_publicado": "string",
+            "tipo_periodo": "string"
+          },
+          "funding": "sbpe",
+          "modalidade": "total",
+          "volume_financiado_milhoes": "number | null",
+          "unidades_financiadas": "number | null"
+        }
+      ],
+      "por_modalidade_e_instituicao": [
+        {
+          "periodo": {
+            "rotulo_publicado": "string",
+            "tipo_periodo": "string"
+          },
+          "funding": "sbpe",
+          "modalidade": "string",
+          "instituicao_financeira": "string",
+          "volume_mensal_milhoes": "number | null",
+          "unidades_mensais": "number | null",
+          "volume_acumulado_ano_milhoes": "number | null",
+          "unidades_acumuladas_ano": "number | null"
+        }
+      ],
+      "serie_historica_anual": [
+        {
+          "periodo": {
+            "rotulo_publicado": "string",
+            "tipo_periodo": "anual"
+          },
+          "funding": "sbpe",
+          "modalidade": "total",
+          "volume_financiado_milhoes": "number | null",
+          "unidades_financiadas": "number | null"
+        }
+      ]
+    },
+    "poupanca_sbpe": {
+      "saldos_mensais": [
+        {
+          "periodo": {
+            "rotulo_publicado": "string",
+            "tipo_periodo": "mensal"
+          },
+          "saldo_milhoes": "number | null"
+        }
+      ],
+      "captacoes_liquidas_mensais": [
+        {
+          "periodo": {
+            "rotulo_publicado": "string",
+            "tipo_periodo": "mensal"
+          },
+          "captacao_liquida_milhoes": "number | null"
+        }
+      ],
+      "observacoes_publicadas": [
+        {
+          "periodo": {
+            "rotulo_publicado": "string",
+            "tipo_periodo": "acumulado_ano"
+          },
+          "captacao_liquida_milhoes": "number | null"
+        }
+      ]
+    }
+  }
+}

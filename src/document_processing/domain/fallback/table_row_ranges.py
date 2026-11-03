@@ -418,3 +418,89 @@ def explicit_row_range_problems(
                 if divergencia:
                     problemas.append(divergencia)
     return problemas
+
+
+ESCOPOS_DE_PERIODO = ("ano_de_referencia", "anos_completos")
+_PERIODO_MENSAL = re.compile(r"^\s*((?:19|20)\d\d)-(0[1-9]|1[0-2])\s*$")
+_ANO = re.compile(r"^(?:19|20)\d\d$")
+
+
+def _colunas_mapeadas(instrucao: Mapping[str, Any]) -> list[int]:
+    """Todas as colunas que a instrucao le, com ou sem ``tipo``; a de rotulo nao conta valor por nao ser numerica."""
+    campos = list(instrucao.get("campos") or [])
+    for faixa in instrucao.get("segmentos") or instrucao.get("faixas_linhas") or []:
+        if isinstance(faixa, Mapping):
+            campos.extend(faixa.get("campos") or [])
+    colunas = {c["indice_coluna"] for c in campos if isinstance(c, Mapping) and isinstance(c.get("indice_coluna"), int)}
+    colunas.update(i for i in instrucao.get("indices_colunas") or [] if isinstance(i, int))
+    return sorted(colunas)
+
+
+def _linhas_efetivas(instrucao: Mapping[str, Any], conteudo: Mapping[str, Any]) -> list[int] | None:
+    """Linhas que o resolvedor vai ler: a parte por rotulos, a faixa explicita ou as linhas de dados do codigo."""
+    dados = data_row_ranges(conteudo, colunas=_colunas_mapeadas(instrucao) or None) or ()
+    rotulo_inicial, rotulo_final = _rotulos_declarados(instrucao)
+    if rotulo_inicial or rotulo_final:
+        partes, erro = resolve_label_range(conteudo, rotulo_inicial, rotulo_final, dados)
+        return None if erro else sorted(_linhas_das_faixas(partes))
+    if _tem_faixa_explicita(instrucao):
+        total = len(conteudo["rows"])
+        faixas = [(i, total - 1 if f is None else f) for i, f in _faixas_explicitas(instrucao)]
+        if any(not isinstance(i, int) or not isinstance(f, int) or i < 0 or f < i or f >= total for i, f in faixas):
+            return None  # faixa invalida ja e acusada por explicit_row_range_problems
+        return sorted(_linhas_das_faixas(faixas) & _linhas_das_faixas(dados))
+    return sorted(_linhas_das_faixas(dados))
+
+
+def period_scope_problems(
+    mapeamento: Mapping[str, Any],
+    tabelas: Mapping[str, Any],
+    escopos: Mapping[str, str],
+    periodo_referencia: str,
+) -> list[str]:
+    """Colecoes cujo contrato declara ``escopo_periodo`` e cujas linhas nao respeitam esse escopo.
+
+    So vale para documento de periodo mensal (``AAAA-MM``); sem isso nao ha o que conferir.
+
+    - ``ano_de_referencia``: a serie mensal do ano de referencia tem no maximo um item
+      por mes ate o mes de referencia. Mais itens que isso e coluna de outro ano (o
+      cabecalho do Docling pode ter perdido o ano, entao a contagem e a prova).
+    - ``anos_completos``: cada linha lida e um ano anterior ao ano de referencia; o ano
+      em andamento e as linhas de mes ficam de fora, declarando a parte por rotulos.
+    """
+    periodo = _PERIODO_MENSAL.match(str(periodo_referencia or ""))
+    if not periodo or not escopos:
+        return []
+    ano, mes = int(periodo.group(1)), int(periodo.group(2))
+    problemas: list[str] = []
+    for caminho, entrada in mapeamento.items():
+        escopo = escopos.get(str(caminho).strip())
+        if escopo not in ESCOPOS_DE_PERIODO or not isinstance(entrada, Mapping):
+            continue
+        for instrucao in _instrucoes_de_linhas(entrada):
+            arquivo = str(instrucao.get("arquivo_origem") or "").strip()
+            artefato = tabelas.get(arquivo)
+            conteudo = table_artifact_content(artefato) if artefato is not None else None
+            if conteudo is None:
+                continue
+            linhas = _linhas_efetivas(instrucao, conteudo)
+            if not linhas:
+                continue
+            if escopo == "ano_de_referencia" and len(linhas) > mes:
+                problemas.append(
+                    f"{caminho} ({arquivo}): o contrato pede a serie do ano de referencia ({ano}), que vai no maximo ate o "
+                    f"mes {mes}, e a instrucao le {len(linhas)} linhas com valor nas colunas mapeadas. As colunas lidas "
+                    f"sao de outro ano; use as colunas de {ano}."
+                )
+            if escopo == "anos_completos":
+                rows = _linhas_do_conteudo(conteudo)
+                rotulos = {i: _texto(next((c for c in rows[i] if _texto(c)), "")) for i in linhas}
+                fora = [r for r in rotulos.values() if not (_ANO.match(r) and int(r) < ano)]
+                if fora:
+                    anos = [r for r in rotulos.values() if _ANO.match(r) and int(r) < ano]
+                    sugestao = f" Declare rotulo_inicial '{anos[0]}' e rotulo_final '{anos[-1]}'." if anos else ""
+                    problemas.append(
+                        f"{caminho} ({arquivo}): o contrato pede so anos completos (anteriores a {ano}) e a instrucao le "
+                        f"linhas que nao sao um ano fechado: {fora[:6]}.{sugestao}"
+                    )
+    return problemas
