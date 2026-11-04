@@ -1949,3 +1949,14 @@ o contrato quer, entao a decisao fica no contrato. Pedido do usuario: comparar d
   retirada do MinIO por ~10 min (copia fora de `contratos/`) e recolocada; conferido que `contratos/abecip/` voltou a ter v2.4.0 e v2.5.0.
 - **Estado:** contrato mais novo da ABECIP no MinIO = **v2.5.0**. Ponteiro da ABECIP = `v2.52.0` (2026-07 `__r2` do braco 1, certo). Airflow no rotulo do
   `.env`, `caffeinate` parado. Harness nao rodado (nenhum dos 5 PDFs tem gabarito).
+
+#### Complemento (03/11): 2026-02 e 2026-04 com a v2.5.0
+
+Os dois meses que ainda tinham `2026*` na serie anual (layouts da tentativa 3, contrato v2.3.0) rodaram com a v2.5.0 sob `exp-contrato-escopo-periodo`
+(codigo `c1f3815`). Auditoria: tudo certo nos dois (308 valores), sem `2026*`, de primeira (nenhum reparo nem recusa de escopo). Ponteiro da ABECIP: `v2.54.0`
+(2026-04). Airflow devolvido ao rotulo do `.env`; `caffeinate` parado.
+
+**Retrato da ABECIP depois dos lotes 18-20** (resultado mais recente de cada mes, resolvido com o codigo atual): numeros 99,8 % iguais ao PDF; sobram so
+erros de OCR: 3 numeros (2025-10 POUPEX 0,9 -> 60; 2025-11 POUPEX 66,6 -> 999; 2026-05 Banco do Brasil 989 -> 686), 1 celula vazia (2026-01 POUPEX 3 ->
+nulo) e os rotulos de mes de 2025-10 e 2025-11 (`Jul` -> vazio/`m`, `Out` -> `1no`). Os `schema_saida` gravados de meses antigos so refletem o codigo
+atual quando a DAG 2 resolver de novo.
