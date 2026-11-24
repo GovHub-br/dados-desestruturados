@@ -19,6 +19,8 @@ from dags._shared.dependencies import (
 @task
 def montar_runtime() -> dict[str, object]:
     runtime = build_construtoras_payload_builder().build_resolution_runtime()
+    # Prioriza a criacao inicial enquanto a correcao pontual nao estiver pronta.
+    runtime["forcar_criacao_inicial_layout"] = True
     context = get_current_context()
     dag_run = context.get("dag_run")
     conf = getattr(dag_run, "conf", None) or {}

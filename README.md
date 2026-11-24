@@ -30,6 +30,11 @@ A LLM não é responsável por calcular indicadores finais nem por publicar dado
 diretamente. Ela é usada apenas para propor ou corrigir o mapeamento de layout;
 toda proposta volta pela validação determinística antes de ser aceita.
 
+Nesta fase, cada PDF novo encaminhado à DAG 2 segue para a criação inicial de
+layout na DAG 3, mesmo quando a entidade já tem uma assinatura ativa. A DAG 2
+continua produzindo a saída estruturada ao revalidar o candidato. A correção
+pontual do layout fica fora do fluxo automático nesta fase.
+
 ## Componentes
 
 | Componente | Responsabilidade |
