@@ -8,7 +8,7 @@ despausá-la (decisão do dono do pipeline).
 
 | # | Verificação | Como verificar | Req. | Evidência | Resultado |
 | --- | --- | --- | --- | --- | --- |
-| A1 | Testes e lint | `pytest tests/unit` e `ruff check src tests/unit scripts/validate_repository_structure.py airflow/dags/abecip airflow/dags/_shared`; `python scripts/validate_repository_structure.py` | RF1–RF7 | 2026-10-21: 325 passed (302 antes + 23 novos), 1 skip preexistente (pandas), ruff limpo, validador ok | ✅ |
+| A1 | Testes e lint | `pytest tests/unit` e `ruff check src tests/unit scripts/validate_repository_structure.py airflow/dags/coleta airflow/dags/_shared`; `python scripts/validate_repository_structure.py` | RF1–RF7 | 2026-10-21: 325 passed (302 antes + 23 novos), 1 skip preexistente (pandas), ruff limpo, validador ok | ✅ |
 | A2 | Cada regra tem um teste que a pega | Quebrar a regra numa cópia e ver o teste falhar | RF5, RF6 | 2026-10-21, 2 mutantes detectados: `FORCE_EXTRACT` passando a valer (`test_force_extract_do_ambiente_nao_reextrai…`) e reconhecimento do layout de nome prefixado removido (`…carga_manual…[layout_prefixado]`) | ✅ |
 | A3 | Parser na página real | `parse_page` sobre o HTML de 2026-10-21 | RF1 | 8 de 8 informativos, períodos 2026-01 a 2026-08 na ordem da página, `…-032` e `…-051` mapeados para 2026-03 e 2026-05, "março" acentuado ok, nenhum conflito descrição × arquivo | ✅ |
 | A4 | `HttpClient` do projeto é aceito pelo site | `fetch` da listagem e de um PDF com o User-Agent padrão | RF3 | 2026-10-21: listagem 51 927 bytes `text/html`; PDF 1 174 792 bytes `application/pdf`, redirecionado para `/admin/assets/uploads/anexos/…`, começa por `%PDF-` | ✅ |

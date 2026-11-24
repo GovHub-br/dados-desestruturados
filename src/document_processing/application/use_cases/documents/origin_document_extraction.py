@@ -8,6 +8,8 @@ import re
 from pathlib import Path
 from typing import Any
 
+from document_processing.domain.document_identity import document_id_from_key
+
 from .constants import DAG_NAME
 
 
@@ -254,7 +256,7 @@ class OriginDocumentExtractionMixin:
         filename = self._safe_filename(object_key.rsplit("/", maxsplit=1)[-1])
         local_pdf = self._write_temp_pdf(candidate, digest, content, filename)
         return {
-            "document_id": digest[:32],
+            "document_id": str(origin_manifest.get("document_id") or document_id_from_key(object_key, digest)),
             "sha256": digest,
             "status": "pendente_extracao",
             "pdf_uri": f"minio://{self.config.minio_bucket}/{object_key}",

@@ -164,6 +164,44 @@ class AbecipInformativosClient:
             )
         return candidates
 
+    def detect_historical_candidates(self, start: date, end: date) -> list[dict[str, Any]]:
+        """Percorre a listagem oficial, incluindo o botao carregar mais."""
+        html = self.http_client.fetch(self.page_url, timeout=self.timeout_seconds).text
+        parser = _BlocosParser()
+        parser.feed(html)
+        parser.close()
+        offset = len(parser.blocks)
+        candidates = self.parse_page(html)
+        seen = {item["url"] for item in candidates}
+        total_match = re.search(r'total_conteudos\s*=\s*["\'](\d+)', html)
+        total = int(total_match.group(1)) if total_match else None
+        # Continua ate esgotar o site, sem assumir ordenacao por competencia.
+        while total is None or offset < total:
+            page = self.http_client.post_form(
+                urljoin(self.page_url, "/livros_load_more_noticias"),
+                {"num_conteudos": offset, "categoria": "imprensa", "subcategoria": "informativos-mensais"},
+                timeout=self.timeout_seconds,
+            )
+            fragment = str(page.get("html") or "")
+            if not fragment.strip():
+                break
+            parser = _BlocosParser()
+            parser.feed(fragment)
+            parser.close()
+            if not parser.blocks:
+                raise RuntimeError("Paginacao ABECIP retornou conteudo sem informativos reconheciveis.")
+            batch = self.parse_page(fragment)
+            fresh = [item for item in batch if item["url"] not in seen]
+            if not fresh:
+                raise RuntimeError("Paginacao ABECIP repetiu uma pagina; historico incompleto.")
+            candidates.extend(fresh)
+            seen.update(item["url"] for item in fresh)
+            offset += len(parser.blocks)
+        return sorted(
+            (item for item in candidates if start.strftime("%Y-%m") <= item["period_label"] <= end.strftime("%Y-%m")),
+            key=lambda item: (item["period_label"], item["url"]),
+        )
+
     def _block_to_candidate(self, block: dict[str, str]) -> dict[str, Any] | None:
         href = block.get("href", "")
         if "download?file=" not in href and ".pdf" not in href.lower():
@@ -227,7 +265,14 @@ class AbecipInformativosClient:
     @staticmethod
     def _periodo_no_arquivo(arquivo: str) -> tuple[int, int] | None:
         match = _PERIODO_NO_ARQUIVO.search(arquivo.lower())
-        return (int(match.group(1)), int(match.group(2))) if match else None
+        if match:
+            return int(match.group(1)), int(match.group(2))
+        legacy = re.search(r"data-abecip-([a-z]+)(20\d{2})", arquivo.lower())
+        if legacy:
+            month = next((number for name, number in _MESES.items() if name.startswith(legacy.group(1))), None)
+            if month:
+                return int(legacy.group(2)), month
+        return None
 
     @staticmethod
     def _data_publicacao(value: str) -> str | None:

@@ -111,3 +111,22 @@ def build_execution_tracer() -> AtlasExecutionTracer:
         config_loader=loader,
         minio_client=MinioStorageClient(config),
     )
+
+
+@lru_cache(maxsize=1)
+def build_historical_ingestion_use_case():
+    from document_processing.application.use_cases.documents.historical_ingestion import (
+        HistoricalIngestionUseCase,
+    )
+
+    loader, config = _settings()
+    http_client = HttpClient()
+    abecip = AbecipInformativosClient(http_client=http_client)
+    return HistoricalIngestionUseCase(
+        abecip_source=abecip,
+        ri_source=RiResultsClient(http_client=http_client),
+        ingestion=MonitoredSourceIngestionUseCase(
+            source=abecip, http_client=http_client, config=config, config_loader=loader,
+            minio_client=MinioStorageClient(config), reuse_existing_origins=True,
+        ),
+    )

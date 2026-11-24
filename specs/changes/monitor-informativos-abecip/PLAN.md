@@ -11,7 +11,7 @@
    grava o que é novo e informa o que segue para extração. Reaproveita os auxiliares de
    `OriginDocumentStorageMixin` (contrato, nome seguro, existência de extração).
 4. Fábrica `build_abecip_monitor_use_case` em `airflow/dags/_shared/dependencies.py`.
-5. DAG `airflow/dags/abecip/dag_detecta_e_baixa_pdfs_abecip.py`, fina, no formato da DAG
+5. DAG `airflow/dags/coleta/dag_detecta_e_baixa_pdfs_abecip.py`, fina, no formato da DAG
    de RI das construtoras.
 6. Testes e `scripts/simular_monitor_abecip.py` (dry-run somente leitura).
 7. Documentação: README, `docs/architecture/arquitetura-orquestracao-airflow.md` e
@@ -37,6 +37,6 @@
   executa o horário mais recente. Essa execução processa o informativo de agosto.
 - Antes de despausar: rodar `scripts/simular_monitor_abecip.py` e conferir a lista.
 - Rollback: pausar a DAG. Nada existente foi alterado; para remover de vez, apagar
-  `airflow/dags/abecip/`, `infrastructure/abecip/`, a porta, o caso de uso e a fábrica.
+  `airflow/dags/coleta/`, `infrastructure/abecip/`, a porta, o caso de uso e a fábrica.
   Os PDFs já gravados em `documentos-origem/abecip/` ficam e continuam válidos para
   `dag_extrai_documentos_origem`.

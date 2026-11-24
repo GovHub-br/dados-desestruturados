@@ -7,7 +7,7 @@ from collections.abc import Iterator
 from dataclasses import dataclass
 from http.client import IncompleteRead, RemoteDisconnected
 from urllib.error import HTTPError, URLError
-from urllib.parse import urlparse
+from urllib.parse import urlencode, urlparse
 from urllib.request import Request, urlopen
 
 DEFAULT_HEADERS = {
@@ -108,6 +108,20 @@ class HttpClient:
             socket.timeout,
         ) as exc:
             raise RuntimeError(f"Falha ao chamar API {url}: {exc}") from exc
+
+    def post_form(self, url: str, payload: dict[str, object], *, timeout: int = 40) -> dict:
+        """Envia formulario de paginacao e le a resposta JSON do site."""
+        request = Request(
+            url,
+            data=urlencode(payload).encode(),
+            headers={**self.default_headers, "Content-Type": "application/x-www-form-urlencoded"},
+            method="POST",
+        )
+        with urlopen(request, timeout=timeout) as response:
+            result = json.loads(response.read().decode("utf-8"))
+        if not isinstance(result, dict) or result.get("erro"):
+            raise RuntimeError(f"Resposta de paginacao invalida em {url}.")
+        return result
 
     def iter_post_json_lines(
         self,

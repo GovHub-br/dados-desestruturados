@@ -54,10 +54,14 @@ pontual do layout fica fora do fluxo automático nesta fase.
 | --- | --- |
 | `dag_detecta_e_baixa_pdfs_construtoras` | Descobre e baixa PDFs de RI para documentos de origem. |
 | `dag_detecta_e_baixa_pdfs_abecip` | Monitora os informativos mensais da ABECIP e dispara a extração dos novos. |
+| `dag_carga_historica_pdfs` | Coleta manual histórica da ABECIP e construtoras, com retomada por etapa. |
 | `dag_extrai_documentos_origem` | Varre documentos de origem, chama o Docling e persiste a extração. |
 | `dag_resolve_schema_saida` | Resolve o schema de saída usando contrato e layout signature. |
 | `dag_valida_e_fallback_llm` | Gera ou corrige layouts quando a resolução falha ou não há layout. |
 | `dag_ingere_bronze` | Ingestão dos dados brutos validados na camada bronze. |
+
+O guia de [carga histórica manual](docs/operations/carga-historica-pdfs.md) descreve
+os parâmetros, o modo de teste sem extração e os IDs legíveis no MinIO.
 
 As DAGs de descoberta são desacopladas da extração: um PDF pode vir de RI, do
 monitor da ABECIP, do portal ou de qualquer outro processo que o grave em

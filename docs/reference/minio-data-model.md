@@ -105,7 +105,7 @@ Upload manual pelo portal usa a mesma hierarquia, com identidade imutavel por
 conteudo:
 
 ```text
-documentos-origem/<dominio>/<entidade>/document_id=<sha256_32>/
+documentos-origem/<dominio>/<entidade>/document_id=<data_entrada_UTC>__<sha256_32>/
   <sha256_16>_arquivo.pdf
   documento_origem.json
 ```
@@ -144,7 +144,7 @@ diretório por documento, para que uma republicação do mesmo mês não sobresc
 manifesto da versão anterior:
 
 ```text
-documentos-origem/abecip/abecip/ano=2026/periodo=2026-08/document_id=<sha256[:32]>/
+documentos-origem/abecip/abecip/ano=2026/periodo=2026-08/document_id=<data_entrada_UTC>__<sha256_32>/
   <sha256[:16]>_data-abecip-2026-08.pdf
   documento_detectado.json
 ```
@@ -236,7 +236,11 @@ Uso:
 
 ### `document_id`
 
-Identificador estavel do documento logico.
+Identificador estável do documento lógico. Novas entradas usam
+`AAAA-MM-DD_HH-MM-SSZ__<sha256_32>`, com horário UTC da primeira entrada.
+O SHA-256 integral é preservado no manifesto e usado para deduplicação.
+IDs antigos continuam válidos. Consulte o guia de
+[carga histórica](../operations/carga-historica-pdfs.md#ids-legíveis-no-minio).
 
 Deve ser usado como pivô entre:
 
