@@ -19,6 +19,7 @@ SupportedMappingOrigin = Literal[
     "cabecalho_de_tabela",
     "celula_de_tabela",
     "linhas_de_tabela",
+    "linhas_de_tabelas",
     "juncao_de_registros_json",
 ]
 

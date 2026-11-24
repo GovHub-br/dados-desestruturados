@@ -416,6 +416,9 @@ Pendencias que o lote abriu ou manteve:
 | `exp-fase2-item24-escopo` | `a5eb677` — item 2.4: escopo de `resolve_row_anchor` por grupo de metrica (`classify_table_metric_group`) e por entidade do documento (`_entity_child_row`) | codigo aprovado e commitado em 19/09; rerun do lote 10 revelou que o voto de vocabulario nao classificava a tabela real do `eztc3` (ver lote 11) |
 | `exp-fase2-item24-titulo` | `079b7ad` — corrige `classify_table_metric_group` para decidir pelo `name`/titulo da tabela antes do voto de rotulos | rodada e comparada em 19/09 (base `exp-gate-e-ancoragem-linha`, lote de 10): **eztc3 e direcional confirmados corretos (1,0/1,0/1,0) via leitura direta do MinIO**; comparador cru **REPROVADO** por regressoes nao relacionadas (santander, pre-existente desde `exp-fase2-ancoragem-numerica`; itau, variancia de LLM confirmada por rerun limpo). Ver lote 11 |
 | `exp-item32b-sinonimo-por-valor` | `9d9b7b1` — item 3.2b: sinonimos de entidade com varios valores de dominio (`escopo_periodo`, `recorte`, `escala`) passam a ser um dict valor->rotulos, escopado por valor; contrato bancos v2.3.0; score de producao `resolucao_linha_por_sinonimo` | rodada e comparada em 20/09 (santander + itau, lote parcial): comparador cru REPROVADO, mas a causa (Itau escolheu `chart002` em vez de `chart004` para inadimplencia) e alheia ao fix — item 3.1 (L), ja documentado desde o lote 7. Mecanismo nao ativou em nenhuma das duas execucoes (`resolucao_linha_por_sinonimo=0`); correcao provada pelos testes unitarios. **Aprovado com ressalva: cenario original nao re-exercitado em producao**. Ver lote 12 |
+| `exp-abecip-docling-antigo` / `exp-abecip-docling-novo` | `9175e34` (metrica e gabarito em `cd7b4ab`); sem mudanca de codigo de fallback: a variavel e a extracao (Docling do PR #18) | rodadas e comparadas em 21/10 sobre ABECIP maio/2026: comparador **REPROVADO** pela guarda nova `assinatura_resolvido_observacoes_corretas` (0,918 -> 0,639); producao inalterada (`e2e_apto_para_bronze` 1 nas duas). Causa real e mecanica: o fallback nao gera `linhas_de_tabelas`. Ver lote 13 |
+| `exp-fallback-linhas-de-tabelas` | `9277545` — `linhas_de_tabelas` no modelo, validador e prompts do fallback (3 blocos: `comum-contrato` v9, `unit-mapping-estrutura` v3, `unit-mapping-artefatos` v3) + metricas `selecao_tabelas_*` | rodada e comparada em 21/10: **aprovada pelo usuario**, com uma ressalva aberta (Itau). Alvo atingido na ABECIP (`assinatura_resolvido_observacoes_corretas` 0,639 -> **0,951**). Guarda em 7 documentos: as 5 construtoras principais (Cury, Direcional, Plano&Plano, Pacaembu, Tenda) e o Santander identicos a base em guardas e valores resolvidos; so o Itau nao publicou (resposta cortada no teto de tokens, 8 de 8 tentativas, pendencia ja registrada), sem controle que descarte o prompt. Cyrela, EZTEC e MRV nao medidas. Ver lote 14 |
+| `exp-docling-titulo-nota` | `d4459ce` (fallback do lote 16, `d8625ed`); a variavel e a extracao (PR #19, `0592726`) | rodada em 03/11 sobre ABECIP 2025-10 contra controle com a extracao antiga (`exp-faixas-rotulos-2__...__2025-10__r2`): **aprovada** — a `table004` entra na selecao e a serie mensal sai dela (alertas de coluna 2 -> 0), guardas iguais. Ver lote 17 |
 
 ## Experimento revertido: declaracao explicita de ausencia opcional (`exp-declaracao-explicita-opcional`, 2026-09-18)
 
@@ -1288,3 +1291,672 @@ investigar): a regressao recorrente do santander desde
 neste lote, mas por variancia de rodada, nao por este fix — **segue aberta**,
 so nao reproduzida desta vez.
 
+
+## Lote 13: ABECIP sobre a extracao nova do Docling (`exp-abecip-docling-antigo` x `exp-abecip-docling-novo`, 21/10)
+
+Primeiro lote da ABECIP neste registro (as execucoes anteriores dela eram
+manuais e sem release limpa) e primeiro cuja variavel independente e a **DAG 1**:
+o branch `fix/docling-titulo-tabela-e-fusao` (PR #18) passou a extrair a p. 8
+do boletim como **3 tabelas** (Construcao, Aquisicao, Aquisicao e Construcao) onde
+antes saia **1 fundida** de 36 linhas. Validacao do Docling:
+[eval/docling/resultados/2026-10-titulo-tabela-fusao/RESULTADO.md](../../eval/docling/resultados/2026-10-titulo-tabela-fusao/RESULTADO.md).
+Este lote mede o que isso faz **depois** da extracao, na criacao do layout.
+
+### Declarado antes de rodar
+
+- **Documento:** ABECIP maio/2026 (`data-abecip-2026-05.pdf`, `document_id=654f34190fc89bf63e34012b0122c3c8`),
+  um PDF so (os meses sao parecidos). Contrato `abecip v2.3.0`.
+- **Variavel independente:** a extracao. Mesmo codigo, mesmo contrato, mesmos
+  prompts (`--verificar` = 18 iguais, 0 divergentes) nas duas releases.
+  - `exp-abecip-docling-antigo`: DAG 3 em `criacao_inicial_layout` sobre a extracao de 31/08
+    (`dag_detecta_pdf_e_extrai__abecip__2026-05__20260831T154401Z`, tabela fundida).
+  - `exp-abecip-docling-novo`: DAG 3 nos mesmos moldes sobre extracao refeita agora, com o
+    runner do Mac Studio no codigo do branch (3 tabelas).
+- **Pareamento:** o comparador pareia por `(document_id, etapa, execution_id da extracao)`. A
+  extracao nova tem outro `execution_id` por construcao, entao nao ha par: comparar com
+  `--sem-pareamento` (1 documento de cada lado, mesma composicao).
+- **Hipotese (a verificar, nao ha codigo novo neste lote):** o resolvedor sabe juntar varias
+  tabelas fisicas numa colecao (`linhas_de_tabelas`, com `fontes`), e os layouts historicos da
+  ABECIP dos meses de 3 tabelas ja o usam, mas o fallback nao: `SupportedMappingOrigin`
+  (`domain/fallback/models.py`) nao o lista e os prompts nao o citam. Logo, com a extracao nova a
+  DAG 3 so consegue mapear `por_modalidade_e_instituicao` para **uma** das tres tabelas, e
+  `assinatura_resolvido_observacoes_corretas` cai em relacao a antiga.
+- **Medicao previa sem LLM** (layout publicado v2.5.0 resolvido offline sobre as duas extracoes):
+  `por_modalidade_e_instituicao` 30 linhas (antiga) x 9 (nova), as outras quatro colecoes iguais;
+  `assinatura_resolvido_observacoes_corretas` 0,918 x 0,590.
+- **Metrica-alvo (nova, desta release):** `assinatura_resolvido_observacoes_corretas` (e
+  `_erradas`, `_ausentes`): confere o `schema_saida_resolvido` da revalidacao com o gabarito
+  curado contra o PDF (`eval/gabaritos/654f34190fc89bf63e34012b0122c3c8.json`, 61 observacoes:
+  30 de `por_modalidade_e_instituicao`, 16 da serie anual, 5 de cada uma das tres series
+  mensais; transcritas da imagem, com a soma das linhas fechando com o TOTAL de cada tabela da
+  p. 8). As metricas `assinatura_f*` nao servem aqui: medem uma linha e uma coluna por
+  observacao, e a ABECIP e de colecoes. Como nasce nesta release, **nao ha delta**: le-se o
+  valor absoluto contra o gabarito.
+- **Guardas:** `e2e_apto_para_bronze`, `resolucao_cobertura_obrigatorios`,
+  `assinatura_resolvido_observacoes_corretas` (guarda nova: valor publicado errado ou perdido
+  nao tem conserto depois).
+- **Datasets Langfuse:** nenhum item da ABECIP existia nos 4 datasets (populados em 05/09, antes
+  do fallback dela em 17/09). Criado `e2e-gabarito::abecip::654f...` em `atlas-e2e-regressao`
+  com a saida esperada curada; `popular_datasets_langfuse_atlas.py --so-gabaritos`.
+- **Ponteiro:** a DAG 3 publica uma versao minor do layout se a revalidacao aprovar, para as
+  duas releases. Rodar a antiga primeiro: o ponteiro termina na versao gerada sobre a extracao
+  nova, e as demais versoes ficam no MinIO.
+
+### Resultado (21/10, `exp-abecip-docling-novo` contra `exp-abecip-docling-antigo`, 1 documento, `--sem-pareamento`)
+
+Ambas limpas (1 `atlas.fallback` + 1 revalidacao, commit `9175e34`, arvore limpa, prompts 18 iguais). A
+extracao nova so valeu na segunda tentativa: a primeira reextracao pela DAG 1 saiu com a tabela fundida
+(36 linhas) porque o runner do Mac Studio nao estava no codigo do PR #18; refeita depois de o usuario
+atualizar o runner, a p. 8 saiu em `table005` (10 linhas), `table006` (11) e `table007` (12).
+
+| metrica | antigo (fundida) | novo (3 tabelas) |
+| --- | --- | --- |
+| `assinatura_resolvido_observacoes_corretas` (guarda) | 0,918 (56 de 61) | **0,639 (39 de 61)** |
+| `assinatura_resolvido_observacoes_ausentes` | 4 | **22** |
+| `assinatura_resolvido_observacoes_erradas` | 1 | 0 (artefato: a modalidade com o erro nao foi mapeada) |
+| `por_modalidade_e_instituicao`: corretas / erradas / ausentes | 27 / 1 / 2 | **10 / 0 / 20** |
+| serie anual, serie mensal, saldos, captacoes (corretas de 16, 5, 5, 5) | 16, 5, 4, 4 | 16, 5, 4, 4 |
+| `e2e_apto_para_bronze`, `resolucao_cobertura_obrigatorios`, `revalidacao_aprovada` | 1, 1, 1 | 1, 1, 1 |
+| tokens / duracao / tentativas | 46.005 / 368 s / 5 | 48.466 / 378 s / 5 |
+
+- **Hipotese confirmada.** Na release nova a LLM mapeou `por_modalidade_e_instituicao` so para
+  `table007` (Aquisicao e Construcao, rotulada `total`, linhas 0-11): 11 instituicoes de 30. As tabelas
+  Construcao (9) e Aquisicao (10) ficaram de fora, **sem erro**. O candidato foi valido e publicado
+  (`v2.7.0`).
+- **Teto sem LLM.** Resolvendo a extracao nova com o mesmo layout, trocando so `por_modalidade_e_instituicao`
+  por `linhas_de_tabelas` com 3 fontes (`table005` linhas 0-8, `table006` 0-9, `table007` 0-10), o valor
+  volta a **0,918**, igual ao do antigo. O dado esta todo na extracao; falta o fallback saber pedir o
+  mapeamento. Referencia: layouts historicos `periodo=2025-10/v2.4.0` (meses que ja saiam com 3 tabelas).
+- **As guardas de producao nao enxergam isso.** `e2e_apto_para_bronze`, a cobertura de obrigatorios e a
+  aprovacao da revalidacao ficaram em 1: o campo obrigatorio existe e esta preenchido (com 11 de 30 linhas).
+  So o gabarito acusa. Vale para qualquer colecao parcial.
+- **Rotulo de cada regressao:** `observacoes_corretas`/`ausentes` = **real** (valor publicado perdido), com causa
+  mecanica no que a extracao muda (`SupportedMappingOrigin` nao lista `linhas_de_tabelas`; os prompts nao o
+  citam). `erradas` "melhorou" = **artefato de medicao** (a linha errada, BANCO DO BRASIL com `686`, esta numa
+  tabela que deixou de ser mapeada). Tokens (+5 %) e duracao (+3 %) = **ambiente/variancia**, mesma contagem
+  de tentativas.
+- **Defeitos que nao dependem da extracao nova** (iguais nas duas releases, ficam fora do delta): erros de OCR
+  na p. 8 (`BANCO DOBRASIL` em 2 tabelas, `686` no lugar de `989`; `eval/docling/PENDENCIAS.md` P10 e P11) e
+  layout da LLM lendo a poupanca a partir da linha 1, o que pula Jan/2026 em `saldos_mensais` e
+  `captacoes_liquidas_mensais` (2 observacoes).
+- **Medicao previa confere:** o layout vigente antes do lote (`v2.5.0`) resolvido offline dava 0,918 / 0,590;
+  a LLM na release antiga repetiu o mesmo mapeamento (0,918).
+
+**Veredito.** A mudanca do Docling esta certa para a extracao (validada contra o PDF em 20/10) e **nao se
+reverte aqui**, mas a ABECIP piora de ponta a ponta enquanto o fallback nao gerar `linhas_de_tabelas`:
+guarda `assinatura_resolvido_observacoes_corretas` reprovada. Proximo passo proposto, uma release propria (nao
+feita neste lote): incluir `linhas_de_tabelas` em `SupportedMappingOrigin`, no validador de candidato e nos
+prompts de unidade, e medir contra este gabarito (alvo: `assinatura_resolvido_observacoes_corretas` >= 0,918 na
+extracao nova; guardas: as de producao mais `assinatura_f3_arquivo_origem_correto` nos documentos de bancos e
+construtoras). O comparador cru nao reprova nada em bancos e construtoras por causa deste lote: nao os tocou.
+
+**Ponteiros apos o lote.** `layouts/abecip/abecip/current.json` = `v2.7.0` (gerado sobre a extracao nova,
+0,639). Versoes `v2.5.0` (manual de 17/09), `v2.6.0` (release antiga, 0,918 na extracao antiga) e `v2.7.0` ficam no
+MinIO. Voltar para `v2.6.0` nao conserta: ele resolve a extracao nova em 9 de 30 linhas (medido offline para
+`v2.5.0`, mesmo mapeamento). Nenhum ponteiro foi mexido; decisao do usuario.
+
+**Pendencias.** (1) release do fallback acima; (2) o layout da LLM pula a primeira linha de dados da poupanca
+(item de ancoragem de linha/indice, fora do escopo); (3) P10/P11 (OCR) em `eval/docling/PENDENCIAS.md`; (4) antes de
+processar o proximo mes da ABECIP, o layout vigente (`v2.7.0`) cobre so 11 de 30 linhas da p. 8; (5) o gabarito
+cobre um documento (maio/2026) e checa as series pelo valor, sem contexto de periodo.
+
+
+## Lote 14: o fallback passa a gerar `linhas_de_tabelas` + metrica de tabelas sem mapeamento (`exp-fallback-linhas-de-tabelas`, 21/10)
+
+Resposta ao resultado do lote 13: com a pagina das modalidades da ABECIP em tres tabelas, a LLM so
+mapeou uma (11 de 30 linhas) porque o candidato nao tinha como descrever uma colecao vinda de varias
+tabelas, e nenhuma metrica de producao acusou.
+
+### Declarado antes de rodar
+
+- **Itens (dois, fechados juntos):**
+  1. **Vocabulario.** `linhas_de_tabelas` (uma instrucao com `fontes`, uma por tabela) passa a ser aceito pelo
+     modelo do candidato (`SupportedMappingOrigin`), pelo validador (cada fonte exige `arquivo_origem` e segue as
+     regras de campos da `linhas_de_tabela`; a colecao inteira dispensa filtro no path) e pelos tipos de
+     evidencia do contrato; o resolvedor ja o lia. Tres blocos de prompt dizem quando usa-lo (varias tabelas
+     para a mesma colecao) e o exemplo de formato da unidade traz o tipo: `unit-mapping-estrutura`,
+     `unit-mapping-artefatos` e `comum-contrato`. Os blocos `candidato-*` (fluxo sem unidades) nao mudam.
+  2. **Visibilidade.** Duas metricas de producao, sem gabarito, emitidas no trace do fallback:
+     `selecao_tabelas_sem_mapeamento` (tabelas que a selecao escolheu e nenhuma instrucao do layout cita;
+     menor e melhor) e `selecao_tabelas_mapeadas` (fracao; maior e melhor). Reproduzidas sobre os artefatos do
+     lote 13: 0 / 1,000 no `antigo` e **2 / 0,667 no `novo`** (`table005` e `table006`). Sao diagnosticas, nao
+     guardas e nao viram gate nesta release. Linhas de dados cobertas por tabela nao foram usadas: faixas
+     parciais sao legitimas (tabelas com meses sem valor, linhas de total), o que a tornaria ruidosa.
+- **Hipotese:** com o tipo disponivel, a LLM usa uma fonte por tabela e a ABECIP volta ao nivel da extracao antiga.
+- **Metrica-alvo:** `assinatura_resolvido_observacoes_corretas` da ABECIP maio/2026 (extracao nova,
+  `...20261021T112000Z`) de **0,639 para >= 0,918** (teto medido sem LLM com o mesmo layout trocando so a colecao
+  das modalidades: 0,918). Secundaria: `selecao_tabelas_sem_mapeamento` 2 -> 0.
+- **Guardas:** `e2e_apto_para_bronze`, `resolucao_cobertura_obrigatorios`, `revalidacao_gate_efetivo`,
+  `validacao_cobertura_de_regras`, `assinatura_resolvido_observacoes_corretas` e, no lote de 10 documentos,
+  `assinatura_f0_selecao_revocacao`, `assinatura_f1_cobertura_obrigatorios`,
+  `assinatura_f3_arquivo_origem_correto`, `avaliacao_revocacao`. Os prompts sao comuns a todos os dominios, entao o
+  lote de bancos e construtoras e obrigatorio para provar que nao regrediu.
+- **Etapas:** (1) ABECIP sozinha, base `exp-abecip-docling-novo` (mesmo `execution_id` da extracao: pareamento
+  valido, sem `--sem-pareamento`); (2) so se o alvo subir, o lote de 10 documentos, base
+  `exp-gate-e-ancoragem-linha` (ultima base aprovada de 10 documentos).
+- **Prompts publicados** (`--empurrar`; antes: 15 iguais, 3 divergentes, os 3 acima): `comum-contrato` v8 -> v9,
+  `unit-mapping-estrutura` v2 -> v3, `unit-mapping-artefatos` v2 -> v3.
+- **Ressalva de atribuicao.** O exemplo novo do prompt usa `linha_inicial: 0`, enquanto os dois exemplos antigos de
+  `linhas_de_tabela` usam 1. Isto pode mexer no deslocamento de linha que a LLM faz na poupanca (Jan/2026 pulado,
+  item 3 deste plano): se a metrica de poupanca mudar nesta release, nao e atribuivel so ao item 1.
+- **Fora desta release:** OCR (P10 e P11), indice de linha (item 3), regras de deteccao de mudanca geradas
+  automaticamente. Tests: 15 novos em `test_linhas_de_tabelas_no_fallback.py` (um deles roda o validador completo
+  com o contrato real da ABECIP) e 4 em `test_observability_metrics.py`; todos provados por mutacao.
+
+### Resultado (21/10, ABECIP contra `exp-abecip-docling-novo`; guarda de 4 documentos contra `exp-fase2-item24-titulo`)
+
+Release limpa: 5 `atlas.fallback` (ABECIP, Cury, Direcional, Santander, Itau) + o `__r2` do Itau, commit `9277545`, arvore
+limpa, prompts 18 iguais. O harness foi rodado uma vez para a ABECIP e uma vez para os outros 4 (`--entidade`, opcao
+nova que evita duplicar scores) e uma vez para o trace do `__r2` (`--trace`, tambem nova).
+
+**ABECIP (alvo).** Pareada por `execution_id` (mesma extracao do lote 13): `assinatura_resolvido_observacoes_corretas`
+**0,639 -> 0,951** (58 de 61); `por_modalidade_e_instituicao` 10/0/20 -> 27/1/2 (corretas/erradas/ausentes); a LLM usou
+`linhas_de_tabelas` com as tres fontes e as faixas certas (0-8, 0-9, 0-10). `selecao_tabelas_sem_mapeamento` 2 -> **0**
+(a metrica nova funciona em producao). Tentativas 5 -> 4, duracao 378 -> 306 s. Os 3 que faltam sao o OCR (P10 e P11).
+Regressoes do comparador, todas sem consequencia: `erradas` 0 -> 1 e **artefato de medicao** (a linha com `686` em vez de
+`989` voltou a ser mapeada, antes a tabela inteira ficava de fora); tokens +12 % e **ambiente/prompt maior**, com menos
+tentativas. A poupanca deixou de pular Jan/2026 (saldos e captacoes 4/5 -> 5/5): efeito provavel do exemplo novo
+`linha_inicial: 0`, a ressalva de atribuicao declarada; **nao e atribuivel so ao item 1**. Ponteiro `abecip` = `v2.8.0`.
+Foi uma execucao so: a variancia da LLM nao foi medida.
+
+**Guarda (os prompts sao comuns a todos os dominios).** O comparador cru **reprova** (`e2e_apto_para_bronze`
+1,00 -> 0,75, `assinatura_f1_cobertura_obrigatorios`, `assinatura_f3_arquivo_origem_correto`), mas a diferenca e um
+documento so:
+
+| documento | guardas contra a base | valores resolvidos | leitura |
+| --- | --- | --- | --- |
+| Cury | identicas | identicos (33 folhas) | sem efeito |
+| Direcional | identicas | identicos (33 folhas) | sem efeito |
+| Santander | identicas | 1 de 67 difere: `margem_financeira_com_mercado` 2T26, base `718`, novo `-718` | **novo certo**: o PDF mostra `(718)`; vem do normalizador de sinal contabil de 30/09, nao desta release |
+| Itau | `e2e_apto_para_bronze` 0 | nao publicou | **ambiente**, ver abaixo |
+
+- **Itau (`indicadores_monetarios`)**: 4 tentativas no original e 4 no `__r2`, todas com `finish_reason: "length"` e
+  "conteudo nao e JSON valido": a resposta e cortada no teto de `FALLBACK_LLM_FRAGMENT_MAX_TOKENS=15000` (reasoning +
+  conteudo de uma unidade com mais de 100 chaves de saida). Nenhuma tentativa traz `linhas_de_tabelas`; o conteudo e a
+  lista de indicadores em `celula_de_tabela`. E o padrao ja registrado (lote 8: 2 erros e 1 sucesso; outra release: 4 erros
+  seguidos; lote 11: redisparo limpo). `indicadores_percentuais` falhou no original (resposta vazia e recusa da
+  ancoragem por sinonimo, item 3.2) e passou de primeira no `__r2`: variancia. **Rotulo: ambiente (limite de tokens
+  pre-existente).** Ressalva: 8 de 8 e mais seguido que o historico e **nao ha controle** com os prompts antigos, entao
+  nao esta descartado que o texto novo empurre o reasoning para cima. Um controle custa um redisparo com os blocos antigos
+  republicados; nao foi feito.
+- **Ponteiros apos o lote:** `abecip` v2.8.0, `cury` v1.14.0, `direcional` v1.14.0, `santander` v1.16.0 (todos publicados
+  por esta release; equivalentes a base nas metricas), `itau` v1.11.0 (inalterado). Nenhum voltou.
+
+**Veredito: aprovada pelo usuario em 21/10, com uma ressalva aberta (Itau).** O alvo subiu e a unica guarda que caiu tem causa
+mecanica conhecida e anterior a esta release. O lote de 10 documentos nao foi rodado por inteiro (decisao do usuario): foram 4 na
+primeira etapa e, depois, as 3 construtoras principais que faltavam (complemento abaixo). Cyrela, EZTEC e MRV nao foram medidas.
+
+**Pendencias.** (1) Itau: o limite de tokens por fragmento e a causa de fundo, e a correcao do plano e a chamada de
+ancoragem plana (o codigo monta, a LLM responde curto) ou o orcamento; a proposta de faixas e tabelas irmas pelo codigo
+vai na mesma direcao. (2) Medir a variancia da LLM na ABECIP (varias execucoes). (3) Item 3 (indice de linha): a poupanca
+ja nao pula Jan/2026, mas por efeito de um exemplo; a correcao que dura e o codigo propor a faixa. (4) OCR (P10 e P11).
+
+### Complemento (21/10): Plano&Plano, Pacaembu e Tenda
+
+Pedido do usuario depois do resultado acima: as construtoras principais sao Plano&Plano, Pacaembu, Direcional, Tenda e Cury; Cury e
+Direcional ja estavam medidas. Rodadas as tres que faltavam, mesmas condicoes (rotulo `exp-fallback-linhas-de-tabelas`, commit
+`9277545`, `document_id` e `execution_id` da base), pontuadas so elas com `--entidade` (117 scores, sem duplicar os dos outros).
+
+| documento | guardas contra `exp-fase2-item24-titulo` | valores resolvidos | ponteiro |
+| --- | --- | --- | --- |
+| Plano&Plano | identicas | identicos (33 de 33 folhas) | v1.15.0 |
+| Pacaembu | identicas | identicos (33 de 33 folhas) | v1.14.0 |
+| Tenda | identicas | identicos (33 de 33 folhas) | v1.14.0 |
+
+Com Cury e Direcional, as **5 construtoras principais** ficam com guardas e valores resolvidos identicos a base, sem diferenca alguma
+em folha. O comparador cru sobre as 7 execucoes pareadas continua reprovando, e a conta fecha com um documento so:
+`e2e_apto_para_bronze` 0,857 = 6 de 7 aprovados, e o que falha e o Itau (teto de tokens, acima). Duracao e tentativas maiores no
+agregado vem das 8 tentativas do Itau; os tokens por execucao caem (-8 %). Nao ha regressao em nenhum documento que publicou.
+
+**Ainda nao medidas:** Cyrela (CYRE3), EZTEC (EZTC3) e MRV, que nao estavam entre as principais indicadas.
+
+
+## Lote 15: ABECIP em varios meses, extracao nova + fallback novo (`exp-abecip-varios-meses`, 21/10)
+
+Pergunta do usuario depois da aprovacao do lote 14: o resultado de maio/2026 vale para os outros meses, cada um com
+tabelas de tamanhos e posicoes diferentes, e o deslocamento de linha da poupanca (Jan/2026 pulado em 3 de 3 geracoes
+antigas, lido na ultima) aparece de novo?
+
+### Declarado antes de rodar
+
+- **Documentos:** os 9 outros meses da ABECIP no MinIO (2025-10, 2025-11, 2025-12, 2026-01, 2026-02, 2026-03, 2026-04,
+  2026-06, 2026-07), cada um **reextraido agora** pela DAG 1 no runner com o codigo do PR #18 (todos com
+  `should_trigger_dag2=false`: a DAG 2 nao e acionada). Sem a reextracao o teste mediria a extracao antiga, que fundia a
+  p. 8 em 7 de 11 meses. Maio/2026 ja tem a rodada do lote 14.
+- **Variavel independente:** o mes (estrutura do documento). Mesmo codigo (`beb4025`), mesmos prompts (18 iguais),
+  mesmo contrato `abecip v2.3.0`, DAG 3 em `criacao_inicial_layout` (um run por mes, rotulo `exp-abecip-varios-meses`).
+- **Hipotese:** o fallback gera, em todos os meses, um layout que cobre as tres tabelas das modalidades e le as series sem
+  pular a primeira linha de dados.
+- **Como se mede sem gabarito lido no PDF de cada mes.** O gabarito curado existe so para maio (61 observacoes lidas da
+  imagem) e ler os outros nove nao cabe. Em cada mes sao verificadas propriedades que o proprio documento garante,
+  calculadas direto das tabelas extraidas e do layout (`eval/abecip/verificar_colecoes.py`):
+  1. **cobertura de linhas:** a faixa mapeada de cada tabela comeca na primeira linha de dados, nao inclui a linha de
+     total e nao deixa linha de dados de fora; nenhuma tabela escolhida fica sem mapeamento;
+  2. **soma = TOTAL:** a soma das instituicoes de cada tabela de modalidade bate com a linha TOTAL da mesma tabela
+     (acusa digito errado de OCR ou linha perdida);
+  3. **identidade entre tabelas:** Aquisicao e Construcao = Construcao + Aquisicao, por instituicao;
+  4. **semantica da coluna:** campo de unidades vem de coluna cujo cabecalho fala de unidades, campo de volume de
+     coluna com R$, e mensal x acumulado no ano coincide com o cabecalho.
+  Isto mede **consistencia**, nao verdade absoluta: um erro que o PDF e o layout repetem de forma coerente nao aparece.
+  Maio serve de calibracao (os defeitos conhecidos, `686` x `989` e `BANCO DOBRASIL`, precisam ser acusados).
+- **Metricas de producao e guardas:** `e2e_apto_para_bronze`, `resolucao_cobertura_obrigatorios`,
+  `selecao_tabelas_sem_mapeamento` (alvo 0), tentativas e tokens. Nao ha base pareavel (primeira rodada de cada mes sob
+  esta versao): leitura por valor absoluto, sem delta.
+- **Medida adicional sem LLM:** o layout vigente de maio (`v2.8.0`) resolvido offline sobre a extracao nova de cada mes,
+  que e o que a DAG 2 faria em producao no mes seguinte (o layout carrega o rotulo de periodo e faixas de maio).
+- **Fora desta release:** OCR (P10 e P11), detector de faixas pelo codigo, valores de bancos e construtoras.
+
+### Resultado (21/10, 9 meses, extracao nova + fallback do lote 14)
+
+Release: 9 `atlas.fallback` + 9 revalidacoes, commit `6682a5c` (marcado `arvore_suja`: so `eval/abecip/verificar_colecoes.py` foi
+ajustado depois do commit, `src/` identico), prompts 18 iguais. As DAGs 3 rodaram **em serie** (a numeracao de versao do layout
+colide com runs simultaneos da mesma entidade: o segundo e recusado na publicacao). Harness uma vez (54 scores `assinatura_f1_*`;
+so maio tem gabarito, os outros 8 meses ficam sem as metricas de ancoragem e de valor resolvido).
+
+**Producao.** `e2e_apto_para_bronze` 8 de 9; `selecao_tabelas_sem_mapeamento` = 0 nos 9; 4 a 5 tentativas, 47 a 59 mil tokens e 3 a 8
+min por mes. O 2026-07 foi reprovado (`apto_para_bronze` 0, cobertura de obrigatorios 0,8) e nao publicou.
+
+**Verificador** (`eval/abecip/verificar_colecoes.py`; consistencia interna, nao verdade absoluta):
+
+| mes | itens por_modalidade | alertas | `TOTAL` como instituicao | comeca em 1 / pula Jan | soma != TOTAL | layout |
+| --- | --- | --- | --- | --- | --- | --- |
+| 2025-10 | 30 | 5 | nao | `serie_mensal` lida da tabela **anual** (comeca na linha 15) | sim, 3 tabelas, 10x | v2.9.0 |
+| 2025-11 | 30 | 5 | nao | poupanca pula Jan | sim | v2.10.0 |
+| 2025-12 | 33 | 7 | **sim** | nao | sim, 10x | v2.11.0 |
+| 2026-01 | 29 | 6 | **sim** | nao | sim (pequeno) | v2.12.0 |
+| 2026-02 | 26 | 3 | nao | poupanca pula Jan | nao | v2.13.0 |
+| 2026-03 | 29 | 5 | **sim** | nao | nao | v2.14.0 |
+| 2026-04 | 29 | 1 | nao | nao | nao (so celulas de OCR) | v2.15.0 |
+| 2026-06 | 30 | **0** | nao | nao | nao | v2.16.0 |
+| 2026-07 | **0** | 12 | sim | **sim, em tudo** | (consequencia da faixa) | nao publicado |
+
+- **Hipotese, em partes.** (a) *Cobertura das tres tabelas*: **confirmada nos 9 meses** (e em maio): `linhas_de_tabelas` em todos, nenhuma
+  tabela escolhida sem uso, nenhum mes perdeu modalidade, apesar de os indices mudarem (`005-007` x `006-008`) e das tabelas terem de 7
+  a 14 linhas. (b) *Ler sem pular a primeira linha*: **nao confirmada**: 3 de 9 meses comecam na linha 1 (2025-11, 2026-02, 2026-07);
+  o "lido" do lote 14 era amostra de 1.
+- **2026-07 (pior caso).** A LLM contou a partir de 1 em todas as colecoes: faixas `(1,12)`, `(1,13)` e `(1,14)` para tabelas de 12, 13 e 14
+  linhas (indices 0-11, 0-12, 0-13). O resolvedor descarta, sem erro, a faixa cujo fim passa da ultima linha
+  (`end >= row_count`), a colecao sai vazia, o obrigatorio nao resolve e a revalidacao nao aprova. O pipeline **falhou seguro**
+  (nao publicou), mas o defeito e o indice, e hoje ele e silencioso.
+- **`TOTAL` publicado como se fosse instituicao** em 4 de 9 meses (2025-12, 2026-01, 2026-03 e 2026-07): 3 itens falsos por mes, um por
+  modalidade (em 2025-12, "TOTAL" com 49.586 unidades). Em maio nao ocorreu.
+- **Dados com erro de OCR em 5 dos 9 meses**, alguns de **10x** (`3.159.7` publicado como 31.597 em 2025-10; `9.447.9` como 94.479 e
+  `1.563.6` como 15.636 em 2025-12): o ponto no lugar da virgula, com milhar, e lido como separador de milhar. A regra soma = TOTAL
+  acusou todos.
+- **Retratacao.** O alerta de coluna do 2026-03 (captacao lendo "Variacao do Saldo") **nao e do layout**: o dado da coluna 11 e a captacao
+  (-18.807, igual a maio); o que esta errado e o **cabecalho** que o Docling atribuiu a essa coluna.
+- **Titulo do Docling (2025-10).** O cabecalho "2 - SBPE: FINANCIAMENTOS..." nao foi detectado como secao; acima da `table004` so ha
+  a nota `**(Depositos-Retiradas)`, que a regra de titulo escolheu. A extracao antiga dava o titulo generico da pagina. Os dois
+  estao errados; o novo e mais enganoso. Efeito observado: `serie_mensal_sbpe` mapeada para a tabela anual.
+
+**Teste sem LLM: reuso do layout de maio (`v2.8.0`) em cada mes** (o que a DAG 2 faria em producao no mes seguinte). Resolve sem erro em
+todos, mas so o **2026-06 (mesma numeracao de tabelas de maio) tem 0 alertas**; nos outros 8 meses ha de 13 a 16 alertas, a serie anual
+sai vazia em 8 de 9 e as modalidades saem de tabelas erradas (2025-10 a 2025-12) ou incompletas (2026-01 a 2026-04: 20 itens em vez de 29
+ou 30). Como os layouts gerados saem com `regras_deteccao_mudanca` vazia, a DAG 2 declararia `compativel` e publicaria dado errado.
+**Um layout por indice de tabela nao serve de um mes para o outro.**
+
+**Ponteiros apos o lote.** `layouts/abecip/abecip/current.json` = `v2.16.0` (o do 2026-06, o unico limpo); versoes `v2.9.0` a `v2.15.0` guardadas,
+uma por mes; 2026-07 nao publicou; `v2.8.0` (maio) e `v2.7.0` anteriores. Nenhum ponteiro foi mexido; decisao do usuario.
+
+**Veredito.** O lote 14 se sustenta (cobertura das tres tabelas em 9 de 9), mas este lote mostra que o resultado de maio escondia defeitos
+de **posicao** que a LLM escolhe e varia de mes para mes (faixa que inclui total, que comeca em 1, tabela errada), e que erros de OCR
+chegam a dado 10x errado sem alerta. **Nao esta "tudo certo" para publicar mes a mes sem revisao.**
+
+**Pendencias.** (1) Detector no codigo de faixas de dados, linha de total e tabelas irmas; o verificador vira o teste de aceitacao (meta: 0
+alertas de cobertura nos 9 meses). (2) `soma = TOTAL` e celulas suspeitas como alerta/validacao de producao. (3) Resolvedor: faixa fora
+da tabela deve ser erro explicito, nao descarte silencioso. (4) Reuso entre meses: identificar a tabela pelo titulo/cabecalho em vez do
+indice, ou regras de deteccao de mudanca no layout. (5) Docling: `PENDENCIAS.md` P12 (titulo perdido, escolhe nota de rodape), P13
+(cabecalho trocado no 2026-03) e extensao de P11 (separador decimal). (6) Decidir o ponteiro (hoje `v2.16.0`). (7) OCR, adiado.
+
+
+
+## Lote 16: as linhas da tabela inteira passam a ser decididas por codigo (`exp-faixas-por-codigo`, 21/10)
+
+Resposta ao lote 15: a LLM erra a contagem de linhas de um jeito diferente a cada mes (linha `TOTAL` publicada como
+instituicao em 4 de 9, faixa comecando em 1 e pulando a primeira linha em 3 de 9, colecao vazia em julho porque as faixas
+passavam do fim). Decisao do usuario: quando a instrucao le a tabela como um todo, quem diz de que linha a que linha vai e
+o codigo; a LLM segue escolhendo tabela, coluna de cada campo e valores fixos. Nada especifico da ABECIP no codigo ou no
+prompt, e nada de regra no contrato: linha de total e dado calculado e a plataforma so coleta dado bruto.
+
+### Declarado antes de rodar
+
+- **Itens (commit `4675ccf`, um so mecanismo):**
+  1. `table_row_ranges.data_row_ranges`: faixas das linhas de dados de uma tabela, sem cabecalho, sem titulo de bloco,
+     sem linha de total/subtotal (reconhecida pelo rotulo, sem somar nada) e so com linhas que tem valor numerico nas
+     colunas que a instrucao le (evita meses futuros vazios). Sem faixa na instrucao `linhas_de_tabela` /
+     `linhas_de_tabelas` (por fonte), o codigo preenche `linha_inicial`/`linha_final` (varias faixas viram `segmentos`
+     que levam os `valores_por_segmento`) depois que o fragmento passa na validacao; `faixas_por_codigo.json` registra
+     quem decidiu cada instrucao. Faixa explicita da LLM (parte da tabela, ex.: anos completos da serie anual) nao e tocada.
+  2. Validador: faixa explicita que passa da ultima linha, ou invertida, e recusada com o tamanho da tabela (antes o
+     resolvedor a descartava em silencio e a colecao saia vazia). Roda no ciclo de reparo da LLM.
+  3. Prompt: tabela inteira nao declara faixa; parte da tabela conta de 0, `linha_final` inclusiva. Os exemplos antigos
+     usavam `linha_inicial: 1`. Blocos publicados (`--empurrar`; antes: 16 iguais e 2 divergentes, exatamente estes):
+     `unit-mapping-estrutura` v3 -> v4 e `candidato-estrutura` v1 -> v2.
+- **Hipotese:** com o codigo contando as linhas, o layout inicial da ABECIP deixa de depender do mes: nenhum `TOTAL`
+  como instituicao, nenhuma primeira linha pulada, nenhuma faixa alem do fim, nenhum mes futuro vazio na serie mensal.
+- **Previsao offline (sem LLM)**, trocando so as faixas dos layouts do lote 15 (`eval/abecip/simular_faixas_por_codigo.py`):
+  0 alertas de cobertura nos 9 meses (antes 1 a 8 por mes); julho de 0 para 36 itens; maio mantem 0,951 no gabarito. Os
+  alertas que restam sao de OCR (soma = TOTAL, identidade) e o cabecalho trocado de 2026-03 (P13).
+- **Metrica-alvo (ABECIP, 10 documentos: maio + 9 meses, em serie):** `eval/abecip/verificar_colecoes.py` com **0 alertas de
+  cobertura e 0 de itens vazios** em todos os meses (a checagem de itens vazios entra agora no verificador: nos lotes 14 e
+  15 acusa maio 7 de 12, 2026-03 9 de 12, 2025-11 e 2026-02 em saldos/captacoes, 2026-07 1 de 7); `e2e_apto_para_bronze`
+  = 1 nos 10 (julho publica); maio com `assinatura_resolvido_observacoes_corretas` >= 0,951.
+- **Guardas:** `e2e_apto_para_bronze`, `resolucao_cobertura_obrigatorios`, `revalidacao_gate_efetivo`,
+  `validacao_cobertura_de_regras`, `assinatura_resolvido_observacoes_corretas`, `selecao_tabelas_sem_mapeamento`.
+- **Etapas:** (1) ABECIP sozinha, DAG 3 em serie (a mesma entidade em paralelo colide na numeracao de versao). Bases:
+  maio contra `exp-fallback-linhas-de-tabelas`, os 9 meses contra `exp-abecip-varios-meses`; o `execution_id` da extracao e o
+  mesmo, entao o pareamento vale. (2) So se a etapa 1 passar, todas as outras entidades com layout (17), cada uma contra a
+  ultima release que a mediu: Cury, Direcional, Plano&Plano, Pacaembu, Tenda e Santander contra
+  `exp-fallback-linhas-de-tabelas`; Cyrela, EZTEC, MRV e Itau contra `exp-fase2-item24-titulo`; Petrobras, Prio, Vale,
+  Gerdau, CSN, Renner e Magalu contra `exp-correcoes-contexto-opcional-e-escala`. Criterio: guardas e valores resolvidos
+  identicos a base; qualquer diferenca recebe um rotulo (real, medicao ou ambiente) depois de comparar o mapeamento e
+  redisparar com `__r2`.
+- **Ressalva de atribuicao.** O codigo novo so age em instrucoes de tabela inteira, que so a ABECIP usa hoje; nas demais
+  entidades (celula e cabecalho) ele e inerte. O que pode mudar nelas e o texto do bloco `unit-mapping-estrutura`, comum a
+  todas, e a variancia da LLM: por isso a etapa 2 existe e compara o mapeamento, nao so o resultado.
+- **Ponteiros antes do lote** (`current.json`): abecip v2.16.0, itau v1.11.0, santander v1.16.0, cury v1.14.0, cyre3 v1.1.0,
+  direcional v1.14.0, eztc3 v1.13.0, mrv v1.12.0, pacaembu v1.14.0, plano-plano v1.15.0, tenda v1.14.0, petrobras v1.2.0,
+  prio v1.1.0, csn v1.2.0, gerdau v1.2.0, vale v1.2.0, mglu v1.2.0, renner v1.2.0. Cada run que aprova publica uma versao
+  nova e move o ponteiro; voltar e decisao do usuario.
+- **Fora desta release:** OCR (P10, P11, rotulos de mes lidos como `imr`/`1no`/`m`), serie anual como sub-bloco (a faixa
+  continua da LLM; ideia: rotulo inicial e final em vez de indice), identificar a tabela por titulo, resolver em tempo
+  de resolucao em vez de na criacao do layout.
+
+### Tentativa 1 (`exp-faixas-por-codigo`): o mecanismo nao ativou; interrompida apos 2 documentos
+
+Rodados maio e 2025-10 (o resto da serie foi cancelado ao ver o resultado de maio). **Em maio, as 7 instrucoes de tabela vieram com
+faixa da LLM (`faixa_da_llm` em `faixas_por_codigo.json`) e o codigo nao preencheu nenhuma.** A instrucao nova esta na entrada da
+LLM (`entrada_llm_fragmento_layout_signature.json`) e ela declarou `faixas_linhas` mesmo assim: pedir no prompt nao basta. Maio
+saiu certo (verificador: 2 alertas, os dois de OCR; a serie mensal veio com `0 a 4`, certa, e no lote 14 tinha vindo `0 a 11`), mas
+por acerto da LLM, nao pelo mecanismo; 2025-10 nao foi avaliado. Ponteiro da ABECIP: v2.16.0 -> **v2.18.0** (maio v2.17.0,
+2025-10 v2.18.0). Rotulo `exp-faixas-por-codigo` fica sem comparacao.
+
+### Tentativa 2 (`exp-faixas-rotulos`): o codigo impoe a regra
+
+Declarado antes de rodar. Mesma hipotese, metrica-alvo, guardas, etapas, bases e ponteiros de antes da secao acima; muda o mecanismo
+(commit `fa1b8d2`):
+
+- Nos escopos de criacao, a **faixa numerica da LLM so vale se coincidir com as linhas de dados** que o codigo calcula. Se divergir
+  (linha de total, primeira linha pulada, linha sem valor nas colunas lidas, alem do fim), o validador recusa no ciclo de reparo da
+  LLM (3 tentativas por unidade) com a diferenca linha a linha e o caminho certo. Na correcao parcial o layout base e preservado;
+  so o que o resolvedor descartaria em silencio e erro em qualquer escopo.
+- **Parte da tabela por rotulo, nao por contagem:** `rotulo_inicial` e `rotulo_final` (primeira celula da primeira e da ultima
+  linha da parte); o codigo acha os indices, e rotulo ausente ou repetido volta como erro. E o caso da serie anual, que a tabela
+  traz junto com o ano corrente mes a mes e a linha "Em 20XX".
+- Prompts publicados: `unit-mapping-estrutura` v4 -> v5, `candidato-estrutura` v2 -> v3, `unit-mapping-artefatos` v3 -> v4
+  (o bloco de artefatos pedia "faixas").
+- **Previsao offline do validador sobre os 10 layouts ja gerados da ABECIP:** recusa 7 de 7 casos com `TOTAL` como instituicao ou
+  faixa alem do fim, os 3 de primeira linha pulada, os 4 de mes futuro vazio na serie mensal, e a serie anual em todos os meses
+  (por desenho: passa a ser por rotulo); nao recusa nenhuma faixa que a LLM tinha acertado.
+- **Risco declarado:** cada unidade com tabela tende a gastar uma tentativa de reparo a mais na primeira rodada (a LLM declara faixa
+  por habito), e uma unidade que nao acatar o erro em 3 tentativas falha e nao publica (falha segura, mas cai a disponibilidade).
+  Medir `correction_attempts_used` e `e2e_apto_para_bronze`.
+
+#### Resultado da tentativa 2 (22/10, `exp-faixas-rotulos`, ABECIP maio + 9 meses; commit `fa1b8d2`, prompts v5/v3/v4)
+
+- **O mecanismo ativou em todos os meses.** `faixas_por_codigo.json`: nenhuma instrucao ficou com `faixa_da_llm`; entre 7 instrucoes por mes, de 1 a 7
+  foram `faixa_por_rotulos` e as demais `faixa_do_codigo` (a LLM omitiu a faixa depois do erro do validador). Maio: as 7 por rotulos.
+- **Verificador (`verificar_colecoes.py`), 10 documentos publicados (julho inclusive):** 0 alertas de cobertura e 0 de itens vazios em todos os meses
+  (lote 15: 1 a 8 de cobertura por mes). Itens por modalidade sem `TOTAL`: 30, 30, 30, 26, 26, 26, 29, 30, 30 e **36 em julho** (antes 0).
+  Alertas que sobram: soma = TOTAL, identidade e celulas, todos de OCR, mais 3 de coluna (2025-10 duas, 2026-03 uma = P13, cabecalho trocado do Docling).
+- **Comparador, 9 meses pareados contra `exp-abecip-varios-meses`:** `e2e_apto_para_bronze` 0,889 -> **1,000**, `resolucao_cobertura_obrigatorios`
+  0,978 -> 1,000, tokens -9 %, duracao -35 %. Nenhuma guarda regrediu (codigo de saida 1, nao 2). Regressoes fora de guarda, **custo previsto do
+  validador estrito e rotulo "ambiente/custo"**: `fallback_tentativas_llm_total` 4,22 -> 4,44, `llm_acerto_1a_tentativa` 0,946 -> 0,889.
+  Maio contra `exp-fallback-linhas-de-tabelas`: tudo estavel; `assinatura_resolvido_observacoes_corretas` 0,951 (erradas 1, ausentes 2: os mesmos OCR).
+- **Regressao real, 2025-10: a serie mensal veio da `table003` (saldo da poupanca), colunas de saldo e variacao, nas duas rodadas (`__r2` confirma que nao e
+  variancia).** Causa: a selecao de artefatos nao incluiu a `table004` (a mensal de financiamentos, sem titulo no Docling); sobraram a `table003` e a `table005`,
+  em que o ano corrente vem aberto mes a mes sob `2025*`, e o rotulo so casava pela primeira celula (`2025*`), nao por `Janeiro`. A LLM largou a `table005`.
+  No `__r2` a serie anual ainda saiu com a tabela inteira (26 itens, com `2025*`, 9 meses sem rotulo e `Em 2025`), porque a LLM omitiu a faixa e a omissao e,
+  por desenho, tabela inteira: o codigo nao tem como saber que o contrato quer so anos completos.
+- **Achado novo do verificador:** a serie anual de 2026-01 publica `2026*` (ano parcial) como ano; ja era assim no lote 15 e nos meses limpos a LLM o deixa de fora.
+- **Correcao** (`d8625ed`): o rotulo passa a casar por qualquer celula da linha quando a primeira nao casa; `unit-mapping-estrutura` v5 -> v6. O verificador
+  ganhou a checagem de serie anual (so anos completos). Ponteiro da ABECIP apos a tentativa 2: ver tentativa 3.
+
+### Tentativa 3 (`exp-faixas-rotulos-2`): mesma hipotese, ABECIP inteira de novo com a correcao de rotulos
+
+Declarado antes de rodar: codigo `d8625ed`, `unit-mapping-estrutura` v6 (os outros blocos como na tentativa 2). Os 10 documentos em serie, mesmas bases e metas;
+acrescenta-se a meta **0 alertas de serie anual** no verificador. Bases: maio contra `exp-fallback-linhas-de-tabelas`, os 9 meses contra `exp-abecip-varios-meses`.
+Esta e a rodada que vale como medicao final da ABECIP; so depois dela vao as outras 17 entidades, sob o mesmo rotulo.
+
+#### Tentativa 3 interrompida por saldo do provedor (22/10, 00:10)
+
+A chamada da LLM passou a devolver `HTTP 402 Payment Required: Insufficient Balance` (`api.deepseek.com`) no meio da serie. Dos tres runs disparados sob
+`exp-faixas-rotulos-2`, **nenhum gerou candidato**: 2025-10 gastou os 15 000 tokens de saida no raciocinio (`finish_reason: length`) e a tentativa de socorro
+levou o 402; 2026-05 e 2025-11 falharam em ~15 s. O Airflow marca esses runs como `success` (a falha e interna ao fallback), entao "success" no estado do run
+**nao** significa que publicou: confira sempre `layout_signature_candidato.json` ou o verificador. Nenhuma versao foi publicada nem ponteiro movido. A rotulo
+`exp-faixas-rotulos-2` tem esses tres traces de falha e fica sem medicao; a ABECIP inteira precisa ser refeita (com sufixo `__r2` nos tres) quando houver saldo.
+Ponteiro da ABECIP ao fim da tentativa 2: ver `current.json` (a serie publicou uma versao por mes; o estado exato e listado ao fim do lote).
+
+## Lote 17: titulo de tabela sem nota de rodape no Docling, efeito no fallback (`exp-docling-titulo-nota`, 02/11)
+
+Sem mudanca no codigo do fallback: a variavel e a **extracao**. O PR #19 (`fix/docling-titulo-nota-e-fonte`, commit `0592726`) muda
+a regra de titulo de tabela do Docling: uma tabela sem titulo detectado nao herda mais a nota de rodape (`**(Depositos-Retiradas)`)
+nem o titulo da tabela de cima quando ha uma linha `Fonte:` entre os dois. Medicao da extracao pelo protocolo de `eval/docling/README.md`
+(`eval/docling/resultados/2026-11-titulo-nota-e-fonte/RESULTADO.md`): 25 PDFs, **1 de 289 tabelas muda**, a `table004` da ABECIP
+2025-10 (`**(Depositos-Retiradas)` -> `Table 4`), linhas e cabecalho identicos; todo o resto identico. Como so essa extracao muda,
+so ela precisa passar pelo fallback: nos outros 24 PDFs a entrada da DAG 3 e a mesma.
+
+### Declarado antes de rodar
+
+- **Hipotese:** a regressao real de 2025-10 na tentativa 2 do lote 16 (serie mensal lida da `table003`, saldo da poupanca) vem de a
+  selecao de artefatos nao ter incluido a `table004` (a mensal de financiamentos), que o Docling batizou com a nota de rodape da tabela
+  de cima. Com o titulo neutro, a selecao passa a considerar a `table004` e a serie mensal sai dela.
+- **Controle, para separar as duas causas:** a tentativa 2 tinha dois defeitos em 2025-10 (titulo do Docling e rotulo casando so pela
+  primeira celula); o segundo foi corrigido em `d8625ed` e nunca rodou em 2025-10 (a tentativa 3 caiu no 402). Por isso roda-se o
+  mesmo codigo duas vezes, mudando so a extracao:
+  1. **controle:** extracao antiga (`dag_detecta_pdf_e_extrai__abecip__2025-10__20261021T151108Z`), rotulo `exp-faixas-rotulos-2`,
+     run `exp-faixas-rotulos-2__abecip__abecip__2025-10__r2` (e o redisparo pendente da tentativa 3; conta para ela);
+  2. **teste:** extracao nova (DAG 1 `dag_extrai_documentos_origem` com o runner na branch do PR #19), rotulo `exp-docling-titulo-nota`,
+     run `exp-docling-titulo-nota__abecip__abecip__2025-10`.
+- **Codigo:** `8d8eb03` (fallback do lote 16, `d8625ed`), prompts sem mudanca (`unit-mapping-estrutura` v6, `unit-mapping-artefatos` v4,
+  `candidato-estrutura` v3; conferir 0 divergentes antes). Contrato: o mais novo do dominio `abecip`, igual ao lote 16.
+- **Metrica-alvo (2025-10, verificador `eval/abecip/verificar_colecoes.py`):** a `table004` entra na selecao e a `serie_mensal_sbpe`
+  sai dela, com 0 alertas de cobertura, de itens vazios e de serie anual. No controle, o esperado e a serie mensal ainda errada (se o
+  controle ja acertar, o merito e do `d8625ed` e o PR #19 nao tem efeito mensuravel no fallback, so na extracao).
+- **Guardas:** `e2e_apto_para_bronze`, `resolucao_cobertura_obrigatorios`, `revalidacao_gate_efetivo`, `validacao_cobertura_de_regras`,
+  `selecao_tabelas_sem_mapeamento`. O harness nao pontua 2025-10 (so maio tem gabarito); o comparador nao pareia (o `execution_id` da
+  extracao muda), entao a leitura e trace a trace, como no lote 13 (`--sem-pareamento`).
+- **Limite:** uma execucao de cada lado; se o teste e o controle divergirem fora do previsto, redisparar com `__r2` antes de concluir.
+- **Ponteiro antes do lote:** abecip `v2.29.0` (2025-10 `__r2` da tentativa 2, o defeituoso). Cada run que aprova publica uma versao
+  nova e move o ponteiro; voltar e decisao do usuario.
+- **Runner:** na branch `fix/docling-titulo-nota-e-fonte` durante o lote; volta para `main` depois do merge do PR #19.
+
+### Resultado (03/11, teste contra controle, ABECIP 2025-10, mesmo codigo `d4459ce`)
+
+| | controle (`exp-faixas-rotulos-2`, extracao antiga) | teste (`exp-docling-titulo-nota`, extracao nova) |
+| --- | --- | --- |
+| extracao | `...__2025-10__20261021T151108Z`, `table004` = `**(Depositos-Retiradas)` | `...__2025-10__20261103T022929Z`, `table004` = `Table 4` |
+| selecao, unidade `financiamentos_imobiliarios` | `table003`, `table005`-`table008` (sem a `table004`, embora oferecida a LLM) | **`table004`**, `table005`-`table008` |
+| `serie_mensal_sbpe` | da `table003`: saldo e variacao da poupanca (jan: 757 496 e -15 985) | **da `table004`**: unidades e R$ milhoes financiados no mes de 2025 (jan: 38 529 e 13 479, conferido na tabela) |
+| verificador: alertas de coluna | 2 (unidades e volume lidos de colunas de saldo) | **0** |
+| verificador: cobertura, itens vazios, serie anual | 0 / 0 / 0 | 0 / 0 / 0 |
+| alertas que sobram | 4 de OCR (soma = TOTAL, identidade, celulas), iguais nos dois | os mesmos 4 |
+| guardas | apto 1, cobertura obrigatorios 1, tabelas sem mapeamento 0 | iguais |
+| custo | 5 chamadas, 12 276 tokens, 336 s | 5 chamadas, 13 423 tokens, 336 s |
+| ponteiro publicado | v2.30.0 | v2.31.0 |
+
+- **Hipotese confirmada, e a causa e a extracao, nao o `d8625ed`:** com o mesmo codigo, o controle repete o erro da tentativa 2 (mesma
+  selecao, mesma serie mensal da poupanca); so com o titulo neutro a LLM passa a escolher a `table004`. A correcao de rotulos sozinha
+  nao resolve 2025-10.
+- **Nenhuma guarda regrediu**; os alertas que sobram sao de OCR (P10/P11, fora deste lote) e aparecem identicos nos dois lados.
+- **Limites:** uma execucao de cada lado (o controle repete exatamente a selecao das duas rodadas da tentativa 2, entao a diferenca
+  nao parece variancia). Nos dois lados o `periodo.rotulo_publicado` da serie mensal vem do OCR da primeira coluna: julho vazio
+  e outubro `1no` (rotulos de mes lidos errado, ja listados em "Fora desta release" do lote 16; nao muda com a extracao). O titulo verdadeiro da `table004` ("2 - SBPE: FINANCIAMENTOS...") continua nao detectado:
+  recupera-lo exigiria OCR do vao (P12 nivel 2), desnecessario para este caso.
+- **Decisao:** o PR #19 pode ser incorporado. Depois do merge, o runner volta para `main` (`atualizar-runner.sh main`).
+- **Ponteiro da ABECIP apos o lote:** `v2.31.0` (o layout do teste, 2025-10 correto). Voltar para outra versao e decisao do usuario.
+- **Estado:** Airflow devolvido ao rotulo do `.env` (`exp-correcoes-contexto-opcional-e-escala`), `caffeinate` parado. A tentativa 3
+  do lote 16 segue pendente (2025-10 `__r2` agora feito; faltam os outros 9 meses, com `__r2` em 2026-05 e 2025-11).
+
+## Lote 18: o leitor de numeros reconhece a virgula decimal lida como ponto (offline, sem LLM, 03/11)
+
+Escopo do usuario: so ABECIP e construtoras, e so a parte deterministica do OCR. Dos tres erros de OCR da ABECIP (P11), so um e do nosso
+codigo: o OCR le `3.159,7` como `3.159.7` e `parse_flexible_number` tratava todos os pontos como milhar, publicando 31.597 (10x). Grupo de
+milhar tem sempre 3 digitos, entao em `3.159.7` o ultimo ponto so pode ser o decimal. Ficam fora, por decisao do usuario: digito trocado
+(`989` -> `686`, pontual), rotulo com espaco perdido (`BANCO DOBRASIL`, P10) e rotulos de mes (`1no`, julho vazio).
+
+- **Mudanca:** `domain/resolution/numbers.py`, regra `THOUSANDS_THEN_DECIMAL_DOT_RE` (`d{1,3}(.ddd)+.d{1,2}` -> ultimo ponto e decimal),
+  antes da regra que apaga todos os pontos. Testes em `tests/unit/domain/test_resolution_numbers.py` (inclui `1.234.567`, `38.529`,
+  `3.159,7` e `3.3` inalterados); a regra foi desligada e o teste novo falhou (checagem de mutacao). Suite: 393 passam.
+- **Previsao (contagem nas extracoes):** 5 celulas no formato nas 11 extracoes da ABECIP (`5.395.6` em maio, `3.159.7` e `2.677.9` em
+  2025-10, `9.447.9` e `1.563.6` em 2025-12); 0 nas 5 construtoras da amostra do Docling.
+- **Medicao:** cada layout publicado resolvido duas vezes pelo resolvedor real, sobre a mesma extracao e o mesmo contrato, com o leitor
+  antigo (`git HEAD`) e o novo; comparacao folha a folha do `schema_saida`. Alvos: os 12 candidatos da ABECIP (`exp-faixas-rotulos`, os 10
+  meses e o `__r2` de 2025-10, e `exp-docling-titulo-nota` 2025-10) e os layouts vigentes das 8 construtoras (`current.json`). Sanidade:
+  a resolucao offline das construtoras bate 6 de 6 com o `schema_saida_resolvido` publicado (Cury, Tenda, MRV conferidos).
+
+| alvo | valores numericos | mudaram |
+| --- | --- | --- |
+| ABECIP 2025-10 (3 layouts) | 186 a 208 | 2 em cada: Itau, Aquisicao, volume no mes 31 597 -> **3 159,7**; BRB, Aquisicao, acumulado 26 779 -> **2 677,9** |
+| ABECIP 2025-12 | 196 | 2: acumulado no ano 94 479 -> **9 447,9** e 15 636 -> **1 563,6** |
+| ABECIP outros 8 meses | 141 a 210 | 0 (a celula `5.395.6` de maio nao esta em coluna lida pelo layout) |
+| 8 construtoras (Cury, Cyrela, Direcional, EZTEC, MRV, Pacaembu, Plano&Plano, Tenda) | 5 a 6 | 0 |
+
+- **Resultado:** so os valores 10x mudam, todos para o valor do PDF; nada mais muda. **Aprovado.** Os alertas de soma = TOTAL de 2025-10
+  e 2025-12 que vinham desses valores devem cair; os de digito trocado continuam.
+- **O que ainda nao muda:** os `schema_saida_resolvido` ja publicados no MinIO foram gravados com o leitor antigo; o valor certo so aparece
+  quando a DAG 2 resolver de novo (proxima execucao ou reprocessamento). Nenhum layout nem ponteiro muda: a regra e do resolvedor, nao do
+  layout. O lote dispensou rotulo de release e LLM, entao nao ha traces no Langfuse.
+
+#### Resultado da tentativa 3 (03/11, `exp-faixas-rotulos-2`, codigo `5e20e02`: faixas por codigo + rotulos em qualquer celula + leitor de numeros do lote 18)
+
+Rodados em serie os 9 meses que faltavam (2025-11 e 2026-05 com `__r2`; o 2025-10 ja tinha sido feito como controle do lote 17). Os 9
+publicaram. Ambiente: o triggerer do Airflow travou com a revalidacao de 2026-02 em espera por 40 min depois de a DAG 2 terminar; reiniciado
+o conteiner (`docker compose restart airflow-triggerer`, sem recriar, rotulo preservado) a tarefa retomou. A `e2e_duracao_segundos` de 2026-02
+fica inflada por isso.
+
+- **Comparador** contra `exp-abecip-varios-meses` (9 x 9 traces): nenhuma guarda regrediu; `e2e_apto_para_bronze` 0,889 -> 1,000,
+  `resolucao_cobertura_obrigatorios` 0,978 -> 1,000; regressoes fora de guarda iguais as da tentativa 2 (custo do validador estrito):
+  `fallback_tentativas_llm_total` 4,22 -> 4,67, `llm_acerto_1a_tentativa` 0,944 -> 0,833.
+- **Harness** (uma vez, so o trace de maio `__r2`, `--trace`): `assinatura_resolvido_observacoes_corretas` 0,951 (1 errada, 2 ausentes), igual.
+- **Ponteiro da ABECIP apos a serie:** `v2.40.0` (o layout de 2026-07, que tem o erro de ano descrito abaixo). Voltar e decisao do usuario.
+
+### Auditoria de ponta a ponta contra o PDF (03/11, `eval/abecip/auditar_valores.py`)
+
+Pergunta do usuario: o que o PDF tem esta sendo extraido, mapeado pela LLM e publicado com o valor certo? Ferramenta nova, sem LLM: monta a
+referencia de cada mes pelas tabelas da extracao lidas por posicao (leitor de numeros proprio, independente de `parse_flexible_number`), confere
+cada celula pelas identidades do proprio boletim (acumulado = anterior + mes; saldo - saldo anterior = variacao; soma das instituicoes = TOTAL;
+Construcao + Aquisicao = Aquisicao e Construcao; meses da tabela 3 = tabela 2; serie anual igual entre os 10 PDFs) e compara cada valor
+publicado. Celula que nao fecha em nenhuma identidade foi lida na imagem do PDF. Alvos: os layouts da tentativa 3 e, para 2025-10, o do
+lote 17 (extracao nova), resolvidos com o codigo atual.
+
+- **Extracao:** as 6 tabelas que o contrato usa estao em todos os 10 meses, com todas as linhas (cobertura e soma = TOTAL fecham, salvo as
+  celulas de OCR abaixo). O que o contrato nao pede fica de fora por desenho: ano anterior, percentuais, acumulados, 12 meses, grafico.
+- **Por mes (valores publicados x PDF):**
+
+| mes | resultado |
+| --- | --- |
+| 2025-12, 2026-03 | tudo certo |
+| 2025-10 | valores certos, menos POUPEX/Construcao R$ no mes: PDF 0,9, OCR `6'0`, publicado 60,0; rotulos de mes `Jul` -> vazio/`m` e `Out` -> `1no` (OCR) nas tres series |
+| 2025-11 | valores certos, menos POUPEX/Aquisicao e Construcao R$ no ano: PDF 66,6, OCR `9'99`, publicado 999; rotulos `Jul` e `Out` errados (OCR) |
+| 2026-01 | valores certos, menos POUPEX/Aquisicao unidades no mes: PDF 3, extracao vazia, publicado nulo; serie anual publica `2026*` (ano parcial) |
+| 2026-02 | **valores certos, mas 138 publicados como texto** (`"35.701"`): a LLM nao marcou `"tipo": "numero"` e o resolvedor publica a celula crua; o periodo de `por_modalidade` sai na chave plana `"periodo.rotulo_publicado"`; serie anual com `2026*` |
+| 2026-04, 2026-06 | valores certos; serie anual com `2026*` |
+| 2026-05 | valores certos, menos Banco do Brasil/Aquisicao unidades no ano: PDF 989, OCR 686 (P11) |
+| 2026-07 | **saldos e captacoes do ano errado** (coluna de 2025 em vez de 2026, 12 itens em vez de 7; repetiu nas duas rodadas); modalidade gravada `Construcao`/`Aquisicao`/`Aquisicao e Construcao`, fora do dominio do contrato (`construcao`/`aquisicao`/`total`); o resto certo |
+
+- **Nao e erro:** a serie anual de 2024 difere entre os PDFs de 2025 (568.163 / 186.671,29) e os de 2026 (532.113 / 180.409,31); conferido na
+  imagem, e revisao da ABECIP e o publicado bate com o PDF de cada mes.
+- **Causas, em ordem de peso:**
+  1. *Codigo do pipeline, generico* (nao depende da ABECIP): (a) o resolvedor so converte para numero se a LLM declarar `"tipo": "numero"`,
+     embora o contrato diga `number` (2026-02 inteiro); (b) valor fixo fora do `dominio` do contrato passa na validacao (2026-07); (c) nada
+     confere que a serie mensal e do ano da competencia (2026-07, duas rodadas); (d) ano parcial `2026*` entra na serie anual (4 de 7 meses de
+     2026); (e) chave com ponto em `valores_por_segmento` sai plana. **Nenhum desses casos baixou `e2e_apto_para_bronze`**: o gate aprova.
+  2. *OCR:* 4 numeros em 10 meses (tres deles na ultima linha da tabela, POUPEX, lidos de cabeca para baixo: `0,9` -> `6'0`, `66,6` -> `9'99`)
+     e os rotulos de mes de 2025-10 e 2025-11.
+- **Construtoras** (layouts vigentes, resolvidos com o codigo atual, contra `eval/gabaritos/`): Cury, Direcional, Pacaembu, Plano&Plano e Tenda
+  6/6, EZTEC 5/5. **Cyrela:** publica "Numero de Lancamentos" (20, 17, 12 empreendimentos) e "Vendas ex-permuta R$ milhoes" (2.561, 2.240,
+  2.164) como unidades; o contrato pede `numero_de_unidades` e o documento nao publica unidades (o gabarito pede ausencia). **MRV:** publica a
+  marca MRV (9.841 / 8.841) e o gabarito o TOTAL INCORPORACAO (10.386 / 9.141 = MRV + SENSIA): decisao de contrato ja pendente no gabarito.
+  Os PDFs fonte de MRV e Cyrela nao estao mais no MinIO; conferido pela extracao. Os layouts das construtoras sao de lotes anteriores: a
+  etapa 2 do lote 16 (regerar as 17 entidades com o prompt atual) segue nao rodada.
+
+## Lote 19: o resolvedor e o validador obedecem ao contrato (offline, sem LLM, 03/11)
+
+Tres das cinco causas da auditoria acima sao lacunas genericas do pipeline e foram corrigidas sem nada especifico da ABECIP (decisao do usuario:
+so o que faz o codigo obedecer ao contrato; regra que dependa do formato da ABECIP nao entra no codigo). Commit `bf30df7`.
+
+- **Itens:** (1) linhas de tabela: folha que o contrato declara `number` sai numero mesmo sem `"tipo": "numero"` na instrucao (antes a
+  celula crua era publicada como texto); (2) `valores_por_segmento`/`valores_fixos` com chave `periodo.rotulo_publicado` viram caminho
+  aninhado (antes saiam na chave plana e o `periodo` ficava nulo); (3) o validador recusa valor fixo fora do `dominio` da entidade no contrato
+  (o campo casa com a entidade pelo nome da folha). Testes em `tests/unit/domain/test_valores_pelo_contrato.py`; checagem de mutacao nos tres.
+- **Medicao:** os layouts publicados (10 da ABECIP: tentativa 3 e 2025-10 do lote 17; 8 construtoras) resolvidos com `git HEAD` e com o codigo
+  novo, comparados folha a folha; a regra de dominio aplicada aos mesmos layouts.
+
+| alvo | mudou |
+| --- | --- |
+| ABECIP 2026-02 | 140 valores texto -> numero; periodo de `por_modalidade` nulo -> `FEV/2026` |
+| ABECIP 2026-01, 2026-03, 2026-04, 2026-07 | periodo de `por_modalidade` nulo -> `JAN/2026`, `MAR/2026`, ... (52 a 72 folhas; o defeito da chave plana era mais amplo que 2026-02) |
+| ABECIP 2025-10, 2025-11, 2025-12, 2026-05, 2026-06 | nada |
+| 8 construtoras | nada |
+| regra de dominio | recusa so 2026-07 (`Construcao`, `Aquisicao`, `Aquisicao e Construcao`); os outros 17 layouts passam |
+
+- **Resultado:** aprovado. Os `schema_saida` ja publicados so mudam quando a DAG 2 resolver de novo.
+
+## Lote 20: escopo de periodo no contrato, so texto x texto + validacao (`exp-contrato-texto-periodo` x `exp-contrato-escopo-periodo`, 03/11)
+
+As outras duas causas da auditoria (serie mensal do ano errado em 2026-07; ano em andamento `2026*` na serie anual em 4 meses) dependem do que
+o contrato quer, entao a decisao fica no contrato. Pedido do usuario: comparar duas formas de dizer isso, em uns 5 PDFs da ABECIP cada.
+
+### Declarado antes de rodar
+
+- **Achado ao preparar:** `contrato_semantico.principios` nao e lido por nenhum codigo e nao chega a LLM; o texto tem de ir onde ela le. O recorte
+  do contrato que a LLM recebe leva `entidades`, `metricas` e `requisitos_mapeamento`, e o teste confirma que a `descricao` de cada
+  `campos_obrigatorios` chega ao recorte da unidade.
+- **Braco 1, `abecip v2.4.0` (`exp-contrato-texto-periodo`):** so texto. `descricao` nas quatro colecoes de serie: mensal = "do ano de referencia
+  do boletim, de janeiro ate o mes de referencia; meses de anos anteriores ficam de fora"; anual = "somente anos completos, anteriores ao ano de
+  referencia; o ano em andamento fica de fora". O codigo nao confere nada.
+- **Braco 2, `abecip v2.5.0` (`exp-contrato-escopo-periodo`):** o mesmo texto + `escopo_periodo` (`ano_de_referencia` nas tres series mensais,
+  `anos_completos` na anual), conferido no validador (commit `1db30c9`, `period_scope_problems`): com periodo mensal do documento, a serie do ano
+  de referencia nao pode ter mais linhas com valor do que o mes de referencia (o cabecalho do Docling de 2026-07 perdeu o ano, entao a contagem e
+  a prova), e a serie anual so le anos anteriores ao de referencia (a mensagem sugere `rotulo_inicial`/`rotulo_final`). So age se o contrato
+  declarar; sem isso e inerte. Offline, sobre os layouts da tentativa 3, recusa exatamente os erros da auditoria (2026-07; `2026*` em 2026-01,
+  02, 04 e 06) e passa os outros 5.
+- **Codigo nos dois bracos:** `1db30c9` (lotes 18 e 19 inclusos). Prompts sem mudanca (conferir 0 divergentes). A DAG 3 usa sempre o contrato mais
+  novo do dominio: publica-se a v2.4.0, roda o braco 1, publica-se a v2.5.0, roda o braco 2.
+- **PDFs (5):** 2025-11 (ano de 2025, rotulos de OCR), 2026-01 (`2026*`), 2026-03 (controle: limpo na tentativa 3), 2026-06 (`2026*`), 2026-07
+  (ano errado nas duas rodadas). Mesmas extracoes da tentativa 3. Em serie.
+- **Metrica-alvo:** auditoria (`eval/abecip/auditar_valores.py`) sem erro de mapeamento, sem `2026*` e sem valor fora do dominio nos 5 PDFs;
+  o braco que chegar la com menos tentativas de LLM e o melhor. Guardas: `e2e_apto_para_bronze`, `resolucao_cobertura_obrigatorios`, o controle
+  2026-03 sem piora. **Base:** `exp-faixas-rotulos-2` (tentativa 3) nos mesmos 5 documentos.
+- **Limite:** uma execucao por PDF por braco; diferenca de um documento so e variancia ate prova em contrario.
+- **Ponteiro antes:** abecip `v2.40.0`. Cada run aprovado publica uma versao nova; voltar e decisao do usuario.
+
+### Resultado (03/11, auditoria por PDF contra o PDF; base `exp-faixas-rotulos-2`, contrato v2.3.0)
+
+| PDF | base v2.3.0 (sem texto) | braco 1, v2.4.0 (so texto) | braco 2, v2.5.0 (texto + validacao) |
+| --- | --- | --- | --- |
+| 2025-11 | certo (so OCR) | certo (so OCR) | certo (so OCR) |
+| 2026-01 | `2026*` na anual | **certo** | **certo** |
+| 2026-03 (controle) | certo | certo | certo |
+| 2026-06 | `2026*` na anual | sem layout (rede: `IncompleteRead` da API) -> `__r2` **certo** | **certo** |
+| 2026-07 | saldos/captacoes de 2025 (2 de 2 rodadas) | **certo** -> `__r2` **certo** | saldos/captacoes de **2025 Jan-Jul** (LLM declarou rotulo_final `Jul` na coluna de 2025) -> regra corrigida, `__r2` **certo** |
+
+- **O texto e o que move o resultado.** Sem texto (v2.3.0): ano errado em 2026-07 nas 2 rodadas e `2026*` em 4 de 4 meses de 2026 que o tinham. Com
+  texto (v2.4.0 ou v2.5.0): `2026*` em 0 de 4 rodadas; 2026-07 certo em 3 de 4 rodadas. O cabecalho do Docling de 2026-07 perdeu o ano, entao a
+  escolha da coluna continua ambigua para a LLM: o texto reduz o erro, nao o elimina.
+- **A validacao tinha uma brecha** e nao recusou a rodada errada do braco 2: contava so as linhas lidas (7) e a LLM tinha lido Jan-Jul da coluna de
+  12 meses. Corrigida em `c1f3815` (conta a coluna inteira; teste de regressao e mutacao). Offline, a regra corrigida recusa a rodada errada do braco 2
+  e os 6 erros da tentativa 3, e aprova os 15 layouts certos. Na rodada `__r2` do braco 2 a LLM acertou de primeira e a regra nao foi exercida.
+- **Custo igual:** `fallback_tentativas_llm_total` 4 a 5 por run nos tres rotulos; nenhuma recusa do validador de escopo nos runs (a LLM nunca precisou
+  de reparo por escopo). Tokens variam de 6 mil a 27 mil sem relacao com o braco (raciocinio do modelo). Guardas: `e2e_apto_para_bronze` e
+  `resolucao_cobertura_obrigatorios` = 1 em todos os runs que geraram layout.
+- **Leitura:** amostra pequena (5 PDFs, 1 a 2 rodadas). O braco 1 fechou 5 de 5 e o braco 2 4 de 5 na primeira rodada, mas a falha do braco 2 e o mesmo
+  modo de erro que o texto sozinho tambem permite (cabecalho sem ano): a validacao corrigida e o que o pega. **Recomendacao:** manter a v2.5.0 (texto +
+  validacao corrigida): mesmo texto, mesmo custo, e uma rede de seguranca para o caso que o texto nao garante. A decisao e do usuario.
+- **Ambiente:** o triggerer do Airflow travou de novo com a revalidacao do 2026-03 do braco 2 (DAG 2 terminou e a tarefa ficou adiada); reiniciado o
+  conteiner, o run terminou. Duas vezes no mesmo dia: pendencia do Airflow. Para refazer o 2026-06 e o 2026-07 do braco 1 com a v2.4.0, a v2.5.0 foi
+  retirada do MinIO por ~10 min (copia fora de `contratos/`) e recolocada; conferido que `contratos/abecip/` voltou a ter v2.4.0 e v2.5.0.
+- **Estado:** contrato mais novo da ABECIP no MinIO = **v2.5.0**. Ponteiro da ABECIP = `v2.52.0` (2026-07 `__r2` do braco 1, certo). Airflow no rotulo do
+  `.env`, `caffeinate` parado. Harness nao rodado (nenhum dos 5 PDFs tem gabarito).
+
+#### Complemento (03/11): 2026-02 e 2026-04 com a v2.5.0
+
+Os dois meses que ainda tinham `2026*` na serie anual (layouts da tentativa 3, contrato v2.3.0) rodaram com a v2.5.0 sob `exp-contrato-escopo-periodo`
+(codigo `c1f3815`). Auditoria: tudo certo nos dois (308 valores), sem `2026*`, de primeira (nenhum reparo nem recusa de escopo). Ponteiro da ABECIP: `v2.54.0`
+(2026-04). Airflow devolvido ao rotulo do `.env`; `caffeinate` parado.
+
+**Retrato da ABECIP depois dos lotes 18-20** (resultado mais recente de cada mes, resolvido com o codigo atual): numeros 99,8 % iguais ao PDF; sobram so
+erros de OCR: 3 numeros (2025-10 POUPEX 0,9 -> 60; 2025-11 POUPEX 66,6 -> 999; 2026-05 Banco do Brasil 989 -> 686), 1 celula vazia (2026-01 POUPEX 3 ->
+nulo) e os rotulos de mes de 2025-10 e 2025-11 (`Jul` -> vazio/`m`, `Out` -> `1no`). Os `schema_saida` gravados de meses antigos so refletem o codigo
+atual quando a DAG 2 resolver de novo.

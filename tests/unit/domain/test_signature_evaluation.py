@@ -6,6 +6,7 @@ from document_processing.domain.observability.signature_evaluation import (
     anchoring_metrics,
     column_role_metrics,
     expected_entries_metrics,
+    resolved_observation_metrics,
     selection_metrics,
     structural_metrics,
 )
@@ -196,3 +197,98 @@ def test_f2_sem_papel_derivavel_so_a_leitura_da_estrutura_e_medida() -> None:
     m = _m(column_role_metrics(estrutura, GABARITO_F2))
     assert m == {"assinatura_f2_estrutura_tabela_lida": 0.0}
     assert column_role_metrics({}, GABARITO_F2) == []
+
+
+COLECAO = "grupo.por_modalidade"
+
+
+def _resolvido(*itens):
+    return {"grupo": {"por_modalidade": list(itens)}}
+
+
+def _gabarito_resolvido(*observacoes, colecao=COLECAO):
+    return {"observacoes_resolvidas": {colecao: list(observacoes)}}
+
+
+def _obs(modalidade, agente, **campos):
+    return {"contexto": {"modalidade": modalidade, "agente": agente}, "campos": campos}
+
+
+def test_resolvido_confere_item_por_contexto_sem_acento_nem_caixa() -> None:
+    resolvido = _resolvido(
+        {"modalidade": "construcao", "agente": "ITAÚ UNIBANCO", "volume": 1971.4, "unidades": 5329.0},
+    )
+    gabarito = _gabarito_resolvido(_obs("Construcao", "Itau Unibanco", volume=1971.4, unidades=5329))
+    m = _m(resolved_observation_metrics(resolvido, gabarito))
+    assert m["assinatura_resolvido_observacoes_corretas"] == 1.0
+    assert m["assinatura_resolvido_observacoes_erradas"] == 0
+    assert m["assinatura_resolvido_observacoes_ausentes"] == 0
+
+
+def test_resolvido_item_existe_com_valor_diferente_e_errado_nao_ausente() -> None:
+    resolvido = _resolvido({"modalidade": "construcao", "agente": "CAIXA", "volume": 2378.1})
+    gabarito = _gabarito_resolvido(_obs("construcao", "CAIXA", volume=2387.1))
+    m = _m(resolved_observation_metrics(resolvido, gabarito))
+    assert m["assinatura_resolvido_observacoes_corretas"] == 0.0
+    assert m["assinatura_resolvido_observacoes_erradas"] == 1
+    assert m["assinatura_resolvido_observacoes_ausentes"] == 0
+
+
+def test_resolvido_modalidade_que_nao_saiu_conta_como_ausente() -> None:
+    """Coleção que perde duas das três tabelas: o gabarito acusa o que sumiu."""
+    resolvido = _resolvido({"modalidade": "construcao", "agente": "CAIXA", "volume": 1.0})
+    gabarito = _gabarito_resolvido(
+        _obs("construcao", "CAIXA", volume=1.0),
+        _obs("aquisicao", "CAIXA", volume=2.0),
+        _obs("total", "CAIXA", volume=3.0),
+    )
+    metricas = resolved_observation_metrics(resolvido, gabarito)
+    m = _m(metricas)
+    assert m["assinatura_resolvido_observacoes_corretas"] == 1 / 3
+    assert m["assinatura_resolvido_observacoes_ausentes"] == 2
+    assert metricas[0].metadata["por_colecao"][COLECAO] == {"corretas": 1, "erradas": 0, "ausentes": 2}
+
+
+def test_resolvido_sem_contexto_so_confere_presenca_do_valor() -> None:
+    resolvido = {"serie": [{"rotulo": "x", "saldo": 10.0}, {"rotulo": "y", "saldo": 20.0}]}
+    gabarito = {
+        "observacoes_resolvidas": {
+            "serie": [{"campos": {"saldo": 20}}, {"campos": {"saldo": 30}}],
+        }
+    }
+    m = _m(resolved_observation_metrics(resolvido, gabarito))
+    assert m["assinatura_resolvido_observacoes_corretas"] == 0.5
+    # sem contexto nao ha como dizer "errada": o valor simplesmente nao esta la.
+    assert m["assinatura_resolvido_observacoes_erradas"] == 0
+    assert m["assinatura_resolvido_observacoes_ausentes"] == 1
+
+
+def test_resolvido_tolerancia_e_contexto_aninhado() -> None:
+    resolvido = {"serie": [{"periodo": {"rotulo": "Jan"}, "volume": 12125.0}]}
+    gabarito = {
+        "observacoes_resolvidas": {
+            "serie": [{"contexto": {"periodo.rotulo": "jan"}, "campos": {"volume": 12125.32}, "tolerancia": 1}],
+        }
+    }
+    assert _m(resolved_observation_metrics(resolvido, gabarito))["assinatura_resolvido_observacoes_corretas"] == 1.0
+    sem_tolerancia = {"observacoes_resolvidas": {"serie": [{"contexto": {"periodo.rotulo": "jan"}, "campos": {"volume": 12125.32}}]}}
+    assert _m(resolved_observation_metrics(resolvido, sem_tolerancia))["assinatura_resolvido_observacoes_erradas"] == 1
+
+
+def test_resolvido_item_a_mais_nao_penaliza_e_colecao_ausente_nao_quebra() -> None:
+    resolvido = _resolvido({"modalidade": "construcao", "agente": "CAIXA", "volume": 1.0}, {"modalidade": "x", "agente": "Y", "volume": 9.0})
+    gabarito = {
+        "observacoes_resolvidas": {
+            COLECAO: [_obs("construcao", "CAIXA", volume=1.0)],
+            "outro.caminho": [{"campos": {"v": 1}}],
+        }
+    }
+    m = _m(resolved_observation_metrics(resolvido, gabarito))
+    assert m["assinatura_resolvido_observacoes_corretas"] == 0.5
+    assert m["assinatura_resolvido_observacoes_ausentes"] == 1
+
+
+def test_resolvido_sem_observacoes_no_gabarito_nao_ha_metrica() -> None:
+    assert resolved_observation_metrics(_resolvido(), {}) == []
+    assert resolved_observation_metrics(_resolvido(), {"observacoes_resolvidas": {COLECAO: []}}) == []
+

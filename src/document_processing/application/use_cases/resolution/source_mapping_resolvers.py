@@ -469,9 +469,46 @@ class SourceMappingResolversMixin:
             current = current[part]
         current[parts[-1]] = value
 
+    @staticmethod
+    def _coerce_rows_to_contract_types(
+        rows: list[Any],
+        contrato: dict[str, Any] | None,
+        mapping_path: str,
+    ) -> list[Any]:
+        """Folha que o contrato declara ``number`` sai numero mesmo sem ``tipo`` na instrucao.
+
+        O tipo do campo e do contrato, nao da LLM: quando ela omite ``"tipo": "numero"``
+        a celula crua ("35.701") seria publicada como texto num campo numerico.
+        Texto que nao e numero vira nulo, como na celula com ``tipo`` declarado.
+        """
+        schema_saida = contrato.get("schema_saida") if isinstance(contrato, dict) else None
+        if not schema_saida:
+            return rows
+        base_path = normalize_mapping_path(mapping_path)
+
+        def coerce(node: dict[str, Any], prefix: str) -> None:
+            for key, value in node.items():
+                path = f"{prefix}.{key}"
+                if isinstance(value, dict):
+                    coerce(value, path)
+                elif isinstance(value, str):
+                    descriptor = field_type(schema_saida, path) or ""
+                    if "number" in descriptor or "integer" in descriptor:
+                        node[key] = parse_flexible_number(value)
+
+        for row in rows:
+            if isinstance(row, dict):
+                coerce(row, base_path)
+        return rows
+
     @classmethod
     def _merge_nested_values(cls, target: dict[str, Any], source: dict[str, Any]) -> None:
         for key, value in source.items():
+            # "periodo.rotulo_publicado" e caminho, como em caminho_saida, nao nome de chave
+            if "." in str(key):
+                head, _, rest = str(key).partition(".")
+                cls._merge_nested_values(target, {head: {rest: value}})
+                continue
             if isinstance(value, dict):
                 if not isinstance(target.get(key), dict):
                     target[key] = {}

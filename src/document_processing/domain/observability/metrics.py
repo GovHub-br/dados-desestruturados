@@ -432,6 +432,74 @@ def artifact_selection_quality_metrics(
     ]
 
 
+def _origin_files(value: Any) -> set[str]:
+    """Todo `arquivo_origem` citado numa instrucao, inclusive nas `fontes` aninhadas."""
+    arquivos: set[str] = set()
+    if isinstance(value, dict):
+        origem = value.get("arquivo_origem")
+        if isinstance(origem, str) and origem.strip():
+            arquivos.add(origem.strip().lstrip("/"))
+        for item in value.values():
+            arquivos |= _origin_files(item)
+    elif isinstance(value, list):
+        for item in value:
+            arquivos |= _origin_files(item)
+    return arquivos
+
+
+def selection_mapping_coverage_metrics(
+    selected_paths: list[str],
+    mapping: dict[str, Any],
+) -> list[MetricValue]:
+    """Mede se o mapeamento do layout usou as tabelas que a selecao escolheu.
+
+    Uma tabela escolhida e que nenhuma instrucao cita e o sinal de que parte da
+    evidencia ficou de fora: foi o que aconteceu com a ABECIP quando a pagina das
+    modalidades passou a ter tres tabelas e o layout so leu uma, publicando 11 de
+    30 linhas com todas as metricas de producao em 1. Nao depende de gabarito.
+
+    So tabelas (`tables/`) entram: graficos e blocos sao escolhidos tambem como
+    contexto, sem obrigacao de virar mapeamento. A conta e sobre o layout inteiro:
+    uma tabela escolhida para uma unidade e usada por outra nao conta como perdida.
+    Escolher uma tabela a toa tambem aparece aqui, o que e informacao sobre a
+    selecao, nao um defeito do layout.
+    """
+    selecionadas = {
+        str(path).strip().lstrip("/")
+        for path in selected_paths
+        if str(path).strip().lstrip("/").startswith("tables/")
+    }
+    if not selecionadas or not mapping:
+        # Sem selecao ou sem layout nao ha o que medir: zero diria "tudo coberto"
+        # (ou "nada coberto") onde a verdade e "nao aplicavel".
+        return []
+    usadas = _origin_files(mapping)
+    sem_mapeamento = sorted(selecionadas - usadas)
+    contexto = {"tabelas_sem_mapeamento": sem_mapeamento}
+    mapeadas = len(selecionadas) - len(sem_mapeamento)
+    return [
+        MetricValue(
+            name="selecao_tabelas_sem_mapeamento",
+            value=float(len(sem_mapeamento)),
+            comment=(
+                "Tabelas escolhidas na selecao que nenhuma instrucao do layout cita: "
+                + (", ".join(sem_mapeamento) if sem_mapeamento else "nenhuma")
+                + "."
+            ),
+            metadata=contexto,
+        ),
+        MetricValue(
+            name="selecao_tabelas_mapeadas",
+            value=_ratio(mapeadas, len(selecionadas)),
+            comment=(
+                "Fracao das tabelas escolhidas que o layout usa. "
+                f"{mapeadas} de {len(selecionadas)}."
+            ),
+            metadata=contexto,
+        ),
+    ]
+
+
 def evidence_prefilter_metrics(
     prefilter: dict[str, Any],
     *,

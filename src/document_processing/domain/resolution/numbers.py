@@ -7,6 +7,9 @@ import unicodedata
 from typing import Any
 
 THOUSANDS_INTEGER_RE = re.compile(r"[-+]?\d{1,3}(?:\.\d{3})+")
+# Grupo de milhar tem sempre 3 digitos: em "3.159.7" o ultimo ponto so pode ser a
+# virgula decimal lida como ponto (OCR de tabela em imagem), nao outro milhar.
+THOUSANDS_THEN_DECIMAL_DOT_RE = re.compile(r"[-+]?\d{1,3}(?:\.\d{3})+\.\d{1,2}")
 # Razao publicada como "numero de vezes": "3,49x", "0,69x", "1.5X".
 RATIO_SUFFIX_RE = re.compile(r"^[-+]?[\d.,]+\s*[xX]$")
 
@@ -76,6 +79,9 @@ def parse_flexible_number(value: Any, *, column_name: str | None = None) -> floa
             if prefers_percent or (cleaned.count(",") == 1 and len(cleaned.split(",")[-1]) in {1, 2})
             else cleaned.replace(",", "")
         )
+    elif THOUSANDS_THEN_DECIMAL_DOT_RE.fullmatch(cleaned):
+        integer_part, _, decimals = cleaned.rpartition(".")
+        cleaned = f"{integer_part.replace('.', '')}.{decimals}"
     elif THOUSANDS_INTEGER_RE.fullmatch(cleaned) or cleaned.count(".") > 1:
         cleaned = cleaned.replace(".", "")
     try:

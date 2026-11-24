@@ -34,6 +34,7 @@ from document_processing.domain.observability.signature_evaluation import (  # n
     anchoring_metrics,
     column_role_metrics,
     expected_entries_metrics,
+    resolved_observation_metrics,
     selection_metrics,
     structural_metrics,
 )
@@ -159,6 +160,20 @@ def _estrutura_tabelas_do_input(observation: dict[str, Any]) -> dict[str, Any]:
     return {}
 
 
+def _abrir_minio() -> Any:
+    from backfill_langfuse_atlas import MinioReader
+
+    return MinioReader()
+
+
+def schema_resolvido_da_revalidacao(trace: dict[str, Any], leitor: Any) -> dict[str, Any] | None:
+    """Le do MinIO o schema que a revalidacao do candidato resolveu (``fallback_prefix`` do trace)."""
+    prefixo = str((trace.get("metadata") or {}).get("fallback_prefix") or "")
+    if not prefixo:
+        return None
+    return leitor.get_json(f"{prefixo}revalidation/schema_saida_resolvido.json") or None
+
+
 def _por_etapa(observations: list[dict[str, Any]]) -> dict[str, list[dict[str, Any]]]:
     grupos: dict[str, list[dict[str, Any]]] = defaultdict(list)
     for obs in observations:
@@ -173,6 +188,7 @@ def avaliar_trace(
     *,
     contratos: dict[str, dict[str, Any]],
     gabaritos: dict[str, dict[str, Any]],
+    schema_resolvido: dict[str, Any] | None = None,
 ) -> list[tuple[Any, str | None]]:
     """Metricas de um trace: lista de (metrica, observation_id ou None)."""
     metadata = trace.get("metadata") or {}
@@ -232,6 +248,10 @@ def avaliar_trace(
     if gabarito and estrutura_tabelas:
         for metric in column_role_metrics(estrutura_tabelas, gabarito):
             resultados.append((metric, None))
+    if gabarito and schema_resolvido:
+        for metric in resolved_observation_metrics(schema_resolvido, gabarito):
+            metric.metadata["candidato_valido"] = candidato_valido
+            resultados.append((metric, None))
     return resultados
 
 
@@ -254,22 +274,48 @@ def main() -> int:
     parser.add_argument("--release", required=True)
     parser.add_argument("--sem-scores", action="store_true", help="Nao grava scores no Langfuse; so o relatorio local.")
     parser.add_argument("--contrato", action="append", default=[], help="Override dominio=caminho do contrato a usar na avaliacao.")
+    parser.add_argument(
+        "--trace",
+        action="append",
+        default=[],
+        help="Avalia so os traces com estes ids (repetivel). Para pontuar um redisparo `__r2` sem duplicar o scores do original.",
+    )
+    parser.add_argument(
+        "--entidade",
+        action="append",
+        default=[],
+        help="Avalia so as entidades indicadas (repetivel). Serve para pontuar traces que entraram na release depois da "
+        "primeira rodada sem duplicar os scores dos que ja foram pontuados.",
+    )
     args = parser.parse_args()
 
     client = Langfuse()
     contratos = carregar_contratos(args.contrato)
     gabaritos = carregar_gabaritos()
     traces = client.traces(args.release)
+    if args.entidade:
+        traces = [t for t in traces if str((t.get("metadata") or {}).get("entidade") or "") in set(args.entidade)]
+    if args.trace:
+        traces = [t for t in traces if str(t.get("id")) in set(args.trace)]
     if not traces:
         print(f"release '{args.release}' sem traces atlas.fallback.")
         return 1
+    leitor_minio: Any = None  # so abre o MinIO se algum gabarito pedir o valor resolvido
 
     relatorio: dict[str, Any] = {"release": args.release, "traces": {}, "medias": {}}
     acumulado: dict[str, list[float]] = defaultdict(list)
     gravados = 0
     for trace in traces:
         observations = client.observations(str(trace["id"]))
-        resultados = avaliar_trace(trace, observations, contratos=contratos, gabaritos=gabaritos)
+        gabarito = gabaritos.get(str((trace.get("metadata") or {}).get("document_id") or ""))
+        schema_resolvido = None
+        if gabarito and gabarito.get("observacoes_resolvidas"):
+            if leitor_minio is None:
+                leitor_minio = _abrir_minio()
+            schema_resolvido = schema_resolvido_da_revalidacao(trace, leitor_minio)
+            if schema_resolvido is None:
+                print(f"aviso: trace {trace['id']} sem revalidation/schema_saida_resolvido.json; valor resolvido nao medido.")
+        resultados = avaliar_trace(trace, observations, contratos=contratos, gabaritos=gabaritos, schema_resolvido=schema_resolvido)
         entidade = str((trace.get("metadata") or {}).get("entidade") or trace["id"])
         por_trace: dict[str, Any] = {}
         for metric, observation_id in resultados:

@@ -164,6 +164,23 @@ class MappingUnitGenerationMixin:
                 fragment_payload=fragment_payload,
                 stage=f"{unit_stage_prefix}/fragmento_layout_signature",
             )
+            fragment, row_range_log = fill_fragment_row_ranges(
+                fragment, fragment_payload.get("artefatos_contexto_llm")
+            )
+            if row_range_log:
+                self._persist_llm_validated(
+                    fallback_context=fallback_context,
+                    stage=f"{unit_stage_prefix}/fragmento_layout_signature",
+                    filename=f"{unit_stage_prefix}/faixas_por_codigo.json",
+                    payload=row_range_artifact(row_range_log, unit_id=unit.id),
+                )
+                logging.info(
+                    "Unidade %s/%s (%s): faixas de linhas definidas por codigo em %s instrucao(oes) de tabela.",
+                    position,
+                    len(units),
+                    unit.id,
+                    sum(1 for item in row_range_log if item["acao"] in {"faixa_do_codigo", "faixa_por_rotulos"}),
+                )
             logging.info(
                 "Unidade %s/%s (%s): fragmento validado com %s mapeamento(s) e %s correcao(oes)",
                 position,

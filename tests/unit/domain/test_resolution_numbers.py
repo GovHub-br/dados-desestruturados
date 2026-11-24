@@ -43,6 +43,24 @@ class ResolutionNumbersTest(unittest.TestCase):
         self.assertEqual(parse_flexible_number("1.5X"), 1.5)
         self.assertEqual(parse_flexible_number("(1,2x)"), -1.2)
 
+    def test_last_dot_after_thousands_groups_is_the_decimal_comma(self) -> None:
+        """Grupo de milhar tem 3 digitos; "3.159.7" e 3.159,7 com a virgula lida como ponto.
+
+        Regressao: ABECIP 2025-10, Aquisicao, Itau, volume no mes publicado como 31.597
+        (10x) a partir da celula de OCR "3.159.7".
+        """
+        self.assertEqual(parse_flexible_number("3.159.7"), 3159.7)
+        self.assertEqual(parse_flexible_number("2.677.9", column_name="volume_acumulado_ano_milhoes"), 2677.9)
+        self.assertEqual(parse_flexible_number("1.234.567.89"), 1234567.89)
+        self.assertEqual(parse_flexible_number("(5.395.6)"), -5395.6)
+        self.assertEqual(parse_flexible_number("3.159.7", column_name="unidades"), 3159.7)
+
+    def test_thousands_groups_without_decimal_part_stay_integers(self) -> None:
+        self.assertEqual(parse_flexible_number("1.234.567"), 1234567.0)
+        self.assertEqual(parse_flexible_number("38.529"), 38529.0)
+        self.assertEqual(parse_flexible_number("3.159,7"), 3159.7)
+        self.assertEqual(parse_flexible_number("3.3"), 3.3)
+
     def test_still_rejects_unknown_alphabetic_tokens(self) -> None:
         """O "x" abriu excecao so para razao; o resto do filtro continua valendo."""
         self.assertIsNone(parse_flexible_number("n.a"))

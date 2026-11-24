@@ -10,6 +10,7 @@ from document_processing.domain.observability import (
     fallback_stage_metrics,
     layout_validation_metrics,
     resolution_metrics,
+    selection_mapping_coverage_metrics,
     table_structure_metrics,
     transition_metrics,
 )
@@ -263,3 +264,62 @@ class TableStructureMetricsTest(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class SelectionMappingCoverageMetricsTest(unittest.TestCase):
+    """Colecao parcial: a selecao escolheu as tres tabelas e o layout leu so uma (ABECIP, lote 13)."""
+
+    SELECIONADAS = [f"tables/table00{n}.json" for n in (2, 3, 4, 5, 6, 7)]
+
+    @staticmethod
+    def _tabela(arquivo: str) -> dict:
+        return {"tipo_origem": "linhas_de_tabela", "arquivo_origem": arquivo, "campos": []}
+
+    def test_tabelas_escolhidas_que_nenhuma_instrucao_cita_sao_contadas(self) -> None:
+        mapeamento = {
+            "poupanca.saldos": self._tabela("tables/table002.json"),
+            "financiamentos.mensal": self._tabela("tables/table003.json"),
+            "financiamentos.anual": self._tabela("tables/table004.json"),
+            "financiamentos.por_modalidade": self._tabela("tables/table007.json"),
+        }
+        metricas = selection_mapping_coverage_metrics(self.SELECIONADAS, mapeamento)
+        valores = _by_name(metricas)
+        self.assertEqual(valores["selecao_tabelas_sem_mapeamento"], 2.0)
+        self.assertAlmostEqual(valores["selecao_tabelas_mapeadas"], 4 / 6, places=5)
+        self.assertEqual(
+            metricas[0].metadata["tabelas_sem_mapeamento"],
+            ["tables/table005.json", "tables/table006.json"],
+        )
+        self.assertIn("table005", metricas[0].comment)
+
+    def test_fontes_aninhadas_contam_como_tabelas_usadas(self) -> None:
+        mapeamento = {
+            "poupanca.saldos": self._tabela("tables/table002.json"),
+            "financiamentos.mensal": self._tabela("tables/table003.json"),
+            "financiamentos.anual": self._tabela("tables/table004.json"),
+            "financiamentos.por_modalidade": {
+                "tipo_origem": "linhas_de_tabelas",
+                "fontes": [
+                    {"arquivo_origem": "tables/table005.json"},
+                    {"arquivo_origem": "/tables/table006.json"},
+                    {"arquivo_origem": "tables/table007.json"},
+                ],
+            },
+        }
+        valores = _by_name(selection_mapping_coverage_metrics(self.SELECIONADAS, mapeamento))
+        self.assertEqual(valores["selecao_tabelas_sem_mapeamento"], 0.0)
+        self.assertEqual(valores["selecao_tabelas_mapeadas"], 1.0)
+
+    def test_so_tabelas_entram_na_conta(self) -> None:
+        selecionadas = ["tables/table001.json", "charts/chart001.json", "blocks/blocks.jsonl", "manifesto_execucao.json"]
+        mapeamento = {"x": self._tabela("tables/table001.json")}
+        valores = _by_name(selection_mapping_coverage_metrics(selecionadas, mapeamento))
+        self.assertEqual(valores["selecao_tabelas_sem_mapeamento"], 0.0)
+        self.assertEqual(valores["selecao_tabelas_mapeadas"], 1.0)
+
+    def test_sem_tabela_escolhida_ou_sem_layout_nao_ha_metrica(self) -> None:
+        """Nao aplicavel nao pode virar zero nem um."""
+        self.assertEqual(selection_mapping_coverage_metrics([], {"x": self._tabela("tables/t.json")}), [])
+        self.assertEqual(selection_mapping_coverage_metrics(["charts/c.json"], {"x": {}}), [])
+        self.assertEqual(selection_mapping_coverage_metrics(["tables/t.json"], {}), [])
+

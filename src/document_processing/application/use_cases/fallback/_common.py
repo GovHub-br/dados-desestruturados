@@ -60,6 +60,7 @@ from document_processing.domain.fallback.row_anchoring import (
     resolve_row_anchor,
     table_metric_groups,
 )
+from document_processing.domain.fallback.table_row_ranges import fill_table_row_ranges
 from document_processing.domain.fallback.table_structure import table_artifact_content
 from document_processing.infrastructure.llm.client import (
     FALLBACK_LLM_CLIENT,
@@ -132,6 +133,50 @@ def table_structure_artifact(
             for seletor, periodos in esperados.items()
         },
     }
+    if unit_id:
+        artifact["unidade_mapeamento"] = unit_id
+    return artifact
+
+
+def fill_mapping_row_ranges(
+    mapeamento: dict[str, Any],
+    loaded_artifacts: dict[str, Any] | None,
+) -> tuple[dict[str, Any], list[dict[str, Any]]]:
+    """Linhas das instrucoes de tabela inteira decididas por codigo (``table_row_ranges``).
+
+    A LLM escolhe a tabela, as colunas e os valores fixos; sem faixa na
+    instrucao, quem diz de que linha a que linha vai e o codigo, sobre a tabela
+    que a LLM recebeu. Devolve o mapeamento e o registro do que foi feito.
+    """
+    tabelas = {
+        path: content
+        for path, artifact in (loaded_artifacts or {}).items()
+        if (content := table_artifact_content(artifact)) is not None
+    }
+    preenchido = fill_table_row_ranges(mapeamento, tabelas)
+    return preenchido.mapeamento, preenchido.registro
+
+
+def fill_fragment_row_ranges(
+    fragment: LayoutSignatureFragment,
+    loaded_artifacts: dict[str, Any] | None,
+) -> tuple[LayoutSignatureFragment, list[dict[str, Any]]]:
+    """Mesmo que ``fill_mapping_row_ranges``, sobre o fragmento ja validado de uma unidade."""
+    entradas = {
+        path: entry.model_dump(mode="json", exclude_none=True)
+        for path, entry in fragment.mapeamento_canonico.items()
+    }
+    mapeamento, registro = fill_mapping_row_ranges(entradas, loaded_artifacts)
+    if not any(item["acao"] in {"faixa_do_codigo", "faixa_por_rotulos"} for item in registro):
+        return fragment, registro
+    dados = fragment.model_dump(mode="json", exclude_none=True)
+    dados["mapeamento_canonico"] = mapeamento
+    return LayoutSignatureFragment.model_validate(dados), registro
+
+
+def row_range_artifact(registro: list[dict[str, Any]], *, unit_id: str | None = None) -> dict[str, Any]:
+    """``faixas_por_codigo.json``: quem decidiu as linhas de cada instrucao de tabela, para auditoria."""
+    artifact: dict[str, Any] = {"tipo_artefato": "faixas_por_codigo", "instrucoes": registro}
     if unit_id:
         artifact["unidade_mapeamento"] = unit_id
     return artifact

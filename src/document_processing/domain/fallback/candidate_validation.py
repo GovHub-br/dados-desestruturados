@@ -23,6 +23,10 @@ from document_processing.domain.fallback.row_anchoring import (
     resolve_row_anchor,
     table_metric_groups,
 )
+from document_processing.domain.fallback.table_row_ranges import (
+    explicit_row_range_problems,
+    period_scope_problems,
+)
 from document_processing.domain.fallback.table_structure import table_artifact_content
 from document_processing.domain.layouts.paths import (
     normalize_mapping_path,
@@ -42,6 +46,38 @@ from .target_enumeration import (
     enumerate_target_entries,
     match_mapping_keys,
 )
+
+
+def _declared_fixed_values(mapping_path: str, payload: dict[str, Any]) -> list[tuple[str, Any]]:
+    """(caminho do campo, valor) de cada valor fixo que a instrucao declara.
+
+    Cobre ``valor_fixo``, ``valores_fixos`` e ``valores_por_segmento``, no topo, nos
+    segmentos e em cada fonte de ``linhas_de_tabelas``; dicionario aninhado vira caminho.
+    """
+    found: list[tuple[str, Any]] = []
+
+    def flatten(values: Any, prefix: str = "") -> None:
+        if not isinstance(values, dict):
+            return
+        for key, value in values.items():
+            path = f"{prefix}.{key}" if prefix else str(key)
+            if isinstance(value, dict):
+                flatten(value, path)
+            else:
+                found.append((path, value))
+
+    def visit(node: dict[str, Any]) -> None:
+        flatten(node.get("valores_fixos"))
+        flatten(node.get("valores_por_segmento"))
+        for key in ("segmentos", "faixas_linhas", "fontes"):
+            for child in node.get(key) or []:
+                if isinstance(child, dict):
+                    visit(child)
+
+    if payload.get("tipo_origem") == "valor_fixo":
+        found.append((normalize_mapping_path(mapping_path), payload.get("valor_fixo")))
+    visit(payload)
+    return found
 
 
 class UnmappedRequiredFieldsError(RuntimeError):
@@ -162,6 +198,18 @@ class FallbackCandidateValidationService:
         self._validate_table_mappings_use_indices_only(
             candidate_model,
             schema_paths=schema_paths,
+        )
+        self._validate_explicit_row_ranges_fit_tables(
+            candidate_model,
+            fallback_problem_context,
+        )
+        self._validate_fixed_values_in_contract_domain(
+            candidate_model,
+            fallback_problem_context,
+        )
+        self._validate_period_scope(
+            candidate_model,
+            fallback_problem_context,
         )
         self._validate_candidate_does_not_override_deterministic_headers(candidate_model)
         self._validate_candidate_extra_sections(candidate_model)
@@ -665,59 +713,31 @@ class FallbackCandidateValidationService:
                     f"{mapping_path}."
                 )
             if entry.tipo_origem == "linhas_de_tabela":
-                fields = payload.get("campos", [])
-                segments = payload.get("segmentos", payload.get("faixas_linhas", []))
-                if not isinstance(segments, list):
-                    segments = []
-                has_positional_columns = isinstance(
-                    payload.get("indices_colunas"), list
-                ) or any(
-                    isinstance(segment, dict)
-                    and isinstance(segment.get("indices_colunas"), list)
-                    for segment in segments
+                FallbackCandidateValidationService._validate_table_rows_source(
+                    payload, mapping_path=mapping_path, schema_paths=schema_paths
                 )
-                if not isinstance(fields, list) or (not fields and not has_positional_columns):
+                continue
+            if entry.tipo_origem == "linhas_de_tabelas":
+                sources = payload.get("fontes")
+                if (
+                    not isinstance(sources, list)
+                    or not sources
+                    or not all(isinstance(source, dict) for source in sources)
+                ):
                     raise RuntimeError(
-                        "Mapeamento linhas_de_tabela deve declarar campos nomeados "
-                        "ou indices_colunas posicionais: "
-                        f"{mapping_path}."
+                        "Mapeamento linhas_de_tabelas deve declarar fontes: lista nao vazia "
+                        "de objetos, uma por tabela, cada uma com arquivo_origem, linhas e "
+                        f"campos: {mapping_path}."
                     )
-                fields_to_validate = list(fields) if isinstance(fields, list) else []
-                for segment in segments:
-                    if isinstance(segment, dict) and isinstance(segment.get("campos"), list):
-                        fields_to_validate.extend(segment["campos"])
-                for field in fields_to_validate:
-                    if not isinstance(field, dict):
+                for source in sources:
+                    if not str(source.get("arquivo_origem", "")).strip():
                         raise RuntimeError(
-                            "Cada campo de linhas_de_tabela deve ser objeto: "
+                            "Cada fonte de linhas_de_tabelas exige arquivo_origem: "
                             f"{mapping_path}."
                         )
-                    allowed_field_keys = {"caminho_saida", "indice_coluna", "tipo"}
-                    invalid_field_keys = set(field) - allowed_field_keys
-                    if invalid_field_keys:
-                        raise RuntimeError(
-                            "Campo de linhas_de_tabela usa chaves nao suportadas "
-                            f"{sorted(invalid_field_keys)} em {mapping_path}; use somente "
-                            "caminho_saida, indice_coluna e tipo."
-                        )
-                    if not str(field.get("caminho_saida", "")).strip() or not isinstance(
-                        field.get("indice_coluna"), int
-                    ):
-                        raise RuntimeError(
-                            "Cada campo de linhas_de_tabela exige caminho_saida e "
-                            f"indice_coluna inteiro: {mapping_path}."
-                        )
-                    if field.get("tipo") not in {None, "texto", "numero"}:
-                        raise RuntimeError(
-                            "tipo de campo em linhas_de_tabela deve ser texto ou numero; "
-                            f"nao use derivacoes: {mapping_path}."
-                        )
-                    output_path = str(field.get("caminho_saida", "")).strip()
-                    if output_path and f"{normalize_schema_path(mapping_path)}.{output_path}" not in schema_paths:
-                        raise RuntimeError(
-                            "caminho_saida de linhas_de_tabela nao pertence ao item "
-                            f"de destino no schema_saida: {mapping_path}.{output_path}."
-                        )
+                    FallbackCandidateValidationService._validate_table_rows_source(
+                        source, mapping_path=mapping_path, schema_paths=schema_paths
+                    )
                 continue
             if entry.tipo_origem not in table_origins:
                 continue
@@ -751,6 +771,166 @@ class FallbackCandidateValidationService:
                     "com o rotulo observado na linha; indice_linha_esperado sozinho nao "
                     "basta porque a posicao da linha varia entre tabelas do mesmo "
                     f"documento: {mapping_path}."
+                )
+
+    @staticmethod
+    def _validate_explicit_row_ranges_fit_tables(
+        candidate: LayoutSignatureCandidate,
+        fallback_problem_context: dict[str, Any],
+    ) -> None:
+        """Faixa e rotulos de linhas tem de bater com a tabela que a LLM recebeu.
+
+        O resolvedor descarta em silencio a faixa cujo fim passa da ultima linha
+        e a colecao sai vazia; aqui a LLM recebe o erro com o tamanho da tabela.
+        Nos escopos de criacao a faixa numerica tambem tem de coincidir com as
+        linhas de dados (sem total, sem linha pulada, sem linha vazia): quem quer
+        a tabela inteira nao declara faixa, e quem quer uma parte declara
+        rotulo_inicial e rotulo_final. Faixa omitida nao entra: o codigo a define.
+        Na correcao parcial o layout base e preservado como esta.
+        """
+        loaded = fallback_problem_context.get("artefatos_contexto_llm")
+        if not isinstance(loaded, dict) or not loaded:
+            return
+        entries = {
+            path: entry.model_dump(mode="json", exclude_none=True)
+            for path, entry in candidate.mapeamento_canonico.items()
+        }
+        creating = candidate.escopo_correcao in {
+            FallbackCandidateValidationService.CREATION_SCOPE,
+            FallbackCandidateValidationService.FULL_REMAP_SCOPE,
+        }
+        problems = explicit_row_range_problems(entries, loaded, estrito=creating)
+        if problems:
+            raise RuntimeError("Faixa de linhas incompativel com a tabela: " + " ".join(problems))
+
+    @staticmethod
+    def _validate_period_scope(
+        candidate: LayoutSignatureCandidate,
+        fallback_problem_context: dict[str, Any],
+    ) -> None:
+        """Colecao com ``escopo_periodo`` no contrato le so as linhas desse escopo.
+
+        Nada acontece sem a declaracao no contrato: o escopo e do dado que o contrato
+        quer (serie do ano de referencia, so anos completos), nao do codigo. Vale nos
+        escopos de criacao; na correcao parcial o layout base e preservado.
+        """
+        if candidate.escopo_correcao not in {
+            FallbackCandidateValidationService.CREATION_SCOPE,
+            FallbackCandidateValidationService.FULL_REMAP_SCOPE,
+        }:
+            return
+        contract = fallback_problem_context.get("contrato_semantico_relevante", {})
+        semantic = contract.get("contrato_semantico", {}) if isinstance(contract, dict) else {}
+        requirements = semantic.get("requisitos_mapeamento", {}) if isinstance(semantic, dict) else {}
+        fields = requirements.get("campos_obrigatorios", []) if isinstance(requirements, dict) else []
+        scopes = {
+            str(field.get("path", "")).strip(): str(field.get("escopo_periodo", "")).strip()
+            for field in fields if isinstance(field, dict) and field.get("escopo_periodo")
+        }
+        identity = fallback_problem_context.get("identidade_documento", {})
+        period = identity.get("periodo") if isinstance(identity, dict) else None
+        loaded = fallback_problem_context.get("artefatos_contexto_llm")
+        if not scopes or not period or not isinstance(loaded, dict):
+            return
+        entries = {
+            path: entry.model_dump(mode="json", exclude_none=True)
+            for path, entry in candidate.mapeamento_canonico.items()
+        }
+        problems = period_scope_problems(entries, loaded, scopes, str(period))
+        if problems:
+            raise RuntimeError("Linhas fora do escopo de periodo do contrato: " + " ".join(problems))
+
+    @staticmethod
+    def _validate_fixed_values_in_contract_domain(
+        candidate: LayoutSignatureCandidate,
+        fallback_problem_context: dict[str, Any],
+    ) -> None:
+        """Valor fixo de um campo cuja entidade tem ``dominio`` no contrato e um desses valores.
+
+        Sem isto a LLM grava `Aquisicao e Construcao` onde o contrato so admite
+        `construcao`, `aquisicao` ou `total`, e a revalidacao aprova. O campo casa com a
+        entidade pelo nome da folha (``modalidade`` -> ``entidades.modalidade``).
+        """
+        contract = fallback_problem_context.get("contrato_semantico_relevante", {})
+        semantic = contract.get("contrato_semantico", {}) if isinstance(contract, dict) else {}
+        entities = semantic.get("entidades", {}) if isinstance(semantic, dict) else {}
+        domains = {
+            str(name): [str(value) for value in spec["dominio"]]
+            for name, spec in (entities.items() if isinstance(entities, dict) else [])
+            if isinstance(spec, dict) and isinstance(spec.get("dominio"), list) and spec["dominio"]
+        }
+        if not domains:
+            return
+        problems = []
+        for mapping_path, entry in candidate.mapeamento_canonico.items():
+            payload = entry.model_dump(mode="json", exclude_none=True)
+            for output_path, value in _declared_fixed_values(mapping_path, payload):
+                allowed = domains.get(output_path.rsplit(".", 1)[-1])
+                if allowed and isinstance(value, str) and value not in allowed:
+                    problems.append(f"{mapping_path}: {output_path}={value!r}, o contrato admite {allowed}")
+        if problems:
+            raise RuntimeError("Valor fixo fora do dominio do contrato: " + "; ".join(problems) + ".")
+
+    @staticmethod
+    def _validate_table_rows_source(
+        payload: dict[str, Any],
+        *,
+        mapping_path: str,
+        schema_paths: set[str],
+    ) -> None:
+        """Valida campos e faixas de uma instrucao de linhas (a do topo ou uma fonte)."""
+        fields = payload.get("campos", [])
+        segments = payload.get("segmentos", payload.get("faixas_linhas", []))
+        if not isinstance(segments, list):
+            segments = []
+        has_positional_columns = isinstance(
+            payload.get("indices_colunas"), list
+        ) or any(
+            isinstance(segment, dict)
+            and isinstance(segment.get("indices_colunas"), list)
+            for segment in segments
+        )
+        if not isinstance(fields, list) or (not fields and not has_positional_columns):
+            raise RuntimeError(
+                "Mapeamento linhas_de_tabela deve declarar campos nomeados "
+                "ou indices_colunas posicionais: "
+                f"{mapping_path}."
+            )
+        fields_to_validate = list(fields) if isinstance(fields, list) else []
+        for segment in segments:
+            if isinstance(segment, dict) and isinstance(segment.get("campos"), list):
+                fields_to_validate.extend(segment["campos"])
+        for field in fields_to_validate:
+            if not isinstance(field, dict):
+                raise RuntimeError(
+                    "Cada campo de linhas_de_tabela deve ser objeto: "
+                    f"{mapping_path}."
+                )
+            allowed_field_keys = {"caminho_saida", "indice_coluna", "tipo"}
+            invalid_field_keys = set(field) - allowed_field_keys
+            if invalid_field_keys:
+                raise RuntimeError(
+                    "Campo de linhas_de_tabela usa chaves nao suportadas "
+                    f"{sorted(invalid_field_keys)} em {mapping_path}; use somente "
+                    "caminho_saida, indice_coluna e tipo."
+                )
+            if not str(field.get("caminho_saida", "")).strip() or not isinstance(
+                field.get("indice_coluna"), int
+            ):
+                raise RuntimeError(
+                    "Cada campo de linhas_de_tabela exige caminho_saida e "
+                    f"indice_coluna inteiro: {mapping_path}."
+                )
+            if field.get("tipo") not in {None, "texto", "numero"}:
+                raise RuntimeError(
+                    "tipo de campo em linhas_de_tabela deve ser texto ou numero; "
+                    f"nao use derivacoes: {mapping_path}."
+                )
+            output_path = str(field.get("caminho_saida", "")).strip()
+            if output_path and f"{normalize_schema_path(mapping_path)}.{output_path}" not in schema_paths:
+                raise RuntimeError(
+                    "caminho_saida de linhas_de_tabela nao pertence ao item "
+                    f"de destino no schema_saida: {mapping_path}.{output_path}."
                 )
 
     @staticmethod
@@ -1027,7 +1207,8 @@ class FallbackCandidateValidationService:
             if (
                 current_path in array_paths
                 and current_path == normalize_mapping_path(path)
-                and (mapping_entry or {}).get("tipo_origem") == "linhas_de_tabela"
+                and (mapping_entry or {}).get("tipo_origem")
+                in {"linhas_de_tabela", "linhas_de_tabelas"}
             ):
                 continue
             if current_path in array_paths and "[" not in raw_part:

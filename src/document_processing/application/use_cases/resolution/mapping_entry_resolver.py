@@ -93,6 +93,7 @@ class MappingEntryResolverMixin:
 
             if tipo_origem == "linhas_de_tabela":
                 value, evidence = self._resolve_table_rows_mapping(extraction_root, mapping_entry)
+                value = self._coerce_rows_to_contract_types(value, contrato, mapping_path)
                 return self._mapping_result(base, value, evidence, resolved=bool(value))
 
             if tipo_origem == "linhas_de_tabelas":
@@ -100,6 +101,7 @@ class MappingEntryResolverMixin:
                     extraction_root,
                     mapping_entry,
                 )
+                value = self._coerce_rows_to_contract_types(value, contrato, mapping_path)
                 return self._mapping_result(base, value, evidence, resolved=bool(value))
 
             if tipo_origem == "juncao_de_registros_json":

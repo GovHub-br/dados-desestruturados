@@ -57,6 +57,7 @@ MAIOR_MELHOR = {
     # Selecao de artefatos: quanto da evidencia escolhida sustenta a unidade.
     "selecao_evidencia_especifica",
     "selecao_prefiltro_reducao",
+    "selecao_tabelas_mapeadas",
     "selecao_prefiltro_leitura_completa",
     "selecao_escolha_dentro_do_prefiltro",
     # Fase 2 em producao: estrutura da tabela e papel por coluna resolvidos pelo codigo.
@@ -79,6 +80,8 @@ MAIOR_MELHOR = {
     "assinatura_f3_arquivo_origem_correto",
     "assinatura_f3_rotulo_linha_correto",
     "assinatura_f3_indice_coluna_correto",
+    # Valor resolvido contra o gabarito (colecoes sem chave de item, ex.: ABECIP).
+    "assinatura_resolvido_observacoes_corretas",
 }
 
 # Metricas em que descer e melhor.
@@ -93,6 +96,7 @@ MENOR_MELHOR = {
     "validacao_regras_reprovadas",
     "transicao_resolucao_para_fallback",
     "selecao_evidencia_descartada",
+    "selecao_tabelas_sem_mapeamento",
     "selecao_candidatos_por_requisito",
     "assinatura_f0_selecao_artefatos_por_requisito",
     "assinatura_f1_array_sem_filtro",
@@ -101,6 +105,8 @@ MENOR_MELHOR = {
     "assinatura_f1_chaves_fora_das_esperadas",
     "assinatura_f3_ausencia_falso_negativo",
     "assinatura_f3_ausencia_falso_positivo",
+    "assinatura_resolvido_observacoes_erradas",
+    "assinatura_resolvido_observacoes_ausentes",
 }
 
 # Metricas de guarda: nunca podem regredir, mesmo que nao sejam o alvo.
@@ -115,6 +121,8 @@ GUARDA = {
     "assinatura_f0_selecao_revocacao",
     "assinatura_f1_cobertura_obrigatorios",
     "assinatura_f3_arquivo_origem_correto",
+    # Valor publicado errado ou perdido nao tem conserto depois: quando ha gabarito, nao pode cair.
+    "assinatura_resolvido_observacoes_corretas",
 }
 
 

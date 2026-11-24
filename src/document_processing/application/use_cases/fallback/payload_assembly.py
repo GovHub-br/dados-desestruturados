@@ -226,8 +226,6 @@ class FallbackPayloadAssemblyMixin:
                 "linhas_de_tabela": {
                     "tipo_origem": "linhas_de_tabela",
                     "arquivo_origem": "tables/table001.json",
-                    "linha_inicial": 0,
-                    "linha_final": 10,
                     "indices_colunas": [0, 1],
                     "obrigatorio": True,
                 },
