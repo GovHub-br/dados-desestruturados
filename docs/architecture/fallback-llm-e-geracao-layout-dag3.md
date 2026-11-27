@@ -1,5 +1,9 @@
 # Arquitetura do Fallback LLM e Geração de Layout na DAG 3
 
+O [fluxo de arquivos por unidade](../reference/examples/abecip-layout-by-blocks.md#fluxo-dos-arquivos-de-cada-unidade)
+descreve a ordem de criação dos dez artefatos, as chamadas à LLM, as etapas
+determinísticas e um exemplo observado com o contrato ABECIP v2.5.0.
+
 ## Objetivo
 
 Implementar a DAG 3 como fallback assistido por LLM para casos em que a DAG 2

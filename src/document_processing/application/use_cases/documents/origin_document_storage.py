@@ -9,6 +9,11 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
+from document_processing.domain.document_identity import (
+    document_id_from_key,
+    find_pdf_by_digest,
+    new_document_id,
+)
 from document_processing.infrastructure.storage.semantic_contract_registry import (
     SemanticContractRegistry,
 )
@@ -42,17 +47,24 @@ class OriginDocumentStorageMixin:
             )
             content = response.body
             digest = hashlib.sha256(content).hexdigest()
-            document_id = digest[:32]
+            origin_keys = self.minio_client.list_object_keys(
+                prefix=f"documentos-origem/{candidate['domain']}/{candidate['entity_slug']}/",
+                suffix=".pdf",
+            )
+            existing_pdf = find_pdf_by_digest(origin_keys, digest)
+            document_id = document_id_from_key(existing_pdf, digest) if existing_pdf else self.minio_client.reserve_document_id(
+                candidate["domain"], candidate["entity_slug"], digest, new_document_id(digest),
+            )
             filename = self._safe_filename(
                 self.http_client.filename_from_url(
                     response.url,
                     fallback=f"{candidate['company_slug']}_{candidate['period_label']}.pdf",
                 )
             )
-            object_key = (
-                f"{self.config.minio_document_prefix}/{candidate['company_slug']}/"
+            object_key = existing_pdf or (
+                f"documentos-origem/{candidate['domain']}/{candidate['entity_slug']}/"
                 f"ano={candidate['reference_year']}/periodo={candidate['period_label']}/"
-                f"{digest[:16]}_{filename}"
+                f"document_id={document_id}/{digest[:16]}_{filename}"
             )
             manifest_key = object_key.rsplit("/", maxsplit=1)[0] + "/documento_detectado.json"
             already_exists = self.minio_client.object_exists(object_key)
@@ -144,8 +156,16 @@ class OriginDocumentStorageMixin:
                 prefix=prefix,
                 suffix="/extraction/manifesto_execucao.json",
             )
-            if manifests:
-                return True
+            for key in manifests:
+                manifest = self.minio_client.get_json(object_key=key)
+                artifacts = manifest.get("artifact_uris")
+                if isinstance(artifacts, list) and artifacts and all(
+                    self.minio_client.object_exists(
+                        str(uri).removeprefix(f"minio://{self.config.minio_bucket}/")
+                    )
+                    for uri in artifacts
+                ):
+                    return True
         return False
 
     def _extraction_prefix(

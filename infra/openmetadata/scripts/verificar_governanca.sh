@@ -68,7 +68,7 @@ pipeline_names = {
 }
 expected_pipelines = {
     "dag_detecta_e_baixa_pdfs_construtoras", "dag_extrai_documentos_origem",
-    "dag_resolve_schema_saida", "dag_valida_e_fallback_llm", "dag_ingere_bronze",
+    "dag_resolve_schema_saida", "dag_valida_e_fallback_llm", "dag_ingere_raw",
 }
 missing = expected_pipelines - pipeline_names
 if missing:

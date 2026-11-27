@@ -4,6 +4,7 @@ WORKDIR /app
 COPY portal/requirements.txt /tmp/requirements.txt
 RUN pip install --no-cache-dir -r /tmp/requirements.txt
 COPY portal /app/portal
+COPY src/document_processing /app/document_processing
 
 ENV PYTHONUNBUFFERED=1
 EXPOSE 8000

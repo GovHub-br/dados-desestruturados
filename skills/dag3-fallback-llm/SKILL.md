@@ -31,8 +31,8 @@ Before designing or changing DAG 3 behavior, read:
 - `docs/archive/implemented/dag3-minimal-reimplementation.md`
 - `docs/architecture/fallback-llm-e-geracao-layout-dag3.md`
 - `docs/archive/implemented/dag3-llm-payloads.md`
-- `airflow/dags/construtoras/dag_valida_e_fallback_llm.py`
-- `airflow/dags/construtoras/dag_resolve_schema_saida.py`
+- `airflow/dags/processamento/dag_valida_e_fallback_llm.py`
+- `airflow/dags/processamento/dag_resolve_schema_saida.py`
 - `src/document_processing/application/use_cases/fallback/service.py`
 - `src/document_processing/application/use_cases/fallback/context_builder.py`
 - `src/document_processing/domain/fallback/candidate_validation.py`
@@ -282,7 +282,7 @@ Report DAG 3 as unsafe/experimental if any of these appear:
 Static syntax and targeted tests:
 
 ```bash
-docker exec ocr_airflow_scheduler bash -lc 'cd /opt/project/dados-desestruturados && PYTHONPATH=src:airflow python -m py_compile src/document_processing/application/use_cases/fallback/context_builder.py src/document_processing/application/use_cases/fallback/service.py src/document_processing/infrastructure/llm/client.py airflow/dags/construtoras/dag_valida_e_fallback_llm.py'
+docker exec ocr_airflow_scheduler bash -lc 'cd /opt/project/dados-desestruturados && PYTHONPATH=src:airflow python -m py_compile src/document_processing/application/use_cases/fallback/context_builder.py src/document_processing/application/use_cases/fallback/service.py src/document_processing/infrastructure/llm/client.py airflow/dags/processamento/dag_valida_e_fallback_llm.py'
 docker exec ocr_airflow_scheduler bash -lc 'cd /opt/project/dados-desestruturados && PYTHONPATH=airflow python -m unittest tests.test_dag3_minimal_reimplementation'
 ```
 

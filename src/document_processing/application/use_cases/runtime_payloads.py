@@ -165,7 +165,7 @@ class ConstrutorasPayloadBuilder:
         }
 
     def build_bronze_runtime(self) -> dict[str, object]:
-        """Monta o payload planejado da DAG de ingestao bronze."""
+        """Planejamento legado; nao usado pela dag_ingere_raw implementada."""
         config = self.config_loader.load_local_platform_config()
         execution_id = self._execution_id("dag_ingere_bronze")
         document_id = self._document_id(config.entidade)

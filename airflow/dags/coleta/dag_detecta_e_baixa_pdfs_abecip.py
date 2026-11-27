@@ -1,9 +1,11 @@
 from __future__ import annotations
 
 import logging
+import re
 from datetime import timedelta
 
 from airflow.decorators import dag, task
+from airflow.operators.python import get_current_context
 from airflow.operators.trigger_dagrun import TriggerDagRunOperator
 from airflow.providers.standard.operators.empty import EmptyOperator
 from airflow.utils.trigger_rule import TriggerRule
@@ -19,7 +21,30 @@ SCHEDULE = "0 18 1-7,20-31 * *"
 
 @task
 def detectar_informativos() -> list[dict[str, object]]:
-    return build_abecip_monitor_use_case().detect_candidates()
+    context = get_current_context()
+    conf = getattr(context.get("dag_run"), "conf", None) or {}
+    candidates = build_abecip_monitor_use_case().detect_candidates()
+    if "periodo_referencia" not in conf:
+        return candidates
+
+    periodo = conf["periodo_referencia"]
+    if not isinstance(periodo, str) or not re.fullmatch(r"20\d{2}-(0[1-9]|1[0-2])", periodo):
+        raise ValueError("periodo_referencia deve estar no formato AAAA-MM.")
+
+    logical_date = context.get("logical_date")
+    data_limite = logical_date.date().isoformat() if logical_date else None
+    selected = [
+        item for item in candidates
+        if item.get("period_label") == periodo
+        and (data_limite is None or "" < str(item.get("published_at") or "") <= data_limite)
+    ]
+    if len(selected) != 1:
+        raise ValueError(
+            f"Esperado um informativo para {periodo} ate {data_limite or 'a data atual'}. "
+            f"Encontrados: {len(selected)}."
+        )
+    logging.info("Coleta limitada a um informativo: periodo=%s data_limite=%s.", periodo, data_limite)
+    return selected
 
 
 @task

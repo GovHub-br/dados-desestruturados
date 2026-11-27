@@ -14,11 +14,16 @@ from __future__ import annotations
 
 import hashlib
 import logging
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from datetime import UTC, datetime
 from typing import TYPE_CHECKING, Any
 
 from document_processing.application.ports import DocumentSource
+from document_processing.domain.document_identity import (
+    document_id_from_key,
+    find_pdf_by_digest,
+    new_document_id,
+)
 from document_processing.shared.config.runtime import (
     RUNTIME_CONFIG_LOADER,
     LocalPlatformConfig,
@@ -81,12 +86,14 @@ class MonitoredSourceIngestionUseCase(OriginDocumentStorageMixin):
         config: LocalPlatformConfig | None = None,
         config_loader: RuntimeConfigLoader | None = None,
         minio_client: MinioStorageClient | None = None,
+        reuse_existing_origins: bool = False,
     ) -> None:
         self.source = source
         self.config_loader = config_loader or RUNTIME_CONFIG_LOADER
         self._config = config
         self.http_client = http_client
         self._minio_client = minio_client
+        self.reuse_existing_origins = reuse_existing_origins
 
     @property
     def config(self) -> LocalPlatformConfig:
@@ -137,7 +144,10 @@ class MonitoredSourceIngestionUseCase(OriginDocumentStorageMixin):
             )
 
         digest = hashlib.sha256(content).hexdigest()
-        document_id = digest[:32]
+        if origin_keys is None:
+            origin_keys = self._origin_pdf_keys(candidate["domain"], candidate["entity_slug"])
+        existing = find_pdf_by_digest(origin_keys, digest)
+        document_id = document_id_from_key(existing, digest) if existing else new_document_id(digest)
         filename = self._safe_filename(
             str((candidate.get("metadata") or {}).get("arquivo_origem") or "")
             or self.http_client.filename_from_url(
@@ -150,8 +160,6 @@ class MonitoredSourceIngestionUseCase(OriginDocumentStorageMixin):
             f"ano={candidate['reference_year']}/periodo={candidate['period_label']}/"
             f"document_id={document_id}"
         )
-        if origin_keys is None:
-            origin_keys = self._origin_pdf_keys(candidate["domain"], candidate["entity_slug"])
         return InspectedDocument(
             candidate=candidate,
             content=content,
@@ -161,7 +169,7 @@ class MonitoredSourceIngestionUseCase(OriginDocumentStorageMixin):
             origin_dir=origin_dir,
             pdf_key=f"{origin_dir}/{digest[:16]}_{filename}",
             manifest_key=f"{origin_dir}/documento_detectado.json",
-            existing_pdf_key=self._find_origin_pdf(origin_keys, document_id, origin_dir),
+            existing_pdf_key=existing,
             extraction_exists=self._extraction_manifest_exists(candidate, document_id),
         )
 
@@ -191,6 +199,29 @@ class MonitoredSourceIngestionUseCase(OriginDocumentStorageMixin):
         return results
 
     def _persist(self, inspected: InspectedDocument, origin_keys: list[str]) -> dict[str, Any]:
+        if not inspected.existing_pdf_key:
+            claimed = self.minio_client.reserve_document_id(
+                inspected.candidate["domain"], inspected.candidate["entity_slug"],
+                inspected.sha256, inspected.document_id,
+            )
+            marker = f"document_id={inspected.document_id}"
+            replacement = f"document_id={claimed}"
+            inspected = replace(
+                inspected, document_id=claimed,
+                origin_dir=inspected.origin_dir.replace(marker, replacement),
+                pdf_key=inspected.pdf_key.replace(marker, replacement),
+                manifest_key=inspected.manifest_key.replace(marker, replacement),
+            )
+        if self.reuse_existing_origins and inspected.existing_pdf_key:
+            parent = inspected.existing_pdf_key.rsplit("/", 1)[0]
+            manifest_key = f"{parent}/documento_detectado.json"
+            manual_key = f"{parent}/documento_origem.json"
+            if not self.minio_client.object_exists(manifest_key) and self.minio_client.object_exists(manual_key):
+                manifest_key = manual_key
+            inspected = replace(
+                inspected, origin_dir=parent, pdf_key=inspected.existing_pdf_key,
+                manifest_key=manifest_key,
+            )
         candidate = inspected.candidate
         label = f"{candidate['entity_slug']} {candidate['period_label']}"
         status = inspected.status

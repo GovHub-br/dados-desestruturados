@@ -126,22 +126,24 @@ Never hardcode a specific domain (e.g. "construtoras", "ABECIP") inside
 `domain/` or generic `application/` code — domain differences must flow
 through the semantic contract, not conditionals in the core.
 
-### The four DAGs (`airflow/dags/construtoras/`)
+### DAGs organized by responsibility (`airflow/dags/`)
 
-1. `dag_detecta_pdf_e_extrai` — discovers/receives PDFs, runs Docling, writes
-   extraction artifacts (`sections/`, `blocks/`, `tables/`, `metrics/`,
-   `charts/`, `text_candidates/`). Never applies a contract or resolves output.
-2. `dag_resolve_schema_saida` — deterministic resolution only (no LLM in the
-   normal path): loads contract + layout signature, resolves period roles and
-   raw values, produces `validacao_layout_signature.json` and
-   `schema_saida_resolvido.json` (+ audit).
-3. `dag_valida_e_fallback_llm` — triggered when validation fails; proposes a
-   *partial* correction by default (regeneration only on "ruptura estrutural
-   ampla"), materializes a **candidate** layout signature, and can trigger a
-   fresh DAG 2 run against that candidate. Never promotes a candidate to
-   active or writes to bronze directly.
-4. `dag_ingere_bronze` — consumes only an approved `schema_saida_resolvido`,
-   never re-touches the PDF or Docling.
+- `coleta/` holds periodic ABECIP and construction-company discovery plus the
+  manual, parameterized historical collection DAG.
+- `processamento/` holds `dag_extrai_documentos_origem`,
+  `dag_resolve_schema_saida` and `dag_valida_e_fallback_llm`. These stages
+  serve all document domains.
+- `ingestao/` holds `dag_ingere_raw`, manual approved-schema export to tabular JSON on RustFS/S3; simulation is the default.
+- `_shared/` holds dependency factories and orchestration configuration.
+
+Collection persists source PDFs and triggers extraction. Extraction runs
+Docling and writes evidence artifacts. In the current development phase,
+normal DAG 2 runs request initial layout creation in DAG 3 for each document.
+DAG 3 proposes a candidate, DAG 2 revalidates it, and DAG 3 publishes the
+approved version. Candidate revalidation does not trigger recursive fallback.
+
+Keep existing DAG IDs and task dependencies when reorganizing files.
+See [airflow/README.md](airflow/README.md) for the directory tree.
 
 Derived metrics (e.g. `%T/T`, `%A/A` period-over-period variations) are
 explicitly out of scope for `schema_saida_resolvido` — only raw observed

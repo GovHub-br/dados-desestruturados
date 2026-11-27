@@ -132,10 +132,16 @@ class FallbackContextLoadingMixin:
         self,
         fallback_context: dict[str, str],
     ) -> dict[str, Any]:
-        """Carrega contexto da DAG 3 quando ainda nao existe layout signature base."""
+        """Carrega o contexto para gerar uma assinatura a partir da extracao atual."""
         contract_key, contract = self.load_semantic_contract(fallback_context)
         manifest_key, manifest = self.load_extraction_manifest(fallback_context)
-        fallback_classification = self._initial_layout_creation_classification()
+        motivo = (
+            "criacao_inicial_layout_forcada"
+            if fallback_context.get("motivo") == "criacao_inicial_layout_forcada"
+            else "layout_signature_ausente"
+        )
+        fallback_classification = self._initial_layout_creation_classification(motivo)
+        failure_codes = fallback_classification["codigos_falha"]
         inventory_key, inventory = self.inventory_service.load_extraction_inventory(
             manifest=manifest,
             load_json_object=self._load_json_object,
@@ -148,8 +154,8 @@ class FallbackContextLoadingMixin:
         validation = {
             "tipo_artefato": "evento_criacao_inicial_layout",
             "status_compatibilidade": {
-                "status": "layout_signature_ausente",
-                "codigos_alerta": ["LAYOUT_SIGNATURE_AUSENTE"],
+                "status": motivo,
+                "codigos_alerta": failure_codes,
             },
             "regras_executadas": [],
         }
@@ -188,8 +194,8 @@ class FallbackContextLoadingMixin:
 
         return {
             "fallback_context": fallback_context,
-            "validation_status": "layout_signature_ausente",
-            "failure_codes": ["LAYOUT_SIGNATURE_AUSENTE"],
+            "validation_status": motivo,
+            "failure_codes": failure_codes,
             "fallback_scope": fallback_classification["fallback_scope"],
             "fallback_classification": fallback_classification,
             "fallback_problem_context": fallback_problem_context,
@@ -252,20 +258,20 @@ class FallbackContextLoadingMixin:
 
     @staticmethod
     def _is_initial_layout_creation_context(fallback_context: dict[str, str]) -> bool:
-        """Identifica o modo em que nao existe layout signature base."""
+        """Identifica o modo que gera a assinatura sem carregar um layout base."""
         return (
             str(fallback_context.get("fallback_mode", "")).strip() == "criacao_inicial_layout"
             or str(fallback_context.get("motivo", "")).strip() == "layout_signature_ausente"
         )
 
 
-    def _initial_layout_creation_classification(self) -> dict[str, Any]:
+    def _initial_layout_creation_classification(self, motivo: str) -> dict[str, Any]:
         """Classificacao deterministica para criacao inicial de layout."""
         return {
             "fallback_scope": self.CREATION_SCOPE,
             "llm_permitida": True,
-            "motivos": ["layout_signature_ausente"],
-            "codigos_falha": ["LAYOUT_SIGNATURE_AUSENTE"],
+            "motivos": [motivo],
+            "codigos_falha": ["LAYOUT_SIGNATURE_AUSENTE"] if motivo == "layout_signature_ausente" else [],
             "metricas": {
                 "regras_reprovadas": 0,
                 "campos_obrigatorios_nao_resolvidos": 0,

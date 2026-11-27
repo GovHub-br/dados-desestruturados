@@ -9,6 +9,15 @@ from typing import Any
 
 from fastapi import HTTPException
 
+from document_processing.domain.document_identity import (
+    document_id_from_key,
+    find_pdf_by_digest,
+    new_document_id,
+)
+from document_processing.infrastructure.storage.document_identity_registry import (
+    reserve_document_id,
+)
+
 from .. import config, storage
 from ..validators import safe_filename
 from . import airflow, contracts
@@ -36,11 +45,18 @@ def register(
     minio = storage.client()
     contract_key = contracts.contract_key(domain, contract_version, minio)
     digest = hashlib.sha256(content).hexdigest()
-    document_id = digest[:32]
+    existing_pdf = find_pdf_by_digest(
+        [item.object_name for item in storage.list_objects(minio, f"documentos-origem/{domain}/{entity_slug}/")
+         if item.object_name.lower().endswith(".pdf")],
+        digest,
+    )
+    document_id = document_id_from_key(existing_pdf, digest) if existing_pdf else reserve_document_id(
+        minio, config.bucket(), domain, entity_slug, digest, new_document_id(digest),
+    )
     pdf_filename = safe_filename(filename, fallback="documento.pdf")
     prefix = f"documentos-origem/{domain}/{entity_slug}/document_id={document_id}"
-    pdf_key = f"{prefix}/{digest[:16]}_{pdf_filename}"
-    manifest_key = f"{prefix}/documento_origem.json"
+    pdf_key = existing_pdf or f"{prefix}/{digest[:16]}_{pdf_filename}"
+    manifest_key = pdf_key.rsplit("/", 1)[0] + "/documento_origem.json"
     pdf_uri = storage.uri(pdf_key)
     contract_uri = storage.uri(contract_key)
 

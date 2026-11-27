@@ -5,7 +5,7 @@ import unittest
 from http.client import IncompleteRead
 from types import SimpleNamespace
 from typing import Any
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
 from document_processing.application.use_cases.fallback.context_builder import (
     FallbackProblemContextBuilder,
@@ -282,6 +282,69 @@ class _BlockInventory(_SelectionInventory):
 
 
 class Dag3MinimalReimplementationTest(unittest.TestCase):
+    def test_forced_creation_does_not_use_active_layout_as_base(self) -> None:
+        manifest_key = "execucoes/abecip/extracao/manifesto_execucao.json"
+        manifest = {
+            "candidate": {"entity_slug": "abecip", "domain": "abecip"},
+            "document_id": "pdf-atual",
+            "execution_id": "extracao-atual",
+            "artifact_uris": ["minio://ocr-cidades/extracao-atual/inventory.json"],
+        }
+        current = "layouts/abecip/abecip/current.json"
+        active_layout = "layouts/abecip/abecip/v1.1.0/layout_signature_deterministico.json"
+        objects = {
+            manifest_key: manifest,
+            current: {"object_key": active_layout},
+            active_layout: {"mapeamento_canonico": {"valor": {}}},
+        }
+        minio = Mock()
+        minio.get_json.side_effect = lambda *, object_key: objects[object_key]
+        minio.object_exists.return_value = True
+        config_loader = _ConfigLoader()
+        resolution = SchemaResolutionService(config_loader=config_loader, minio_client=minio)
+
+        result = resolution.process_extraction_manifest(
+            {"forcar_criacao_inicial_layout": True}, manifest_key=manifest_key
+        )
+
+        minio.get_json.assert_called_once_with(object_key=manifest_key)
+        minio.object_exists.assert_not_called()
+        self.assertTrue(result["layout_alterado"])
+        self.assertEqual(result["fallback_mode"], "criacao_inicial_layout")
+        self.assertEqual(result["motivo"], "criacao_inicial_layout_forcada")
+
+        contract = {
+            "schema_saida": {"valor": "number"},
+            "contrato_semantico": {
+                "requisitos_mapeamento": {"campos_obrigatorios": [{"path": "valor"}]},
+            },
+        }
+        fallback = FallbackLlmService(config_loader=config_loader, minio_client=minio)
+        with (
+            patch.object(
+                fallback,
+                "load_semantic_contract",
+                return_value=("contrato.json", contract),
+            ),
+            patch.object(
+                fallback.inventory_service,
+                "load_extraction_inventory",
+                return_value=(
+                    "inventory.json",
+                    {"items": [{"kind": "table", "path": "tables/table001.json"}]},
+                ),
+            ),
+        ):
+            loaded = fallback.load_fallback_context({
+                **result, "trigger_origin_dag": "dag_resolve_schema_saida"
+            })
+
+        self.assertEqual(loaded["fallback_scope"], "criacao_inicial_layout")
+        self.assertEqual(loaded["validation_status"], "criacao_inicial_layout_forcada")
+        self.assertEqual(loaded["failure_codes"], [])
+        self.assertIsNone(loaded["fallback_problem_context"]["layout_signature_base_ref"])
+        self.assertIsNone(loaded["object_keys"]["layout_signature_base"])
+
     def test_inventory_summary_for_llm_selection_exposes_only_tables_and_charts(self) -> None:
         inventory = FallbackInventoryService()
 

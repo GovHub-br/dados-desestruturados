@@ -95,3 +95,5 @@ verdade sem uma verificação explícita de documentos vigentes ou substitutos.
 - resultados manuais de observabilidade de DAG 3 não são documentação canônica;
 - logs detalhados de execução continuam em Airflow, MinIO e ferramentas de
   observabilidade, conforme a ADR 0006.
+
+- [Ingestão raw de resoluções aprovadas](operations/ingestao-raw.md)

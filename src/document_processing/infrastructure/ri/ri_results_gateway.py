@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import calendar
 import html
 import json
 import re
@@ -128,8 +129,10 @@ class RiResultsClient:
             CompanySource(
                 slug="tenda",
                 display_name="Tenda",
-                provider="sumaq_next",
+                provider="mziq",
                 results_page_url="https://ri.tenda.com/informacoes-financeiras/central-de-resultados/",
+                mziq_company_id="36c72d10-4c63-4c06-a420-f7797fcde0bf",
+                mziq_categories=("central_de_resultados_previa_operacional",),
             ),
         ]
 
@@ -151,6 +154,33 @@ class RiResultsClient:
             raise RuntimeError(f"Provider de RI nao suportado: {source.provider}")
 
         return [candidate.as_dict() for candidate in self._deduplicate(candidates)]
+
+    def detect_historical_previews(
+        self, start: date, end: date, companies: list[str],
+    ) -> list[dict[str, Any]]:
+        """Busca previas por competencia trimestral nas fontes configuradas."""
+        sources = self.sources if self.sources is not None else self.default_company_sources()
+        known = {source.slug for source in sources}
+        unknown = set(companies) - known
+        if unknown:
+            raise ValueError(f"Construtoras desconhecidas: {sorted(unknown)}. Disponiveis: {sorted(known)}")
+        selected = [source for source in sources if not companies or source.slug in companies]
+        candidates = []
+        for year in range(start.year, end.year + 1):
+            for quarter in range(1, 5):
+                month = quarter * 3
+                period_start = date(year, month - 2, 1)
+                period_end = date(year, month, calendar.monthrange(year, month)[1])
+                if period_start > end or period_end < start:
+                    continue
+                window = DisclosureWindow(
+                    year, quarter, f"{quarter}T{str(year)[-2:]}",
+                    (month, month), period_end.isoformat(),
+                )
+                for item in self.detect_operational_previews(window=window, sources=selected):
+                    item.update(domain="construtoras", should_trigger_dag2=True)
+                    candidates.append(item)
+        return candidates
 
     def _detect_mziq(self, source: CompanySource, window: DisclosureWindow) -> list[DocumentCandidate]:
         """Consulta o backend MZIQ e filtra documentos da categoria de previa operacional."""

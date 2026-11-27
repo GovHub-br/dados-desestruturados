@@ -30,6 +30,12 @@ class MinioStorageClient:
             secure=self.config.minio_secure,
         )
 
+    def reserve_document_id(self, domain: str, entity: str, digest: str, proposed: str) -> str:
+        from .document_identity_registry import reserve_document_id
+
+        self.ensure_bucket()
+        return reserve_document_id(self._client(), self.config.minio_bucket, domain, entity, digest, proposed)
+
     def ensure_bucket(self) -> None:
         """Garante que o bucket de data lake exista antes de gravar artefatos."""
         client = self._client()

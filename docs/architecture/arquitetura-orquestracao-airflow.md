@@ -55,7 +55,7 @@ O fluxo recomendado e dividido em cinco DAGs principais.
 2. `dag_extrai_documentos_origem`
 3. `dag_resolve_schema_saida`
 4. `dag_valida_e_fallback_llm`
-5. `dag_ingere_bronze`
+5. `dag_ingere_raw`
 
 Em alto nível:
 
@@ -448,29 +448,13 @@ Contém:
 A LLM deve ser apoio de exceção, não o mecanismo principal de resolução.
 
 
-## DAG 4: ingestão na bronze
+## DAG 4: ingestão raw
 
-### Nome sugerido
-
-- `dag_ingere_bronze`
-
-### Entrada
-
-- `schema_saida_resolvido.json`
-
-### Responsabilidades
-
-- transformar o JSON final em registros estruturados;
-- carregar os dados na camada bronze;
-- registrar metadados de execução;
-- ligar cada carga ao documento de origem e à resolução usada.
-
-### Saídas esperadas
-
-- tabelas bronze no banco;
-- log de ingestão;
-- metadados de linhagem.
-
+A `dag_ingere_raw` transforma schemas aprovados em arrays JSON tabulares no
+RustFS/S3. É manual, com simulação por padrão, sem execução de PDF/Docling/LLM.
+Confere a validação, a auditoria e a publicação de fallback antes de carregar.
+Preserva as competências anteriores e registra um manifesto de carga na origem.
+Veja [o fluxo e a configuração](../operations/ingestao-raw.md).
 
 ## Como os artefatos se comunicam
 

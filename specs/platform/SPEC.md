@@ -485,33 +485,23 @@ Esta decisao esta registrada em:
 
 - `docs/adr/0001-fallback-produz-layout-candidato.md`
 
-## DAG 4: Ingestao Bronze
+## DAG 4: Ingestao Raw
 
-Nome esperado:
+`dag_ingere_raw` substitui o stub bronze por uma carga manual de schemas
+aprovados para o RustFS/S3. Recebe filtros de dominio, entidade, competencia e
+chaves de schema; `simular=true` e o padrao sem escrita.
 
-- `dag_ingere_bronze`
+Confere auditoria, validacao e identidade com a extracao. Para fallback exige
+publicacao aprovada da mesma revalidacao. Produz arrays JSON planos nas seis
+tabelas ABECIP por mes e em lancamentos/vendas por construtora, preservando
+outras competencias. A origem e o MinIO de artefatos; o destino usa UI_*/RAW_TARGET_*.
+Nao interpreta PDF/Docling, nao chama LLM e nao calcula metricas derivadas.
 
-Entrada:
-
-- `schema_saida_resolvido.json`;
-- status de validacao que permita continuidade;
-- metadados de execucao.
-
-Responsabilidades:
-
-- transformar JSON resolvido em registros estruturados;
-- gravar camada bronze;
-- preservar referencia ao documento, execucao, contrato e layout;
-- preparar base para calculo posterior de metricas derivadas.
-- registrar carga bronze e lineage operacional no Postgres operacional quando a
-  integracao operacional estiver implementada.
-
-Nao deve:
-
-- reinterpretar PDF;
-- consultar Docling diretamente;
-- aceitar schema parcial quando a validacao bloqueou continuidade;
-- calcular metricas derivadas como se fossem valores extraidos.
+Escrita condicional evita sobrescrita concorrente e repeticao nao duplica linhas.
+Manifestos de carga ficam em ingestoes/raw na origem. Nao ha transacao entre
+arquivos nem nova persistencia operacional em Postgres. A DAG ainda nao e
+acionada automaticamente pelas anteriores. Consulte
+[ingestao raw](../../docs/operations/ingestao-raw.md).
 
 ## MinIO
 

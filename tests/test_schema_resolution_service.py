@@ -3,9 +3,61 @@ from __future__ import annotations
 import unittest
 from pathlib import Path
 from tempfile import TemporaryDirectory
+from unittest.mock import Mock, patch
 
 from document_processing.application.use_cases.resolution.resolve_schema import SchemaResolutionService
 from document_processing.domain.contracts.schema import apply_contract_literals
+
+
+def test_missing_layout_still_requests_initial_creation_without_forcing() -> None:
+    minio = Mock()
+    minio.get_json.return_value = {
+        "candidate": {"entity_slug": "abecip", "domain": "abecip"},
+        "document_id": "pdf-atual",
+        "execution_id": "extracao-atual",
+    }
+    minio.object_exists.return_value = False
+    service = SchemaResolutionService(minio_client=minio)
+
+    result = service.process_extraction_manifest({}, manifest_key="extracao/manifesto.json")
+
+    assert result["fallback_mode"] == "criacao_inicial_layout"
+    assert result["motivo"] == "layout_signature_ausente"
+
+
+def test_revalidation_resolves_candidate_when_initial_creation_is_forced() -> None:
+    service = SchemaResolutionService(minio_client=Mock())
+    runtime = {
+        "forcar_criacao_inicial_layout": True,
+        "modo_execucao": "revalidacao_layout_candidato",
+        "layout_signature_override": {"layout_signature_object_key": "candidato.json"},
+    }
+    manifest_key = "extracao/manifesto_execucao.json"
+    loaded = {
+        "runtime": runtime,
+        "execution": {
+            "domain": "abecip",
+            "entity_slug": "abecip",
+            "execution_id": "extracao-atual",
+            "document_id": "pdf-atual",
+            "contrato_semantico_uri": "minio://bucket/contrato.json",
+        },
+        "contrato_semantico": {"schema_saida": {"unidade": "unidades"}},
+        "layout_signature": {"mapeamento_canonico": {}},
+        "extraction_root": ".",
+    }
+    persisted = {"schema_saida_resolvido_uri": "minio://bucket/revalidation/schema.json"}
+    with (
+        patch.object(service, "_load_inputs_from_manifest", return_value=loaded) as load,
+        patch.object(service, "persist_outputs", return_value=persisted) as persist,
+    ):
+        result = service.process_extraction_manifest(runtime, manifest_key=manifest_key)
+
+    load.assert_called_once_with(runtime, manifest_key=manifest_key)
+    assert persist.call_args.args[2]["schema_saida"] == {"unidade": "unidades"}
+    assert result["status_compatibilidade"] == "compativel"
+    assert result["persisted"] == persisted
+    assert "fallback_mode" not in result
 
 
 def test_schema_template_keeps_contract_literals_and_nulls_type_descriptors() -> None:

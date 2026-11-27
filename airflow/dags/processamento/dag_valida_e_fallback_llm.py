@@ -200,7 +200,8 @@ def avaliar_revalidacao_candidato(
     return result
 
 
-@task(multiple_outputs=False)
+# A escolha da proxima versao e a escrita do ponteiro precisam ser sequenciais.
+@task(multiple_outputs=False, max_active_tis_per_dag=1)
 def publicar_nova_versao_layout(
     revalidation_result: dict[str, object],
     revalidation_conf: dict[str, object],

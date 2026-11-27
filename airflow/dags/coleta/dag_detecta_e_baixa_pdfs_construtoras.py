@@ -10,8 +10,8 @@ from airflow.providers.standard.operators.empty import EmptyOperator
 from airflow.utils.trigger_rule import TriggerRule
 
 from dags._shared.airflow_defaults import AirflowDefaults
-from dags._shared.runtime import REFERENCE_DATE_RESOLVER
 from dags._shared.dependencies import build_source_document_processing_use_case
+from dags._shared.runtime import REFERENCE_DATE_RESOLVER
 
 
 def _documents_use_case():

@@ -137,3 +137,36 @@ class AbecipInformativosClientTest(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+def test_historical_discovery_loads_more_and_filters_by_month():
+    from datetime import date
+
+    class HistoricalHttp:
+        def __init__(self):
+            self.offsets = []
+
+        def fetch(self, url, **kwargs):
+            html = _bloco(
+                "/download?file=data-abecip-2026-09.pdf",
+                "Em setembro de 2026, os financiamentos.",
+            ) + '<script>total_conteudos = "2";</script>'
+            return HttpResponse(url=url, body=html.encode(), content_type="text/html")
+
+        def post_form(self, url, payload, **kwargs):
+            self.offsets.append(payload["num_conteudos"])
+            return {"html": _bloco(
+                "/download?file=data-abecip-2025-01.pdf",
+                "Em janeiro de 2025, os financiamentos.",
+            )}
+
+    http = HistoricalHttp()
+    client = AbecipInformativosClient(http_client=http)
+    found = client.detect_historical_candidates(date(2025, 1, 1), date(2025, 1, 31))
+    assert [item["period_label"] for item in found] == ["2025-01"]
+    assert http.offsets == [1]
+
+
+def test_historical_filename_with_named_month():
+    client = AbecipInformativosClient()
+    assert client._periodo_no_arquivo("data-abecip-jan20181.pdf") == (2018, 1)

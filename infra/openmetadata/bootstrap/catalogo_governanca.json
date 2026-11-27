@@ -83,9 +83,9 @@
       "criticality": "high",
       "sla_minutes": 30
     },
-    "dag_ingere_bronze": {
-      "description": "Ingere dados brutos já validados na camada bronze. A publicação depende de schema resolvido aprovado.",
-      "processing_type": "bronze_ingestion",
+    "dag_ingere_raw": {
+      "description": "Exporta schemas aprovados para arrays JSON tabulares no RustFS/S3, com simulação, histórico e manifesto de carga.",
+      "processing_type": "raw_ingestion",
       "criticality": "high",
       "sla_minutes": 15
     }

@@ -19,7 +19,7 @@ Read these files before changing behavior:
 
 - `specs/platform/SPEC.md`
 - `docs/archive/experiments/dag1-e2e-report.md`
-- `airflow/dags/construtoras/dag_detecta_pdf_e_extrai.py`
+- `airflow/dags/coleta/dag_detecta_e_baixa_pdfs_construtoras.py`
 - `src/document_processing/application/use_cases/documents/source_document_processing.py`
 - `src/document_processing/infrastructure/ri/ri_results_gateway.py`
 - `src/document_processing/infrastructure/docling/docling_gateway.py`

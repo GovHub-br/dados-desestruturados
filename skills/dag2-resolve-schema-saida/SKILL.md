@@ -23,7 +23,7 @@ Read these files before changing behavior:
 - `resultados_contrutoras/contrato_semantico_construtora.json`
 - `resultados_contrutoras/layout_signature_cury_deterministico.json`
 - `docs/reference/examples/cury-deterministic-layout.md`
-- `airflow/dags/construtoras/dag_resolve_schema_saida.py`
+- `airflow/dags/processamento/dag_resolve_schema_saida.py`
 - `src/document_processing/application/use_cases/resolution/resolve_schema.py`
 - `src/document_processing/application/use_cases/runtime_payloads.py`
 

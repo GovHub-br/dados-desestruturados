@@ -59,7 +59,7 @@ disso, cada DAG principal recebeu uma descrição funcional:
 | `dag_extrai_documentos_origem` | Extrai documentos pendentes com Docling e persiste as evidências. |
 | `dag_resolve_schema_saida` | Aplica contrato e layout, produz schema resolvido, auditoria e validação. |
 | `dag_valida_e_fallback_llm` | Corrige/cria layout com LLM, revalida e publica somente se aprovado. |
-| `dag_ingere_bronze` | Etapa planejada para carga da camada bronze. |
+| `dag_ingere_raw` | Carga manual de resoluções aprovadas para a raw no RustFS/S3. |
 
 O conector foi configurado para trazer até 50 status recentes por pipeline,
 com janela de 30 dias.

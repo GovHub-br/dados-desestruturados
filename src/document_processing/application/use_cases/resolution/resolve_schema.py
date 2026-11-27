@@ -132,16 +132,16 @@ class ResolveSchemaUseCase(
 
     def process_extraction_manifest(self, runtime: dict[str, Any], *, manifest_key: str) -> dict[str, Any]:
         """Processa um manifesto individual de extracao e persiste saidas da DAG2."""
-        initial_creation = self._initial_layout_creation_result_if_missing(
+        initial_creation = self._initial_layout_creation_result(
             runtime,
             manifest_key=manifest_key,
         )
         if initial_creation:
-            logging.warning(
-                "Layout signature ausente para entity=%s execution_id=%s. "
-                "Acionando criacao inicial por DAG 3.",
+            logging.info(
+                "Acionando criacao inicial pela DAG 3: entity=%s execution_id=%s motivo=%s.",
                 initial_creation.get("entity_slug"),
                 initial_creation.get("execution_id"),
+                initial_creation.get("motivo"),
             )
             return initial_creation
 
@@ -164,13 +164,13 @@ class ResolveSchemaUseCase(
             "persisted": persist_uris,
         }
 
-    def _initial_layout_creation_result_if_missing(
+    def _initial_layout_creation_result(
         self,
         runtime: dict[str, Any],
         *,
         manifest_key: str,
     ) -> dict[str, Any] | None:
-        """Retorna um gatilho de criacao inicial quando nao ha layout vigente."""
+        """Encaminha a criacao inicial quando priorizada ou sem layout vigente."""
         if str(runtime.get("modo_execucao", "")).strip() == "revalidacao_layout_candidato":
             return None
 
@@ -183,9 +183,14 @@ class ResolveSchemaUseCase(
         domain = self._domain_from_manifest(manifest)
         execution_id = str(manifest.get("execution_id") or "execucao_desconhecida")
         document_id = str(manifest.get("document_id") or "documento_desconhecido")
-        layout_key = self._current_layout_signature_object_key(entity_slug, domain=domain)
-        if self.minio_client.object_exists(layout_key):
-            return None
+        if runtime.get("forcar_criacao_inicial_layout") is True:
+            motivo = "criacao_inicial_layout_forcada"
+            layout_key = self._current_layout_pointer_object_key(entity_slug, domain=domain)
+        else:
+            motivo = "layout_signature_ausente"
+            layout_key = self._current_layout_signature_object_key(entity_slug, domain=domain)
+            if self.minio_client.object_exists(layout_key):
+                return None
 
         return {
             "manifest_key": manifest_key,
@@ -195,9 +200,9 @@ class ResolveSchemaUseCase(
             "document_id": document_id,
             "contrato_semantico_uri": str(manifest.get("contrato_semantico_uri", "")).strip(),
             "layout_alterado": True,
-            "status_compatibilidade": "layout_signature_ausente",
+            "status_compatibilidade": motivo,
             "fallback_mode": "criacao_inicial_layout",
-            "motivo": "layout_signature_ausente",
+            "motivo": motivo,
             "layout_signature_pointer_key_esperado": layout_key,
             "persisted": {},
         }

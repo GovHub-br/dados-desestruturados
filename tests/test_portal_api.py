@@ -53,6 +53,13 @@ class FakeMinio:
             raise KeyError(key)
         return SimpleNamespace(object_name=key)
 
+    def _execute(self, method, *, bucket_name, object_name, body, headers):
+        from minio.error import S3Error
+        if object_name in self.objects:
+            raise S3Error("PreconditionFailed", "exists", "", "", "", None)
+        self.objects[object_name] = body
+        return SimpleNamespace(release_conn=lambda: None)
+
     def put_object(self, bucket: str, key: str, data, length: int, content_type: str = "") -> None:
         self.objects[key] = data.read()
 

@@ -20,6 +20,10 @@ class _FakeMinio:
     def __init__(self) -> None:
         self.objects: dict[str, bytes] = {CONTRACT_KEY: b"{}"}
         self.writes: list[str] = []
+        self.identities = {}
+
+    def reserve_document_id(self, domain, entity, digest, proposed):
+        return self.identities.setdefault((domain, entity, digest), proposed)
 
     def object_exists(self, object_key: str) -> bool:
         return object_key in self.objects
@@ -117,15 +121,26 @@ class MonitoredSourceIngestionTest(unittest.TestCase):
 
     def _agosto_dir(self) -> str:
         document_id = _digest(PDF_AGOSTO)[:32]
-        return f"documentos-origem/abecip/abecip/ano=2026/periodo=2026-08/document_id={document_id}"
+        matching = [
+            key.rsplit("/", 1)[0] for key in self.minio.objects
+            if key.endswith(".pdf") and key.rsplit("/", 1)[-1].startswith(_digest(PDF_AGOSTO)[:16])
+        ]
+        return matching[0] if matching else f"documentos-origem/abecip/abecip/ano=2026/periodo=2026-08/document_id={document_id}"
 
     def _add_extraction(self, period: str, content: bytes) -> None:
-        document_id = _digest(content)[:32]
+        from document_processing.domain.document_identity import document_id_from_key
+        origin = next(
+            (key for key in self.minio.objects if key.endswith(".pdf") and key.rsplit("/", 1)[-1].startswith(_digest(content)[:16])),
+            "",
+        )
+        document_id = document_id_from_key(origin, _digest(content))
         year = period.split("-")[0]
+        artifact = f"execucoes/abecip/teste/{document_id}/inventory.json"
+        self.minio.objects[artifact] = b"{}"
         self.minio.objects[
             f"execucoes/abecip/extracao/abecip/ano={year}/periodo={period}/document_id={document_id}/"
             "execution_id=x/extraction/manifesto_execucao.json"
-        ] = b"{}"
+        ] = json.dumps({"artifact_uris": [f"minio://{BUCKET}/{artifact}"]}).encode()
 
     def test_documento_novo_e_gravado_num_diretorio_proprio_e_segue_para_extracao(self) -> None:
         use_case = self._use_case([_candidate("2026-08")])
@@ -144,7 +159,7 @@ class MonitoredSourceIngestionTest(unittest.TestCase):
         self.assertEqual(result["status"], "novo")
         self.assertTrue(result["should_extract"])
         self.assertEqual(result["origin_manifest_key"], f"{directory}/documento_detectado.json")
-        self.assertEqual(result["document_id"], _digest(PDF_AGOSTO)[:32])
+        self.assertRegex(result["document_id"], r"^20\d{2}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2}Z__" + _digest(PDF_AGOSTO)[:32] + "$")
 
     def test_manifesto_de_origem_carrega_o_que_as_dags_seguintes_leem(self) -> None:
         use_case = self._use_case([_candidate("2026-08")])
@@ -283,3 +298,95 @@ class MonitoredSourceIngestionTest(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class HistoricalIngestionTest(unittest.TestCase):
+    def setUp(self):
+        from document_processing.application.use_cases.documents.historical_ingestion import (
+            HistoricalIngestionUseCase,
+        )
+
+        self.base = MonitoredSourceIngestionTest()
+        self.base.setUp()
+        self.base.config.minio_resolution_prefix = "execucoes/construtoras/resolucao"
+        self.ingestion = self.base._use_case([])
+        self.ingestion.reuse_existing_origins = True
+        self.history = HistoricalIngestionUseCase(
+            abecip_source=_FakeSource([]), ri_source=None, ingestion=self.ingestion,
+        )
+
+    def test_reuses_legacy_pdf_and_recovers_missing_extraction(self):
+        digest = _digest(PDF_AGOSTO)
+        key = f"documentos-origem/abecip/abecip/document_id={digest[:32]}/{digest[:16]}_antigo.pdf"
+        self.base.minio.objects[key] = PDF_AGOSTO
+
+        result = self.history.persist_candidate(_candidate("2026-08"))
+
+        self.assertEqual(result["document_id"], digest[:32])
+        self.assertTrue(result["should_extract"])
+        self.assertFalse(result["resolution_complete"])
+        self.assertTrue(result["origin_manifest_key"].startswith(key.rsplit("/", 1)[0]))
+        self.assertFalse(any(key.endswith(".pdf") for key in self.base.minio.writes))
+
+    def test_complete_extraction_is_reused_and_missing_resolution_is_forwarded(self):
+        first = self.history.persist_candidate(_candidate("2026-08"))
+        self.base._add_extraction("2026-08", PDF_AGOSTO)
+        writes = list(self.base.minio.writes)
+
+        result = self.history.persist_candidate(_candidate("2026-08"))
+
+        self.assertEqual(result["document_id"], first["document_id"])
+        self.assertFalse(result["should_extract"])
+        self.assertTrue(result["extraction_manifest_key"])
+        self.assertFalse(result["resolution_complete"])
+        self.assertEqual(writes, self.base.minio.writes)
+
+    def test_incomplete_extraction_is_retried(self):
+        self.history.persist_candidate(_candidate("2026-08"))
+        self.base._add_extraction("2026-08", PDF_AGOSTO)
+        key = next(key for key in self.base.minio.objects if key.endswith("/inventory.json"))
+        del self.base.minio.objects[key]
+
+        result = self.history.persist_candidate(_candidate("2026-08"))
+
+        self.assertTrue(result["should_extract"])
+        self.assertEqual(result["extraction_manifest_key"], "")
+
+    def test_published_resolution_is_skipped(self):
+        first = self.history.persist_candidate(_candidate("2026-08"))
+        self.base._add_extraction("2026-08", PDF_AGOSTO)
+        extraction = next(key for key in self.base.minio.objects if key.endswith("/manifesto_execucao.json"))
+        manifest = self.base.minio.get_json(object_key=extraction)
+        manifest["execution_id"] = "run-original"
+        self.base.minio.objects[extraction] = json.dumps(manifest).encode()
+        prefix = f"fallback/abecip/abecip/document_id={first['document_id']}/execution_id=fallback/"
+        self.base.minio.objects[prefix + "layout_signature_candidato.json"] = json.dumps({
+            "execution_id_origem": "run-original",
+        }).encode()
+        self.base.minio.objects[prefix + "publicacao_layout_signature.json"] = json.dumps({
+            "status": "publicado",
+            "candidate_layout_object_key": prefix + "layout_signature_candidato.json",
+        }).encode()
+
+        result = self.history.persist_candidate(_candidate("2026-08"))
+
+        self.assertFalse(result["should_extract"])
+        self.assertTrue(result["resolution_complete"])
+
+    def test_extractor_preserves_timestamp_document_id(self):
+        from document_processing.application.use_cases.documents import (
+            SourceDocumentProcessingUseCase,
+        )
+
+        result = self.history.persist_candidate(_candidate("2026-08"))
+        minio = self.base.minio
+        minio.get_bytes = lambda *, object_key: minio.objects[object_key]
+        config = self.base.config
+        config.pipeline_tmp_dir = "/tmp"
+        use_case = SourceDocumentProcessingUseCase(config=config, minio_client=minio)
+        from unittest.mock import patch
+        with patch.object(use_case, "_write_temp_pdf", return_value="/tmp/test.pdf"):
+            doc = use_case._build_origin_document(
+                object_key=result["pdf_uri"].split("/", 3)[3], origin_prefix="documentos-origem",
+            )
+        self.assertEqual(doc["document_id"], result["document_id"])
