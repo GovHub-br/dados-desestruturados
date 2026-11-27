@@ -130,3 +130,15 @@ def build_historical_ingestion_use_case():
             minio_client=MinioStorageClient(config), reuse_existing_origins=True,
         ),
     )
+
+
+@lru_cache(maxsize=1)
+def build_raw_ingestion_use_case():
+    from document_processing.application.use_cases.raw.ingestion import RawIngestionUseCase
+    from document_processing.infrastructure.storage.raw_repository import RawRepository
+    from document_processing.shared.config.raw import load_raw_storage_config
+
+    _loader, config = _settings()
+    return RawIngestionUseCase(
+        source=MinioStorageClient(config), target=RawRepository(load_raw_storage_config()),
+    )

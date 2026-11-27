@@ -21,7 +21,7 @@ airflow/
       dag_resolve_schema_saida.py
       dag_valida_e_fallback_llm.py
     ingestao/
-      dag_ingere_bronze.py
+      dag_ingere_raw.py
   logs/
   state/
 ```
@@ -30,7 +30,7 @@ airflow/
 | --- | --- |
 | `dags/coleta/` | Descoberta e armazenamento de PDFs da ABECIP, das construtoras e da carga histórica parametrizada. |
 | `dags/processamento/` | Extração, resolução e fallback compartilhados entre os domínios documentais. |
-| `dags/ingestao/` | Etapa posterior de ingestão estruturada. A DAG de bronze ainda registra somente o planejamento. |
+| `dags/ingestao/` | Etapa posterior de ingestão estruturada. A DAG raw transforma resoluções aprovadas em arquivos tabulares no RustFS/S3. |
 | `dags/_shared/` | Fábricas de dependências, configuração e utilitários da orquestração. |
 | `logs/` | Logs das execuções no Airflow. |
 | `state/` | Estado operacional local utilizado pelos serviços do Airflow. |
@@ -48,6 +48,7 @@ Coleta periódica ou histórica
   → fallback para criação inicial da assinatura
   → revalidação pela resolução
   → publicação do layout aprovado
+  → ingestão raw manual (simulação por padrão)
 ```
 
 A DAG histórica pode encaminhar uma extração já existente diretamente para a
@@ -76,3 +77,7 @@ sem executar tarefas. A estrutura documental é verificada por
 
 A validação desta reorganização compara IDs, agendas, operadores, dependências
 entre tarefas e destinos dos disparos antes e depois da movimentação.
+
+A etapa raw possui configuração de destino independente. Veja o guia de
+[ingestão raw](../docs/operations/ingestao-raw.md) e a skill
+[dag4-ingere-raw](../skills/dag4-ingere-raw/SKILL.md).

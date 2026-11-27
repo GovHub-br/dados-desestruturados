@@ -61,7 +61,7 @@ DAG 3  dag_valida_e_fallback_llm        trace  atlas.fallback
         ├── span fallback.revalidacao_dag2                 → gate de publicação
         └── span fallback.publicacao_layout
 
-DAG 4  dag_ingere_bronze                trace  atlas.bronze
+DAG 4  dag_ingere_raw                   manifesto no MinIO (sem trace implementado)
 ```
 
 ### Correlação entre as DAGs

@@ -58,7 +58,7 @@ pontual do layout fica fora do fluxo automático nesta fase.
 | `dag_extrai_documentos_origem` | Varre documentos de origem, chama o Docling e persiste a extração. |
 | `dag_resolve_schema_saida` | Resolve o schema de saída usando contrato e layout signature. |
 | `dag_valida_e_fallback_llm` | Gera ou corrige layouts quando a resolução falha ou não há layout. |
-| `dag_ingere_bronze` | Ingestão dos dados brutos validados na camada bronze. |
+| `dag_ingere_raw` | Exportação manual de schemas aprovados para a raw tabular no RustFS/S3. |
 
 O guia de [carga histórica manual](docs/operations/carga-historica-pdfs.md) descreve
 os parâmetros, o modo de teste sem extração e os IDs legíveis no MinIO.

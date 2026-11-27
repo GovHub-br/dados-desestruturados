@@ -801,7 +801,7 @@ No seu caso, isso deixa explicito que:
 - `dag_detecta_pdf_e_extrai` transforma PDF de origem em artefatos Docling;
 - `dag_resolve_schema_saida` deve transformar extracao em JSON resolvido;
 - `dag_valida_e_fallback_llm` cuida das falhas de resolucao;
-- `dag_ingere_bronze` deve publicar dados estruturados.
+- `dag_ingere_raw` deve publicar dados estruturados.
 
 Quando a lineage estiver montada, o Airflow sera o elo entre entrada e saida:
 documentos no MinIO entram em uma DAG, a DAG gera artefatos, os artefatos geram
@@ -836,7 +836,7 @@ Filtro inicial de DAGs:
 dag_detecta_pdf_e_extrai
 dag_resolve_schema_saida
 dag_valida_e_fallback_llm
-dag_ingere_bronze
+dag_ingere_raw
 ```
 
 Como hoje voce executou a DAG 1, a mais importante para catalogar agora e:
@@ -992,7 +992,7 @@ documentos-origem/construtoras
   -> execucoes/construtoras/.../extraction
   -> dag_resolve_schema_saida
   -> schema_saida_resolvido.json
-  -> dag_ingere_bronze
+  -> dag_ingere_raw
   -> tabela bronze
   -> tabela silver
   -> BI / consumo

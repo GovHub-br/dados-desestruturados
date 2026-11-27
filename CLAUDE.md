@@ -133,7 +133,7 @@ through the semantic contract, not conditionals in the core.
 - `processamento/` holds `dag_extrai_documentos_origem`,
   `dag_resolve_schema_saida` and `dag_valida_e_fallback_llm`. These stages
   serve all document domains.
-- `ingestao/` holds `dag_ingere_bronze`, currently a planning stub.
+- `ingestao/` holds `dag_ingere_raw`, manual approved-schema export to tabular JSON on RustFS/S3; simulation is the default.
 - `_shared/` holds dependency factories and orchestration configuration.
 
 Collection persists source PDFs and triggers extraction. Extraction runs
