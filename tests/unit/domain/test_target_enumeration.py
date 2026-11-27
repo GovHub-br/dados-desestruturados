@@ -26,7 +26,6 @@ from document_processing.domain.fallback.target_enumeration import (
 )
 
 CONTRATOS = Path("infra/minio-bootstrap/contracts")
-ABECIP = Path("resultados_construtoras/abecip/contratos/abecip/v2.1.1/contrato_semantico_abecip.json")
 
 
 def _publicado(dominio: str, versao: str) -> dict:
@@ -46,7 +45,7 @@ def bancos() -> dict:
 
 @pytest.fixture(scope="module")
 def abecip() -> dict:
-    return json.loads(ABECIP.read_text(encoding="utf-8"))
+    return _publicado("abecip", "v2.5.0")
 
 
 IDENTIDADE = {"entidade": "cury", "periodo": "2T26"}
